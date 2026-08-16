@@ -1,0 +1,37 @@
+# --- Android / Kotlin ---
+android/*.iml
+android/.gradle/
+android/.idea/
+android/local.properties
+android/.DS_Store
+android/build/
+android/captures/
+android/.externalNativeBuild/
+android/.cxx/
+android/*.apk
+android/*.aab
+android/app/release/
+android/app/debug/
+
+# --- Backend / Java / Spring Boot ---
+backend/target/
+backend/.mvn/
+backend/*.class
+backend/.idea/
+backend/*.iml
+backend/HELP.md
+backend/.env
+backend/application-local.properties
+backend/application-local.yml
+
+# --- General ---
+.DS_Store
+*.log
+.vscode/
+*.swp
+
+# --- Secrets ---
+**/secrets.properties
+**/*apikey*
+**/.env
+**/.env.*
