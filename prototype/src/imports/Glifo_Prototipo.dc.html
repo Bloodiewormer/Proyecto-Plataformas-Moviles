@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0C1219;font-family:Inter,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#FFD372}a:hover{color:#ffe0a0}
+::-webkit-scrollbar{width:0;height:0}
+@keyframes glifoFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes glifoSpin{to{transform:rotate(360deg)}}
+@keyframes glifoPulse{0%,100%{opacity:.35}50%{opacity:1}}
+@keyframes glifoFlash{0%{opacity:0}12%{opacity:.9}100%{opacity:0}}
+</style>
+</helmet>
+
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+<symbol id="menu" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"></path></symbol>
+<symbol id="back" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"></path></symbol>
+<symbol id="close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"></path></symbol>
+<symbol id="search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="M20.5 20.5L16.2 16.2"></path></symbol>
+<symbol id="add" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></symbol>
+<symbol id="camera" viewBox="0 0 24 24"><path d="M3 8.5A2.5 2.5 0 015.5 6H8l1.4-2.2h5.2L16 6h2.5A2.5 2.5 0 0121 8.5v9A2.5 2.5 0 0118.5 20h-13A2.5 2.5 0 013 17.5z"></path><circle cx="12" cy="13" r="3.8"></circle></symbol>
+<symbol id="school" viewBox="0 0 24 24"><path d="M12 4L2.5 8.6 12 13.2l9.5-4.6z"></path><path d="M6.5 10.8v4.4c0 1.8 2.5 3.1 5.5 3.1s5.5-1.3 5.5-3.1v-4.4"></path></symbol>
+<symbol id="notes" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"></path><path d="M14 3v5h5"></path><path d="M8.8 13h6.4M8.8 16.6h4.2"></path></symbol>
+<symbol id="coverage" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 3.5v8.5h8.5"></path></symbol>
+<symbol id="study" viewBox="0 0 24 24"><path d="M12 3.2l8.8 4.6L12 12.4 3.2 7.8z"></path><path d="M3.2 13.4L12 18l8.8-4.6"></path></symbol>
+<symbol id="sync" viewBox="0 0 24 24"><path d="M20.2 11a8.2 8.2 0 00-14-5.4L3.8 8"></path><path d="M3.8 13a8.2 8.2 0 0014 5.4L20.2 16"></path><path d="M3.8 3.6V8h4.4M20.2 20.4V16h-4.4"></path></symbol>
+<symbol id="person" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.8"></circle><path d="M4.5 20.6v-.8a5.4 5.4 0 015.4-5.4h4.2a5.4 5.4 0 015.4 5.4v.8"></path></symbol>
+<symbol id="settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.1"></circle><path d="M12 2.6v3M12 18.4v3M2.6 12h3M18.4 12h3M5.4 5.4l2.1 2.1M16.5 16.5l2.1 2.1M18.6 5.4l-2.1 2.1M7.5 16.5l-2.1 2.1"></path></symbol>
+<symbol id="logout" viewBox="0 0 24 24"><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path><path d="M9 3.4H5.4a2 2 0 00-2 2v13.2a2 2 0 002 2H9"></path></symbol>
+<symbol id="syllabus" viewBox="0 0 24 24"><path d="M8.5 6.5h12M8.5 12h12M8.5 17.5h12"></path><path d="M3.8 6.5h.02M3.8 12h.02M3.8 17.5h.02" stroke-width="2.4"></path></symbol>
+<symbol id="glossary" viewBox="0 0 24 24"><path d="M18.5 4.5H6l6.6 7.5L6 19.5h12.5"></path></symbol>
+<symbol id="gaps" viewBox="0 0 24 24"><path d="M3.4 17.2l5.4-5.4 3.6 3.6 6.4-7.4"></path><path d="M15.4 7.4h4.4v4.4"></path></symbol>
+<symbol id="copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"></rect><path d="M5.6 15H4.8a1.8 1.8 0 01-1.8-1.8V4.8A1.8 1.8 0 014.8 3h8.4A1.8 1.8 0 0115 4.8v.8"></path></symbol>
+<symbol id="down" viewBox="0 0 24 24"><path d="M6.5 9.5l5.5 5.5 5.5-5.5"></path></symbol>
+<symbol id="right" viewBox="0 0 24 24"><path d="M9.5 5.5L16 12l-6.5 6.5"></path></symbol>
+<symbol id="warn" viewBox="0 0 24 24"><path d="M12 3.6L21.2 19.8H2.8z"></path><path d="M12 10v4M12 16.8h.02" stroke-width="2"></path></symbol>
+<symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"></circle><path d="M12 7v5.2l3.2 2"></path></symbol>
+<symbol id="check" viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-11"></path></symbol>
+<symbol id="users" viewBox="0 0 24 24"><circle cx="9.5" cy="8.4" r="3.4"></circle><path d="M3 20.4v-.9a4.9 4.9 0 014.9-4.9h3.2a4.9 4.9 0 014.9 4.9v.9"></path><path d="M16.4 5.6a3.2 3.2 0 010 6.2M17.6 14.8h.7a4 4 0 014 4v1.6"></path></symbol>
+<symbol id="image" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="15" rx="2"></rect><circle cx="8.4" cy="9.6" r="1.8"></circle><path d="M3.6 17.4l5-5 4.4 4.4 3-2.8 4.4 4.2"></path></symbol>
+<symbol id="flash" viewBox="0 0 24 24"><path d="M13.5 2.5L5 13.5h5.5L10 21.5 19 10.5h-5.5z"></path></symbol>
+<symbol id="edit" viewBox="0 0 24 24"><path d="M4 20h4.2L19.4 8.8a2.1 2.1 0 00-3-3L5.2 17z"></path><path d="M14.6 6.2l3.2 3.2"></path></symbol>
+<symbol id="refresh" viewBox="0 0 24 24"><path d="M20.5 12a8.5 8.5 0 11-2.6-6.1"></path><path d="M20.5 4v5h-5"></path></symbol>
+<symbol id="shield" viewBox="0 0 24 24"><path d="M12 3l7.5 3v5.5c0 4.4-3 8.4-7.5 9.7-4.5-1.3-7.5-5.3-7.5-9.7V6z"></path><path d="M9 12.2l2.2 2.2 4-4.2"></path></symbol>
+<symbol id="target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"></circle><circle cx="12" cy="12" r="4.4"></circle><circle cx="12" cy="12" r=".8" stroke-width="2"></circle></symbol>
+<symbol id="calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2"></rect><path d="M3.5 9.6h17M8.2 3v4M15.8 3v4"></path></symbol>
+<symbol id="cost" viewBox="0 0 24 24"><path d="M3.5 20.5h17"></path><path d="M6.6 20.5v-5.4M11.4 20.5V6.2M16.2 20.5v-8.8"></path></symbol>
+<symbol id="sys-wifi" viewBox="0 0 24 18"><path d="M12 17.4L23.2 4.2A17.4 17.4 0 00.8 4.2z"></path></symbol>
+<symbol id="sys-signal" viewBox="0 0 24 18"><path d="M22 1.2v15.4a.9.9 0 01-.9.9H2.6c-.8 0-1.2-1-.6-1.5L20.5.6c.6-.5 1.5-.1 1.5.6z"></path></symbol>
+<symbol id="sys-batt" viewBox="0 0 26 14"><rect x=".8" y=".8" width="21.4" height="12.4" rx="3.4" fill="none" stroke="currentColor" stroke-width="1.6"></rect><rect x="3.2" y="3.2" width="14" height="7.6" rx="1.8"></rect><path d="M24.2 5.2v3.6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"></path></symbol>
+</svg>
+
+<div style="display:flex;gap:32px;align-items:flex-start;padding:28px 32px 56px;min-height:100vh;color:#D7D1B9">
+
+  <div style="width:288px;flex:0 0 auto;position:sticky;top:28px">
+    <div style="font:600 11px/1 Inter,sans-serif;letter-spacing:1.4px;text-transform:uppercase;color:#FFD372;margin-bottom:9px">Glifo · prototipo</div>
+    <div style="font:600 21px/1.25 Inter,sans-serif;letter-spacing:-.4px;margin-bottom:6px">Mapa de flujo</div>
+    <div style="font:400 12px/1.55 Inter,sans-serif;color:#959595;margin-bottom:16px">Navegá libre en el teléfono. El mapa resalta dónde estás; tocá cualquier pantalla para saltar.</div>
+
+    <div style="display:flex;gap:8px;margin-bottom:18px">
+      <div onClick="{{ toggleMode }}" style="flex:1;height:40px;border-radius:8px;border:1px solid #4A5A6E;background:#1A222C;color:#D7D1B9;display:flex;align-items:center;justify-content:center;gap:7px;font:500 13px Inter,sans-serif;cursor:pointer;user-select:none" style-hover="border-color:#FFD372">{{ modeLabel }}</div>
+      <div onClick="{{ reset }}" style="width:40px;height:40px;border-radius:8px;border:1px solid #4A5A6E;background:#1A222C;color:#959595;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="color:#FFD372;border-color:#FFD372" title="Reiniciar"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#refresh"></use></svg></div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:8px;background:rgba(255,211,114,.10);border:1px solid rgba(255,211,114,.28);margin-bottom:18px">
+      <svg width="16" height="16" fill="none" stroke="#FFD372" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#person"></use></svg>
+      <span style="font:500 12.5px Inter,sans-serif;color:#D7D1B9">{{ roleLabel }}</span>
+      <span style="flex:1"></span>
+      <span style="font:400 11px ui-monospace,'JetBrains Mono',monospace;color:#959595">{{ screen }}</span>
+    </div>
+
+    <sc-for list="{{ mapGroups }}" as="g" hint-placeholder-count="5">
+      <div style="margin-bottom:14px">
+        <div style="font:600 10px/1 Inter,sans-serif;letter-spacing:1.1px;text-transform:uppercase;color:#959595;padding-bottom:7px;border-bottom:1px solid #2E3B4B;margin-bottom:7px">{{ g.name }}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px">
+          <sc-for list="{{ g.items }}" as="s" hint-placeholder-count="6">
+            <div onClick="{{ s.go }}" style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px;cursor:pointer;font:400 11.5px/1.3 Inter,sans-serif;align-self:flex-start;border:1px solid {{ s.bd }};background:{{ s.bg }};color:{{ s.fg }}" style-hover="border-color:#FFD372">
+              <b style="font:600 10.5px ui-monospace,'JetBrains Mono',monospace">{{ s.id }}</b>{{ s.name }}
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="flex:0 0 auto">
+    <div style="width:382px;height:822px;background:#000;border-radius:40px;padding:11px;box-shadow:0 0 0 1px #2E3B4B,0 24px 60px rgba(0,0,0,.6);position:relative">
+      <div style="--background:{{ t.background }};--surface:{{ t.surface }};--surfaceHigh:{{ t.surfaceHigh }};--border:{{ t.border }};--accent:#FFD372;--onAccent:{{ t.onAccent }};--accentText:{{ t.accentText }};--accentSoft:{{ t.accentSoft }};--textPrimary:{{ t.textPrimary }};--textSecondary:{{ t.textSecondary }};--alert:{{ t.alert }};--alertFill:{{ t.alertFill }};--alertBorder:{{ t.alertBorder }};--verified:{{ t.verified }};--repaired:{{ t.repaired }};--escalated:{{ t.escalated }};--uncertain:{{ t.uncertain }};width:360px;height:800px;border-radius:30px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--background,#161E27);color:var(--textPrimary,#D7D1B9);font:400 16px/1.4 Inter,sans-serif">
+
+        <div style="position:absolute;top:9px;left:50%;transform:translateX(-50%);width:11px;height:11px;border-radius:999px;background:#000;z-index:9"></div>
+
+        <div style="height:30px;display:flex;align-items:center;padding:0 18px;flex:0 0 auto;z-index:8;position:relative">
+          <span style="font:600 13px Inter,sans-serif">{{ clock }}</span><span style="flex:1"></span>
+          <span style="display:flex;align-items:center;gap:6px;color:var(--textPrimary,#D7D1B9)"><svg width="15" height="11" fill="currentColor"><use href="#sys-wifi"></use></svg><svg width="15" height="11" fill="currentColor"><use href="#sys-signal"></use></svg><svg width="24" height="13" fill="currentColor"><use href="#sys-batt"></use></svg></span>
+        </div>
+
+        <sc-if value="{{ bar.show }}" hint-placeholder-val="{{ true }}">
+        <div style="height:56px;background:var(--surface,#2E3B4B);border-bottom:1px solid var(--border,#4A5A6E);display:flex;align-items:center;padding:0 8px 0 8px;gap:6px;flex:0 0 auto">
+          <div onClick="{{ bar.leftGo }}" style="width:48px;height:48px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:var(--textSecondary);cursor:pointer;flex:0 0 auto" style-hover="color:var(--accentText)">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="{{ bar.leftIcon }}"></use></svg>
+          </div>
+          <sc-if value="{{ bar.switcher }}" hint-placeholder-val="{{ false }}">
+            <div onClick="{{ openSheet }}" style="display:flex;flex-direction:column;line-height:1.2;padding-left:2px;cursor:pointer;min-height:48px;justify-content:center">
+              <span style="font:400 11px Inter,sans-serif;color:var(--textSecondary)">{{ bar.switcher }}</span>
+              <span style="font:500 18px Inter,sans-serif;display:flex;align-items:center;gap:3px">{{ course }}<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#down"></use></svg></span>
+            </div>
+          </sc-if>
+          <sc-if value="{{ bar.title }}" hint-placeholder-val="{{ false }}">
+            <span style="font:500 19px Inter,sans-serif;padding-left:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ bar.title }}</span>
+          </sc-if>
+          <span style="flex:1"></span>
+          <sc-if value="{{ bar.a1 }}" hint-placeholder-val="{{ false }}">
+            <div onClick="{{ bar.a1go }}" style="width:48px;height:48px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:var(--textSecondary);cursor:pointer;flex:0 0 auto" style-hover="color:var(--accentText)"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="{{ bar.a1 }}"></use></svg></div>
+          </sc-if>
+          <sc-if value="{{ bar.a2 }}" hint-placeholder-val="{{ false }}">
+            <div onClick="{{ bar.a2go }}" style="width:48px;height:48px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:var(--textSecondary);cursor:pointer;flex:0 0 auto" style-hover="color:var(--accentText)"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="{{ bar.a2 }}"></use></svg></div>
+          </sc-if>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ syncBanner }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ goH1 }}" style="min-height:40px;display:flex;align-items:center;gap:10px;padding:9px 16px;font:400 13.5px/1.35 Inter,sans-serif;background:var(--accentSoft);color:var(--textPrimary);flex:0 0 auto;cursor:pointer">
+            <svg width="18" height="18" fill="none" stroke="var(--accentText)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#sync"></use></svg>
+            <span style="flex:1">{{ syncBanner }}</span>
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#right"></use></svg>
+          </div>
+        </sc-if>
+
+        <div style="flex:1;overflow-y:auto;overflow-x:hidden;position:relative">
+
+          <sc-if value="{{ isA1 }}" hint-placeholder-val="{{ false }}">
+            <div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;animation:glifoFade .4s ease">
+              <div style="width:88px;height:88px;border-radius:26px;background:var(--accent);display:flex;align-items:center;justify-content:center">
+                <span style="font:600 46px Inter,sans-serif;color:var(--onAccent);line-height:1">G</span>
+              </div>
+              <div style="font:600 28px/34px Inter,sans-serif;letter-spacing:-.5px">Glifo</div>
+              <div style="font:400 14px Inter,sans-serif;color:var(--textSecondary)">Leyendo la sesión guardada…</div>
+              <div style="width:20px;height:20px;border-radius:999px;border:2px solid var(--border);border-top-color:var(--accent);animation:glifoSpin .8s linear infinite"></div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isA2 }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:32px 16px 16px;animation:glifoFade .3s ease">
+              <div style="font:600 28px/34px Inter,sans-serif;letter-spacing:-.5px;margin-bottom:6px">Iniciar sesión</div>
+              <div style="font:400 14px/20px Inter,sans-serif;color:var(--textSecondary);margin-bottom:24px">Entrá con una de las cuentas de demostración. Cada una abre una navegación distinta.</div>
+              <sc-for list="{{ accounts }}" as="a" hint-placeholder-count="3">
+                <div onClick="{{ a.go }}" style="display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:12px;cursor:pointer;min-height:72px" style-hover="border-color:var(--accent)">
+                  <div style="width:40px;height:40px;border-radius:999px;background:var(--surfaceHigh);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font:600 15px Inter,sans-serif;color:var(--textSecondary);flex:0 0 auto">{{ a.ini }}</div>
+                  <div style="flex:1;min-width:0">
+                    <div style="font:500 16px Inter,sans-serif">{{ a.name }}</div>
+                    <div style="font:400 13px ui-monospace,'JetBrains Mono',monospace;color:var(--textSecondary);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ a.mail }}</div>
+                  </div>
+                  <span style="font:600 11px Inter,sans-serif;letter-spacing:.5px;padding:4px 8px;border-radius:999px;background:var(--accentSoft);color:var(--accentText);flex:0 0 auto">{{ a.rol }}</span>
+                </div>
+              </sc-for>
+              <div style="height:12px"></div>
+              <div style="height:56px;background:var(--surfaceHigh);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;padding:0 14px;font:400 16px Inter,sans-serif;color:var(--textSecondary);margin-bottom:12px">Contraseña</div>
+              <div onClick="{{ goA3 }}" style="height:40px;display:flex;align-items:center;justify-content:center;font:500 16px Inter,sans-serif;color:var(--accentText);cursor:pointer">Crear una cuenta</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isA3 }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:24px 16px 16px;animation:glifoFade .3s ease">
+              <div style="font:500 22px/28px Inter,sans-serif;margin-bottom:20px">Crear cuenta</div>
+              <div style="height:56px;background:var(--surfaceHigh);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;padding:0 14px;color:var(--textSecondary);margin-bottom:12px">Nombre completo</div>
+              <div style="height:56px;background:var(--surfaceHigh);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;padding:0 14px;color:var(--textSecondary);margin-bottom:12px">Correo institucional</div>
+              <div style="height:56px;background:var(--surfaceHigh);border:2px solid var(--alert);border-radius:8px;display:flex;align-items:center;padding:0 14px;color:var(--textPrimary);margin-bottom:6px">••••••••</div>
+              <div style="font:400 14px/20px Inter,sans-serif;color:var(--alert);margin-bottom:16px">Las dos contraseñas deben coincidir</div>
+              <div onClick="{{ goA2 }}" style="height:48px;border-radius:8px;background:var(--accent);color:var(--onAccent);display:flex;align-items:center;justify-content:center;font:500 16px Inter,sans-serif;cursor:pointer">Crear cuenta</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isB2 }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:16px;animation:glifoFade .25s ease">
+              <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px">
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <span style="font:500 18px Inter,sans-serif">Cobertura del curso</span>
+                  <span style="font:600 24px Inter,sans-serif;color:var(--accentText)">68%</span>
+                </div>
+                <div style="display:flex;height:6px;border-radius:999px;overflow:hidden;margin:14px 0 8px">
+                  <i style="display:block;height:100%;width:54%;background:var(--verified)"></i><i style="display:block;height:100%;width:20%;background:var(--repaired)"></i><i style="display:block;height:100%;width:14%;background:var(--escalated)"></i><i style="display:block;height:100%;width:12%;background:var(--uncertain)"></i>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <span style="font:400 14px Inter,sans-serif;color:var(--textSecondary)">18 sólidos · 7 parciales · 5 ausentes</span>
+                  <span style="font:600 14px Inter,sans-serif;color:var(--verified)">+2</span>
+                </div>
+              </div>
+              <div style="font:600 11px Inter,sans-serif;letter-spacing:.6px;text-transform:uppercase;color:var(--textSecondary);margin:22px 0 10px">Pendientes de hoy</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div onClick="{{ goG1 }}" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;min-height:96px;display:flex;flex-direction:column;justify-content:space-between;cursor:pointer" style-hover="border-color:var(--accent)">
+                  <span style="font:500 16px Inter,sans-serif;display:flex;align-items:center;gap:8px"><svg width="20" height="20" fill="none" stroke="var(--accentText)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#study"></use></svg>12 flashcards</span>
+                  <span style="font:400 12px/1.35 Inter,sans-serif;color:var(--textSecondary)">Series · Integrales impropias</span>
+                </div>
+                <div onClick="{{ goG3 }}" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;min-height:96px;display:flex;flex-direction:column;justify-content:space-between;cursor:pointer" style-hover="border-color:var(--accent)">
+                  <span style="font:500 16px Inter,sans-serif;display:flex;align-items:center;gap:8px"><svg width="20" height="20" fill="none" stroke="var(--accentText)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#coverage"></use></svg>1 quiz</span>
+                  <span style="font:400 12px/1.35 Inter,sans-serif;color:var(--textSecondary)">De los vacíos detectados</span>
+                </div>
+              </div>
+              <div style="font:600 11px Inter,sans-serif;letter-spacing:.6px;text-transform:uppercase;color:var(--textSecondary);margin:22px 0 10px">Últimos apuntes</div>
+              <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden">
+                <sc-for list="{{ notes }}" as="n" hint-placeholder-count="3">
+                  <div onClick="{{ n.go }}" style="display:flex;align-items:center;gap:14px;padding:12px 16px;border-bottom:1px solid var(--border);min-height:72px;cursor:pointer" style-hover="background:var(--surfaceHigh)">
+                    <div style="width:48px;height:48px;border-radius:8px;background:var(--surfaceHigh);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--textSecondary);flex:0 0 auto"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#notes"></use></svg></div>
+                    <div style="flex:1;min-width:0">
+                      <div style="font:400 16px Inter,sans-serif">{{ n.title }}</div>
+                      <div style="font:400 14px Inter,sans-serif;color:var(--textSecondary);margin-top:2px">{{ n.meta }}</div>
+                    </div>
+                    <div style="display:flex;gap:5px;align-items:center;flex:0 0 auto">
+                      <sc-for list="{{ n.shapes }}" as="sh" hint-placeholder-count="3">
+                        <span style="display:block">{{ sh.el }}</span>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isB3 }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:16px;animation:glifoFade .25s ease">
+              <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                  <span style="font:500 18px Inter,sans-serif">Grupo · 34 inscritos</span>
+                  <span style="font:400 14px ui-monospace,'JetBrains Mono',monospace;color:var(--textSecondary)">MA-1002</span>
+                </div>
+                <div style="display:flex;height:12px;border-radius:999px;overflow:hidden;margin-bottom:12px">
+                  <i style="display:block;height:100%;width:46%;background:var(--verified)"></i><i style="display:block;height:100%;width:22%;background:var(--repaired)"></i><i style="display:block;height:100%;width:20%;background:var(--escalated)"></i><i style="display:block;height:100%;width:12%;background:var(--uncertain)"></i>
+                </div>
+                <div style="font:400 14px/20px Inter,sans-serif;color:var(--textSecondary)">Cobertura promedio del grupo: 61%. Tres temas con menos del 30% de evidencia.</div>
+              </div>
+              <div onClick="{{ goI5 }}" style="background:var(--alertFill);border:1px solid var(--alertBorder);border-radius:12px;padding:16px;margin-bottom:12px;cursor:pointer">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                  <svg width="20" height="20" fill="none" stroke="var(--alert)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#warn"></use></svg>
+                  <span style="font:500 18px Inter,sans-serif;flex:1">3 brechas del grupo</span>
+                  <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#right"></use></svg>
+                </div>
+                <div style="font:400 14px/20px Inter,sans-serif;color:var(--textPrimary);opacity:.85">Series de potencias, radio de convergencia y criterio de la integral aparecen ausentes en más de la mitad de los apuntes.</div>
+              </div>
+              <div style="font:600 11px Inter,sans-serif;letter-spacing:.6px;text-transform:uppercase;color:var(--textSecondary);margin:22px 0 10px">Mis cursos</div>
+              <div onClick="{{ goI1 }}" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer" style-hover="border-color:var(--accent)">
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <span style="font:500 18px Inter,sans-serif">Ver los 3 cursos</span>
+                  <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#right"></use></svg>
+                </div>
+                <div style="font:400 14px Inter,sans-serif;color:var(--textSecondary);margin-top:6px">Uno de ellos todavía no tiene temario publicado</div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isB4 }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:16px;animation:glifoFade .25s ease">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+                <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px">
+                  <div style="font:600 26px Inter,sans-serif">248</div>
+                  <div style="font:400 13px Inter,sans-serif;color:var(--textSecondary);margin-top:4px">Usuarios activos</div>
+                </div>
+                <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px">
+                  <div style="font:600 26px Inter,sans-serif">12</div>
+                  <div style="font:400 13px Inter,sans-serif;color:var(--textSecondary);margin-top:4px">Cursos con temario</div>
+                </div>
+              </div>
+              <div onClick="{{ goH2 }}" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;cursor:pointer">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+                  <svg width="20" height="20" fill="none" stroke="var(--accentText)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#cost"></use></svg>
+                  <span style="font:500 18px Inter,sans-serif;flex:1">Consumo de IA del mes</span>
+                  <span style="font:600 18px Inter,sans-serif;color:var(--accentText)">64%</span>
+                </div>
+                <div style="height:6px;border-radius:999px;background:var(--surfaceHigh);overflow:hidden"><i style="display:block;height:100%;width:64%;background:var(--accent)"></i></div>
+                <div style="font:400 13px Inter,sans-serif;color:var(--textSecondary);margin-top:8px">1 842 de 2 900 llamadas N2 · escaladas a servicio de pago</div>
+              </div>
+              <div onClick="{{ goJ1 }}" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;display:flex;align-items:center;gap:10px" style-hover="border-color:var(--accent)">
+                <svg width="20" height="20" fill="none" stroke="var(--accentText)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#users"></use></svg>
+                <span style="font:500 18px Inter,sans-serif;flex:1">Usuarios y roles</span>
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#right"></use></svg>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isC1 }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:16px;animation:glifoFade .25s ease">
+              <sc-for list="{{ courses }}" as="c" hint-placeholder-count="3">
+                <div onClick="{{ c.go }}" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;cursor:pointer" style-hover="border-color:var(--accent)">
+                  <div style="font:500 18px Inter,sans-serif">{{ c.name }}</div>
+                  <div style="font:400 14px ui-monospace,'JetBrains Mono',monospace;color:var(--textSecondary);margin-top:3px">{{ c.code }}</div>
+                  <div style="display:flex;height:6px;border-radius:999px;overflow:hidden;margin:14px 0 8px;background:var(--surfaceHigh)">
+                    <i style="display:block;height:100%;background:var(--verified);width:{{ c.w1 }}"></i><i style="display:block;height:100%;background:var(--repaired);width:{{ c.w2 }}"></i><i style="display:block;height:100%;background:var(--escalated);width:{{ c.w3 }}"></i><i style="display:block;height:100%;background:var(--uncertain);width:{{ c.w4 }}"></i>
+                  </div>
+                  <div style="display:flex;align-items:center;justify-content:space-between">
+                    <span style="font:400 14px Inter,sans-serif;color:var(--textSecondary)">{{ c.pct }} de cobertura</span>
+                    <span style="font:600 14px Inter,sans-serif;color:var(--verified)">{{ c.delta }}</span>
+                  </div>
+                </div>
+              </sc-for>
+              <div onClick="{{ goC2 }}" style="height:48px;border-radius:8px;border:1px solid var(--accentText);color:var(--accentText);display:flex;align-items:center;justify-content:center;gap:8px;font:500 16px Inter,sans-serif;cursor:pointer">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#add"></use></svg>Unirme con un código
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isC2 }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:24px 16px 16px;animation:glifoFade .25s ease">
+              <div style="font:400 16px/24px Inter,sans-serif;color:var(--textSecondary);margin-bottom:20px">Pedile el código al docente. Son seis caracteres y distingue mayúsculas.</div>
+              <div style="height:56px;background:var(--surfaceHigh);border:2px solid var(--accent);border-radius:8px;display:flex;align-items:center;padding:0 14px;font:400 20px ui-monospace,'JetBrains Mono',monospace;letter-spacing:4px;margin-bottom:8px">{{ joinCode }}</div>
+              <div style="font:400 14px Inter,sans-serif;color:var(--textSecondary);margin-bottom:20px">{{ joinHint }}</div>
+              <div onClick="{{ typeCode }}" style="height:48px;border-radius:8px;background:var(--accent);color:var(--onAccent);display:flex;align-items:center;justify-content:center;font:500 16px Inter,sans-serif;cursor:pointer">{{ joinCta }}</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isC3 }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:16px;animation:glifoFade .25s ease">
+              <div style="font:400 14px ui-monospace,'JetBrains Mono',monospace;color:var(--textSecondary);margin-bottom:16px">MA-1002 · 33 temas · 34 inscritos</div>
+              <sc-for list="{{ hubItems }}" as="h" hint-placeholder-count="4">
+                <div onClick="{{ h.go }}" style="display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:12px;cursor:pointer;min-height:72px" style-hover="border-color:var(--accent)">
+                  <svg width="24" height="24" fill="none" stroke="var(--accentText)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="{{ h.icon }}"></use></svg>
+                  <div style="flex:1">
+                    <div style="font:500 16px Inter,sans-serif">{{ h.name }}</div>
+                    <div style="font:400 13px Inter,sans-serif;color:var(--textSecondary);margin-top:2px">{{ h.meta }}</div>
+                  </div>
+                  <svg width="18" height="18" fill="none" stroke="var(--textSecondary)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#right"></use></svg>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isD1 }}" hint-placeholder-val="{{ false }}">
+            <div style="height:100%;display:flex;flex-direction:column;background:#000">
+              <div style="flex:1;position:relative;background:repeating-linear-gradient(38deg,#20262e,#20262e 14px,#262d36 14px,#262d36 28px);display:flex;align-items:center;justify-content:center;overflow:hidden">
+                <div style="position:absolute;inset:44px 24px;border:2px solid rgba(255,211,114,.85);border-radius:10px"></div>
+                <div style="position:absolute;top:16px;left:16px;right:16px;display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;background:rgba(8,12,17,.72);color:#D7D1B9;font:400 13px/1.35 Inter,sans-serif">
+                  <svg width="18" height="18" fill="none" stroke="#FFD372" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#target"></use></svg>
+                  <span style="flex:1">Encuadrá la pizarra dentro del marco · página 1</span>
+                </div>
+                <span style="font:400 12px ui-monospace,'JetBrains Mono',monospace;color:rgba(215,209,185,.55)">vista de cámara</span>
+                <sc-if value="{{ shooting }}" hint-placeholder-val="{{ false }}">
+                  <div style="position:absolute;inset:0;background:#fff;animation:glifoFlash .5s ease forwards"></div>
+                </sc-if>
+              </div>
+              <div style="height:132px;flex:0 0 auto;background:#000;display:flex;align-items:center;justify-content:space-between;padding:0 28px">
+                <div onClick="{{ goD1flash }}" style="width:48px;height:48px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#D7D1B9;cursor:pointer"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#flash"></use></svg></div>
+                <div onClick="{{ shoot }}" style="width:72px;height:72px;border-radius:999px;background:var(--accent);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 0 0 4px rgba(255,211,114,.25)">
+                  <svg width="30" height="30" fill="none" stroke="{{ t.onAccent }}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#camera"></use></svg>
+                </div>
+                <div onClick="{{ goE1 }}" style="width:48px;height:48px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#D7D1B9;cursor:pointer"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#image"></use></svg></div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isD2 }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:16px;animation:glifoFade .25s ease">
+              <div style="height:186px;margin-bottom:14px;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--textSecondary);font:400 12px ui-monospace,'JetBrains Mono',monospace;background:repeating-linear-gradient(45deg,var(--surfaceHigh),var(--surfaceHigh) 6px,var(--border) 6px,var(--border) 12px);filter:blur(1.4px)">vista previa de la toma</div>
+              <div style="background:var(--alertFill);border:1px solid var(--alertBorder);border-radius:12px;padding:16px;margin-bottom:12px">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <svg width="20" height="20" fill="none" stroke="var(--alert)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#warn"></use></svg>
+                  <span style="font:500 18px Inter,sans-serif">La foto está movida</span>
+                </div>
+                <div style="font:400 14px/21px Inter,sans-serif;margin-top:8px;color:var(--textPrimary);opacity:.85">Con este desenfoque el reconocimiento inventaría texto. Apoyá el codo y repetí la toma.</div>
+              </div>
+              <div style="font:600 11px Inter,sans-serif;letter-spacing:.6px;text-transform:uppercase;color:var(--textSecondary);margin:22px 0 10px">Diagnóstico de calidad</div>
+              <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">
+                <sc-for list="{{ quality }}" as="q" hint-placeholder-count="4">
+                  <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);font:400 14px Inter,sans-serif">
+                    <svg width="18" height="18" fill="none" stroke="{{ q.color }}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="{{ q.icon }}"></use></svg>
+                    <span style="flex:1">{{ q.name }}</span>
+                    <sc-if value="{{ q.pct }}" hint-placeholder-val="{{ false }}">
+                      <div style="height:6px;border-radius:999px;background:var(--surfaceHigh);overflow:hidden;width:76px"><i style="display:block;height:100%;width:{{ q.pct }};background:{{ q.color }}"></i></div>
+                    </sc-if>
+                    <span style="font:400 12px ui-monospace,'JetBrains Mono',monospace;color:var(--textSecondary)">{{ q.val }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div onClick="{{ goD1 }}" style="height:48px;border-radius:8px;background:var(--accent);color:var(--onAccent);display:flex;align-items:center;justify-content:center;gap:8px;font:500 16px Inter,sans-serif;cursor:pointer">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#camera"></use></svg>Repetir la foto
+              </div>
+              <div onClick="{{ goD3 }}" style="height:40px;margin-top:8px;display:flex;align-items:center;justify-content:center;font:500 15px Inter,sans-serif;color:var(--textPrimary);opacity:.85;cursor:pointer">Procesarla igual, sé que va a fallar</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isD3 }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:16px;animation:glifoFade .25s ease">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px">
+                <span style="font:400 14px Inter,sans-serif;color:var(--textSecondary);flex:1">Escalera de procesamiento</span>
+                <div onClick="{{ cycleSpeed }}" style="height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--accentText);color:var(--accentText);display:flex;align-items:center;font:500 13px Inter,sans-serif;cursor:pointer">{{ speedLabel }}</div>
+                <div onClick="{{ skipLadder }}" style="height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--border);color:var(--textSecondary);display:flex;align-items:center;font:500 13px Inter,sans-serif;cursor:pointer">Saltar</div>
+              </div>
+              <sc-for list="{{ ladder }}" as="s" hint-placeholder-count="5">
+                <div style="display:flex;gap:14px;align-items:stretch">
+                  <div style="width:24px;flex:0 0 auto;display:flex;flex-direction:column;align-items:center">
+                    <div style="width:24px;height:24px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:600 11px Inter,sans-serif;background:{{ s.nodeBg }};border:1.5px solid {{ s.nodeBd }};color:{{ s.nodeFg }}">{{ s.num }}</div>
+                    <div style="flex:1;width:2px;background:{{ s.line }};min-height:26px"></div>
+                  </div>
+                  <div style="flex:1;padding-bottom:18px">
+                    <div style="display:flex;align-items:baseline;gap:8px">
+                      <span style="font:500 16px Inter,sans-serif;color:{{ s.titleFg }}">{{ s.name }}</span>
+                      <span style="font:500 11px Inter,sans-serif;letter-spacing:.4px;padding:2px 6px;border-radius:8px;background:var(--accentSoft);color:var(--accentText)">{{ s.level }}</span>
+                    </div>
+                    <div style="font:400 13.5px/19px Inter,sans-serif;color:var(--textSecondary);margin-top:3px">{{ s.desc }}</div>
+                    <sc-if value="{{ s.result }}" hint-placeholder-val="{{ false }}">
+                      <div style="font:400 12px ui-monospace,'JetBrains Mono',monospace;color:{{ s.resultFg }};margin-top:6px">{{ s.result }}</div>
+                    </sc-if>
+                  </div>
+                </div>
+              </sc-for>
+              <sc-if value="{{ ladderDone }}" hint-placeholder-val="{{ false }}">
+                <div onClick="{{ goE2 }}" style="height:48px;border-radius:8px;background:var(--accent);color:var(--onAccent);display:flex;align-items:center;justify-content:center;font:500 16px Inter,sans-serif;cursor:pointer;margin-top:4px">Ver el mapa de confianza</div>
+              </sc-if>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isE1 }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:16px;animation:glifoFade .25s ease">
+              <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden">
+                <sc-for list="{{ notesFull }}" as="n" hint-placeholder-count="5">
+                  <div onClick="{{ n.go }}" style="display:flex;align-items:center;gap:14px;padding:12px 16px;border-bottom:1px solid var(--border);min-height:72px;cursor:pointer" style-hover="background:var(--surfaceHigh)">
+                    <div style="width:48px;height:48px;border-radius:8px;background:var(--surfaceHigh);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--textSecondary);flex:0 0 auto"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#notes"></use></svg></div>
+                    <div style="flex:1;min-width:0">
+                      <div style="font:400 16px Inter,sans-serif">{{ n.title }}</div>
+                      <div style="font:400 14px Inter,sans-serif;color:var(--textSecondary);margin-top:2px">{{ n.meta }}</div>
+                    </div>
+                    <div style="display:flex;gap:5px;align-items:center;flex:0 0 auto">
+                      <sc-for list="{{ n.shapes }}" as="sh" hint-placeholder-count="2">
+                        <span style="display:block">{{ sh.el }}</span>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isE2 }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:16px;animation:glifoFade .25s ease">
+              <div style="font:400 12px Inter,sans-serif;color:var(--textSecondary);margin-bottom:12px">Clase del 12 de agosto · página 1 de 3</div>
+              <div style="font:500 18px Inter,sans-serif;margin-bottom:10px"><span style="border-bottom:2px solid var(--verified);border-radius:3px;padding:1px 0">Integrales impropias de primera especie</span></div>
+              <p style="font:400 16px/28px Inter,sans-serif;margin:0 0 14px">
+                <span style="border-bottom:2px solid var(--verified);border-radius:3px">Una integral es impropia cuando el intervalo no está acotado, o cuando la función presenta una</span>
+                <span onClick="{{ goE5 }}" style="border-bottom:2px solid var(--escalated);background:var(--alertFill);border-radius:3px;cursor:pointer">discontinuidad infinita</span>
+                <span style="border-bottom:2px solid var(--verified);border-radius:3px">dentro del intervalo.</span>
+              </p>
+              <div onClick="{{ goE4 }}" style="background:var(--surfaceHigh);border:1px solid var(--border);border-left:3px solid var(--repaired);border-radius:8px;padding:14px;margin-bottom:14px;cursor:pointer">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                  <span style="font:600 11px Inter,sans-serif;letter-spacing:.5px;padding:3px 7px;border-radius:8px;background:rgba(143,183,220,.20);color:var(--repaired)">REPARADO · N1.5</span>
+                  <span style="font:400 12px Inter,sans-serif;color:var(--textSecondary)">confianza 0.86</span>
+                </div>
+                <div style="text-align:center;font:400 21px Inter,sans-serif;padding:8px 0">∫<sub style="font-size:11px">a</sub><sup style="font-size:11px">∞</sup> f(x) dx = lim<sub style="font-size:11px">b→∞</sub> ∫<sub style="font-size:11px">a</sub><sup style="font-size:11px">b</sup> f(x) dx</div>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <svg width="18" height="18" fill="none" stroke="var(--textSecondary)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#image"></use></svg>
+                  <span style="font:400 12px Inter,sans-serif;color:var(--textSecondary)">Ver el recorte original</span>
+                </div>
+              </div>
+              <p style="font:400 16px/28px Inter,sans-serif;margin:0">
+                <span style="border-bottom:2px solid var(--verified);border-radius:3px">Si el límite existe y es finito, la integral</span>
+                <span onClick="{{ goE3 }}" style="border-bottom:2px {{ frag.style }} {{ frag.color }};background:{{ frag.bg }};border-radius:3px;cursor:pointer">{{ frag.text }}</span>
+                <span style="border-bottom:2px solid var(--verified);border-radius:3px">.</span>
+              </p>
+              <div onClick="{{ goE3 }}" style="background:{{ frag.cardBg }};border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:16px;cursor:pointer;display:flex;align-items:center;gap:10px;min-height:56px">
+                <span style="flex:0 0 auto">{{ frag.shape }}</span>
+                <span style="font:400 15px Inter,sans-serif;flex:1">{{ frag.cardText }}</span>
+                <svg width="18" height="18" fill="none" stroke="var(--textSecondary)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#right"></use></svg>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isE3 }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:16px;animation:glifoFade .25s ease">
+              <div style="height:120px;margin-bottom:16px;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--textSecondary);font:400 12px ui-monospace,'JetBrains Mono',monospace;background:repeating-linear-gradient(45deg,var(--surfaceHigh),var(--surfaceHigh) 6px,var(--border) 6px,var(--border) 12px)">recorte del fragmento</div>
+              <div style="font:600 11px Inter,sans-serif;letter-spacing:.6px;text-transform:uppercase;color:var(--textSecondary);margin-bottom:10px">Lo que leyó el reconocimiento</div>
+              <div style="background:var(--surfaceHigh);border:1px solid var(--border);border-radius:8px;padding:14px;font:400 14px ui-monospace,'JetBrains Mono',monospace;margin-bottom:16px">converge; en caso contrario dvierge</div>
+              <div style="font:600 11px Inter,sans-serif;letter-spacing:.6px;text-transform:uppercase;color:var(--textSecondary);margin-bottom:10px">Corrección sugerida</div>
+              <div onClick="{{ applyFix }}" style="background:var(--surface);border:1px solid var(--accent);border-radius:8px;padding:14px;font:400 16px Inter,sans-serif;margin-bottom:8px;cursor:pointer">converge; en caso contrario diverge</div>
+              <div style="font:400 13px/19px Inter,sans-serif;color:var(--textSecondary);margin-bottom:20px">Tocá la corrección para aceptarla. El fragmento pasa a reparado y el tema recalcula su cobertura.</div>
+              <div onClick="{{ applyFix }}" style="height:48px;border-radius:8px;background:var(--accent);color:var(--onAccent);display:flex;align-items:center;justify-content:center;font:500 16px Inter,sans-serif;cursor:pointer">Aceptar y volver al mapa</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isE4 }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:16px;animation:glifoFade .25s ease">
+              <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px 16px;text-align:center;font:400 24px Inter,sans-serif;margin-bottom:12px">∫<sub style="font-size:12px">a</sub><sup style="font-size:12px">∞</sup> f(x) dx = lim<sub style="font-size:12px">b→∞</sub> ∫<sub style="font-size:12px">a</sub><sup style="font-size:12px">b</sup> f(x) dx</div>
+              <div style="font:600 11px Inter,sans-serif;letter-spacing:.6px;text-transform:uppercase;color:var(--textSecondary);margin:22px 0 10px">LaTeX crudo</div>
+              <div style="background:var(--surfaceHigh);border:1px solid var(--border);border-radius:8px;padding:14px;font:400 14px/20px ui-monospace,'JetBrains Mono',monospace;margin-bottom:12px">\int_{a}^{\infty} f(x)\,dx = \lim_{b\to\infty}\int_{a}^{b} f(x)\,dx</div>
+              <div style="height:48px;border-radius:8px;border:1px solid var(--accentText);color:var(--accentText);display:flex;align-items:center;justify-content:center;gap:8px;font:500 16px Inter,sans-serif;cursor:pointer"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#copy"></use></svg>Copiar el LaTeX</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isE5 }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:16px;animation:glifoFade .25s ease">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+                <svg width="16" height="14"><polygon points="8,0 16,14 0,14" fill="var(--escalated)"></polygon></svg>
+                <span style="font:600 11px Inter,sans-serif;letter-spacing:.5px;padding:3px 7px;border-radius:8px;background:var(--alertFill);color:var(--alert)">ESCALADO · N2</span>
+                <span style="font:400 12px Inter,sans-serif;color:var(--textSecondary)">confianza 0.41</span>
+              </div>
+              <div style="height:110px;margin-bottom:16px;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--textSecondary);font:400 12px ui-monospace,'JetBrains Mono',monospace;background:repeating-linear-gradient(45deg,var(--surfaceHigh),var(--surfaceHigh) 6px,var(--border) 6px,var(--border) 12px)">región original</div>
+              <div style="font:600 11px Inter,sans-serif;letter-spacing:.6px;text-transform:uppercase;color:var(--textSecondary);margin-bottom:10px">Procedencia</div>
+              <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px">
+                <sc-for list="{{ provenance }}" as="p" hint-placeholder-count="4">
+                  <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+                    <span style="font:600 10.5px Inter,sans-serif;letter-spacing:.4px;padding:2px 6px;border-radius:8px;background:var(--accentSoft);color:var(--accentText);flex:0 0 auto">{{ p.lvl }}</span>
+                    <span style="font:400 14px Inter,sans-serif;flex:1">{{ p.name }}</span>
+                    <span style="font:400 12px ui-monospace,'JetBrains Mono',monospace;color:var(--textSecondary)">{{ p.val }}</span>
+                  </div>
+                </sc-for>
+                <div style="font:400 13px/19px Inter,sans-serif;color:var(--textSecondary);padding-top:12px">Esta región costó una llamada de pago. El administrador la ve en el consumo del mes.</div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isF1 }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:16px;animation:glifoFade .25s ease">
+              <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                  <span style="font:500 18px Inter,sans-serif">33 temas</span>
+                  <span style="font:600 26px Inter,sans-serif;color:var(--accentText)">{{ coverPct }}</span>
+                </div>
+                <div style="display:flex;height:12px;border-radius:999px;overflow:hidden">
+                  <i style="display:block;height:100%;width:54%;background:var(--verified)"></i><i style="display:block;height:100%;width:20%;background:var(--repaired)"></i><i style="display:block;height:100%;width:14%;background:var(--escalated)"></i><i style="display:block;height:100%;width:12%;background:var(--uncertain)"></i>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin-top:14px;font:400 14px Inter,sans-serif;color:var(--textSecondary)">
+                  <span style="display:flex;align-items:center;gap:7px"><svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="var(--verified)"></circle></svg>18 sólidos</span>
+                  <span style="display:flex;align-items:center;gap:7px"><svg width="12" height="12"><rect width="11" height="11" rx="2" fill="var(--repaired)"></rect></svg>7 parciales</span>
+                  <span style="display:flex;align-items:center;gap:7px"><svg width="14" height="12"><polygon points="7,0 14,12 0,12" fill="var(--escalated)"></polygon></svg>5 ausentes</span>
+                  <span style="display:flex;align-items:center;gap:7px"><svg width="12" height="12"><circle cx="6" cy="6" r="5.2" fill="none" stroke="var(--uncertain)" stroke-width="1.5" stroke-dasharray="2 2"></circle></svg>3 dudosos</span>
+                </div>
+              </div>
+              <div style="font:600 11px Inter,sans-serif;letter-spacing:.6px;text-transform:uppercase;color:var(--textSecondary);margin:22px 0 10px">Unidad 3 · Series</div>
+              <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden">
+                <sc-for list="{{ topics }}" as="tp" hint-placeholder-count="5">
+                  <div onClick="{{ tp.go }}" style="display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);min-height:56px;cursor:pointer" style-hover="background:var(--surfaceHigh)">
+                    <span style="flex:0 0 auto">{{ tp.shape }}</span>
+                    <div style="flex:1;min-width:0">
+                      <div style="font:400 15px Inter,sans-serif">{{ tp.name }}</div>
+                      <sc-if value="{{ tp.note }}" hint-placeholder-val="{{ false }}">
+                        <div style="font:400 12px Inter,sans-serif;color:var(--textSecondary);margin-top:2px">{{ tp.note }}</div>
+                      </sc-if>
+                    </div>
+                    <span style="font:400 12px ui-monospace,'JetBrains Mono',monospace;color:var(--textSecondary)">{{ tp.score }}</span>
+                    <svg width="18" height="18" fill="none" stroke="var(--textSecondary)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#right"></use></svg>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isF2 }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:16px;animation:glifoFade .25s ease">
+              <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+                  <svg width="12" height="12"><rect width="11" height="11" rx="2" fill="var(--repaired)"></rect></svg>
+                  <span style="font:600 11px Inter,sans-serif;letter-spacing:.5px;padding:3px 7px;border-radius:8px;background:rgba(143,183,220,.20);color:var(--repaired)">PARCIAL · N1.5</span>
+                  <span style="flex:1"></span>
+                  <span style="font:400 14px ui-monospace,'JetBrains Mono',monospace;color:var(--textSecondary)">0.54</span>
+                </div>
+                <div style="font:500 18px Inter,sans-serif;margin-bottom:6px">3.3 Criterio de comparación</div>
+                <div style="font:400 14px/21px Inter,sans-serif;color:var(--textSecondary)">Del temario del docente. Tus apuntes cubren el enunciado pero no el caso del límite.</div>
+              </div>
+              <div style="font:600 11px Inter,sans-serif;letter-spacing:.6px;text-transform:uppercase;color:var(--textSecondary);margin:22px 0 10px">Evidencia en tus apuntes</div>
+              <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px">
+                <div onClick="{{ goE2 }}" style="display:flex;align-items:center;gap:14px;padding:12px 16px;border-bottom:1px solid var(--border);min-height:72px;cursor:pointer">
+                  <div style="width:48px;height:48px;border-radius:8px;background:var(--surfaceHigh);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--textSecondary);flex:0 0 auto"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#notes"></use></svg></div>
+                  <div style="flex:1"><div style="font:400 16px Inter,sans-serif">Criterio de comparación</div><div style="font:400 14px Inter,sans-serif;color:var(--textSecondary);margin-top:2px">7 ago · página 2</div></div>
+                  <svg width="18" height="18" fill="none" stroke="var(--textSecondary)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#right"></use></svg>
+                </div>
+                <div style="padding:14px 16px;font:400 14px/21px Inter,sans-serif;color:var(--textSecondary)">Falta: comparación por paso al límite, y el ejemplo con 1/n<sup>p</sup>.</div>
+              </div>
+              <div onClick="{{ goG1 }}" style="height:48px;border-radius:8px;background:var(--accent);color:var(--onAccent);display:flex;align-items:center;justify-content:center;font:500 16px Inter,sans-serif;cursor:pointer">Estudiar este tema</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isF3 }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:16px;animation:glifoFade .25s ease">
+              <div style="font:400 14px Inter,sans-serif;color:var(--textSecondary);margin-bottom:16px">Entre la sesión del 8 y la del 12 de agosto</div>
+              <sc-for list="{{ deltas }}" as="d" hint-placeholder-count="4">
+                <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:12px;display:flex;align-items:center;gap:12px">
+                  <span style="flex:0 0 auto">{{ d.shape }}</span>
+                  <div style="flex:1">
+                    <div style="font:400 15px Inter,sans-serif">{{ d.name }}</div>
+                    <div style="font:400 12px Inter,sans-serif;color:var(--textSecondary);margin-top:2px">{{ d.from }}</div>
+                  </div>
+                  <span style="font:600 15px Inter,sans-serif;color:{{ d.color }}">{{ d.val }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isG1 }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:16px;animation:glifoFade .25s ease">
+              <div onClick="{{ goG2 }}" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;cursor:pointer" style-hover="border-color:var(--accent)">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <svg width="24" height="24" fill="none" stroke="var(--accentText)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#study"></use></svg>
+                  <span style="font:500 18px Inter,sans-serif;flex:1">12 flashcards</span>
+                  <svg width="18" height="18" fill="none" stroke="var(--textSecondary)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#right"></use></svg>
+                </div>
+                <div style="font:400 14px/21px Inter,sans-serif;color:var(--textSecondary);margin-top:8px">Generadas de los temas parciales. 4 son de la corrección de ayer.</div>
+              </div>
+              <div onClick="{{ goG3 }}" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;cursor:pointer" style-hover="border-color:var(--accent)">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <svg width="24" height="24" fill="none" stroke="var(--accentText)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#coverage"></use></svg>
+                  <span style="font:500 18px Inter,sans-serif;flex:1">Quiz de 5 preguntas</span>
+                  <svg width="18" height="18" fill="none" stroke="var(--textSecondary)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#right"></use></svg>
+                </div>
+                <div style="font:400 14px/21px Inter,sans-serif;color:var(--textSecondary);margin-top:8px">Sobre los cinco vacíos con menos evidencia</div>
+              </div>
+              <div style="font:400 13px/19px Inter,sans-serif;color:var(--textSecondary);padding:8px 2px">El material de estudio sale de la cobertura, no de un temario genérico: solo pregunta lo que tus apuntes no sostienen.</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isG2 }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:16px;height:100%;display:flex;flex-direction:column;animation:glifoFade .25s ease">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+                <div style="flex:1;height:6px;border-radius:999px;background:var(--surfaceHigh);overflow:hidden"><i style="display:block;height:100%;background:var(--accent);width:{{ cardPct }}"></i></div>
+                <span style="font:400 12px ui-monospace,'JetBrains Mono',monospace;color:var(--textSecondary)">{{ cardCount }}</span>
+              </div>
+              <div onClick="{{ flipCard }}" style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px 20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;cursor:pointer;text-align:center;min-height:280px">
+                <span style="font:600 11px Inter,sans-serif;letter-spacing:.5px;padding:3px 7px;border-radius:8px;background:var(--accentSoft);color:var(--accentText)">{{ card.side }}</span>
+                <div style="font:500 20px/29px Inter,sans-serif">{{ card.text }}</div>
+                <div style="font:400 13px Inter,sans-serif;color:var(--textSecondary)">{{ card.hint }}</div>
+              </div>
+              <div style="display:flex;gap:12px;margin-top:14px">
+                <div onClick="{{ cardAgain }}" style="flex:1;height:48px;border-radius:8px;border:1px solid var(--alert);color:var(--alert);display:flex;align-items:center;justify-content:center;font:500 16px Inter,sans-serif;cursor:pointer">Otra vez</div>
+                <div onClick="{{ cardOk }}" style="flex:1;height:48px;border-radius:8px;background:var(--accent);color:var(--onAccent);display:flex;align-items:center;justify-content:center;font:500 16px Inter,sans-serif;cursor:pointer">La sabía</div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isG3 }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:16px;animation:glifoFade .25s ease">
+              <div style="font:400 12px ui-monospace,'JetBrains Mono',monospace;color:var(--textSecondary);margin-bottom:12px">Pregunta 3 de 5 · 3.4 Series de potencias</div>
+              <div style="font:500 18px/26px Inter,sans-serif;margin-bottom:18px">¿Cuál es el radio de convergencia de la serie ∑ x<sup>n</sup>/n!?</div>
+              <sc-for list="{{ options }}" as="o" hint-placeholder-count="4">
+                <div onClick="{{ o.pick }}" style="min-height:56px;border-radius:8px;border:1px solid {{ o.bd }};background:{{ o.bg }};color:{{ o.fg }};display:flex;align-items:center;gap:12px;padding:12px 14px;margin-bottom:12px;cursor:pointer;font:400 16px Inter,sans-serif">
+                  <span style="width:24px;height:24px;border-radius:999px;border:1.5px solid {{ o.bd }};display:flex;align-items:center;justify-content:center;font:600 12px Inter,sans-serif;flex:0 0 auto">{{ o.k }}</span>
+                  <span style="flex:1">{{ o.text }}</span>
+                </div>
+              </sc-for>
+              <sc-if value="{{ answered }}" hint-placeholder-val="{{ false }}">
+                <div onClick="{{ goG4 }}" style="height:48px;border-radius:8px;background:var(--accent);color:var(--onAccent);display:flex;align-items:center;justify-content:center;font:500 16px Inter,sans-serif;cursor:pointer">Ver el resultado</div>
+              </sc-if>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isG4 }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:16px;animation:glifoFade .25s ease">
+              <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 16px;text-align:center;margin-bottom:12px">
+                <div style="font:600 34px Inter,sans-serif;color:var(--accentText)">4 / 5</div>
+                <div style="font:400 14px Inter,sans-serif;color:var(--textSecondary);margin-top:6px">La única fallada es la de series de potencias</div>
+              </div>
+              <div style="background:var(--surfaceHigh);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px">
+                <div style="font:400 14px/21px Inter,sans-serif">El tema pasa de <b style="font-weight:500">ausente</b> a <b style="font-weight:500">parcial</b> en tu cobertura: el quiz cuenta como evidencia propia, no como apunte.</div>
+              </div>
+              <div onClick="{{ goF1 }}" style="height:48px;border-radius:8px;border:1px solid var(--accentText);color:var(--accentText);display:flex;align-items:center;justify-content:center;font:500 16px Inter,sans-serif;cursor:pointer">Ver la cobertura actualizada</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isH1 }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:16px;animation:glifoFade .25s ease">
+              <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px">
+                <sc-for list="{{ queue }}" as="q" hint-placeholder-count="3">
+                  <div style="display:flex;align-items:center;gap:14px;padding:12px 16px;border-bottom:1px solid var(--border);min-height:72px">
+                    <div style="width:48px;height:48px;border-radius:8px;background:var(--surfaceHigh);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--textSecondary);flex:0 0 auto"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#image"></use></svg></div>
+                    <div style="flex:1;min-width:0">
+                      <div style="font:400 15px Inter,sans-serif">{{ q.name }}</div>
+                      <div style="font:400 13px Inter,sans-serif;color:{{ q.fg }};margin-top:2px">{{ q.state }}</div>
+                    </div>
+                    <sc-if value="{{ q.pct }}" hint-placeholder-val="{{ false }}">
+                      <div style="width:60px;height:6px;border-radius:999px;background:var(--surfaceHigh);overflow:hidden;flex:0 0 auto"><i style="display:block;height:100%;background:var(--accent);width:{{ q.pct }}"></i></div>
+                    </sc-if>
+                  </div>
+                </sc-for>
+              </div>
+              <div onClick="{{ retrySync }}" style="height:48px;border-radius:8px;background:var(--accent);color:var(--onAccent);display:flex;align-items:center;justify-content:center;gap:8px;font:500 16px Inter,sans-serif;cursor:pointer"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#refresh"></use></svg>{{ retryLabel }}</div>
+              <div style="font:400 13px/19px Inter,sans-serif;color:var(--textSecondary);padding:12px 2px">Las capturas se guardan en el teléfono y se envían cuando vuelve la red. Nada se pierde al quedarse sin señal en el aula.</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isH2 }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:16px;animation:glifoFade .25s ease">
+              <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px">
+                <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px">
+                  <span style="font:500 18px Inter,sans-serif">Agosto</span>
+                  <span style="font:600 26px Inter,sans-serif;color:var(--accentText)">64%</span>
+                </div>
+                <div style="height:12px;border-radius:999px;background:var(--surfaceHigh);overflow:hidden"><i style="display:block;height:100%;width:64%;background:var(--accent)"></i></div>
+                <div style="font:400 13px Inter,sans-serif;color:var(--textSecondary);margin-top:10px">1 842 de 2 900 llamadas de nivel 2</div>
+              </div>
+              <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px">
+                <sc-for list="{{ spend }}" as="s" hint-placeholder-count="4">
+                  <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font:400 14px Inter,sans-serif">
+                    <span style="font:600 10.5px Inter,sans-serif;letter-spacing:.4px;padding:2px 6px;border-radius:8px;background:var(--accentSoft);color:var(--accentText);flex:0 0 auto">{{ s.lvl }}</span>
+                    <span style="flex:1">{{ s.name }}</span>
+                    <span style="font:400 12px ui-monospace,'JetBrains Mono',monospace;color:var(--textSecondary)">{{ s.val }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isI1 }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:16px;animation:glifoFade .25s ease">
+              <sc-for list="{{ teachCourses }}" as="c" hint-placeholder-count="3">
+                <div onClick="{{ c.go }}" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;cursor:pointer" style-hover="border-color:var(--accent)">
+                  <div style="font:500 18px Inter,sans-serif">{{ c.name }}</div>
+                  <div style="font:400 14px ui-monospace,'JetBrains Mono',monospace;color:var(--textSecondary);margin-top:3px">{{ c.code }} · {{ c.n }} inscritos</div>
+                  <sc-if value="{{ c.warn }}" hint-placeholder-val="{{ false }}">
+                    <div style="background:var(--alertFill);border:1px solid var(--alertBorder);border-radius:8px;padding:12px;margin-top:12px">
+                      <div style="display:flex;align-items:center;gap:8px;font:500 14px Inter,sans-serif"><svg width="18" height="18" fill="none" stroke="var(--alert)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#warn"></use></svg>Sin temario publicado</div>
+                      <div style="font:400 13px/19px Inter,sans-serif;color:var(--textPrimary);opacity:.85;margin-top:6px">Sin temario no hay cobertura que calcular.</div>
+                      <div onClick="{{ goI3 }}" style="height:40px;margin-top:10px;border-radius:8px;border:1px solid var(--accentText);color:var(--accentText);display:flex;align-items:center;justify-content:center;font:500 15px Inter,sans-serif">Publicar temario</div>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ c.ok }}" hint-placeholder-val="{{ false }}">
+                    <div style="margin-top:12px">
+                      <div style="font:400 14px Inter,sans-serif;color:var(--textSecondary);margin-bottom:8px">{{ c.gaps }}</div>
+                      <div style="display:flex;align-items:center;gap:8px">
+                        <span style="font:400 13px ui-monospace,'JetBrains Mono',monospace;color:var(--accentText)">{{ c.join }}</span>
+                        <svg width="16" height="16" fill="none" stroke="var(--textSecondary)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#copy"></use></svg>
+                        <span style="font:400 12px Inter,sans-serif;color:var(--textSecondary)">código de inscripción</span>
+                      </div>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isI3 }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:16px;animation:glifoFade .25s ease">
+              <div style="font:400 14px/21px Inter,sans-serif;color:var(--textSecondary);margin-bottom:16px">Pegá el temario o subí el PDF del curso. Glifo lo parte en temas numerados y de ahí sale la cobertura.</div>
+              <div style="background:var(--surfaceHigh);border:1px solid var(--border);border-radius:8px;padding:14px;font:400 14px/22px ui-monospace,'JetBrains Mono',monospace;min-height:150px;margin-bottom:12px">3.1 Sucesiones<br>3.2 Series geométricas<br>3.3 Criterio de comparación<br>3.4 Series de potencias<br>3.5 Radio de convergencia</div>
+              <div style="font:400 13px Inter,sans-serif;color:var(--verified);margin-bottom:16px">5 temas reconocidos en la unidad 3</div>
+              <div onClick="{{ publishSyllabus }}" style="height:48px;border-radius:8px;background:var(--accent);color:var(--onAccent);display:flex;align-items:center;justify-content:center;font:500 16px Inter,sans-serif;cursor:pointer">{{ publishLabel }}</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isI4 }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:16px;animation:glifoFade .25s ease">
+              <div style="font:400 14px/21px Inter,sans-serif;color:var(--textSecondary);margin-bottom:16px">Notación propia del curso. El reconocimiento la usa como diccionario antes de escalar a un nivel de pago.</div>
+              <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden">
+                <sc-for list="{{ glossary }}" as="g" hint-placeholder-count="4">
+                  <div style="display:flex;align-items:center;gap:14px;padding:12px 16px;border-bottom:1px solid var(--border);min-height:56px">
+                    <span style="font:400 16px ui-monospace,'JetBrains Mono',monospace;color:var(--accentText);flex:0 0 auto;width:72px">{{ g.sym }}</span>
+                    <span style="font:400 15px Inter,sans-serif;flex:1">{{ g.mean }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isI5 }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:16px;animation:glifoFade .25s ease">
+              <div style="font:400 14px/21px Inter,sans-serif;color:var(--textSecondary);margin-bottom:16px">Temas donde la mayoría del grupo no tiene evidencia. Se calcula sobre 34 apuntes, sin exponer a ningún estudiante.</div>
+              <sc-for list="{{ groupGaps }}" as="g" hint-placeholder-count="3">
+                <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px">
+                  <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+                    <span style="flex:0 0 auto">{{ g.shape }}</span>
+                    <span style="font:500 16px Inter,sans-serif;flex:1">{{ g.name }}</span>
+                    <span style="font:600 16px Inter,sans-serif;color:{{ g.color }}">{{ g.pct }}</span>
+                  </div>
+                  <div style="height:6px;border-radius:999px;background:var(--surfaceHigh);overflow:hidden;margin-bottom:10px"><i style="display:block;height:100%;background:{{ g.color }};width:{{ g.pct }}"></i></div>
+                  <div style="font:400 13px/19px Inter,sans-serif;color:var(--textSecondary)">{{ g.note }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isJ1 }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:16px;animation:glifoFade .25s ease">
+              <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden">
+                <sc-for list="{{ users }}" as="u" hint-placeholder-count="5">
+                  <div onClick="{{ u.go }}" style="display:flex;align-items:center;gap:14px;padding:12px 16px;border-bottom:1px solid var(--border);min-height:72px;cursor:pointer" style-hover="background:var(--surfaceHigh)">
+                    <div style="width:40px;height:40px;border-radius:999px;background:var(--surfaceHigh);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font:600 14px Inter,sans-serif;color:var(--textSecondary);flex:0 0 auto">{{ u.ini }}</div>
+                    <div style="flex:1;min-width:0">
+                      <div style="font:400 16px Inter,sans-serif">{{ u.name }}</div>
+                      <div style="font:400 13px ui-monospace,'JetBrains Mono',monospace;color:var(--textSecondary);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ u.mail }}</div>
+                    </div>
+                    <span style="font:600 11px Inter,sans-serif;letter-spacing:.5px;padding:4px 8px;border-radius:999px;background:var(--accentSoft);color:var(--accentText);flex:0 0 auto">{{ u.rol }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isJ2 }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:16px;animation:glifoFade .25s ease">
+              <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
+                <div style="width:56px;height:56px;border-radius:999px;background:var(--surfaceHigh);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font:600 20px Inter,sans-serif;color:var(--textSecondary)">MS</div>
+                <div>
+                  <div style="font:500 18px Inter,sans-serif">Mariana Solís</div>
+                  <div style="font:400 13px ui-monospace,'JetBrains Mono',monospace;color:var(--textSecondary);margin-top:2px">msolis@tec.ac.cr</div>
+                </div>
+              </div>
+              <div style="font:600 11px Inter,sans-serif;letter-spacing:.6px;text-transform:uppercase;color:var(--textSecondary);margin-bottom:10px">Roles asignados</div>
+              <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px">
+                <sc-for list="{{ roleToggles }}" as="r" hint-placeholder-count="3">
+                  <div onClick="{{ r.toggle }}" style="display:flex;align-items:center;gap:14px;padding:12px 16px;border-bottom:1px solid var(--border);min-height:56px;cursor:pointer">
+                    <span style="font:400 16px Inter,sans-serif;flex:1">{{ r.name }}</span>
+                    <div style="width:44px;height:26px;border-radius:999px;background:{{ r.trackBg }};border:1px solid {{ r.trackBd }};display:flex;align-items:center;padding:2px;justify-content:{{ r.just }}">
+                      <div style="width:20px;height:20px;border-radius:999px;background:{{ r.knob }}"></div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="font:400 13px/19px Inter,sans-serif;color:var(--textSecondary)">El menú del usuario cambia por completo con el rol. Docente y estudiante solo comparten Perfil y Ajustes.</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isJ3 }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:16px;animation:glifoFade .25s ease">
+              <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden">
+                <sc-for list="{{ privileges }}" as="p" hint-placeholder-count="5">
+                  <div style="padding:12px 16px;border-bottom:1px solid var(--border)">
+                    <div style="font:400 15px Inter,sans-serif;margin-bottom:6px">{{ p.name }}</div>
+                    <div style="display:flex;gap:6px">
+                      <sc-for list="{{ p.roles }}" as="r" hint-placeholder-count="3">
+                        <span style="font:600 10.5px Inter,sans-serif;letter-spacing:.4px;padding:3px 7px;border-radius:999px;background:{{ r.bg }};color:{{ r.fg }}">{{ r.name }}</span>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isK1 }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:16px;animation:glifoFade .25s ease">
+              <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px">
+                <div onClick="{{ toggleMode }}" style="display:flex;align-items:center;gap:14px;padding:12px 16px;border-bottom:1px solid var(--border);min-height:56px;cursor:pointer">
+                  <span style="font:400 16px Inter,sans-serif;flex:1">Modo día</span>
+                  <div style="width:44px;height:26px;border-radius:999px;background:{{ dayToggle.bg }};border:1px solid {{ dayToggle.bd }};display:flex;align-items:center;padding:2px;justify-content:{{ dayToggle.just }}">
+                    <div style="width:20px;height:20px;border-radius:999px;background:{{ dayToggle.knob }}"></div>
+                  </div>
+                </div>
+                <div onClick="{{ toggleWifi }}" style="display:flex;align-items:center;gap:14px;padding:12px 16px;border-bottom:1px solid var(--border);min-height:56px;cursor:pointer">
+                  <div style="flex:1">
+                    <div style="font:400 16px Inter,sans-serif">Sincronizar solo con Wi-Fi</div>
+                    <div style="font:400 13px Inter,sans-serif;color:var(--textSecondary);margin-top:2px">Las capturas esperan la red del campus</div>
+                  </div>
+                  <div style="width:44px;height:26px;border-radius:999px;background:{{ wifiToggle.bg }};border:1px solid {{ wifiToggle.bd }};display:flex;align-items:center;padding:2px;justify-content:{{ wifiToggle.just }}">
+                    <div style="width:20px;height:20px;border-radius:999px;background:{{ wifiToggle.knob }}"></div>
+                  </div>
+                </div>
+                <div onClick="{{ goH1 }}" style="display:flex;align-items:center;gap:14px;padding:12px 16px;min-height:56px;cursor:pointer">
+                  <span style="font:400 16px Inter,sans-serif;flex:1">Cola de sincronización</span>
+                  <span style="font:400 13px Inter,sans-serif;color:var(--textSecondary)">{{ queueCount }}</span>
+                  <svg width="18" height="18" fill="none" stroke="var(--textSecondary)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#right"></use></svg>
+                </div>
+              </div>
+              <div onClick="{{ logout }}" style="height:48px;border-radius:8px;border:1px solid var(--alert);color:var(--alert);display:flex;align-items:center;justify-content:center;gap:8px;font:500 16px Inter,sans-serif;cursor:pointer"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#logout"></use></svg>Cerrar sesión</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isK2 }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:24px 16px 16px;animation:glifoFade .25s ease">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:24px">
+                <div style="width:72px;height:72px;border-radius:999px;background:var(--surfaceHigh);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font:600 26px Inter,sans-serif;color:var(--textSecondary)">{{ me.ini }}</div>
+                <div style="font:500 18px Inter,sans-serif">{{ me.name }}</div>
+                <div style="font:400 13px ui-monospace,'JetBrains Mono',monospace;color:var(--textSecondary)">{{ me.mail }}</div>
+                <span style="font:600 11px Inter,sans-serif;letter-spacing:.5px;padding:4px 9px;border-radius:999px;background:var(--accentSoft);color:var(--accentText)">{{ me.rol }}</span>
+              </div>
+              <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden">
+                <div style="display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border);font:400 15px Inter,sans-serif"><span style="flex:1;color:var(--textSecondary)">Apuntes tomados</span>28</div>
+                <div style="display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border);font:400 15px Inter,sans-serif"><span style="flex:1;color:var(--textSecondary)">Cursos activos</span>3</div>
+                <div style="display:flex;align-items:center;padding:14px 16px;font:400 15px Inter,sans-serif"><span style="flex:1;color:var(--textSecondary)">Regiones corregidas</span>11</div>
+              </div>
+            </div>
+          </sc-if>
+
+        </div>
+
+        <sc-if value="{{ showFab }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ goD1 }}" style="position:absolute;right:16px;bottom:42px;width:56px;height:56px;border-radius:18px;background:var(--accent);color:var(--onAccent);display:flex;align-items:center;justify-content:center;z-index:5;cursor:pointer">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#camera"></use></svg>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ sheet }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ closeSheet }}" style="position:absolute;inset:0;background:{{ t.scrim }};z-index:10"></div>
+          <div style="position:absolute;left:0;right:0;bottom:0;z-index:11;background:var(--surface);border-top:1px solid var(--border);border-radius:12px 12px 0 0;padding:16px 0 26px;animation:glifoFade .2s ease">
+            <div style="font:600 11px Inter,sans-serif;letter-spacing:.6px;text-transform:uppercase;color:var(--textSecondary);padding:0 16px 12px">Curso activo</div>
+            <sc-for list="{{ sheetCourses }}" as="c" hint-placeholder-count="3">
+              <div onClick="{{ c.pick }}" style="display:flex;align-items:center;gap:14px;padding:12px 16px;min-height:56px;cursor:pointer;background:{{ c.bg }}">
+                <span style="font:400 16px Inter,sans-serif;flex:1;color:{{ c.fg }}">{{ c.name }}</span>
+                <span style="font:400 13px ui-monospace,'JetBrains Mono',monospace;color:var(--textSecondary)">{{ c.code }}</span>
+                <sc-if value="{{ c.active }}" hint-placeholder-val="{{ false }}">
+                  <svg width="20" height="20" fill="none" stroke="var(--accentText)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#check"></use></svg>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ drawer }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ closeDrawer }}" style="position:absolute;inset:0;background:{{ t.scrim }};z-index:12"></div>
+          <div style="position:absolute;left:0;top:0;bottom:0;width:296px;z-index:13;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;animation:glifoFade .18s ease">
+            <div style="padding:24px 16px 16px;border-bottom:1px solid var(--border)">
+              <div style="width:56px;height:56px;border-radius:999px;background:var(--surfaceHigh);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font:600 20px Inter,sans-serif;color:var(--textSecondary);margin-bottom:12px">{{ me.ini }}</div>
+              <div style="font:500 16px Inter,sans-serif">{{ me.name }}</div>
+              <div style="font:400 13px ui-monospace,'JetBrains Mono',monospace;color:var(--textSecondary);margin-top:2px">{{ me.mail }}</div>
+              <span style="display:inline-block;font:600 11px Inter,sans-serif;letter-spacing:.5px;padding:4px 9px;border-radius:999px;background:var(--accentSoft);color:var(--accentText);margin-top:10px">{{ me.rol }}</span>
+            </div>
+            <div onClick="{{ openSheet }}" style="padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer">
+              <div style="font:400 11px Inter,sans-serif;color:var(--textSecondary)">Curso activo</div>
+              <div style="font:500 16px Inter,sans-serif;display:flex;align-items:center;gap:6px;margin-top:2px">{{ course }}<svg width="16" height="16" fill="none" stroke="var(--accentText)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#down"></use></svg></div>
+            </div>
+            <div style="flex:1;overflow-y:auto;padding:8px 0">
+              <sc-for list="{{ drawerItems }}" as="d" hint-placeholder-count="6">
+                <div onClick="{{ d.go }}" style="display:flex;align-items:center;gap:14px;height:48px;padding:0 16px 0 13px;cursor:pointer;background:{{ d.bg }};border-left:3px solid {{ d.bar }};color:{{ d.fg }}">
+                  <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="{{ d.icon }}"></use></svg>
+                  <span style="font:400 16px Inter,sans-serif">{{ d.name }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="border-top:1px solid var(--border);padding:8px 0">
+              <div onClick="{{ goK2 }}" style="display:flex;align-items:center;gap:14px;height:48px;padding:0 16px;cursor:pointer;color:var(--textPrimary)"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#person"></use></svg><span style="font:400 16px Inter,sans-serif">Perfil</span></div>
+              <div onClick="{{ goK1 }}" style="display:flex;align-items:center;gap:14px;height:48px;padding:0 16px;cursor:pointer;color:var(--textPrimary)"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#settings"></use></svg><span style="font:400 16px Inter,sans-serif">Ajustes</span></div>
+              <div onClick="{{ logout }}" style="display:flex;align-items:center;gap:14px;height:48px;padding:0 16px;cursor:pointer;color:var(--alert)"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#logout"></use></svg><span style="font:400 16px Inter,sans-serif">Cerrar sesión</span></div>
+            </div>
+          </div>
+        </sc-if>
+
+        <div style="height:26px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;position:relative;z-index:14">
+          <i style="display:block;width:118px;height:4px;border-radius:999px;background:var(--textSecondary);opacity:.7"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="width:230px;flex:0 0 auto;position:sticky;top:28px;font:400 12px/1.6 Inter,sans-serif;color:#959595">
+    <div style="font:600 10px/1 Inter,sans-serif;letter-spacing:1.1px;text-transform:uppercase;color:#959595;padding-bottom:7px;border-bottom:1px solid #2E3B4B;margin-bottom:10px">Notas de la demostración</div>
+    <p style="margin:0 0 10px">Tres cuentas en A2: cada una abre un menú distinto. Para cambiar de rol, Cerrar sesión desde el menú lateral.</p>
+    <p style="margin:0 0 10px">D1 → D2 rechaza siempre por desenfoque, con el diagnóstico numérico. «Procesarla igual» corre la escalera D3, con velocidad y salto.</p>
+    <p style="margin:0 0 10px">En E2, el fragmento gris punteado es corregible: al aceptar en E3 pasa a cuadrado reparado y la cobertura de F1 sube.</p>
+    <p style="margin:0 0 10px">Los cuatro estados llevan forma además de color: círculo, cuadrado, triángulo y círculo punteado.</p>
+    <div style="font:600 10px/1 Inter,sans-serif;letter-spacing:1.1px;text-transform:uppercase;color:#959595;padding:14px 0 7px;border-top:1px solid #2E3B4B;margin-top:14px">Pendiente</div>
+    <p style="margin:0">C2b como hoja aparte, I2 crear curso y G3 con las cinco preguntas completas.</p>
+  </div>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;1000&quot;,&quot;height&quot;:&quot;900&quot;}}">
+const NIGHT = {
+  background:'#161E27', surface:'#2E3B4B', surfaceHigh:'#3B4A5C', border:'#4A5A6E',
+  onAccent:'#1A1206', accentText:'#FFD372', accentSoft:'rgba(255,211,114,.14)',
+  textPrimary:'#D7D1B9', textSecondary:'#959595',
+  alert:'#E0693A', alertFill:'rgba(185,65,23,.18)', alertBorder:'rgba(224,105,58,.45)',
+  verified:'#5FA88C', repaired:'#8FB7DC', escalated:'#F59E0B', uncertain:'#959595',
+  scrim:'rgba(8,12,17,.72)'
+};
+const DAY = {
+  background:'#EDEAE0', surface:'#F7F4EC', surfaceHigh:'#D7D1B9', border:'#C4BCA3',
+  onAccent:'#2E3B4B', accentText:'#8A6210', accentSoft:'rgba(185,131,15,.16)',
+  textPrimary:'#2E3B4B', textSecondary:'#63666A',
+  alert:'#B94117', alertFill:'rgba(185,65,23,.12)', alertBorder:'rgba(185,65,23,.4)',
+  verified:'#2F7D62', repaired:'#3E6E9E', escalated:'#D97706', uncertain:'#63666A',
+  scrim:'rgba(46,59,75,.5)'
+};
+
+const ACCOUNTS = [
+  {ini:'MS', name:'Mariana Solís', mail:'msolis@estudiante.cr', rol:'ESTUDIANTE', role:'student', home:'B2'},
+  {ini:'RQ', name:'Rodrigo Quesada', mail:'rquesada@docente.cr', rol:'DOCENTE', role:'teacher', home:'B3'},
+  {ini:'AV', name:'Ana Vargas', mail:'avargas@ti.cr', rol:'ADMIN', role:'admin', home:'B4'}
+];
+
+const COURSES = [
+  {name:'Cálculo II', code:'MA-1002'},
+  {name:'Física General II', code:'FI-2001'},
+  {name:'Ecuaciones Diferenciales', code:'MA-2003'}
+];
+
+const LADDER = [
+  {num:'1', name:'Calidad de imagen', level:'N0', desc:'Nitidez, iluminación, reflejos y perspectiva', result:'nitidez 12 / 35 · por debajo del umbral', bad:true},
+  {num:'2', name:'Reconocimiento local', level:'N1', desc:'Motor en el dispositivo, sin red ni costo', result:'17 regiones · 14 con confianza alta'},
+  {num:'3', name:'Reparación con glosario', level:'N1.5', desc:'Notación del curso y diccionario del docente', result:'2 regiones reparadas'},
+  {num:'4', name:'Escalado a servicio de pago', level:'N2', desc:'Solo las regiones que siguen por debajo del umbral', result:'1 región escalada · 1 llamada'},
+  {num:'5', name:'Mapa de confianza', level:'N3', desc:'Ensamble de la página con su procedencia', result:'listo'}
+];
+
+const SCREENS = {
+  A1:{g:'T1', n:'Splash', bare:true},
+  A2:{g:'T1', n:'Login', title:'Iniciar sesión', left:'back', leftTo:'A1'},
+  A3:{g:'T1', n:'Crear cuenta', title:'Crear cuenta', left:'back', leftTo:'A2'},
+  B2:{g:'T1', n:'Inicio est.', switcher:'Curso activo', left:'menu', a1:'#clock', a1to:'H1', fab:true, banner:true},
+  B3:{g:'T1', n:'Inicio doc.', switcher:'Curso activo', left:'menu', a1:'#users', a1to:'I5'},
+  B4:{g:'T5', n:'Inicio admin', title:'Administración', left:'menu'},
+  C1:{g:'T1', n:'Mis cursos', title:'Mis cursos', left:'menu', a1:'#add', a1to:'C2'},
+  C2:{g:'T2', n:'Unirme', title:'Unirme a un curso', left:'close', leftTo:'C1'},
+  C3:{g:'T1', n:'Centro de curso', title:'Cálculo II', left:'back', leftTo:'C1'},
+  D1:{g:'T2', n:'Cámara', bare:true},
+  D2:{g:'T2', n:'Diagnóstico N0', title:'Revisá la foto', left:'close', leftTo:'D1'},
+  D3:{g:'T3', n:'Escalera', title:'Procesando', left:'back', leftTo:'D1'},
+  E1:{g:'T1', n:'Apuntes', switcher:'Apuntes de', left:'menu', a1:'#search', a2:'#add', a2to:'D1', fab:true},
+  E2:{g:'T2', n:'Mapa de confianza', title:'Integrales impropias', left:'back', leftTo:'E1', a1:'#image', a2:'#edit', a2to:'E3'},
+  E3:{g:'T3', n:'Corregir', title:'Corregir fragmento', left:'close', leftTo:'E2'},
+  E4:{g:'T5', n:'Visor de fórmula', title:'Fórmula', left:'back', leftTo:'E2'},
+  E5:{g:'T5', n:'Procedencia', title:'Detalle de región', left:'back', leftTo:'E2'},
+  F1:{g:'T4', n:'Cobertura', switcher:'Cobertura de', left:'menu', a1:'#calendar', a1to:'F3'},
+  F2:{g:'T4', n:'Tema', title:'Detalle del tema', left:'back', leftTo:'F1'},
+  F3:{g:'T4', n:'Delta', title:'Delta entre sesiones', left:'back', leftTo:'F1'},
+  G1:{g:'T5', n:'Estudio', title:'Estudio', left:'menu'},
+  G2:{g:'T5', n:'Flashcards', title:'Flashcards', left:'close', leftTo:'G1'},
+  G3:{g:'T5', n:'Quiz', title:'Quiz', left:'close', leftTo:'G1'},
+  G4:{g:'T5', n:'Resultado', title:'Resultado del quiz', left:'back', leftTo:'G1'},
+  H1:{g:'T3', n:'Cola de sync', title:'Sincronización', left:'menu'},
+  H2:{g:'T5', n:'Consumo de IA', title:'Consumo de IA', left:'back', leftTo:'B4'},
+  I1:{g:'T1', n:'Cursos doc.', title:'Mis cursos', left:'menu', a1:'#add', a1to:'C2'},
+  I3:{g:'T4', n:'Publicar temario', title:'Publicar temario', left:'back', leftTo:'I1'},
+  I4:{g:'T4', n:'Glosario', title:'Glosario de notación', left:'back', leftTo:'I1'},
+  I5:{g:'T5', n:'Brechas del grupo', title:'Brechas del grupo', left:'back', leftTo:'B3'},
+  J1:{g:'T5', n:'Usuarios', title:'Usuarios', left:'menu', a1:'#search'},
+  J2:{g:'T5', n:'Detalle usuario', title:'Detalle de usuario', left:'back', leftTo:'J1'},
+  J3:{g:'T5', n:'Roles', title:'Roles y privilegios', left:'back', leftTo:'J1'},
+  K1:{g:'T3', n:'Ajustes', title:'Ajustes', left:'back', leftTo:'B2'},
+  K2:{g:'T2', n:'Perfil', title:'Perfil', left:'back', leftTo:'B2'}
+};
+
+const GROUPS = [
+  {name:'T1 · Acceso y navegación', ids:['A1','A2','A3','B2','B3','C1','C3','E1','I1']},
+  {name:'T2 · Captura y confianza', ids:['C2','D1','D2','E2','K2']},
+  {name:'T3 · Escalera y sincronización', ids:['D3','E3','H1','K1']},
+  {name:'T4 · Cobertura y temario', ids:['F1','F2','F3','I3','I4']},
+  {name:'T5 · IA, estudio y administración', ids:['E4','E5','G1','G2','G3','G4','H2','I5','B4','J1','J2','J3']}
+];
+
+const CARDS = [
+  {q:'¿Cuándo es impropia una integral?', a:'Cuando el intervalo no está acotado o la función tiene una discontinuidad infinita dentro del intervalo.'},
+  {q:'Criterio de comparación por paso al límite', a:'Si lim aₙ/bₙ = L con 0 < L < ∞, ambas series convergen o ambas divergen.'},
+  {q:'Radio de convergencia de ∑ xⁿ/n!', a:'Infinito: la serie converge para todo x real.'}
+];
+
+class Component extends DCLogic {
+  state = {
+    screen:'A1', mode:'night', role:'student', account:ACCOUNTS[0],
+    course:'Cálculo II', drawer:false, sheet:false,
+    step:0, speed:1, shooting:false, fixed:false, joined:false,
+    cardIdx:0, cardBack:false, picked:null, wifi:true, published:false,
+    roles:{estudiante:true, docente:false, admin:false}, retried:false,
+    hist:[]
+  };
+
+  componentDidMount() {
+    this.t = setTimeout(() => { if (this.state.screen === 'A1') this.setState({screen:'A2'}); }, 1600);
+  }
+  componentWillUnmount() { clearTimeout(this.t); clearInterval(this.iv); }
+
+  go = (id) => {
+    clearInterval(this.iv);
+    const st = {screen:id, drawer:false, sheet:false};
+    if (id === 'D3') { st.step = 0; this.runLadder(); }
+    if (id === 'D1') st.shooting = false;
+    if (id === 'G2') { st.cardIdx = 0; st.cardBack = false; }
+    if (id === 'G3') st.picked = null;
+    this.setState(st);
+  };
+
+  runLadder() {
+    clearInterval(this.iv);
+    this.iv = setInterval(() => {
+      this.setState(s => {
+        if (s.step >= LADDER.length) { clearInterval(this.iv); return null; }
+        return {step: s.step + 1};
+      });
+    }, 1500 / this.state.speed);
+  }
+
+  shapeEl(kind, size) {
+    const s = size || 12;
+    const c = {verified:'var(--verified)', repaired:'var(--repaired)', escalated:'var(--escalated)', uncertain:'var(--uncertain)'}[kind];
+    if (kind === 'verified') return React.createElement('svg', {width:s, height:s, key:kind}, React.createElement('circle', {cx:s/2, cy:s/2, r:s/2, fill:c}));
+    if (kind === 'repaired') return React.createElement('svg', {width:s, height:s, key:kind}, React.createElement('rect', {width:s-1, height:s-1, rx:2, fill:c}));
+    if (kind === 'escalated') return React.createElement('svg', {width:s+2, height:s, key:kind}, React.createElement('polygon', {points:`${(s+2)/2},0 ${s+2},${s} 0,${s}`, fill:c}));
+    return React.createElement('svg', {width:s, height:s, key:kind}, React.createElement('circle', {cx:s/2, cy:s/2, r:s/2-0.8, fill:'none', stroke:c, strokeWidth:1.5, strokeDasharray:'2 2'}));
+  }
+
+  renderVals() {
+    const s = this.state;
+    const t = s.mode === 'night' ? NIGHT : DAY;
+    const meta = SCREENS[s.screen] || {};
+    const acc = s.account;
+    const sh = (k, size) => this.shapeEl(k, size);
+
+    const mapGroups = GROUPS.map(g => ({
+      name: g.name,
+      items: g.ids.map(id => ({
+        id, name: SCREENS[id].n, go: () => this.go(id),
+        bg: id === s.screen ? 'rgba(255,211,114,.16)' : '#1A222C',
+        bd: id === s.screen ? '#FFD372' : '#2E3B4B',
+        fg: id === s.screen ? '#FFD372' : '#D7D1B9'
+      }))
+    }));
+
+    const bar = {
+      show: !meta.bare,
+      title: meta.title || false,
+      switcher: meta.switcher || false,
+      leftIcon: '#' + (meta.left || 'back'),
+      leftGo: () => {
+        if (meta.left === 'menu') this.setState({drawer:true});
+        else this.go(meta.leftTo || 'B2');
+      },
+      a1: meta.a1 || false, a1go: () => meta.a1to ? this.go(meta.a1to) : null,
+      a2: meta.a2 || false, a2go: () => meta.a2to ? this.go(meta.a2to) : null
+    };
+
+    const drawerDefs = {
+      student:[['#school','Inicio','B2'],['#notes','Apuntes','E1'],['#coverage','Cobertura','F1'],['#study','Estudio','G1'],['#school','Mis cursos','C1'],['#sync','Sincronización','H1']],
+      teacher:[['#school','Inicio','B3'],['#school','Mis cursos','I1'],['#syllabus','Temario','I3'],['#glossary','Glosario','I4'],['#gaps','Brechas del grupo','I5']],
+      admin:[['#school','Inicio','B4'],['#users','Usuarios','J1'],['#shield','Roles y privilegios','J3'],['#cost','Consumo de IA','H2']]
+    }[s.role];
+
+    const drawerItems = drawerDefs.map(([icon,name,id]) => ({
+      icon, name, go: () => this.go(id),
+      bg: id === s.screen ? 'var(--accentSoft)' : 'transparent',
+      bar: id === s.screen ? 'var(--accent)' : 'transparent',
+      fg: id === s.screen ? 'var(--accentText)' : 'var(--textPrimary)'
+    }));
+
+    const noteShapes = [['verified','repaired','escalated'],['verified','uncertain'],['verified','verified']];
+    const mkNotes = (arr) => arr.map((n,i) => ({
+      title:n[0], meta:n[1], go:() => this.go('E2'),
+      shapes:(n[2] || noteShapes[i % 3]).map(k => ({el: sh(k)}))
+    }));
+
+    const ladder = LADDER.map((l, i) => {
+      const done = i < s.step, cur = i === s.step;
+      return {
+        num: done ? '✓' : l.num, name:l.name, level:l.level, desc:l.desc,
+        result: done ? l.result : (cur ? 'en curso…' : false),
+        resultFg: done && l.bad ? 'var(--alert)' : 'var(--textSecondary)',
+        nodeBg: done ? 'var(--verified)' : 'transparent',
+        nodeBd: done ? 'var(--verified)' : (cur ? 'var(--accent)' : 'var(--border)'),
+        nodeFg: done ? t.background : (cur ? 'var(--accentText)' : 'var(--textSecondary)'),
+        titleFg: done || cur ? 'var(--textPrimary)' : 'var(--textSecondary)',
+        line: done ? 'var(--verified)' : 'var(--border)'
+      };
+    });
+
+    const quizOpts = [['A','R = 1'],['B','R = e'],['C','R = ∞'],['D','R = 0']].map(([k,text]) => {
+      const isPick = s.picked === k, correct = k === 'C';
+      let bd = 'var(--border)', bg = 'var(--surface)', fg = 'var(--textPrimary)';
+      if (s.picked) {
+        if (correct) { bd = 'var(--verified)'; bg = 'rgba(95,168,140,.14)'; }
+        else if (isPick) { bd = 'var(--alert)'; bg = 'var(--alertFill)'; }
+      }
+      return {k, text, bd, bg, fg, pick: () => this.setState({picked:k})};
+    });
+
+    const tog = (on) => ({
+      bg: on ? 'var(--accent)' : 'var(--surfaceHigh)',
+      bd: on ? 'var(--accent)' : 'var(--border)',
+      just: on ? 'flex-end' : 'flex-start',
+      knob: on ? t.onAccent : t.textSecondary
+    });
+
+    const card = CARDS[s.cardIdx % CARDS.length];
+
+    return {
+      t, screen: s.screen, course: s.course, drawer: s.drawer, sheet: s.sheet,
+      clock: '9:41',
+      mode: s.mode,
+      modeLabel: s.mode === 'night' ? 'Modo noche' : 'Modo día',
+      roleLabel: {student:'Estudiante · Mariana', teacher:'Docente · Rodrigo', admin:'Administrador · Ana'}[s.role],
+      toggleMode: () => this.setState(p => ({mode: p.mode === 'night' ? 'day' : 'night'})),
+      reset: () => { clearInterval(this.iv); this.setState({screen:'A1', role:'student', account:ACCOUNTS[0], fixed:false, joined:false, published:false, step:0, drawer:false, sheet:false}); this.t = setTimeout(() => this.setState({screen:'A2'}), 1400); },
+      mapGroups, bar, drawerItems,
+      me: {ini:acc.ini, name:acc.name, mail:acc.mail, rol:acc.rol},
+      showFab: !!meta.fab,
+      syncBanner: meta.banner && !s.retried ? '2 capturas en cola · se envían al volver la red' : false,
+
+      isA1: s.screen==='A1', isA2: s.screen==='A2', isA3: s.screen==='A3',
+      isB2: s.screen==='B2', isB3: s.screen==='B3', isB4: s.screen==='B4',
+      isC1: s.screen==='C1', isC2: s.screen==='C2', isC3: s.screen==='C3',
+      isD1: s.screen==='D1', isD2: s.screen==='D2', isD3: s.screen==='D3',
+      isE1: s.screen==='E1', isE2: s.screen==='E2', isE3: s.screen==='E3',
+      isE4: s.screen==='E4', isE5: s.screen==='E5',
+      isF1: s.screen==='F1', isF2: s.screen==='F2', isF3: s.screen==='F3',
+      isG1: s.screen==='G1', isG2: s.screen==='G2', isG3: s.screen==='G3', isG4: s.screen==='G4',
+      isH1: s.screen==='H1', isH2: s.screen==='H2',
+      isI1: s.screen==='I1', isI3: s.screen==='I3', isI4: s.screen==='I4', isI5: s.screen==='I5',
+      isJ1: s.screen==='J1', isJ2: s.screen==='J2', isJ3: s.screen==='J3',
+      isK1: s.screen==='K1', isK2: s.screen==='K2',
+
+      accounts: ACCOUNTS.map(a => ({...a, go: () => this.setState({account:a, role:a.role, screen:a.home, drawer:false})})),
+      goA2: () => this.go('A2'), goA3: () => this.go('A3'),
+      goD1: () => this.go('D1'), goD3: () => this.go('D3'), goE1: () => this.go('E1'),
+      goE2: () => this.go('E2'), goE3: () => this.go('E3'), goE4: () => this.go('E4'), goE5: () => this.go('E5'),
+      goF1: () => this.go('F1'), goG1: () => this.go('G1'), goG2: () => this.go('G2'),
+      goG3: () => this.go('G3'), goG4: () => this.go('G4'), goH1: () => this.go('H1'), goH2: () => this.go('H2'),
+      goI1: () => this.go('I1'), goI3: () => this.go('I3'), goI5: () => this.go('I5'),
+      goJ1: () => this.go('J1'), goC2: () => this.go('C2'), goK1: () => this.go('K1'), goK2: () => this.go('K2'),
+      logout: () => { clearInterval(this.iv); this.setState({screen:'A2', drawer:false, sheet:false}); },
+      closeDrawer: () => this.setState({drawer:false}),
+      openSheet: () => this.setState({sheet:true}),
+      closeSheet: () => this.setState({sheet:false}),
+      sheetCourses: COURSES.map(c => ({
+        name:c.name, code:c.code, active: c.name === s.course,
+        bg: c.name === s.course ? 'var(--accentSoft)' : 'transparent',
+        fg: c.name === s.course ? 'var(--accentText)' : 'var(--textPrimary)',
+        pick: () => this.setState({course:c.name, sheet:false})
+      })),
+
+      notes: mkNotes([['Integrales impropias','12 ago · 3 páginas'],['Criterio de comparación','7 ago · 2 páginas']]),
+      notesFull: mkNotes([
+        ['Integrales impropias','12 ago · 3 páginas'],
+        ['Criterio de comparación','7 ago · 2 páginas'],
+        ['Series geométricas','2 ago · 2 páginas',['verified','verified']],
+        ['Sucesiones monótonas','28 jul · 1 página',['verified']],
+        ['Repaso de límites','21 jul · 4 páginas',['verified','repaired']]
+      ]),
+
+      courses: COURSES.map((c,i) => ({
+        name:c.name, code:c.code, go: () => { this.setState({course:c.name}); this.go('C3'); },
+        pct: ['68%','54%','81%'][i], delta: ['+2','+1','+3'][i],
+        w1: ['54%','40%','66%'][i], w2: ['20%','14%','15%'][i], w3: ['14%','26%','9%'][i], w4: ['12%','20%','10%'][i]
+      })),
+      teachCourses: [
+        {name:'Cálculo II', code:'MA-1002', n:34, ok:true, warn:false, gaps:'3 brechas del grupo · cobertura promedio 61%', join:'MA2-7QK', go:()=>this.go('I5')},
+        {name:'Cálculo III', code:'MA-2004', n:28, ok:false, warn:true, go:()=>this.go('I3')},
+        {name:'Álgebra Lineal', code:'MA-1005', n:41, ok:true, warn:false, gaps:'1 brecha del grupo · cobertura promedio 78%', join:'AL1-3RT', go:()=>this.go('I5')}
+      ],
+      hubItems: [
+        {icon:'#notes', name:'Apuntes', meta:'28 capturas · 3 con regiones inciertas', go:()=>this.go('E1')},
+        {icon:'#coverage', name:'Cobertura', meta:'68% · 33 temas', go:()=>this.go('F1')},
+        {icon:'#study', name:'Estudio', meta:'12 flashcards y 1 quiz pendientes', go:()=>this.go('G1')},
+        {icon:'#glossary', name:'Glosario del curso', meta:'19 símbolos del docente', go:()=>this.go('I4')}
+      ],
+
+      joinCode: s.joined ? 'MA2-7QK' : '______',
+      joinHint: s.joined ? 'Cálculo II · Rodrigo Quesada · 34 inscritos' : 'Todavía no hay curso reconocido',
+      joinCta: s.joined ? 'Unirme a Cálculo II' : 'Pegar el código de ejemplo',
+      typeCode: () => s.joined ? this.go('C3') : this.setState({joined:true}),
+
+      shooting: s.shooting,
+      shoot: () => { this.setState({shooting:true}); setTimeout(() => this.setState({shooting:false, screen:'D2'}), 520); },
+      goD1flash: () => {},
+      quality: [
+        {name:'Nitidez', icon:'#warn', color:'var(--alert)', pct:'24%', val:'12 / 35'},
+        {name:'Iluminación', icon:'#check', color:'var(--verified)', pct:'78%', val:'78'},
+        {name:'Sin reflejos', icon:'#check', color:'var(--verified)', pct:'91%', val:'91'},
+        {name:'Perspectiva', icon:'#check', color:'var(--verified)', pct:false, val:'−4.2° corregida'}
+      ],
+
+      ladder, ladderDone: s.step >= LADDER.length,
+      speedLabel: s.speed === 1 ? '1×' : (s.speed === 2 ? '2×' : '0.5×'),
+      cycleSpeed: () => { const nx = s.speed === 1 ? 2 : (s.speed === 2 ? 0.5 : 1); this.setState({speed:nx}, () => this.runLadder()); },
+      skipLadder: () => { clearInterval(this.iv); this.setState({step:LADDER.length}); },
+
+      frag: s.fixed
+        ? {text:'converge; en caso contrario diverge', style:'solid', color:'var(--repaired)', bg:'rgba(143,183,220,.16)', shape:sh('repaired'), cardBg:'rgba(143,183,220,.10)', cardText:'Fragmento reparado · N1.5'}
+        : {text:'converge; en caso contrario dvierge', style:'dashed', color:'var(--uncertain)', bg:'rgba(149,149,149,.18)', shape:sh('uncertain'), cardBg:'rgba(149,149,149,.10)', cardText:'1 fragmento sin leer con certeza'},
+      applyFix: () => this.setState({fixed:true, screen:'E2'}),
+      coverPct: s.fixed ? '71%' : '68%',
+
+      topics: [
+        ['verified','3.1 Sucesiones',false,'0.92'],
+        ['verified','3.2 Series geométricas',false,'0.88'],
+        ['repaired','3.3 Criterio de comparación','Falta el caso del límite','0.54'],
+        ['escalated','3.4 Series de potencias','Sin evidencia en tus apuntes','0.11'],
+        ['uncertain','3.5 Radio de convergencia','Apunte ilegible en esa sección','—']
+      ].map(([k,name,note,score]) => ({shape:sh(k), name, note, score, go:()=>this.go('F2')})),
+
+      deltas: [
+        {shape:sh('verified'), name:'3.2 Series geométricas', from:'de parcial a sólido', val:'+0.34', color:'var(--verified)'},
+        {shape:sh('repaired'), name:'3.3 Criterio de comparación', from:'de ausente a parcial', val:'+0.21', color:'var(--verified)'},
+        {shape:sh('escalated'), name:'3.4 Series de potencias', from:'sin cambio', val:'0.00', color:'var(--textSecondary)'},
+        {shape:sh('uncertain'), name:'3.5 Radio de convergencia', from:'apunte ilegible', val:'—', color:'var(--textSecondary)'}
+      ],
+
+      card: {side: s.cardBack ? 'RESPUESTA' : 'PREGUNTA', text: s.cardBack ? card.a : card.q, hint: s.cardBack ? 'Marcá si la sabías' : 'Tocá para ver la respuesta'},
+      cardCount: (s.cardIdx + 1) + ' / 12',
+      cardPct: Math.round((s.cardIdx / 12) * 100) + '%',
+      flipCard: () => this.setState(p => ({cardBack: !p.cardBack})),
+      cardOk: () => this.setState(p => ({cardIdx: p.cardIdx + 1, cardBack:false})),
+      cardAgain: () => this.setState({cardBack:false}),
+
+      options: quizOpts, answered: !!s.picked,
+
+      queue: s.retried
+        ? [
+            {name:'Integrales impropias · pág. 3', state:'Sincronizado', fg:'var(--verified)', pct:false},
+            {name:'Series de potencias · pág. 1', state:'Sincronizado', fg:'var(--verified)', pct:false}
+          ]
+        : [
+            {name:'Integrales impropias · pág. 3', state:'En cola · sin conexión', fg:'var(--textSecondary)', pct:false},
+            {name:'Series de potencias · pág. 1', state:'Error al enviar', fg:'var(--alert)', pct:false},
+            {name:'Criterio de comparación · pág. 2', state:'Subiendo', fg:'var(--accentText)', pct:'62%'}
+          ],
+      retryLabel: s.retried ? 'Todo está sincronizado' : 'Reintentar los 2 pendientes',
+      retrySync: () => this.setState({retried:true}),
+      queueCount: s.retried ? '0 pendientes' : '2 pendientes',
+
+      spend: [
+        {lvl:'N0', name:'Diagnóstico de calidad', val:'sin costo'},
+        {lvl:'N1', name:'Reconocimiento local', val:'sin costo'},
+        {lvl:'N1.5', name:'Reparación con glosario', val:'sin costo'},
+        {lvl:'N2', name:'Escalado a servicio de pago', val:'1 842 llamadas'}
+      ],
+      provenance: [
+        {lvl:'N0', name:'Calidad de imagen', val:'aprobada'},
+        {lvl:'N1', name:'Reconocimiento local', val:'0.31'},
+        {lvl:'N1.5', name:'Glosario del curso', val:'sin coincidencia'},
+        {lvl:'N2', name:'Servicio de pago', val:'0.41'}
+      ],
+      glossary: [
+        {sym:'∑', mean:'Sumatoria, índice desde n = 1'},
+        {sym:'aₙ', mean:'Término general de la sucesión'},
+        {sym:'R', mean:'Radio de convergencia'},
+        {sym:'⇒', mean:'Implica (el docente lo escribe con una sola raya)'}
+      ],
+      groupGaps: [
+        {shape:sh('escalated'), name:'3.4 Series de potencias', pct:'18%', color:'var(--escalated)', note:'6 de 34 apuntes tienen evidencia del tema'},
+        {shape:sh('escalated'), name:'3.5 Radio de convergencia', pct:'22%', color:'var(--escalated)', note:'La sesión del 8 de agosto quedó sin fotografiar en la mayoría'},
+        {shape:sh('repaired'), name:'3.3 Criterio de comparación', pct:'47%', color:'var(--repaired)', note:'Cubren el enunciado pero no el caso del límite'}
+      ],
+      users: [
+        {ini:'MS', name:'Mariana Solís', mail:'msolis@estudiante.cr', rol:'ESTUDIANTE'},
+        {ini:'RQ', name:'Rodrigo Quesada', mail:'rquesada@docente.cr', rol:'DOCENTE'},
+        {ini:'AV', name:'Ana Vargas', mail:'avargas@ti.cr', rol:'ADMIN'},
+        {ini:'JL', name:'Josué León', mail:'jleon@estudiante.cr', rol:'ESTUDIANTE'},
+        {ini:'CP', name:'Carla Pérez', mail:'cperez@estudiante.cr', rol:'ESTUDIANTE'}
+      ].map(u => ({...u, go: () => this.go('J2')})),
+      roleToggles: ['estudiante','docente','admin'].map(k => ({
+        name: {estudiante:'Estudiante', docente:'Docente', admin:'Administrador'}[k],
+        ...tog(s.roles[k]),
+        trackBg: tog(s.roles[k]).bg, trackBd: tog(s.roles[k]).bd,
+        toggle: () => this.setState(p => ({roles: {...p.roles, [k]: !p.roles[k]}}))
+      })),
+      privileges: [
+        {name:'Tomar apuntes y ver su mapa de confianza', roles:[{name:'ESTUDIANTE'}]},
+        {name:'Publicar el temario del curso', roles:[{name:'DOCENTE'}]},
+        {name:'Ver brechas del grupo', roles:[{name:'DOCENTE'},{name:'ADMIN'}]},
+        {name:'Asignar roles', roles:[{name:'ADMIN'}]},
+        {name:'Ver el consumo de IA', roles:[{name:'ADMIN'}]}
+      ].map(p => ({name:p.name, roles:p.roles.map(r => ({name:r.name, bg:'var(--accentSoft)', fg:'var(--accentText)'}))})),
+
+      dayToggle: tog(s.mode === 'day'),
+      wifiToggle: tog(s.wifi),
+      toggleWifi: () => this.setState(p => ({wifi: !p.wifi})),
+      publishLabel: s.published ? 'Temario publicado' : 'Publicar temario',
+      publishSyllabus: () => s.published ? this.go('I1') : this.setState({published:true})
+    };
+  }
+}
+
+</script>
+</body>
+</html>

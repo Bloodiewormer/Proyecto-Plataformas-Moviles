@@ -1,0 +1,1151 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Glifo — Tanda T1 · pantallas</title><style>
+.night{
+  --background:#161E27; --surface:#2E3B4B; --surfaceHigh:#3B4A5C; --border:#4A5A6E;
+  --accent:#FFD372; --accentText:#FFD372; --onAccent:#1A1206;
+  --accentSoft:rgba(255,211,114,.16); --accentFaint:rgba(255,211,114,.08); --accentLine:rgba(255,211,114,.42);
+  --textPrimary:#D7D1B9; --textSecondary:#959595;
+  --alert:#E0693A; --alertSoft:rgba(224,105,58,.18); --alertFaint:rgba(224,105,58,.09); --alertLine:rgba(224,105,58,.45);
+  --verified:#5FA88C; --verifiedSoft:rgba(95,168,140,.18); --verifiedLine:rgba(95,168,140,.45);
+  --repaired:#8FB7DC; --repairedSoft:rgba(143,183,220,.18); --repairedLine:rgba(143,183,220,.45);
+  --escalated:#F59E0B; --escalatedSoft:rgba(245,158,11,.18); --escalatedFaint:rgba(245,158,11,.09); --escalatedLine:rgba(245,158,11,.45);
+  --uncertain:#959595; --uncertainSoft:rgba(149,149,149,.20); --uncertainFaint:rgba(149,149,149,.10); --uncertainLine:rgba(149,149,149,.45);
+  --neutralSoft:rgba(149,149,149,.18);
+  --btnSecBorder:#FFD372; --btnSecText:#FFD372;
+  --scrim:rgba(8,12,17,.72);
+}
+.day{
+  --background:#EDEAE0; --surface:#F7F4EC; --surfaceHigh:#D7D1B9; --border:#C4BCA3;
+  --accent:#FFD372; --accentText:#8A6210; --onAccent:#2E3B4B;
+  --accentSoft:rgba(196,143,20,.20); --accentFaint:rgba(196,143,20,.10); --accentLine:rgba(160,116,15,.5);
+  --textPrimary:#2E3B4B; --textSecondary:#63666A;
+  --alert:#B94117; --alertSoft:rgba(185,65,23,.14); --alertFaint:rgba(185,65,23,.07); --alertLine:rgba(185,65,23,.42);
+  --verified:#2F7D62; --verifiedSoft:rgba(47,125,98,.14); --verifiedLine:rgba(47,125,98,.42);
+  --repaired:#3E6E9E; --repairedSoft:rgba(62,110,158,.14); --repairedLine:rgba(62,110,158,.42);
+  --escalated:#D97706; --escalatedSoft:rgba(217,119,6,.14); --escalatedFaint:rgba(217,119,6,.07); --escalatedLine:rgba(217,119,6,.42);
+  --uncertain:#63666A; --uncertainSoft:rgba(99,102,106,.14); --uncertainFaint:rgba(99,102,106,.07); --uncertainLine:rgba(99,102,106,.38);
+  --neutralSoft:rgba(99,102,106,.14);
+  --btnSecBorder:#A07413; --btnSecText:#8A6210;
+  --scrim:rgba(46,59,75,.5);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0C1219;color:#D7D1B9;font-family:Inter,-apple-system,"Segoe UI",Roboto,sans-serif;padding:36px 24px 72px}
+.doc{max-width:1660px;margin:0 auto 36px}
+.doc h1{font-size:30px;font-weight:600;letter-spacing:-.6px}
+.doc .eyebrow{font-size:12px;letter-spacing:1.2px;font-weight:600;color:#FFD372;text-transform:uppercase;margin-bottom:10px}
+.doc .sub{color:#959595;font-size:14px;margin-top:8px;max-width:70ch;line-height:1.6}
+.legend{display:flex;flex-wrap:wrap;gap:18px;margin-top:20px;padding-top:18px;border-top:1px solid #2E3B4B}
+.legend span{font-size:12px;color:#959595;display:flex;align-items:center;gap:7px}
+.grid{display:flex;flex-wrap:wrap;gap:38px 30px;max-width:1660px;margin:0 auto}
+.block{width:812px}
+.cap{font-size:12px;letter-spacing:.5px;font-weight:500;color:#959595;margin-bottom:10px;text-transform:uppercase}
+.cap b{color:#FFD372;font-weight:600}
+.cap i{font-style:normal;opacity:.6}
+.duo{display:flex;gap:32px}
+.one{width:390px}
+.mode{font-size:10px;letter-spacing:1px;font-weight:700;padding:3px 8px;border-radius:5px;margin-bottom:8px;display:inline-block}
+.mode.n{background:#2E3B4B;color:#D7D1B9}
+.mode.d{background:#D7D1B9;color:#2E3B4B}
+.note{margin-top:14px;font-size:12px;line-height:1.55;color:#959595}
+.note b{color:#FFD372;font-weight:600}
+.note i{color:#D7D1B9;font-style:italic}
+.device{width:390px;height:846px;background:#000;border-radius:40px;padding:11px;
+  box-shadow:0 0 0 1px #2E3B4B,0 24px 60px rgba(0,0,0,.6);position:relative}
+.screen{width:368px;height:824px;background:var(--background);color:var(--textPrimary);border-radius:30px;
+  overflow:hidden;display:flex;flex-direction:column;position:relative}
+.punch{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:11px;height:11px;border-radius:999px;background:#000;z-index:6}
+.sysbar{height:30px;display:flex;align-items:center;padding:0 18px;flex:0 0 auto;position:relative;z-index:3}
+.sysbar .hora{font-size:13px;font-weight:600;letter-spacing:.2px}
+.sysbar .sys{display:flex;align-items:center;gap:6px}
+.gest{height:26px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;z-index:3}
+.gest i{display:block;width:118px;height:4px;border-radius:999px;background:var(--textSecondary);opacity:.75}
+.appbar{height:56px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;
+  padding:0 8px 0 12px;gap:10px;flex:0 0 auto}
+.appbar.flat{background:transparent;border-bottom:none}
+.appbar .tap{width:40px;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:var(--textSecondary);flex:0 0 auto}
+.appbar .t{font-size:22px;font-weight:500;letter-spacing:-.2px;padding-left:4px}
+.appbar .t.sm{font-size:18px}
+.appbar .sw{display:flex;flex-direction:column;line-height:1.2;padding-left:4px}
+.appbar .sw .lbl{font-size:11px;color:var(--textSecondary);letter-spacing:.3px}
+.appbar .sw .val{font-size:18px;font-weight:500;display:flex;align-items:center;gap:3px}
+.sp{flex:1}
+.body{flex:1;overflow:hidden;padding:16px}
+.body.flush{padding:0}
+h2.sec{font-size:11px;letter-spacing:.6px;font-weight:600;color:var(--textSecondary);text-transform:uppercase;margin:22px 0 10px}
+h2.sec:first-child{margin-top:0}
+.meta{font-size:14px;color:var(--textSecondary)}
+.meta.sm{font-size:12px}
+.mono{font-family:ui-monospace,"JetBrains Mono","Roboto Mono",monospace}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px}
+.card.tight{padding:0;overflow:hidden}
+.card .name{font-size:18px;font-weight:500}
+.card .code{font-family:ui-monospace,monospace;font-size:13px;color:var(--textSecondary);margin-top:3px}
+.row{display:flex;align-items:center;gap:8px}
+.betw{display:flex;align-items:center;justify-content:space-between}
+.covbar{display:flex;height:6px;border-radius:999px;overflow:hidden;margin:14px 0 8px}
+.covbar.big{height:12px}
+.covbar i{display:block;height:100%}
+.btn{height:48px;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:16px;font-weight:500;width:100%}
+.btn.pri{background:var(--accent);color:var(--onAccent)}
+.btn.sec{border:1px solid var(--btnSecBorder);color:var(--btnSecText)}
+.btn.txt{color:var(--btnSecText);height:40px}
+.btn.dan{border:1px solid var(--alert);color:var(--alert)}
+.btn.sm{height:40px;font-size:14px}
+.field{min-height:56px;background:var(--surfaceHigh);border:1px solid var(--border);border-radius:8px;padding:9px 14px;
+  display:flex;flex-direction:column;justify-content:center;margin-bottom:12px}
+.field.focus{border:2px solid var(--accentLine)}
+.field.err{border:2px solid var(--alert)}
+.field .lb{font-size:11px;color:var(--textSecondary);letter-spacing:.3px}
+.field.focus .lb{color:var(--accentText)}
+.field.err .lb{color:var(--alert)}
+.field .vl{font-size:16px;margin-top:1px}
+.field .ph{font-size:16px;color:var(--textSecondary);margin-top:1px}
+.item{display:flex;align-items:center;gap:14px;padding:12px 16px;border-bottom:1px solid var(--border);min-height:72px}
+.item:last-child{border-bottom:none}
+.item.compact{min-height:56px;padding:10px 16px}
+.thumb{width:48px;height:48px;border-radius:8px;background:var(--surfaceHigh);border:1px solid var(--border);flex:0 0 auto;
+  display:flex;align-items:center;justify-content:center;color:var(--textSecondary)}
+.item .tt{font-size:16px}
+.item .st{font-size:14px;color:var(--textSecondary);margin-top:2px}
+.chips{display:flex;gap:5px;align-items:center}
+.badge{font-size:11px;font-weight:600;letter-spacing:.5px;padding:3px 7px;border-radius:8px;white-space:nowrap;display:inline-block}
+.fab{position:absolute;right:16px;bottom:42px;width:56px;height:56px;border-radius:18px;background:var(--accent);
+  color:var(--onAccent);display:flex;align-items:center;justify-content:center;z-index:4}
+.banner{min-height:40px;display:flex;align-items:center;gap:10px;padding:8px 16px;font-size:14px;
+  background:var(--accentSoft);color:var(--textPrimary);flex:0 0 auto}
+.banner.warn{background:var(--alertSoft);color:var(--alert)}
+.quad{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.quad .q{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;min-height:96px;
+  display:flex;flex-direction:column;justify-content:space-between}
+.quad .q .qn{font-size:16px;font-weight:500;display:flex;align-items:center;gap:8px}
+.quad .q .qm{font-size:12px;color:var(--textSecondary);line-height:1.35}
+.splash{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px}
+.wordmark{font-size:30px;font-weight:600;letter-spacing:-.6px}
+.scrim{flex:1;display:flex;background:var(--scrim)}
+.scrim.bottom{flex-direction:column;justify-content:flex-end}
+.drawer{width:296px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column}
+.dhead{padding:20px 16px 18px;border-bottom:1px solid var(--border)}
+.avatar{width:56px;height:56px;border-radius:999px;background:var(--surfaceHigh);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:600;color:var(--accentText)}
+.rolechip{display:inline-block;margin-top:11px;font-size:11px;font-weight:600;letter-spacing:.6px;padding:4px 9px;
+  border-radius:999px;background:var(--accentSoft);color:var(--accentText)}
+.dcourse{padding:12px 16px;border-bottom:1px solid var(--border)}
+.ditem{height:48px;display:flex;align-items:center;gap:16px;padding:0 16px;font-size:16px;position:relative;color:var(--textPrimary)}
+.ditem svg{color:var(--textSecondary)}
+.ditem.on{background:var(--accentSoft);color:var(--accentText)}
+.ditem.on svg{color:var(--accentText)}
+.ditem.on::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent)}
+.dsep{height:1px;background:var(--border);margin:8px 16px}
+.sheet{background:var(--surface);border-top:1px solid var(--border);border-radius:16px 16px 0 0;padding:8px 0 16px}
+.sheet .handle{width:36px;height:4px;border-radius:999px;background:var(--border);margin:6px auto 14px}
+.radio{width:20px;height:20px;border-radius:999px;border:2px solid var(--textSecondary);flex:0 0 auto;position:relative}
+.radio.on{border-color:var(--accentText)}
+.radio.on::after{content:"";position:absolute;inset:3px;border-radius:999px;background:var(--accentText)}
+.check{width:20px;height:20px;border-radius:4px;border:2px solid var(--textSecondary);flex:0 0 auto;display:flex;align-items:center;justify-content:center}
+.check.on{border-color:var(--accent);background:var(--accent);color:var(--onAccent)}
+.switch{width:44px;height:24px;border-radius:999px;background:var(--border);flex:0 0 auto;position:relative}
+.switch.on{background:var(--accent)}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:999px;background:var(--textSecondary)}
+.switch.on::after{left:23px;background:var(--onAccent)}
+.step{display:flex;gap:14px}
+.step .rail{width:24px;display:flex;flex-direction:column;align-items:center;flex:0 0 auto}
+.step .dot{width:24px;height:24px;border-radius:999px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;
+  border:2px solid var(--border);color:var(--textSecondary);font-size:11px;font-weight:600}
+.step .dot.done{background:var(--verified);border-color:var(--verified);color:var(--background)}
+.step .dot.now{border-color:var(--accent);color:var(--accentText)}
+.step .line{flex:1;width:2px;background:var(--border);margin:2px 0}
+.step .line.done{background:var(--verified)}
+.step .txt{padding-bottom:16px;flex:1}
+.step .txt .h{font-size:16px;font-weight:500}
+.step .txt .d{font-size:13px;color:var(--textSecondary);margin-top:3px;line-height:1.4}
+.frag{border-radius:3px;padding:1px 0;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.fv{border-bottom:2px solid var(--verified)}
+.fr{border-bottom:2px solid var(--repaired);background:var(--repairedSoft)}
+.fe{border-bottom:2px solid var(--escalated);background:var(--escalatedFaint)}
+.fu{border-bottom:2px dashed var(--uncertain);background:var(--uncertainSoft)}
+.crop{background:repeating-linear-gradient(45deg,var(--surfaceHigh),var(--surfaceHigh) 6px,var(--border) 6px,var(--border) 12px);
+  border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;
+  color:var(--textSecondary);font-size:12px;text-align:center}
+.viewfinder{flex:1;background:radial-gradient(120% 80% at 50% 45%,var(--surfaceHigh) 0%,var(--surface) 55%,var(--background) 100%);
+  position:relative;display:flex;align-items:center;justify-content:center}
+.metrow{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);font-size:14px}
+.metrow:last-child{border-bottom:none}
+.bar{height:6px;border-radius:999px;background:var(--surfaceHigh);overflow:hidden;flex:1}
+.bar i{display:block;height:100%;background:var(--accent)}
+.ic{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+.ic.s20{width:20px;height:20px}.ic.s18{width:18px;height:18px}.ic.s32{width:32px;height:32px}
+.icf{fill:currentColor;stroke:none;flex:0 0 auto}
+</style></head><body><svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+<symbol id="menu" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></symbol>
+<symbol id="back" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></symbol>
+<symbol id="search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5L16.2 16.2"/></symbol>
+<symbol id="add" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="camera" viewBox="0 0 24 24"><path d="M3 8.5A2.5 2.5 0 015.5 6H8l1.4-2.2h5.2L16 6h2.5A2.5 2.5 0 0121 8.5v9A2.5 2.5 0 0118.5 20h-13A2.5 2.5 0 013 17.5z"/><circle cx="12" cy="13" r="3.8"/></symbol>
+<symbol id="home" viewBox="0 0 24 24"><path d="M3.5 10.6L12 3.5l8.5 7.1V20a1 1 0 01-1 1h-15a1 1 0 01-1-1z"/><path d="M9.5 21v-6.5h5V21"/></symbol>
+<symbol id="school" viewBox="0 0 24 24"><path d="M12 4L2.5 8.6 12 13.2l9.5-4.6z"/><path d="M6.5 10.8v4.4c0 1.8 2.5 3.1 5.5 3.1s5.5-1.3 5.5-3.1v-4.4"/></symbol>
+<symbol id="notes" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5"/><path d="M8.8 13h6.4M8.8 16.6h4.2"/></symbol>
+<symbol id="coverage" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v8.5h8.5"/></symbol>
+<symbol id="study" viewBox="0 0 24 24"><path d="M12 3.2l8.8 4.6L12 12.4 3.2 7.8z"/><path d="M3.2 13.4L12 18l8.8-4.6"/></symbol>
+<symbol id="cost" viewBox="0 0 24 24"><path d="M3.5 20.5h17"/><path d="M6.6 20.5v-5.4M11.4 20.5V6.2M16.2 20.5v-8.8"/></symbol>
+<symbol id="sync" viewBox="0 0 24 24"><path d="M20.2 11a8.2 8.2 0 00-14-5.4L3.8 8"/><path d="M3.8 13a8.2 8.2 0 0014 5.4L20.2 16"/><path d="M3.8 3.6V8h4.4M20.2 20.4V16h-4.4"/></symbol>
+<symbol id="person" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.8"/><path d="M4.5 20.6v-.8a5.4 5.4 0 015.4-5.4h4.2a5.4 5.4 0 015.4 5.4v.8"/></symbol>
+<symbol id="settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.1"/><path d="M12 2.6v3M12 18.4v3M2.6 12h3M18.4 12h3M5.4 5.4l2.1 2.1M16.5 16.5l2.1 2.1M18.6 5.4l-2.1 2.1M7.5 16.5l-2.1 2.1"/></symbol>
+<symbol id="logout" viewBox="0 0 24 24"><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/><path d="M9 3.4H5.4a2 2 0 00-2 2v13.2a2 2 0 002 2H9"/></symbol>
+<symbol id="syllabus" viewBox="0 0 24 24"><path d="M8.5 6.5h12M8.5 12h12M8.5 17.5h12"/><path d="M3.8 6.5h.02M3.8 12h.02M3.8 17.5h.02" stroke-width="2.4"/></symbol>
+<symbol id="glossary" viewBox="0 0 24 24"><path d="M18.5 4.5H6l6.6 7.5L6 19.5h12.5"/></symbol>
+<symbol id="gaps" viewBox="0 0 24 24"><path d="M3.4 17.2l5.4-5.4 3.6 3.6 6.4-7.4"/><path d="M15.4 7.4h4.4v4.4"/></symbol>
+<symbol id="copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5.6 15H4.8a1.8 1.8 0 01-1.8-1.8V4.8A1.8 1.8 0 014.8 3h8.4A1.8 1.8 0 0115 4.8v.8"/></symbol>
+<symbol id="down" viewBox="0 0 24 24"><path d="M6.5 9.5l5.5 5.5 5.5-5.5"/></symbol>
+<symbol id="right" viewBox="0 0 24 24"><path d="M9.5 5.5L16 12l-6.5 6.5"/></symbol>
+<symbol id="warn" viewBox="0 0 24 24"><path d="M12 3.6L21.2 19.8H2.8z"/><path d="M12 10v4M12 16.8h.02" stroke-width="2"/></symbol>
+<symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><path d="M12 7v5.2l3.2 2"/></symbol>
+<symbol id="close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+<symbol id="users" viewBox="0 0 24 24"><circle cx="9.5" cy="8.4" r="3.4"/><path d="M3 20.4v-.9a4.9 4.9 0 014.9-4.9h3.2a4.9 4.9 0 014.9 4.9v.9"/><path d="M16.4 5.6a3.2 3.2 0 010 6.2M17.6 14.8h.7a4 4 0 014 4v1.6"/></symbol>
+<!-- iconos de sistema (rellenos) -->
+<symbol id="sys-wifi" viewBox="0 0 24 18"><path d="M12 17.4L23.2 4.2A17.4 17.4 0 00.8 4.2z"/></symbol>
+<symbol id="sys-signal" viewBox="0 0 24 18"><path d="M22 1.2v15.4a.9.9 0 01-.9.9H2.6c-.8 0-1.2-1-.6-1.5L20.5.6c.6-.5 1.5-.1 1.5.6z"/></symbol>
+<symbol id="sys-batt" viewBox="0 0 26 14"><rect x=".8" y=".8" width="21.4" height="12.4" rx="3.4" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="3.2" y="3.2" width="14" height="7.6" rx="1.8"/><path d="M24.2 5.2v3.6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></symbol>
+</svg><div class="doc">
+  <h1>Glifo — Tanda&nbsp;T1</h1>
+  <p class="sub">Diez pantallas, once frames. Lo que debe existir para la corrección del miércoles 19 de agosto: acceso, estructura de navegación con dos roles visiblemente distintos, y las tres listas que exige el Laboratorio&nbsp;2. Media fidelidad sobre marco de 360&nbsp;×&nbsp;800&nbsp;dp con cromo de Android&nbsp;14 e iconografía Material Symbols.</p>
+  <div class="legend">
+    <span><svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="var(--verified)"/></svg> Verificado · N1</span>
+    <span><svg width="12" height="12"><rect x=".5" y=".5" width="11" height="11" rx="2" fill="var(--repaired)"/></svg> Reparado · N1.5</span>
+    <span><svg width="14" height="12"><polygon points="7,0 14,12 0,12" fill="var(--escalated)"/></svg> Escalado · N2</span>
+    <span><svg width="12" height="12"><circle cx="6" cy="6" r="5.2" fill="none" stroke="var(--uncertain)" stroke-width="1.5" stroke-dasharray="2 2"/></svg> Incierto</span>
+  </div>
+</div><div class="grid">
+<div class="block">
+  <div class="cap"><b>A1</b> · Splash y ruteo de sesión</div>
+  <div class="duo">
+    <div class="one"><span class="mode n">NOCHE</span>
+      <div class="device"><div class="screen night">
+    <div class="punch"></div>
+    <div class="sysbar"><span class="hora">9:41</span><span class="sp"></span><span class="sys">
+      <svg class="icf" width="15" height="11"><use href="#sys-wifi"/></svg>
+      <svg class="icf" width="15" height="11"><use href="#sys-signal"/></svg>
+      <svg class="icf" width="24" height="13"><use href="#sys-batt"/></svg></span></div>
+    <div class="splash">
+      <svg width="96" height="96" viewBox="0 0 88 88">
+        <circle cx="44" cy="44" r="39" fill="none" stroke="var(--accentText)" stroke-width="1.2" opacity=".45"/>
+        <path d="M30 58 C30 34, 58 34, 58 48 C58 58, 42 60, 38 50 C35 43, 46 38, 52 44"
+              fill="none" stroke="var(--accentText)" stroke-width="3.4" stroke-linecap="round"/>
+        <circle cx="56.5" cy="29.5" r="2.8" fill="var(--accentText)"/>
+      </svg>
+      <div class="wordmark">Glifo</div>
+      <div class="meta">El glifo es la unidad de la escritura.</div>
+    </div>
+    <div style="padding:0 16px 28px;text-align:center"><span class="meta" style="font-size:12px">Grupo X-Ray · EIF411</span></div>
+    <div class="gest"><i></i></div>
+  </div></div></div>
+    <div class="one"><span class="mode d">DÍA</span>
+      <div class="device"><div class="screen day">
+    <div class="punch"></div>
+    <div class="sysbar"><span class="hora">9:41</span><span class="sp"></span><span class="sys">
+      <svg class="icf" width="15" height="11"><use href="#sys-wifi"/></svg>
+      <svg class="icf" width="15" height="11"><use href="#sys-signal"/></svg>
+      <svg class="icf" width="24" height="13"><use href="#sys-batt"/></svg></span></div>
+    <div class="splash">
+      <svg width="96" height="96" viewBox="0 0 88 88">
+        <circle cx="44" cy="44" r="39" fill="none" stroke="var(--accentText)" stroke-width="1.2" opacity=".45"/>
+        <path d="M30 58 C30 34, 58 34, 58 48 C58 58, 42 60, 38 50 C35 43, 46 38, 52 44"
+              fill="none" stroke="var(--accentText)" stroke-width="3.4" stroke-linecap="round"/>
+        <circle cx="56.5" cy="29.5" r="2.8" fill="var(--accentText)"/>
+      </svg>
+      <div class="wordmark">Glifo</div>
+      <div class="meta">El glifo es la unidad de la escritura.</div>
+    </div>
+    <div style="padding:0 16px 28px;text-align:center"><span class="meta" style="font-size:12px">Grupo X-Ray · EIF411</span></div>
+    <div class="gest"><i></i></div>
+  </div></div></div>
+  </div>
+  <p class="note"><b>Ruteo.</b> Con sesión válida entra al shell del rol; sin sesión, a A2. El trazo del logotipo es un glifo manuscrito, no un icono genérico: es exactamente lo que la aplicación lee.</p>
+</div>
+<div class="block">
+  <div class="cap"><b>A2</b> · Iniciar sesión</div>
+  <div class="duo">
+    <div class="one"><span class="mode n">NOCHE</span>
+      <div class="device"><div class="screen night">
+    <div class="punch"></div>
+    <div class="sysbar"><span class="hora">9:41</span><span class="sp"></span><span class="sys">
+      <svg class="icf" width="15" height="11"><use href="#sys-wifi"/></svg>
+      <svg class="icf" width="15" height="11"><use href="#sys-signal"/></svg>
+      <svg class="icf" width="24" height="13"><use href="#sys-batt"/></svg></span></div>
+    <div class="body">
+      <div style="height:36px"></div>
+      <svg width="52" height="52" viewBox="0 0 88 88"><path d="M30 58 C30 34, 58 34, 58 48 C58 58, 42 60, 38 50 C35 43, 46 38, 52 44" fill="none" stroke="var(--accentText)" stroke-width="4.2" stroke-linecap="round"/></svg>
+      <div style="font-size:22px;font-weight:500;margin:22px 0 6px">Entrar a Glifo</div>
+      <div class="meta" style="margin-bottom:26px">Usá tu correo institucional.</div>
+      <div class="field focus"><div class="lb">Correo</div><div class="vl">bbrenes@est.una.ac.cr</div></div>
+      <div class="field"><div class="lb">Contraseña</div><div class="ph">••••••••</div></div>
+      <div style="height:10px"></div>
+      <div class="btn pri">Entrar</div>
+      <div style="height:10px"></div>
+      <div class="btn txt">Olvidé mi contraseña</div>
+      <div style="height:150px"></div>
+      <div class="betw"><span class="meta">¿Todavía no tenés cuenta?</span>
+        <span style="color:var(--accentText);font-size:16px;font-weight:500">Crear cuenta</span></div>
+    </div>
+    <div class="gest"><i></i></div>
+  </div></div></div>
+    <div class="one"><span class="mode d">DÍA</span>
+      <div class="device"><div class="screen day">
+    <div class="punch"></div>
+    <div class="sysbar"><span class="hora">9:41</span><span class="sp"></span><span class="sys">
+      <svg class="icf" width="15" height="11"><use href="#sys-wifi"/></svg>
+      <svg class="icf" width="15" height="11"><use href="#sys-signal"/></svg>
+      <svg class="icf" width="24" height="13"><use href="#sys-batt"/></svg></span></div>
+    <div class="body">
+      <div style="height:36px"></div>
+      <svg width="52" height="52" viewBox="0 0 88 88"><path d="M30 58 C30 34, 58 34, 58 48 C58 58, 42 60, 38 50 C35 43, 46 38, 52 44" fill="none" stroke="var(--accentText)" stroke-width="4.2" stroke-linecap="round"/></svg>
+      <div style="font-size:22px;font-weight:500;margin:22px 0 6px">Entrar a Glifo</div>
+      <div class="meta" style="margin-bottom:26px">Usá tu correo institucional.</div>
+      <div class="field focus"><div class="lb">Correo</div><div class="vl">bbrenes@est.una.ac.cr</div></div>
+      <div class="field"><div class="lb">Contraseña</div><div class="ph">••••••••</div></div>
+      <div style="height:10px"></div>
+      <div class="btn pri">Entrar</div>
+      <div style="height:10px"></div>
+      <div class="btn txt">Olvidé mi contraseña</div>
+      <div style="height:150px"></div>
+      <div class="betw"><span class="meta">¿Todavía no tenés cuenta?</span>
+        <span style="color:var(--accentText);font-size:16px;font-weight:500">Crear cuenta</span></div>
+    </div>
+    <div class="gest"><i></i></div>
+  </div></div></div>
+  </div>
+  <p class="note"><b>Laboratorio 2 — login.</b> El primer campo va en estado <i>focus</i> para documentar la variante. El error de validación se dibuja en T2.</p>
+</div>
+<div class="block">
+  <div class="cap"><b>A3</b> · Crear cuenta</div>
+  <div class="duo">
+    <div class="one"><span class="mode n">NOCHE</span>
+      <div class="device"><div class="screen night">
+    <div class="punch"></div>
+    <div class="sysbar"><span class="hora">9:41</span><span class="sp"></span><span class="sys">
+      <svg class="icf" width="15" height="11"><use href="#sys-wifi"/></svg>
+      <svg class="icf" width="15" height="11"><use href="#sys-signal"/></svg>
+      <svg class="icf" width="24" height="13"><use href="#sys-batt"/></svg></span></div>
+    <div class="appbar"><span class="tap"><svg class="ic"><use href="#back"/></svg></span>
+      <span class="t" style="font-size:18px">Crear cuenta</span></div>
+    <div class="body">
+      <div class="field"><div class="lb">Nombre completo</div><div class="vl">Brandon Brenes</div></div>
+      <div class="field"><div class="lb">Correo</div><div class="vl">bbrenes@est.una.ac.cr</div></div>
+      <div class="field"><div class="lb">Contraseña</div><div class="ph">Mínimo 8 caracteres</div></div>
+      <div class="field err"><div class="lb">Confirmar contraseña</div><div class="ph">••••••</div></div>
+      <div class="row" style="color:var(--alert);margin:-2px 0 18px;gap:6px">
+        <svg class="ic s18"><use href="#warn"/></svg><span style="font-size:14px">Las dos contraseñas deben coincidir.</span></div>
+      <div class="btn pri">Crear cuenta</div>
+      <div style="height:18px"></div>
+      <div class="meta" style="line-height:1.55">Vas a entrar como estudiante. Si sos docente, pedile el cambio de rol al administrador.</div>
+    </div>
+    <div class="gest"><i></i></div>
+  </div></div></div>
+    <div class="one"><span class="mode d">DÍA</span>
+      <div class="device"><div class="screen day">
+    <div class="punch"></div>
+    <div class="sysbar"><span class="hora">9:41</span><span class="sp"></span><span class="sys">
+      <svg class="icf" width="15" height="11"><use href="#sys-wifi"/></svg>
+      <svg class="icf" width="15" height="11"><use href="#sys-signal"/></svg>
+      <svg class="icf" width="24" height="13"><use href="#sys-batt"/></svg></span></div>
+    <div class="appbar"><span class="tap"><svg class="ic"><use href="#back"/></svg></span>
+      <span class="t" style="font-size:18px">Crear cuenta</span></div>
+    <div class="body">
+      <div class="field"><div class="lb">Nombre completo</div><div class="vl">Brandon Brenes</div></div>
+      <div class="field"><div class="lb">Correo</div><div class="vl">bbrenes@est.una.ac.cr</div></div>
+      <div class="field"><div class="lb">Contraseña</div><div class="ph">Mínimo 8 caracteres</div></div>
+      <div class="field err"><div class="lb">Confirmar contraseña</div><div class="ph">••••••</div></div>
+      <div class="row" style="color:var(--alert);margin:-2px 0 18px;gap:6px">
+        <svg class="ic s18"><use href="#warn"/></svg><span style="font-size:14px">Las dos contraseñas deben coincidir.</span></div>
+      <div class="btn pri">Crear cuenta</div>
+      <div style="height:18px"></div>
+      <div class="meta" style="line-height:1.55">Vas a entrar como estudiante. Si sos docente, pedile el cambio de rol al administrador.</div>
+    </div>
+    <div class="gest"><i></i></div>
+  </div></div></div>
+  </div>
+  <p class="note"><b>Laboratorio 2 — registro.</b> Documenta la variante de error del campo. El registro público no crea docentes: el rol lo asigna el administrador, y eso es lo que sostiene la existencia de la pantalla J2.</p>
+</div>
+<div class="block">
+  <div class="cap"><b>B1a</b> · Menú — estudiante</div>
+  <div class="duo">
+    <div class="one"><span class="mode n">NOCHE</span>
+      <div class="device"><div class="screen night">
+    <div class="punch"></div>
+    <div class="sysbar"><span class="hora">9:41</span><span class="sp"></span><span class="sys">
+      <svg class="icf" width="15" height="11"><use href="#sys-wifi"/></svg>
+      <svg class="icf" width="15" height="11"><use href="#sys-signal"/></svg>
+      <svg class="icf" width="24" height="13"><use href="#sys-batt"/></svg></span></div>
+    <div class="scrim">
+      <div class="drawer">
+        <div class="dhead">
+          <div class="avatar">BB</div>
+          <div style="font-size:16px;margin-top:12px">Brandon Brenes</div>
+          <div class="meta" style="font-size:13px">bbrenes@est.una.ac.cr</div>
+          <div class="rolechip">ESTUDIANTE</div>
+        </div>
+        <div class="dcourse">
+          <div class="meta" style="font-size:11px;text-transform:uppercase;letter-spacing:.5px">Curso activo</div>
+          <div class="betw" style="margin-top:4px"><span style="font-size:16px">Cálculo II</span>
+            <span style="color:var(--accentText);font-size:14px">Cambiar</span></div>
+        </div>
+        <div style="padding:8px 0;overflow:hidden">
+          <div class="ditem on"><svg class="ic"><use href="#home"/></svg>Inicio</div>
+          <div class="ditem"><svg class="ic"><use href="#school"/></svg>Mis cursos</div>
+          <div class="ditem"><svg class="ic"><use href="#notes"/></svg>Apuntes</div>
+          <div class="ditem"><svg class="ic"><use href="#coverage"/></svg>Cobertura</div>
+          <div class="ditem"><svg class="ic"><use href="#study"/></svg>Estudio</div>
+          <div class="ditem"><svg class="ic"><use href="#sync"/></svg>Sincronización</div>
+          <div class="ditem"><svg class="ic"><use href="#cost"/></svg>Consumo</div>
+          <div class="dsep"></div>
+          <div class="ditem"><svg class="ic"><use href="#person"/></svg>Perfil</div>
+          <div class="ditem"><svg class="ic"><use href="#settings"/></svg>Ajustes</div>
+          <div class="ditem" style="color:var(--alert)"><svg class="ic" style="color:var(--alert)"><use href="#logout"/></svg>Cerrar sesión</div>
+        </div>
+      </div>
+      <div style="flex:1"></div>
+    </div>
+    <div class="gest"><i></i></div>
+  </div></div></div>
+    <div class="one"><span class="mode d">DÍA</span>
+      <div class="device"><div class="screen day">
+    <div class="punch"></div>
+    <div class="sysbar"><span class="hora">9:41</span><span class="sp"></span><span class="sys">
+      <svg class="icf" width="15" height="11"><use href="#sys-wifi"/></svg>
+      <svg class="icf" width="15" height="11"><use href="#sys-signal"/></svg>
+      <svg class="icf" width="24" height="13"><use href="#sys-batt"/></svg></span></div>
+    <div class="scrim">
+      <div class="drawer">
+        <div class="dhead">
+          <div class="avatar">BB</div>
+          <div style="font-size:16px;margin-top:12px">Brandon Brenes</div>
+          <div class="meta" style="font-size:13px">bbrenes@est.una.ac.cr</div>
+          <div class="rolechip">ESTUDIANTE</div>
+        </div>
+        <div class="dcourse">
+          <div class="meta" style="font-size:11px;text-transform:uppercase;letter-spacing:.5px">Curso activo</div>
+          <div class="betw" style="margin-top:4px"><span style="font-size:16px">Cálculo II</span>
+            <span style="color:var(--accentText);font-size:14px">Cambiar</span></div>
+        </div>
+        <div style="padding:8px 0;overflow:hidden">
+          <div class="ditem on"><svg class="ic"><use href="#home"/></svg>Inicio</div>
+          <div class="ditem"><svg class="ic"><use href="#school"/></svg>Mis cursos</div>
+          <div class="ditem"><svg class="ic"><use href="#notes"/></svg>Apuntes</div>
+          <div class="ditem"><svg class="ic"><use href="#coverage"/></svg>Cobertura</div>
+          <div class="ditem"><svg class="ic"><use href="#study"/></svg>Estudio</div>
+          <div class="ditem"><svg class="ic"><use href="#sync"/></svg>Sincronización</div>
+          <div class="ditem"><svg class="ic"><use href="#cost"/></svg>Consumo</div>
+          <div class="dsep"></div>
+          <div class="ditem"><svg class="ic"><use href="#person"/></svg>Perfil</div>
+          <div class="ditem"><svg class="ic"><use href="#settings"/></svg>Ajustes</div>
+          <div class="ditem" style="color:var(--alert)"><svg class="ic" style="color:var(--alert)"><use href="#logout"/></svg>Cerrar sesión</div>
+        </div>
+      </div>
+      <div style="flex:1"></div>
+    </div>
+    <div class="gest"><i></i></div>
+  </div></div></div>
+  </div>
+  <p class="note"><b>Siete destinos.</b> Comparar con B1b: entre los dos roles solo se repiten <i>Perfil</i> y <i>Ajustes</i>.</p>
+</div>
+<div class="block">
+  <div class="cap"><b>B1b</b> · Menú — docente</div>
+  <div class="duo">
+    <div class="one"><span class="mode n">NOCHE</span>
+      <div class="device"><div class="screen night">
+    <div class="punch"></div>
+    <div class="sysbar"><span class="hora">9:41</span><span class="sp"></span><span class="sys">
+      <svg class="icf" width="15" height="11"><use href="#sys-wifi"/></svg>
+      <svg class="icf" width="15" height="11"><use href="#sys-signal"/></svg>
+      <svg class="icf" width="24" height="13"><use href="#sys-batt"/></svg></span></div>
+    <div class="scrim">
+      <div class="drawer">
+        <div class="dhead">
+          <div class="avatar" style="color:var(--accentText)">MG</div>
+          <div style="font-size:16px;margin-top:12px">Maikol Guzmán</div>
+          <div class="meta" style="font-size:13px">maikol.guzman@una.cr</div>
+          <div class="rolechip" style="background:var(--accentSoft);color:var(--accentText)">DOCENTE</div>
+        </div>
+        <div class="dcourse">
+          <div class="meta" style="font-size:11px;text-transform:uppercase;letter-spacing:.5px">Curso activo</div>
+          <div class="betw" style="margin-top:4px"><span style="font-size:16px">EIF411</span>
+            <span style="color:var(--accentText);font-size:14px">Cambiar</span></div>
+        </div>
+        <div style="padding:8px 0;overflow:hidden">
+          <div class="ditem on"><svg class="ic"><use href="#home"/></svg>Inicio</div>
+          <div class="ditem"><svg class="ic"><use href="#school"/></svg>Mis cursos</div>
+          <div class="ditem"><svg class="ic"><use href="#syllabus"/></svg>Temario</div>
+          <div class="ditem"><svg class="ic"><use href="#glossary"/></svg>Glosario de notación</div>
+          <div class="ditem"><svg class="ic"><use href="#gaps"/></svg>Brechas del grupo</div>
+          <div class="ditem"><svg class="ic"><use href="#cost"/></svg>Consumo del curso</div>
+          <div class="dsep"></div>
+          <div class="ditem"><svg class="ic"><use href="#person"/></svg>Perfil</div>
+          <div class="ditem"><svg class="ic"><use href="#settings"/></svg>Ajustes</div>
+          <div class="ditem" style="color:var(--alert)"><svg class="ic" style="color:var(--alert)"><use href="#logout"/></svg>Cerrar sesión</div>
+        </div>
+      </div>
+      <div style="flex:1"></div>
+    </div>
+    <div class="gest"><i></i></div>
+  </div></div></div>
+    <div class="one"><span class="mode d">DÍA</span>
+      <div class="device"><div class="screen day">
+    <div class="punch"></div>
+    <div class="sysbar"><span class="hora">9:41</span><span class="sp"></span><span class="sys">
+      <svg class="icf" width="15" height="11"><use href="#sys-wifi"/></svg>
+      <svg class="icf" width="15" height="11"><use href="#sys-signal"/></svg>
+      <svg class="icf" width="24" height="13"><use href="#sys-batt"/></svg></span></div>
+    <div class="scrim">
+      <div class="drawer">
+        <div class="dhead">
+          <div class="avatar" style="color:var(--accentText)">MG</div>
+          <div style="font-size:16px;margin-top:12px">Maikol Guzmán</div>
+          <div class="meta" style="font-size:13px">maikol.guzman@una.cr</div>
+          <div class="rolechip" style="background:var(--accentSoft);color:var(--accentText)">DOCENTE</div>
+        </div>
+        <div class="dcourse">
+          <div class="meta" style="font-size:11px;text-transform:uppercase;letter-spacing:.5px">Curso activo</div>
+          <div class="betw" style="margin-top:4px"><span style="font-size:16px">EIF411</span>
+            <span style="color:var(--accentText);font-size:14px">Cambiar</span></div>
+        </div>
+        <div style="padding:8px 0;overflow:hidden">
+          <div class="ditem on"><svg class="ic"><use href="#home"/></svg>Inicio</div>
+          <div class="ditem"><svg class="ic"><use href="#school"/></svg>Mis cursos</div>
+          <div class="ditem"><svg class="ic"><use href="#syllabus"/></svg>Temario</div>
+          <div class="ditem"><svg class="ic"><use href="#glossary"/></svg>Glosario de notación</div>
+          <div class="ditem"><svg class="ic"><use href="#gaps"/></svg>Brechas del grupo</div>
+          <div class="ditem"><svg class="ic"><use href="#cost"/></svg>Consumo del curso</div>
+          <div class="dsep"></div>
+          <div class="ditem"><svg class="ic"><use href="#person"/></svg>Perfil</div>
+          <div class="ditem"><svg class="ic"><use href="#settings"/></svg>Ajustes</div>
+          <div class="ditem" style="color:var(--alert)"><svg class="ic" style="color:var(--alert)"><use href="#logout"/></svg>Cerrar sesión</div>
+        </div>
+      </div>
+      <div style="flex:1"></div>
+    </div>
+    <div class="gest"><i></i></div>
+  </div></div></div>
+  </div>
+  <p class="note"><b>Requisito del 12 de agosto.</b> Dos menús que se ven distintos al abrirlos son la prueba visual más barata de que hay dos roles reales, no un booleano de permiso.</p>
+</div>
+<div class="block">
+  <div class="cap"><b>B2</b> · Inicio — estudiante</div>
+  <div class="duo">
+    <div class="one"><span class="mode n">NOCHE</span>
+      <div class="device"><div class="screen night">
+    <div class="punch"></div>
+    <div class="sysbar"><span class="hora">9:41</span><span class="sp"></span><span class="sys">
+      <svg class="icf" width="15" height="11"><use href="#sys-wifi"/></svg>
+      <svg class="icf" width="15" height="11"><use href="#sys-signal"/></svg>
+      <svg class="icf" width="24" height="13"><use href="#sys-batt"/></svg></span></div>
+    <div class="appbar">
+      <span class="tap"><svg class="ic"><use href="#menu"/></svg></span>
+      <div class="sw"><span class="lbl">Curso activo</span>
+        <span class="val">Cálculo II <svg class="ic s18" style="stroke-width:2"><use href="#down"/></svg></span></div>
+      <span class="sp"></span>
+      <span class="tap"><svg class="ic"><use href="#clock"/></svg></span>
+    </div>
+    <div class="banner"><svg class="ic s18"><use href="#sync"/></svg>2 capturas en cola · se envían al volver la red</div>
+    <div class="body">
+      <div class="card">
+        <div class="betw"><span class="name">Cobertura del curso</span>
+          <span style="font-size:24px;font-weight:600;color:var(--accentText)">68%</span></div>
+        <div class="covbar">
+          <i style="width:54%;background:var(--verified)"></i>
+          <i style="width:20%;background:var(--repaired)"></i>
+          <i style="width:14%;background:var(--escalated)"></i>
+          <i style="width:12%;background:var(--uncertain)"></i></div>
+        <div class="betw"><span class="meta">18 sólidos · 7 parciales · 5 ausentes</span>
+          <span style="color:var(--verified);font-size:14px;font-weight:500">+2 desde el 8 ago</span></div>
+      </div>
+      <h2 class="sec">Pendientes de hoy</h2>
+      <div class="quad">
+        <div class="q"><span class="qn"><svg class="ic s20" style="color:var(--accentText)"><use href="#study"/></svg>12 flashcards</span>
+          <span class="qm">Series · Integrales impropias</span></div>
+        <div class="q"><span class="qn"><svg class="ic s20" style="color:var(--accentText)"><use href="#coverage"/></svg>1 quiz</span>
+          <span class="qm">De los vacíos detectados</span></div>
+      </div>
+      <h2 class="sec">Últimos apuntes</h2>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="item">
+          <div class="thumb"><svg class="ic s20"><use href="#notes"/></svg></div>
+          <div style="flex:1"><div class="tt">Integrales impropias</div><div class="st">12 ago · 3 páginas</div></div>
+          <div class="chips">
+            <svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="var(--verified)"/></svg>
+            <svg width="12" height="12"><rect width="11" height="11" rx="2" fill="var(--repaired)"/></svg>
+            <svg width="14" height="12"><polygon points="7,0 14,12 0,12" fill="var(--escalated)"/></svg></div>
+        </div>
+        <div class="item" style="border-bottom:none">
+          <div class="thumb"><svg class="ic s20"><use href="#notes"/></svg></div>
+          <div style="flex:1"><div class="tt">Criterio de comparación</div><div class="st">7 ago · 2 páginas</div></div>
+          <div class="chips">
+            <svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="var(--verified)"/></svg>
+            <svg width="12" height="12"><circle cx="6" cy="6" r="5.2" fill="none" stroke="var(--uncertain)" stroke-width="1.5" stroke-dasharray="2 2"/></svg></div>
+        </div>
+      </div>
+    </div>
+    <div class="fab"><svg class="ic"><use href="#camera"/></svg></div>
+    <div class="gest"><i></i></div>
+  </div></div></div>
+    <div class="one"><span class="mode d">DÍA</span>
+      <div class="device"><div class="screen day">
+    <div class="punch"></div>
+    <div class="sysbar"><span class="hora">9:41</span><span class="sp"></span><span class="sys">
+      <svg class="icf" width="15" height="11"><use href="#sys-wifi"/></svg>
+      <svg class="icf" width="15" height="11"><use href="#sys-signal"/></svg>
+      <svg class="icf" width="24" height="13"><use href="#sys-batt"/></svg></span></div>
+    <div class="appbar">
+      <span class="tap"><svg class="ic"><use href="#menu"/></svg></span>
+      <div class="sw"><span class="lbl">Curso activo</span>
+        <span class="val">Cálculo II <svg class="ic s18" style="stroke-width:2"><use href="#down"/></svg></span></div>
+      <span class="sp"></span>
+      <span class="tap"><svg class="ic"><use href="#clock"/></svg></span>
+    </div>
+    <div class="banner"><svg class="ic s18"><use href="#sync"/></svg>2 capturas en cola · se envían al volver la red</div>
+    <div class="body">
+      <div class="card">
+        <div class="betw"><span class="name">Cobertura del curso</span>
+          <span style="font-size:24px;font-weight:600;color:var(--accentText)">68%</span></div>
+        <div class="covbar">
+          <i style="width:54%;background:var(--verified)"></i>
+          <i style="width:20%;background:var(--repaired)"></i>
+          <i style="width:14%;background:var(--escalated)"></i>
+          <i style="width:12%;background:var(--uncertain)"></i></div>
+        <div class="betw"><span class="meta">18 sólidos · 7 parciales · 5 ausentes</span>
+          <span style="color:var(--verified);font-size:14px;font-weight:500">+2 desde el 8 ago</span></div>
+      </div>
+      <h2 class="sec">Pendientes de hoy</h2>
+      <div class="quad">
+        <div class="q"><span class="qn"><svg class="ic s20" style="color:var(--accentText)"><use href="#study"/></svg>12 flashcards</span>
+          <span class="qm">Series · Integrales impropias</span></div>
+        <div class="q"><span class="qn"><svg class="ic s20" style="color:var(--accentText)"><use href="#coverage"/></svg>1 quiz</span>
+          <span class="qm">De los vacíos detectados</span></div>
+      </div>
+      <h2 class="sec">Últimos apuntes</h2>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="item">
+          <div class="thumb"><svg class="ic s20"><use href="#notes"/></svg></div>
+          <div style="flex:1"><div class="tt">Integrales impropias</div><div class="st">12 ago · 3 páginas</div></div>
+          <div class="chips">
+            <svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="var(--verified)"/></svg>
+            <svg width="12" height="12"><rect width="11" height="11" rx="2" fill="var(--repaired)"/></svg>
+            <svg width="14" height="12"><polygon points="7,0 14,12 0,12" fill="var(--escalated)"/></svg></div>
+        </div>
+        <div class="item" style="border-bottom:none">
+          <div class="thumb"><svg class="ic s20"><use href="#notes"/></svg></div>
+          <div style="flex:1"><div class="tt">Criterio de comparación</div><div class="st">7 ago · 2 páginas</div></div>
+          <div class="chips">
+            <svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="var(--verified)"/></svg>
+            <svg width="12" height="12"><circle cx="6" cy="6" r="5.2" fill="none" stroke="var(--uncertain)" stroke-width="1.5" stroke-dasharray="2 2"/></svg></div>
+        </div>
+      </div>
+    </div>
+    <div class="fab"><svg class="ic"><use href="#camera"/></svg></div>
+    <div class="gest"><i></i></div>
+  </div></div></div>
+  </div>
+  <p class="note"><b>Conmutador de curso</b> en la barra superior: es el único punto donde <i>SharedPreferences</i> se vuelve visible y demostrable. El delta y los chips de confianza aparecen desde el inicio, no escondidos en pantallas internas.</p>
+</div>
+<div class="block">
+  <div class="cap"><b>B3</b> · Inicio — docente</div>
+  <div class="duo">
+    <div class="one"><span class="mode n">NOCHE</span>
+      <div class="device"><div class="screen night">
+    <div class="punch"></div>
+    <div class="sysbar"><span class="hora">9:41</span><span class="sp"></span><span class="sys">
+      <svg class="icf" width="15" height="11"><use href="#sys-wifi"/></svg>
+      <svg class="icf" width="15" height="11"><use href="#sys-signal"/></svg>
+      <svg class="icf" width="24" height="13"><use href="#sys-batt"/></svg></span></div>
+    <div class="appbar">
+      <span class="tap"><svg class="ic"><use href="#menu"/></svg></span>
+      <div class="sw"><span class="lbl">Curso activo</span>
+        <span class="val">EIF411 <svg class="ic s18" style="stroke-width:2"><use href="#down"/></svg></span></div>
+      <span class="sp"></span>
+    </div>
+    <div class="body">
+      <div class="card">
+        <div class="betw"><span class="name">Cobertura del grupo</span>
+          <span style="font-size:24px;font-weight:600;color:var(--accentText)">54%</span></div>
+        <div class="covbar">
+          <i style="width:40%;background:var(--verified)"></i>
+          <i style="width:24%;background:var(--repaired)"></i>
+          <i style="width:26%;background:var(--escalated)"></i>
+          <i style="width:10%;background:var(--uncertain)"></i></div>
+        <div class="meta">27 estudiantes inscritos · promedio del curso</div>
+      </div>
+      <h2 class="sec">Temas con más vacíos</h2>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="item">
+          <svg width="14" height="12"><polygon points="7,0 14,12 0,12" fill="var(--escalated)"/></svg>
+          <div style="flex:1"><div class="tt">4.3 Sockets e hilos</div><div class="st">19 de 27 sin cubrir</div></div>
+          <span class="meta">70%</span>
+          <svg class="ic s18" style="color:var(--textSecondary)"><use href="#right"/></svg>
+        </div>
+        <div class="item">
+          <svg width="12" height="12"><circle cx="6" cy="6" r="5.2" fill="none" stroke="var(--uncertain)" stroke-width="1.5" stroke-dasharray="2 2"/></svg>
+          <div style="flex:1"><div class="tt">6.1 Seguridad y permisos</div><div class="st">14 de 27 sin cubrir</div></div>
+          <span class="meta">52%</span>
+          <svg class="ic s18" style="color:var(--textSecondary)"><use href="#right"/></svg>
+        </div>
+        <div class="item" style="border-bottom:none">
+          <svg width="12" height="12"><rect width="11" height="11" rx="2" fill="var(--repaired)"/></svg>
+          <div style="flex:1"><div class="tt">3.2 Jetpack Compose</div><div class="st">8 de 27 sin cubrir</div></div>
+          <span class="meta">30%</span>
+          <svg class="ic s18" style="color:var(--textSecondary)"><use href="#right"/></svg>
+        </div>
+      </div>
+      <h2 class="sec">Requiere atención</h2>
+      <div class="card" style="border-color:var(--alertLine);background:var(--alertFaint)">
+        <div class="row" style="gap:10px"><svg class="ic s20" style="color:var(--alert)"><use href="#warn"/></svg>
+          <span style="font-size:16px;font-weight:500">Álgebra Lineal no tiene temario</span></div>
+        <div class="meta" style="margin:8px 0 14px">Sin temario no se puede calcular la cobertura.</div>
+        <div class="btn sec">Publicar temario</div>
+      </div>
+    </div>
+    <div class="gest"><i></i></div>
+  </div></div></div>
+    <div class="one"><span class="mode d">DÍA</span>
+      <div class="device"><div class="screen day">
+    <div class="punch"></div>
+    <div class="sysbar"><span class="hora">9:41</span><span class="sp"></span><span class="sys">
+      <svg class="icf" width="15" height="11"><use href="#sys-wifi"/></svg>
+      <svg class="icf" width="15" height="11"><use href="#sys-signal"/></svg>
+      <svg class="icf" width="24" height="13"><use href="#sys-batt"/></svg></span></div>
+    <div class="appbar">
+      <span class="tap"><svg class="ic"><use href="#menu"/></svg></span>
+      <div class="sw"><span class="lbl">Curso activo</span>
+        <span class="val">EIF411 <svg class="ic s18" style="stroke-width:2"><use href="#down"/></svg></span></div>
+      <span class="sp"></span>
+    </div>
+    <div class="body">
+      <div class="card">
+        <div class="betw"><span class="name">Cobertura del grupo</span>
+          <span style="font-size:24px;font-weight:600;color:var(--accentText)">54%</span></div>
+        <div class="covbar">
+          <i style="width:40%;background:var(--verified)"></i>
+          <i style="width:24%;background:var(--repaired)"></i>
+          <i style="width:26%;background:var(--escalated)"></i>
+          <i style="width:10%;background:var(--uncertain)"></i></div>
+        <div class="meta">27 estudiantes inscritos · promedio del curso</div>
+      </div>
+      <h2 class="sec">Temas con más vacíos</h2>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="item">
+          <svg width="14" height="12"><polygon points="7,0 14,12 0,12" fill="var(--escalated)"/></svg>
+          <div style="flex:1"><div class="tt">4.3 Sockets e hilos</div><div class="st">19 de 27 sin cubrir</div></div>
+          <span class="meta">70%</span>
+          <svg class="ic s18" style="color:var(--textSecondary)"><use href="#right"/></svg>
+        </div>
+        <div class="item">
+          <svg width="12" height="12"><circle cx="6" cy="6" r="5.2" fill="none" stroke="var(--uncertain)" stroke-width="1.5" stroke-dasharray="2 2"/></svg>
+          <div style="flex:1"><div class="tt">6.1 Seguridad y permisos</div><div class="st">14 de 27 sin cubrir</div></div>
+          <span class="meta">52%</span>
+          <svg class="ic s18" style="color:var(--textSecondary)"><use href="#right"/></svg>
+        </div>
+        <div class="item" style="border-bottom:none">
+          <svg width="12" height="12"><rect width="11" height="11" rx="2" fill="var(--repaired)"/></svg>
+          <div style="flex:1"><div class="tt">3.2 Jetpack Compose</div><div class="st">8 de 27 sin cubrir</div></div>
+          <span class="meta">30%</span>
+          <svg class="ic s18" style="color:var(--textSecondary)"><use href="#right"/></svg>
+        </div>
+      </div>
+      <h2 class="sec">Requiere atención</h2>
+      <div class="card" style="border-color:var(--alertLine);background:var(--alertFaint)">
+        <div class="row" style="gap:10px"><svg class="ic s20" style="color:var(--alert)"><use href="#warn"/></svg>
+          <span style="font-size:16px;font-weight:500">Álgebra Lineal no tiene temario</span></div>
+        <div class="meta" style="margin:8px 0 14px">Sin temario no se puede calcular la cobertura.</div>
+        <div class="btn sec">Publicar temario</div>
+      </div>
+    </div>
+    <div class="gest"><i></i></div>
+  </div></div></div>
+  </div>
+  <p class="note"><b>Ningún elemento de contenido en común con B2.</b> Misma shell, pantallas distintas: es el argumento de los dos roles convertido en interfaz.</p>
+</div>
+<div class="block">
+  <div class="cap"><b>C1</b> · Mis cursos — estudiante <i>(lista 1 de 3)</i></div>
+  <div class="duo">
+    <div class="one"><span class="mode n">NOCHE</span>
+      <div class="device"><div class="screen night">
+    <div class="punch"></div>
+    <div class="sysbar"><span class="hora">9:41</span><span class="sp"></span><span class="sys">
+      <svg class="icf" width="15" height="11"><use href="#sys-wifi"/></svg>
+      <svg class="icf" width="15" height="11"><use href="#sys-signal"/></svg>
+      <svg class="icf" width="24" height="13"><use href="#sys-batt"/></svg></span></div>
+    <div class="appbar"><span class="tap"><svg class="ic"><use href="#menu"/></svg></span>
+      <span class="t">Mis cursos</span><span class="sp"></span>
+      <span class="tap"><svg class="ic"><use href="#search"/></svg></span></div>
+    <div class="body">
+      <div class="card">
+        <div class="betw"><span class="name">Cálculo II</span>
+          <span class="badge" style="background:var(--accentSoft);color:var(--accentText)">ACTIVO</span></div>
+        <div class="code">MAT-202 · Prof. Rodríguez</div>
+        <div class="covbar"><i style="width:54%;background:var(--verified)"></i><i style="width:20%;background:var(--repaired)"></i><i style="width:14%;background:var(--escalated)"></i><i style="width:12%;background:var(--uncertain)"></i></div>
+        <div class="betw"><span class="meta">68% de cobertura</span>
+          <span style="color:var(--verified);font-size:14px;font-weight:500">+2</span></div>
+      </div>
+      <div class="card">
+        <div class="name">Física General II</div>
+        <div class="code">FIS-204 · Prof. Mora</div>
+        <div class="covbar"><i style="width:31%;background:var(--verified)"></i><i style="width:14%;background:var(--repaired)"></i><i style="width:25%;background:var(--escalated)"></i><i style="width:30%;background:var(--uncertain)"></i></div>
+        <div class="betw"><span class="meta">45% de cobertura</span><span class="meta">sin cambios</span></div>
+      </div>
+      <div class="card">
+        <div class="name">Programación IV</div>
+        <div class="code">EIF-209 · Prof. Guzmán</div>
+        <div class="covbar"><i style="width:70%;background:var(--verified)"></i><i style="width:12%;background:var(--repaired)"></i><i style="width:10%;background:var(--escalated)"></i><i style="width:8%;background:var(--uncertain)"></i></div>
+        <div class="betw"><span class="meta">82% de cobertura</span>
+          <span style="color:var(--verified);font-size:14px;font-weight:500">+5</span></div>
+      </div>
+      <div style="height:8px"></div>
+      <div class="btn sec"><svg class="ic s20"><use href="#add"/></svg>Unirme con un código</div>
+    </div>
+    <div class="gest"><i></i></div>
+  </div></div></div>
+    <div class="one"><span class="mode d">DÍA</span>
+      <div class="device"><div class="screen day">
+    <div class="punch"></div>
+    <div class="sysbar"><span class="hora">9:41</span><span class="sp"></span><span class="sys">
+      <svg class="icf" width="15" height="11"><use href="#sys-wifi"/></svg>
+      <svg class="icf" width="15" height="11"><use href="#sys-signal"/></svg>
+      <svg class="icf" width="24" height="13"><use href="#sys-batt"/></svg></span></div>
+    <div class="appbar"><span class="tap"><svg class="ic"><use href="#menu"/></svg></span>
+      <span class="t">Mis cursos</span><span class="sp"></span>
+      <span class="tap"><svg class="ic"><use href="#search"/></svg></span></div>
+    <div class="body">
+      <div class="card">
+        <div class="betw"><span class="name">Cálculo II</span>
+          <span class="badge" style="background:var(--accentSoft);color:var(--accentText)">ACTIVO</span></div>
+        <div class="code">MAT-202 · Prof. Rodríguez</div>
+        <div class="covbar"><i style="width:54%;background:var(--verified)"></i><i style="width:20%;background:var(--repaired)"></i><i style="width:14%;background:var(--escalated)"></i><i style="width:12%;background:var(--uncertain)"></i></div>
+        <div class="betw"><span class="meta">68% de cobertura</span>
+          <span style="color:var(--verified);font-size:14px;font-weight:500">+2</span></div>
+      </div>
+      <div class="card">
+        <div class="name">Física General II</div>
+        <div class="code">FIS-204 · Prof. Mora</div>
+        <div class="covbar"><i style="width:31%;background:var(--verified)"></i><i style="width:14%;background:var(--repaired)"></i><i style="width:25%;background:var(--escalated)"></i><i style="width:30%;background:var(--uncertain)"></i></div>
+        <div class="betw"><span class="meta">45% de cobertura</span><span class="meta">sin cambios</span></div>
+      </div>
+      <div class="card">
+        <div class="name">Programación IV</div>
+        <div class="code">EIF-209 · Prof. Guzmán</div>
+        <div class="covbar"><i style="width:70%;background:var(--verified)"></i><i style="width:12%;background:var(--repaired)"></i><i style="width:10%;background:var(--escalated)"></i><i style="width:8%;background:var(--uncertain)"></i></div>
+        <div class="betw"><span class="meta">82% de cobertura</span>
+          <span style="color:var(--verified);font-size:14px;font-weight:500">+5</span></div>
+      </div>
+      <div style="height:8px"></div>
+      <div class="btn sec"><svg class="ic s20"><use href="#add"/></svg>Unirme con un código</div>
+    </div>
+    <div class="gest"><i></i></div>
+  </div></div></div>
+  </div>
+  <p class="note"><b>Lista 1.</b> El estado vacío usa <i>EstadoVacio</i> con la acción «Unirme con un código», y se dibuja como variante del mismo frame.</p>
+</div>
+<div class="block">
+  <div class="cap"><b>C3</b> · Curso — centro de acceso</div>
+  <div class="duo">
+    <div class="one"><span class="mode n">NOCHE</span>
+      <div class="device"><div class="screen night">
+    <div class="punch"></div>
+    <div class="sysbar"><span class="hora">9:41</span><span class="sp"></span><span class="sys">
+      <svg class="icf" width="15" height="11"><use href="#sys-wifi"/></svg>
+      <svg class="icf" width="15" height="11"><use href="#sys-signal"/></svg>
+      <svg class="icf" width="24" height="13"><use href="#sys-batt"/></svg></span></div>
+    <div class="appbar"><span class="tap"><svg class="ic"><use href="#back"/></svg></span>
+      <span class="t" style="font-size:18px">Cálculo II</span></div>
+    <div class="body">
+      <div class="card">
+        <div class="code" style="margin:0 0 12px">MAT-202 · II Ciclo 2026 · Prof. Rodríguez</div>
+        <div class="covbar big" style="margin-top:0"><i style="width:54%;background:var(--verified)"></i><i style="width:20%;background:var(--repaired)"></i><i style="width:14%;background:var(--escalated)"></i><i style="width:12%;background:var(--uncertain)"></i></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin-top:12px">
+          <span class="meta row" style="gap:7px"><svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="var(--verified)"/></svg>18 sólidos</span>
+          <span class="meta row" style="gap:7px"><svg width="12" height="12"><rect width="11" height="11" rx="2" fill="var(--repaired)"/></svg>7 parciales</span>
+          <span class="meta row" style="gap:7px"><svg width="14" height="12"><polygon points="7,0 14,12 0,12" fill="var(--escalated)"/></svg>5 ausentes</span>
+          <span class="meta row" style="gap:7px"><svg width="12" height="12"><circle cx="6" cy="6" r="5.2" fill="none" stroke="var(--uncertain)" stroke-width="1.5" stroke-dasharray="2 2"/></svg>3 dudosos</span>
+        </div>
+      </div>
+      <h2 class="sec">Del curso</h2>
+      <div class="quad">
+        <div class="q"><span class="qn"><svg class="ic s20" style="color:var(--accentText)"><use href="#notes"/></svg>Apuntes</span>
+          <span class="qm">14 capturas · 3 sin revisar</span></div>
+        <div class="q"><span class="qn"><svg class="ic s20" style="color:var(--accentText)"><use href="#coverage"/></svg>Cobertura</span>
+          <span class="qm">33 temas del temario</span></div>
+        <div class="q"><span class="qn"><svg class="ic s20" style="color:var(--accentText)"><use href="#study"/></svg>Estudio</span>
+          <span class="qm">12 repasos para hoy</span></div>
+        <div class="q"><span class="qn"><svg class="ic s20" style="color:var(--accentText)"><use href="#syllabus"/></svg>Temario</span>
+          <span class="qm">Publicado el 29 de julio</span></div>
+      </div>
+      <div style="height:18px"></div>
+      <div class="btn pri"><svg class="ic s20"><use href="#camera"/></svg>Capturar un apunte</div>
+    </div>
+    <div class="gest"><i></i></div>
+  </div></div></div>
+    <div class="one"><span class="mode d">DÍA</span>
+      <div class="device"><div class="screen day">
+    <div class="punch"></div>
+    <div class="sysbar"><span class="hora">9:41</span><span class="sp"></span><span class="sys">
+      <svg class="icf" width="15" height="11"><use href="#sys-wifi"/></svg>
+      <svg class="icf" width="15" height="11"><use href="#sys-signal"/></svg>
+      <svg class="icf" width="24" height="13"><use href="#sys-batt"/></svg></span></div>
+    <div class="appbar"><span class="tap"><svg class="ic"><use href="#back"/></svg></span>
+      <span class="t" style="font-size:18px">Cálculo II</span></div>
+    <div class="body">
+      <div class="card">
+        <div class="code" style="margin:0 0 12px">MAT-202 · II Ciclo 2026 · Prof. Rodríguez</div>
+        <div class="covbar big" style="margin-top:0"><i style="width:54%;background:var(--verified)"></i><i style="width:20%;background:var(--repaired)"></i><i style="width:14%;background:var(--escalated)"></i><i style="width:12%;background:var(--uncertain)"></i></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin-top:12px">
+          <span class="meta row" style="gap:7px"><svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="var(--verified)"/></svg>18 sólidos</span>
+          <span class="meta row" style="gap:7px"><svg width="12" height="12"><rect width="11" height="11" rx="2" fill="var(--repaired)"/></svg>7 parciales</span>
+          <span class="meta row" style="gap:7px"><svg width="14" height="12"><polygon points="7,0 14,12 0,12" fill="var(--escalated)"/></svg>5 ausentes</span>
+          <span class="meta row" style="gap:7px"><svg width="12" height="12"><circle cx="6" cy="6" r="5.2" fill="none" stroke="var(--uncertain)" stroke-width="1.5" stroke-dasharray="2 2"/></svg>3 dudosos</span>
+        </div>
+      </div>
+      <h2 class="sec">Del curso</h2>
+      <div class="quad">
+        <div class="q"><span class="qn"><svg class="ic s20" style="color:var(--accentText)"><use href="#notes"/></svg>Apuntes</span>
+          <span class="qm">14 capturas · 3 sin revisar</span></div>
+        <div class="q"><span class="qn"><svg class="ic s20" style="color:var(--accentText)"><use href="#coverage"/></svg>Cobertura</span>
+          <span class="qm">33 temas del temario</span></div>
+        <div class="q"><span class="qn"><svg class="ic s20" style="color:var(--accentText)"><use href="#study"/></svg>Estudio</span>
+          <span class="qm">12 repasos para hoy</span></div>
+        <div class="q"><span class="qn"><svg class="ic s20" style="color:var(--accentText)"><use href="#syllabus"/></svg>Temario</span>
+          <span class="qm">Publicado el 29 de julio</span></div>
+      </div>
+      <div style="height:18px"></div>
+      <div class="btn pri"><svg class="ic s20"><use href="#camera"/></svg>Capturar un apunte</div>
+    </div>
+    <div class="gest"><i></i></div>
+  </div></div></div>
+  </div>
+  <p class="note"><b>Decisión 3 resuelta.</b> El curso es el contenedor, pero el menú entra directo gracias al curso activo. Dos toques, sin riesgo de mezclar datos entre cursos.</p>
+</div>
+<div class="block">
+  <div class="cap"><b>E1</b> · Apuntes <i>(lista 2 de 3)</i></div>
+  <div class="duo">
+    <div class="one"><span class="mode n">NOCHE</span>
+      <div class="device"><div class="screen night">
+    <div class="punch"></div>
+    <div class="sysbar"><span class="hora">9:41</span><span class="sp"></span><span class="sys">
+      <svg class="icf" width="15" height="11"><use href="#sys-wifi"/></svg>
+      <svg class="icf" width="15" height="11"><use href="#sys-signal"/></svg>
+      <svg class="icf" width="24" height="13"><use href="#sys-batt"/></svg></span></div>
+    <div class="appbar">
+      <span class="tap"><svg class="ic"><use href="#menu"/></svg></span>
+      <div class="sw"><span class="lbl">Apuntes de</span>
+        <span class="val">Cálculo II <svg class="ic s18" style="stroke-width:2"><use href="#down"/></svg></span></div>
+      <span class="sp"></span>
+      <span class="tap"><svg class="ic"><use href="#search"/></svg></span>
+    </div>
+    <div class="body flush">
+      <div class="item">
+        <div class="thumb"><svg class="ic s20"><use href="#notes"/></svg></div>
+        <div style="flex:1"><div class="tt">Integrales impropias</div><div class="st">12 ago · 3 páginas</div></div>
+        <div style="text-align:right">
+          <div class="chips" style="justify-content:flex-end">
+            <svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="var(--verified)"/></svg>
+            <svg width="12" height="12"><rect width="11" height="11" rx="2" fill="var(--repaired)"/></svg>
+            <svg width="14" height="12"><polygon points="7,0 14,12 0,12" fill="var(--escalated)"/></svg></div>
+          <span class="badge" style="background:var(--escalatedSoft);color:var(--escalated);display:inline-block;margin-top:7px">N2</span>
+        </div>
+      </div>
+      <div class="item">
+        <div class="thumb"><svg class="ic s20"><use href="#notes"/></svg></div>
+        <div style="flex:1"><div class="tt">Criterio de comparación</div><div class="st">7 ago · 2 páginas</div></div>
+        <div style="text-align:right">
+          <div class="chips" style="justify-content:flex-end">
+            <svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="var(--verified)"/></svg>
+            <svg width="12" height="12"><circle cx="6" cy="6" r="5.2" fill="none" stroke="var(--uncertain)" stroke-width="1.5" stroke-dasharray="2 2"/></svg></div>
+          <span class="badge" style="background:var(--uncertainSoft);color:var(--uncertain);display:inline-block;margin-top:7px">REVISAR</span>
+        </div>
+      </div>
+      <div class="item">
+        <div class="thumb"><svg class="ic s20"><use href="#notes"/></svg></div>
+        <div style="flex:1"><div class="tt">Series de potencias</div><div class="st">5 ago · 4 páginas</div></div>
+        <div style="text-align:right">
+          <div class="chips" style="justify-content:flex-end">
+            <svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="var(--verified)"/></svg>
+            <svg width="12" height="12"><rect width="11" height="11" rx="2" fill="var(--repaired)"/></svg></div>
+          <span class="badge" style="background:var(--repairedSoft);color:var(--repaired);display:inline-block;margin-top:7px">N1.5</span>
+        </div>
+      </div>
+      <div class="item">
+        <div class="thumb"><svg class="ic s20"><use href="#notes"/></svg></div>
+        <div style="flex:1"><div class="tt">Convergencia absoluta</div><div class="st">31 jul · 1 página</div></div>
+        <div style="text-align:right">
+          <div class="chips" style="justify-content:flex-end">
+            <svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="var(--verified)"/></svg></div>
+          <span class="badge" style="background:var(--verifiedSoft);color:var(--verified);display:inline-block;margin-top:7px">N1</span>
+        </div>
+      </div>
+      <div class="item" style="opacity:.62">
+        <div class="thumb"><svg class="ic s20"><use href="#sync"/></svg></div>
+        <div style="flex:1"><div class="tt">Sin título</div><div class="st">Hoy · en cola, esperando red</div></div>
+        <span class="badge" style="background:var(--neutralSoft);color:var(--textSecondary)">EN COLA</span>
+      </div>
+    </div>
+    <div class="fab"><svg class="ic"><use href="#camera"/></svg></div>
+    <div class="gest"><i></i></div>
+  </div></div></div>
+    <div class="one"><span class="mode d">DÍA</span>
+      <div class="device"><div class="screen day">
+    <div class="punch"></div>
+    <div class="sysbar"><span class="hora">9:41</span><span class="sp"></span><span class="sys">
+      <svg class="icf" width="15" height="11"><use href="#sys-wifi"/></svg>
+      <svg class="icf" width="15" height="11"><use href="#sys-signal"/></svg>
+      <svg class="icf" width="24" height="13"><use href="#sys-batt"/></svg></span></div>
+    <div class="appbar">
+      <span class="tap"><svg class="ic"><use href="#menu"/></svg></span>
+      <div class="sw"><span class="lbl">Apuntes de</span>
+        <span class="val">Cálculo II <svg class="ic s18" style="stroke-width:2"><use href="#down"/></svg></span></div>
+      <span class="sp"></span>
+      <span class="tap"><svg class="ic"><use href="#search"/></svg></span>
+    </div>
+    <div class="body flush">
+      <div class="item">
+        <div class="thumb"><svg class="ic s20"><use href="#notes"/></svg></div>
+        <div style="flex:1"><div class="tt">Integrales impropias</div><div class="st">12 ago · 3 páginas</div></div>
+        <div style="text-align:right">
+          <div class="chips" style="justify-content:flex-end">
+            <svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="var(--verified)"/></svg>
+            <svg width="12" height="12"><rect width="11" height="11" rx="2" fill="var(--repaired)"/></svg>
+            <svg width="14" height="12"><polygon points="7,0 14,12 0,12" fill="var(--escalated)"/></svg></div>
+          <span class="badge" style="background:var(--escalatedSoft);color:var(--escalated);display:inline-block;margin-top:7px">N2</span>
+        </div>
+      </div>
+      <div class="item">
+        <div class="thumb"><svg class="ic s20"><use href="#notes"/></svg></div>
+        <div style="flex:1"><div class="tt">Criterio de comparación</div><div class="st">7 ago · 2 páginas</div></div>
+        <div style="text-align:right">
+          <div class="chips" style="justify-content:flex-end">
+            <svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="var(--verified)"/></svg>
+            <svg width="12" height="12"><circle cx="6" cy="6" r="5.2" fill="none" stroke="var(--uncertain)" stroke-width="1.5" stroke-dasharray="2 2"/></svg></div>
+          <span class="badge" style="background:var(--uncertainSoft);color:var(--uncertain);display:inline-block;margin-top:7px">REVISAR</span>
+        </div>
+      </div>
+      <div class="item">
+        <div class="thumb"><svg class="ic s20"><use href="#notes"/></svg></div>
+        <div style="flex:1"><div class="tt">Series de potencias</div><div class="st">5 ago · 4 páginas</div></div>
+        <div style="text-align:right">
+          <div class="chips" style="justify-content:flex-end">
+            <svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="var(--verified)"/></svg>
+            <svg width="12" height="12"><rect width="11" height="11" rx="2" fill="var(--repaired)"/></svg></div>
+          <span class="badge" style="background:var(--repairedSoft);color:var(--repaired);display:inline-block;margin-top:7px">N1.5</span>
+        </div>
+      </div>
+      <div class="item">
+        <div class="thumb"><svg class="ic s20"><use href="#notes"/></svg></div>
+        <div style="flex:1"><div class="tt">Convergencia absoluta</div><div class="st">31 jul · 1 página</div></div>
+        <div style="text-align:right">
+          <div class="chips" style="justify-content:flex-end">
+            <svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="var(--verified)"/></svg></div>
+          <span class="badge" style="background:var(--verifiedSoft);color:var(--verified);display:inline-block;margin-top:7px">N1</span>
+        </div>
+      </div>
+      <div class="item" style="opacity:.62">
+        <div class="thumb"><svg class="ic s20"><use href="#sync"/></svg></div>
+        <div style="flex:1"><div class="tt">Sin título</div><div class="st">Hoy · en cola, esperando red</div></div>
+        <span class="badge" style="background:var(--neutralSoft);color:var(--textSecondary)">EN COLA</span>
+      </div>
+    </div>
+    <div class="fab"><svg class="ic"><use href="#camera"/></svg></div>
+    <div class="gest"><i></i></div>
+  </div></div></div>
+  </div>
+  <p class="note"><b>Lista 2.</b> Cada apunte muestra su tira de confianza y el nivel que lo resolvió. El último ítem es la cola offline vista desde aquí: el tema de investigación aplicada se percibe sin entrar a H1.</p>
+</div>
+<div class="block">
+  <div class="cap"><b>I1</b> · Mis cursos — docente <i>(lista 3 de 3)</i></div>
+  <div class="duo">
+    <div class="one"><span class="mode n">NOCHE</span>
+      <div class="device"><div class="screen night">
+    <div class="punch"></div>
+    <div class="sysbar"><span class="hora">9:41</span><span class="sp"></span><span class="sys">
+      <svg class="icf" width="15" height="11"><use href="#sys-wifi"/></svg>
+      <svg class="icf" width="15" height="11"><use href="#sys-signal"/></svg>
+      <svg class="icf" width="24" height="13"><use href="#sys-batt"/></svg></span></div>
+    <div class="appbar"><span class="tap"><svg class="ic"><use href="#menu"/></svg></span>
+      <span class="t">Mis cursos</span><span class="sp"></span>
+      <span class="tap"><svg class="ic"><use href="#add"/></svg></span></div>
+    <div class="body">
+      <div class="card">
+        <div class="betw"><span class="name">EIF411</span>
+          <span class="badge" style="background:var(--accentSoft);color:var(--accentText)">ACTIVO</span></div>
+        <div class="code">Plataformas Móviles · II Ciclo 2026</div>
+        <div class="row" style="margin-top:14px;gap:16px">
+          <span class="meta row" style="gap:6px"><svg class="ic s18"><use href="#users"/></svg>27 inscritos</span>
+          <span class="meta row" style="gap:6px"><svg class="ic s18"><use href="#syllabus"/></svg>33 temas</span>
+        </div>
+        <div class="betw" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+          <span><span class="meta" style="font-size:11px;text-transform:uppercase;letter-spacing:.5px">Código de inscripción</span><br>
+            <span class="mono" style="font-size:17px;color:var(--accentText);letter-spacing:1px">GLF-4K2P</span></span>
+          <svg class="ic s20" style="color:var(--accentText)"><use href="#copy"/></svg>
+        </div>
+      </div>
+      <div class="card" style="border-color:var(--alertLine)">
+        <div class="name">Álgebra Lineal</div>
+        <div class="code">MAT-301 · II Ciclo 2026</div>
+        <div class="row" style="margin-top:14px;gap:8px;color:var(--alert)">
+          <svg class="ic s18"><use href="#warn"/></svg>
+          <span style="font-size:14px">Sin temario · la cobertura no se calcula</span></div>
+        <div style="height:14px"></div>
+        <div class="btn sec">Publicar temario</div>
+      </div>
+      <div class="card" style="opacity:.7">
+        <div class="name">Ecuaciones Diferenciales</div>
+        <div class="code">MAT-303 · I Ciclo 2026</div>
+        <div class="row" style="margin-top:14px;gap:16px">
+          <span class="meta row" style="gap:6px"><svg class="ic s18"><use href="#users"/></svg>12 inscritos</span>
+          <span class="meta">Curso cerrado</span>
+        </div>
+      </div>
+    </div>
+    <div class="gest"><i></i></div>
+  </div></div></div>
+    <div class="one"><span class="mode d">DÍA</span>
+      <div class="device"><div class="screen day">
+    <div class="punch"></div>
+    <div class="sysbar"><span class="hora">9:41</span><span class="sp"></span><span class="sys">
+      <svg class="icf" width="15" height="11"><use href="#sys-wifi"/></svg>
+      <svg class="icf" width="15" height="11"><use href="#sys-signal"/></svg>
+      <svg class="icf" width="24" height="13"><use href="#sys-batt"/></svg></span></div>
+    <div class="appbar"><span class="tap"><svg class="ic"><use href="#menu"/></svg></span>
+      <span class="t">Mis cursos</span><span class="sp"></span>
+      <span class="tap"><svg class="ic"><use href="#add"/></svg></span></div>
+    <div class="body">
+      <div class="card">
+        <div class="betw"><span class="name">EIF411</span>
+          <span class="badge" style="background:var(--accentSoft);color:var(--accentText)">ACTIVO</span></div>
+        <div class="code">Plataformas Móviles · II Ciclo 2026</div>
+        <div class="row" style="margin-top:14px;gap:16px">
+          <span class="meta row" style="gap:6px"><svg class="ic s18"><use href="#users"/></svg>27 inscritos</span>
+          <span class="meta row" style="gap:6px"><svg class="ic s18"><use href="#syllabus"/></svg>33 temas</span>
+        </div>
+        <div class="betw" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+          <span><span class="meta" style="font-size:11px;text-transform:uppercase;letter-spacing:.5px">Código de inscripción</span><br>
+            <span class="mono" style="font-size:17px;color:var(--accentText);letter-spacing:1px">GLF-4K2P</span></span>
+          <svg class="ic s20" style="color:var(--accentText)"><use href="#copy"/></svg>
+        </div>
+      </div>
+      <div class="card" style="border-color:var(--alertLine)">
+        <div class="name">Álgebra Lineal</div>
+        <div class="code">MAT-301 · II Ciclo 2026</div>
+        <div class="row" style="margin-top:14px;gap:8px;color:var(--alert)">
+          <svg class="ic s18"><use href="#warn"/></svg>
+          <span style="font-size:14px">Sin temario · la cobertura no se calcula</span></div>
+        <div style="height:14px"></div>
+        <div class="btn sec">Publicar temario</div>
+      </div>
+      <div class="card" style="opacity:.7">
+        <div class="name">Ecuaciones Diferenciales</div>
+        <div class="code">MAT-303 · I Ciclo 2026</div>
+        <div class="row" style="margin-top:14px;gap:16px">
+          <span class="meta row" style="gap:6px"><svg class="ic s18"><use href="#users"/></svg>12 inscritos</span>
+          <span class="meta">Curso cerrado</span>
+        </div>
+      </div>
+    </div>
+    <div class="gest"><i></i></div>
+  </div></div></div>
+  </div>
+  <p class="note"><b>Lista 3.</b> Variante <i>docente</i> de <i>TarjetaCurso</i> más el estado <i>sinTemario</i>. El código va en monoespaciada porque el estudiante lo transcribe a mano y ahí importa distinguir 0 de O.</p>
+</div></div></body></html>

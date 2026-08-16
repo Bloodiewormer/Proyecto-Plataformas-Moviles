@@ -35,3 +35,19 @@ backend/application-local.yml
 **/*apikey*
 **/.env
 **/.env.*
+
+# --- Prototipo (Figma Make / Vite / React) ---
+prototype/node_modules/
+prototype/dist/
+prototype/build/
+prototype/.cache/
+prototype/.vite/
+prototype/vite.config.*.timestamp-*
+prototype/*.tsbuildinfo
+prototype/*-debug.log*
+prototype/logs/
+prototype/*.log
+prototype/.claude-replay.*
+prototype/.tmp-*
+prototype/.plugins/
+prototype/.opencode-skills/

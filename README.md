@@ -23,7 +23,7 @@ Ver `docs/Glifo_Alcance.md` para el detalle completo del flujo de procesamiento 
 ```
 glifo/
 ├── docs/           # Documentación de arquitectura, alcance, UML, decisiones
-├── prototype/       # Prototipo HTML (39 pantallas) y wireframes
+├── prototype/       # Prototipo interactivo (Figma Make / React+Vite) — 39 pantallas, tandas T1-T5
 ├── android/         # Cliente Android (Kotlin, Android Studio)
 ├── backend/         # Backend (Spring Boot, Java, PostgreSQL)
 └── .github/         # Plantillas de issues para asignación de tareas
