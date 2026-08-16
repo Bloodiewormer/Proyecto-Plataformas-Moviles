@@ -1,4 +1,4 @@
-# Glifo (antes NotaViva)
+# Glifo 
 
 Aplicación Android que reconstruye notas manuscritas de estudiantes en conocimiento estructurado por materia, detecta vacíos frente al syllabus del curso, y guía el estudio adaptativo (flashcards, quizzes, repetición espaciada, plan de examen).
 
