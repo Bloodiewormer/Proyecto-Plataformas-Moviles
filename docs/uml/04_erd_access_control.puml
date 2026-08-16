@@ -1,0 +1,65 @@
+@startuml 04_erd_access_control
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam noteBackgroundColor #FDF6E3
+skinparam noteBorderColor #C4BCA3
+skinparam linetype ortho
+skinparam defaultFontName Inter
+skinparam ArrowColor #63666A
+skinparam class {
+  BackgroundColor #E4F0EA
+  BorderColor #2F7D62
+  FontName Inter
+}
+hide circle
+hide methods
+
+entity users {
+  * id : BIGSERIAL <<PK>>
+  --
+  * email : VARCHAR(255) <<UQ>>
+  * password_hash : VARCHAR(255)
+  first_name : VARCHAR(100)
+  last_name : VARCHAR(100)
+  avatar_url : VARCHAR(512)
+  * is_active : BOOLEAN
+  * created_at : TIMESTAMPTZ
+  * updated_at : TIMESTAMPTZ
+}
+
+entity user_roles {
+  * user_id : BIGINT <<PK,FK>>
+  * role_id : BIGINT <<PK,FK>>
+}
+
+entity roles {
+  * id : BIGSERIAL <<PK>>
+  --
+  * name : VARCHAR(50) <<UQ>>
+  description : VARCHAR(255)
+}
+
+entity role_privileges {
+  * role_id : BIGINT <<PK,FK>>
+  * privilege_id : BIGINT <<PK,FK>>
+}
+
+entity privileges {
+  * id : BIGSERIAL <<PK>>
+  --
+  * name : VARCHAR(64) <<UQ>>
+  description : VARCHAR(255)
+}
+
+users        ||--o{ user_roles       : "1 : N"
+roles        ||--o{ user_roles       : "1 : N"
+roles        ||--o{ role_privileges  : "1 : N"
+privileges   ||--o{ role_privileges  : "1 : N"
+
+note bottom of user_roles
+  Composite primary key
+  (user_id, role_id).
+  No surrogate id: the pair
+  is already unique.
+end note
+@enduml

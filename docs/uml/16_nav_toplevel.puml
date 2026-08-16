@@ -1,0 +1,98 @@
+@startuml 16_nav_toplevel
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam noteBackgroundColor #FDF6E3
+skinparam noteBorderColor #C4BCA3
+skinparam defaultFontName Inter
+skinparam ArrowColor #63666A
+skinparam state {
+  BackgroundColor #E8EEF6
+  BorderColor #3E6E9E
+  FontName Inter
+}
+
+[*] --> A1
+state "A1 · Splash" as A1
+state "A2 · Login" as A2
+state "A3 · Register" as A3
+state "A4 · Recover" as A4
+
+A1 --> A2 : no valid JWT
+A1 --> RoleRouter : valid JWT
+A2 --> A3
+A2 --> A4
+A3 --> RoleRouter : auto-login
+A2 --> RoleRouter : 200 + JWT
+
+state RoleRouter <<choice>>
+
+state "STUDENT" as Student #E8EEF6 {
+  state "B2 · Home" as B2
+  state "C1 · My courses" as C1
+  state "E1 · Notes" as E1
+  state "F1 · Coverage" as F1
+  state "G1 · Study" as G1
+  state "H1 · Sync queue\n[D - cut 3]" as H1
+  state "H2 · AI usage\n[unresolved - see 8.3]" as H2
+  B2 --> C1
+  B2 --> E1
+  B2 --> F1
+  B2 --> G1
+  B2 --> H1
+  B2 --> H2
+}
+
+state "TEACHER" as Teacher #FFF3D8 {
+  state "B3 · Home" as B3
+  state "I1 · Courses" as I1
+  state "I4 · Glossary\n[D]" as I4
+  state "I5 · Group gaps\n[D]" as I5
+  B3 --> I1
+  B3 --> I4
+  B3 --> I5
+}
+
+state "ADMIN  [D - should-have]" as Admin #F5EDE9 {
+  state "B4 · Home\n[D]" as B4
+  state "J1 · Users\n[D]" as J1
+  state "J3 · Roles\n[D]" as J3
+  B4 --> J1
+  B4 --> J3
+}
+
+state "K1 · Settings" as K1
+state "K2 · Profile" as K2
+
+RoleRouter --> B2 : hasAuthority NOTE_WRITE_OWN
+RoleRouter --> B3 : hasAuthority SYLLABUS_PUBLISH
+RoleRouter --> B4 : hasAuthority USER_MANAGE
+
+Student --> K1
+Teacher --> K1
+Admin  --> K1
+K1 --> K2
+K1 --> A2 : logout
+
+Student --> C1 : C2b switch role
+Teacher --> B2 : C2b switch role
+
+note bottom of RoleRouter
+  A user can hold more than one role.
+  C2b is the switcher; the drawer
+  (B1a/b/c) renders the section list
+  for the ACTIVE role only.
+end note
+
+note as Legend
+  **Scope priority** — Alcance 6 and 11
+  unmarked    = I, must-have
+  [D]         = D, should-have
+  [D - cut n] = should-have, position n
+                on the cut list
+  [unresolved]= sources disagree, see 8.3
+
+  The ADMIN zone is should-have in full,
+  but the roles/privileges TABLES it
+  edits are must-have. See 12.1.
+end note
+@enduml

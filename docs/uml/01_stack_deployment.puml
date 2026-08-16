@@ -1,0 +1,56 @@
+@startuml 01_stack_deployment
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam noteBackgroundColor #FDF6E3
+skinparam noteBorderColor #C4BCA3
+skinparam defaultFontName Inter
+skinparam ArrowColor #63666A
+hide empty members
+
+node "Android device\nAPI 26+" as device #E8EEF6 {
+  artifact "glifo-app.apk" as apk {
+    component "Compose UI + Navigation" as ui
+    component "ViewModels · MVVM" as vm
+    component "UseCases · pure Kotlin" as uc
+    component "Repositories" as repo
+    component "Pipeline\nOpenCV · ML Kit" as pipe
+    component "Retrofit + OkHttp" as retro
+    component "WorkManager\nsync queue" as work
+  }
+  database "Room 2.6\nread cache + outbox" as room #E4F0EA
+}
+
+cloud "Cloud host\nRender / Railway" as cloudhost #FFF3D8 {
+  node "JVM 21" as jvm {
+    component "glifo-api.jar\nSpring Boot 3.3 · Kotlin 2.0" as api
+  }
+  database "PostgreSQL 16\nrelational + JSONB" as pg #E4F0EA
+}
+
+cloud "Third-party services" as ext #F5EDE9 {
+  component "SimpleTex\nmath OCR" as simpletex
+  component "LLM vision + text API" as llm
+  component "Firebase\nFCM · Analytics · Crashlytics" as fb
+}
+
+ui --> vm
+vm --> uc
+uc --> repo
+repo --> pipe
+repo --> retro
+repo --> room
+work --> retro
+retro --> api : HTTPS · JSON · JWT
+api --> pg : JDBC · HikariCP
+api --> simpletex : HTTPS
+api --> llm : HTTPS
+api --> fb : FCM push
+apk ..> fb : Analytics · Crashlytics
+
+note right of ext
+  No third-party credential
+  is ever present in the APK.
+  All keys live in backend
+  environment variables.
+end note
+@enduml

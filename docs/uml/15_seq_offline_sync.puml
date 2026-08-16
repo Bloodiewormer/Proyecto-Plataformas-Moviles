@@ -1,0 +1,73 @@
+@startuml 15_seq_offline_sync
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam noteBackgroundColor #FDF6E3
+skinparam noteBorderColor #C4BCA3
+skinparam defaultFontName Inter
+skinparam sequenceMessageAlign left
+skinparam ParticipantPadding 8
+skinparam BoxPadding 10
+
+box "FRONT · device" #E8EEF6
+  actor Student as S
+  participant "CaptureViewModel" as VM
+  participant "NoteRepository" as NR
+  participant "SyncQueue" as SQ
+  participant "SyncWorker" as SW
+  participant "RetryPolicy" as RP
+  database "Room" as RM
+end box
+
+box "BACK · server" #FFF3D8
+  participant "NoteController" as NC
+  database "PostgreSQL" as PG
+end box
+
+== Offline ==
+S -> VM : capture (airplane mode)
+VM -> NR : savePage(result)
+NR -> RM : insert page
+NR -> SQ : enqueue(UPLOAD_PAGE, idempotencyKey = uuid4())
+SQ -> RM : insert sync_operations (PENDING)
+NR --> VM : local success
+VM --> S : "Saved. 1 pending upload."
+
+== Connectivity returns ==
+SW -> SQ : nextBatch(limit = 10)
+SQ --> SW : [op#1]
+SW -> NC : POST /notes/{id}/pages\nIdempotency-Key: <same uuid>
+
+alt 2xx
+  NC -> PG : insert page + sync_queue row
+  NC --> SW : 201
+  SW -> SQ : markDone(op#1)
+else 409 duplicate key
+  NC --> SW : 409 ALREADY_PROCESSED
+  SW -> SQ : markDone(op#1)
+  note right of SW
+    A duplicate is a SUCCESS, not
+    a failure. This is the whole
+    reason the key is generated at
+    enqueue time and never per attempt.
+  end note
+else 5xx or timeout
+  NC --> SW : error
+  SW -> RP : delayFor(attempt)
+  RP --> SW : backoff + jitter
+  SW -> SQ : markFailed(op#1, error)
+  SW --> SW : reschedule
+end
+
+== Queue drained ==
+SW -> SQ : nextBatch()
+SQ --> SW : [] empty
+NC -> S : FCM push · "Sync complete"
+
+note right of NC
+  Sent by the server once the last
+  operation for this device is
+  acknowledged. Real FCM, not a
+  locally-raised notification — the
+  course requires push to be real.
+end note
+@enduml

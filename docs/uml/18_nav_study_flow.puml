@@ -1,0 +1,50 @@
+@startuml 18_nav_study_flow
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam noteBackgroundColor #FDF6E3
+skinparam noteBorderColor #C4BCA3
+skinparam defaultFontName Inter
+skinparam ArrowColor #63666A
+skinparam state {
+  BackgroundColor #E8EEF6
+  BorderColor #3E6E9E
+  FontName Inter
+}
+
+state "F1 · Coverage" as F1
+state "F2 · Topic detail" as F2
+state "F3 · Delta\nsince last session\n[D]" as F3
+state "G1 · Study hub\ndue today" as G1
+state "G2 · Flashcards" as G2
+state "G3 · Quiz" as G3
+state "G4 · Result" as G4
+
+F1 --> F2 : tap topic
+F1 --> F3 : tap delta banner
+F2 --> G1 : "study this gap"
+F3 --> F1 : back
+G1 --> G2 : FLASHCARD items due
+G1 --> G3 : MULTIPLE_CHOICE / TRUE_FALSE
+G2 --> G2 : self-rate, next card
+G2 --> G4 : deck finished
+G3 --> G3 : answer, next question
+G3 --> G4 : quiz finished
+G4 --> G1 : continue
+G4 --> F1 : coverage recalculated
+
+note bottom of G4
+  Grading is local and deterministic.
+  Failed items are rescheduled by
+  RetryPolicy's sibling: the spaced
+  repetition interval. No network
+  round-trip to see a score.
+end note
+
+note bottom of F3
+  [D] Deseable. Computed from
+  topic_coverage.updated_at alone,
+  NOT from coverage_snapshots —
+  snapshots are Opcional and second
+  on the cut list. See 4.4.
+end note
+@enduml

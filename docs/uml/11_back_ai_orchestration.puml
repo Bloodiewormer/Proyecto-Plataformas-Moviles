@@ -1,0 +1,97 @@
+@startuml 11_back_ai_orchestration
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam noteBackgroundColor #FDF6E3
+skinparam noteBorderColor #C4BCA3
+skinparam classAttributeIconSize 0
+skinparam defaultFontName Inter
+skinparam ArrowColor #63666A
+skinparam class {
+  BackgroundColor #FFF3D8
+  BorderColor #8A6210
+}
+hide empty fields
+
+package "ai · BACK" #F7F4EC {
+
+  class AiOrchestrator <<Facade>> {
+    + repairRegions(job : PageJob) : List<RegionResultDto>
+    + reconstruct(job : NoteJob) : NoteContentDto
+    + generateStudyItems(batch : TopicBatch) : List<StudyItemDto>
+    + explain(query : ConceptQuery) : ExplanationDto
+    + judgeCoverage(batch : AmbiguousBatch) : List<CoverageVerdictDto>
+  }
+
+  interface MathOcrEngine <<Strategy>> {
+    + recognize(crop : RegionCrop) : MathResult
+    + name() : String
+    + isAvailable() : Boolean
+  }
+  class SimpleTexEngine <<primary>>
+  class VisionMathEngine <<fallback>>
+  class MathOcrEngineFactory <<Factory>> {
+    + resolve() : MathOcrEngine
+  }
+
+  class VisionRepairService <<IA-00>>
+  class ReconstructionService <<IA-01>>
+  class GenerationService <<IA-02>>
+  class ExplanationService <<IA-03>>
+  class SemanticJudgeService <<IA-05>>
+
+  class PromptBuilder <<Builder>> {
+    + withGlossary(g : List<GlossaryEntry>) : PromptBuilder
+    + withTopic(t : SyllabusTopic) : PromptBuilder
+    + withConstraints(c : Constraints) : PromptBuilder
+    + build() : Prompt
+  }
+  class LatexValidator {
+    + compiles(latex : String) : Boolean
+  }
+  class CostLedgerService {
+    + record(call : AiCall) : Unit
+    + summaryForCourse(courseId : Long) : CostSummary
+  }
+}
+
+package "external · BACK boundary" #F5EDE9 {
+  interface SimpleTexClient <<@HttpExchange>>
+  interface LlmClient <<@HttpExchange>>
+}
+
+AiOrchestrator --> MathOcrEngineFactory
+AiOrchestrator --> VisionRepairService
+AiOrchestrator --> ReconstructionService
+AiOrchestrator --> GenerationService
+AiOrchestrator --> ExplanationService
+AiOrchestrator --> SemanticJudgeService
+AiOrchestrator --> CostLedgerService
+AiOrchestrator --> LatexValidator
+
+MathOcrEngineFactory ..> MathOcrEngine : creates
+MathOcrEngine <|.. SimpleTexEngine
+MathOcrEngine <|.. VisionMathEngine
+SimpleTexEngine --> SimpleTexClient
+VisionMathEngine --> LlmClient
+
+VisionRepairService --> LlmClient
+ReconstructionService --> LlmClient
+GenerationService --> LlmClient
+ExplanationService --> LlmClient
+SemanticJudgeService --> LlmClient
+
+VisionRepairService --> PromptBuilder
+ReconstructionService --> PromptBuilder
+GenerationService --> PromptBuilder
+ExplanationService --> PromptBuilder
+SemanticJudgeService --> PromptBuilder
+
+note right of CostLedgerService
+  Every service records through
+  the ledger. Not a cross-cutting
+  aspect: a call that is not
+  recorded is a call that did
+  not happen, as far as the
+  project's argument goes.
+end note
+@enduml

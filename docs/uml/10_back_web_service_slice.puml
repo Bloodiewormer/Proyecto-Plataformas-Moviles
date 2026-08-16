@@ -1,0 +1,105 @@
+@startuml 10_back_web_service_slice
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam noteBackgroundColor #FDF6E3
+skinparam noteBorderColor #C4BCA3
+skinparam classAttributeIconSize 0
+skinparam defaultFontName Inter
+skinparam ArrowColor #63666A
+skinparam class {
+  BackgroundColor #FFF3D8
+  BorderColor #8A6210
+}
+hide empty members
+
+package "note.controller · BACK" #F7F4EC {
+  class NoteController <<@RestController>> {
+    + create(req : CreateNoteRequest) : ResponseEntity<NoteResponse>
+    + findById(id : Long) : ResponseEntity<NoteResponse>
+    + findAll(courseId : Long, pageable) : ResponseEntity<PageResponse<NoteResponse>>
+    + correctFragment(id, spanId, req : CorrectionRequest) : ResponseEntity<NoteResponse>
+    + reconstruct(id : Long) : ResponseEntity<NoteResponse>
+  }
+}
+
+package "note.dto · BACK" #F7F4EC {
+  class CreateNoteRequest <<data class>> <<@Valid>> {
+    + courseId : Long
+    + classDate : LocalDate
+    + title : String
+  }
+  class CorrectionRequest <<data class>> <<@Valid>> {
+    + text : String
+  }
+  class NoteResponse <<data class>> {
+    + id : Long
+    + title : String
+    + content : JsonNode?
+    + summary : ConfidenceSummaryDto
+  }
+}
+
+package "note.service · BACK" #F7F4EC {
+  class NoteService <<@Service>> {
+    + create(req : CreateNoteRequest) : NoteResponse
+    + findById(id : Long) : NoteResponse
+    + correctFragment(id : Long, spanId : String, text : String) : NoteResponse
+    + reconstruct(id : Long) : NoteResponse
+  }
+}
+
+package "note.repository · BACK" #F7F4EC {
+  interface NoteRepository <<@Repository>> {
+    + findByIdAndUserId(id : Long, userId : Long) : Note?
+    + findAllByCourseId(courseId : Long, pageable : Pageable) : Page<Note>
+  }
+}
+
+package "note.mapper · BACK" #F7F4EC {
+  class NoteMappers <<extension functions>> {
+    + Note.toResponse() : NoteResponse
+    + CreateNoteRequest.toEntity(course : Course) : Note
+  }
+}
+
+package "common · BACK" #F7F4EC {
+  class GlobalExceptionHandler <<@RestControllerAdvice>>
+  class ApiError
+  class ResourceNotFoundException
+}
+
+NoteController --> NoteService
+NoteController ..> CreateNoteRequest
+NoteController ..> CorrectionRequest
+NoteController ..> NoteResponse
+NoteService --> NoteRepository
+NoteService ..> NoteMappers : uses
+NoteService ..> ResourceNotFoundException
+GlobalExceptionHandler ..> ApiError
+GlobalExceptionHandler ..> ResourceNotFoundException
+
+note right of NoteController
+  Starts here.
+  The frontend diagram (6.3)
+  ends at the Retrofit interface.
+  Neither diagram crosses.
+end note
+
+note bottom of NoteService
+  The only layer that opens a
+  transaction. A JPA entity never
+  leaves this package unmapped.
+end note
+
+note bottom of NoteMappers
+  NoteMappers.kt is a FILE of
+  top-level extension functions,
+  not a class and not an injected
+  bean. Drawn as a box because UML
+  has no notation for a Kotlin file.
+
+  Satisfies the Mapper pattern
+  required by Estandares 5 with
+  no library at all.
+end note
+@enduml

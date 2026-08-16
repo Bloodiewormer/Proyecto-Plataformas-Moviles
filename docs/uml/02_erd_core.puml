@@ -1,0 +1,184 @@
+@startuml 02_erd_core
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam noteBackgroundColor #FDF6E3
+skinparam noteBorderColor #C4BCA3
+skinparam linetype ortho
+skinparam defaultFontName Inter
+skinparam ArrowColor #63666A
+skinparam class {
+  BackgroundColor #E4F0EA
+  BorderColor #2F7D62
+  FontName Inter
+}
+hide circle
+hide methods
+
+package "ACCESS CONTROL" as pkgAccess #F7F4EC {
+  entity users {
+    * id : BIGSERIAL <<PK>>
+    --
+    * email : VARCHAR(255) <<UQ>>
+    * password_hash : VARCHAR(255)
+    first_name : VARCHAR(100)
+    last_name : VARCHAR(100)
+    avatar_url : VARCHAR(512)
+    * is_active : BOOLEAN
+    * created_at : TIMESTAMPTZ
+    * updated_at : TIMESTAMPTZ
+  }
+  entity roles {
+    * id : BIGSERIAL <<PK>>
+    --
+    * name : VARCHAR(50) <<UQ>>
+    description : VARCHAR(255)
+  }
+  entity privileges {
+    * id : BIGSERIAL <<PK>>
+    --
+    * name : VARCHAR(64) <<UQ>>
+    description : VARCHAR(255)
+  }
+  entity user_roles {
+    * user_id : BIGINT <<PK,FK>>
+    * role_id : BIGINT <<PK,FK>>
+  }
+  entity role_privileges {
+    * role_id : BIGINT <<PK,FK>>
+    * privilege_id : BIGINT <<PK,FK>>
+  }
+}
+
+package "ACADEMIC DOMAIN" as pkgCourse #F7F4EC {
+  entity courses {
+    * id : BIGSERIAL <<PK>>
+    --
+    * owner_user_id : BIGINT <<FK>>
+    * code : VARCHAR(20)
+    * name : VARCHAR(150)
+    * term : VARCHAR(20)
+    * join_code : VARCHAR(10) <<UQ>>
+    syllabus_source_uri : VARCHAR(512)
+    syllabus_parsed_at : TIMESTAMPTZ
+    * created_at : TIMESTAMPTZ
+  }
+  entity enrollments {
+    * id : BIGSERIAL <<PK>>
+    --
+    * user_id : BIGINT <<FK>>
+    * course_id : BIGINT <<FK>>
+    * status : VARCHAR(20) <<CHECK>>
+    * joined_at : TIMESTAMPTZ
+  }
+  entity syllabus_topics {
+    * id : BIGSERIAL <<PK>>
+    --
+    * course_id : BIGINT <<FK>>
+    parent_id : BIGINT <<FK>>
+    * code : VARCHAR(20)
+    * title : VARCHAR(255)
+    * order_index : INTEGER
+  }
+  entity course_glossary {
+    * id : BIGSERIAL <<PK>>
+    --
+    * course_id : BIGINT <<FK>>
+    * term : VARCHAR(120)
+    * canonical_form : VARCHAR(255)
+    * kind : VARCHAR(20) <<CHECK>>
+  }
+}
+
+package "INGESTION" as pkgNote #F7F4EC {
+  entity notes {
+    * id : BIGSERIAL <<PK>>
+    --
+    * user_id : BIGINT <<FK>>
+    * course_id : BIGINT <<FK>>
+    syllabus_topic_id : BIGINT <<FK>>
+    * class_date : DATE
+    * title : VARCHAR(200)
+    content : JSONB
+    content_generated_at : TIMESTAMPTZ
+    * created_at : TIMESTAMPTZ
+  }
+  entity note_pages {
+    * id : BIGSERIAL <<PK>>
+    --
+    * note_id : BIGINT <<FK>>
+    * page_index : INTEGER
+    * perceptual_hash : CHAR(16)
+    * storage_uri : VARCHAR(512)
+    * level_reached : VARCHAR(12) <<CHECK>>
+    * overall_confidence : REAL
+    quality_metrics : JSONB
+    regions : JSONB
+    processed_at : TIMESTAMPTZ
+  }
+}
+
+package "STUDY" as pkgStudy #F7F4EC {
+  entity topic_coverage {
+    * id : BIGSERIAL <<PK>>
+    --
+    * user_id : BIGINT <<FK>>
+    * syllabus_topic_id : BIGINT <<FK>>
+    * state : VARCHAR(12) <<CHECK>>
+    * score : REAL
+    * updated_at : TIMESTAMPTZ
+  }
+  entity study_items {
+    * id : BIGSERIAL <<PK>>
+    --
+    * course_id : BIGINT <<FK>>
+    * syllabus_topic_id : BIGINT <<FK>>
+    * kind : VARCHAR(20) <<CHECK>>
+    * payload : JSONB
+    * created_at : TIMESTAMPTZ
+  }
+  entity attempts {
+    * id : BIGSERIAL <<PK>>
+    --
+    * user_id : BIGINT <<FK>>
+    * study_item_id : BIGINT <<FK>>
+    * response : JSONB
+    * is_correct : BOOLEAN
+    * answered_at : TIMESTAMPTZ
+  }
+  entity review_schedule {
+    * id : BIGSERIAL <<PK>>
+    --
+    * user_id : BIGINT <<FK>>
+    * study_item_id : BIGINT <<FK>>
+    * due_at : TIMESTAMPTZ
+    * interval_days : INTEGER
+    * ease : REAL
+  }
+}
+
+users ||--o{ user_roles
+roles ||--o{ user_roles
+roles ||--o{ role_privileges
+privileges ||--o{ role_privileges
+
+users ||--o{ courses : owns
+users ||--o{ enrollments
+courses ||--o{ enrollments
+courses ||--o{ syllabus_topics
+courses ||--o{ course_glossary
+syllabus_topics |o--o{ syllabus_topics : parent
+
+users ||--o{ notes
+courses ||--o{ notes
+syllabus_topics |o--o{ notes
+notes ||--|{ note_pages
+
+users ||--o{ topic_coverage
+syllabus_topics ||--o{ topic_coverage
+courses ||--o{ study_items
+syllabus_topics ||--o{ study_items
+users ||--o{ attempts
+study_items ||--o{ attempts
+users ||--o{ review_schedule
+study_items ||--o{ review_schedule
+@enduml

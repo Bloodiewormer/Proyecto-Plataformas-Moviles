@@ -1,0 +1,102 @@
+@startuml 07_front_mvvm_slice
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam noteBackgroundColor #FDF6E3
+skinparam noteBorderColor #C4BCA3
+skinparam classAttributeIconSize 0
+skinparam defaultFontName Inter
+skinparam ArrowColor #63666A
+skinparam class {
+  BackgroundColor #E8EEF6
+  BorderColor #3E6E9E
+}
+hide empty members
+
+package "feature.note.presentation · FRONT" #F7F4EC {
+  class NoteDetailScreen <<Composable>> <<stateless>> {
+    + NoteDetailScreen(state, onCorrectFragment, onRequestFullVision, onOpenCrop)
+  }
+  class NoteDetailViewModel <<@HiltViewModel>> {
+    - _uiState : MutableStateFlow<NoteDetailUiState>
+    + uiState : StateFlow<NoteDetailUiState>
+    + onCorrectFragment(spanId : String, text : String)
+    + onRequestFullVision()
+  }
+  abstract class NoteDetailUiState <<sealed>>
+  class Loading
+  class Success {
+    + content : NoteContent
+    + summary : ConfidenceSummary
+    + isSyncing : Boolean
+  }
+  class Failure {
+    + error : AppError
+  }
+}
+
+package "feature.note.domain · FRONT" #F7F4EC {
+  class GetNoteUseCase {
+    + invoke(noteId : Long) : Flow<Result<Note>>
+  }
+  class CorrectFragmentUseCase {
+    + invoke(spanId : String, text : String) : Result<Unit>
+  }
+  interface NoteRepository {
+    + observeNote(id : Long) : Flow<Result<Note>>
+    + correctFragment(spanId : String, text : String) : Result<Unit>
+    + requestFullVision(noteId : Long) : Result<Unit>
+  }
+  class Note {
+    + id : Long
+    + title : String
+    + classDate : LocalDate
+    + content : NoteContent
+  }
+}
+
+package "feature.note.data · FRONT" #F7F4EC {
+  class NoteRepositoryImpl {
+    - api : NoteApi
+    - dao : NoteDao
+    - outbox : SyncQueue
+  }
+  interface NoteApi <<Retrofit>> {
+    + getNote(id : Long) : NoteResponse
+    + patchFragment(id : Long, spanId : String, body : CorrectionRequest) : NoteResponse
+    + requestFullVision(id : Long, pageId : Long) : PageResponse
+  }
+  class NoteDao <<Room @Dao>>
+  class NoteMapper {
+    + toDomain(dto : NoteResponse) : Note
+    + toEntity(model : Note) : NoteEntity
+  }
+}
+
+NoteDetailScreen --> NoteDetailViewModel : observes
+NoteDetailViewModel --> NoteDetailUiState
+NoteDetailUiState <|-- Loading
+NoteDetailUiState <|-- Success
+NoteDetailUiState <|-- Failure
+NoteDetailViewModel --> GetNoteUseCase
+NoteDetailViewModel --> CorrectFragmentUseCase
+GetNoteUseCase --> NoteRepository
+CorrectFragmentUseCase --> NoteRepository
+NoteRepository <|.. NoteRepositoryImpl
+NoteRepositoryImpl --> NoteApi
+NoteRepositoryImpl --> NoteDao
+NoteRepositoryImpl --> NoteMapper
+GetNoteUseCase ..> Note
+
+note right of NoteRepository
+  Declared in domain,
+  implemented in data.
+  The dependency arrow
+  points inward.
+end note
+
+note bottom of NoteApi
+  The frontend diagram ends here.
+  What is on the other side of
+  this interface is section 7.
+end note
+@enduml

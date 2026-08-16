@@ -1,0 +1,58 @@
+@startuml 13_component_api_seam
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam noteBackgroundColor #FDF6E3
+skinparam noteBorderColor #C4BCA3
+skinparam defaultFontName Inter
+skinparam ArrowColor #63666A
+skinparam component {
+  BackgroundColor #E8EEF6
+  BorderColor #3E6E9E
+}
+skinparam interface {
+  BackgroundColor #FFFFFF
+  BorderColor #8A6210
+}
+
+package "FRONT · glifo-app.apk" #E8EEF6 {
+  component "Feature ViewModels" as vms
+  component "Repositories" as repos
+  component "Retrofit clients\nAuthApi · CourseApi · NoteApi\nCoverageApi · StudyApi · AdminApi" as clients
+  component "SyncWorker" as sync
+}
+
+package "BACK · glifo-api.jar" #FFF3D8 {
+  component "Controllers\n@RestController" as ctrls #FFF3D8
+  component "Services" as svcs #FFF3D8
+  component "JPA Repositories" as jpa #FFF3D8
+  component "AiOrchestrator" as ai #FFF3D8
+}
+
+interface "Glifo REST API v1" as API
+
+vms --> repos
+repos --> clients
+sync --> clients
+clients -( API
+API )- ctrls
+ctrls --> svcs
+svcs --> jpa
+svcs --> ai
+
+database "PostgreSQL 16" as pg #E4F0EA
+jpa --> pg
+
+cloud "LLM / SimpleTex" as ext #F5EDE9
+ai --> ext
+
+note bottom of API
+  HTTPS · JSON · Bearer JWT.
+
+  This lollipop is the ONLY place
+  where FRONT and BACK touch in
+  any diagram in this document.
+  Everything above it compiles
+  into the APK; everything below
+  it compiles into the JAR.
+end note
+@enduml

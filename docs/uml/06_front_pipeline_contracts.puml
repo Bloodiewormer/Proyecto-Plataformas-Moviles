@@ -1,0 +1,105 @@
+@startuml 06_front_pipeline_contracts
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam noteBackgroundColor #FDF6E3
+skinparam noteBorderColor #C4BCA3
+skinparam classAttributeIconSize 0
+skinparam defaultFontName Inter
+skinparam ArrowColor #63666A
+skinparam class {
+  BackgroundColor #E8EEF6
+  BorderColor #3E6E9E
+}
+skinparam enum {
+  BackgroundColor #F7F4EC
+  BorderColor #8A6210
+}
+hide empty methods
+
+package "pipeline.model · FRONT" #F7F4EC {
+
+  class PageResult {
+    + pageIndex : Int
+    + perceptualHash : String
+    + levelReached : ProcessingLevel
+    + overallConfidence : Float
+    + quality : QualityMetrics
+  }
+
+  class PageRegion {
+    + id : String
+    + bbox : BoundingBox
+    + kind : RegionKind
+    + crop : Bitmap
+  }
+
+  class RegionResult {
+    + regionId : String
+    + finalText : String?
+    + latex : String?
+    + resolvedAt : ProcessingLevel
+    + confidence : ConfidenceScore
+    + isUncertain : Boolean
+  }
+
+  class ConfidenceScore {
+    + value : Float
+    + breakdown : Map<String, Float>
+    + isAboveThreshold : Boolean
+  }
+
+  class QualityMetrics {
+    + blurVariance : Float
+    + brightness : Float
+    + glareRatio : Float
+    + skewAngleDeg : Float
+    + isUsable : Boolean
+    + rejectionReason : RejectionReason?
+  }
+
+  class BoundingBox {
+    + x0 : Float
+    + y0 : Float
+    + x1 : Float
+    + y1 : Float
+  }
+
+  class RemoteWorkRequest {
+    + regionId : String
+    + targetLevel : ProcessingLevel
+    + cropBytes : ByteArray
+  }
+
+  enum ProcessingLevel {
+    N0
+    N1
+    N1_5
+    N2
+    N3
+    UNRESOLVED
+  }
+  enum RegionKind {
+    TEXT
+    MATH
+    DRAWING
+  }
+  enum RejectionReason {
+    TOO_BLURRY
+    TOO_DARK
+    GLARE
+    SKEW_EXCESSIVE
+    NO_TEXT_DETECTED
+  }
+}
+
+PageResult *-- "1" QualityMetrics
+PageResult *-- "1..*" RegionResult
+PageResult --> ProcessingLevel
+PageRegion *-- "1" BoundingBox
+PageRegion --> RegionKind
+RegionResult *-- "1" ConfidenceScore
+RegionResult --> ProcessingLevel
+QualityMetrics --> RejectionReason
+RemoteWorkRequest --> ProcessingLevel
+RegionResult ..> PageRegion : resolves
+@enduml

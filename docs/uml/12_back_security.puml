@@ -1,0 +1,60 @@
+@startuml 12_back_security
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam noteBackgroundColor #FDF6E3
+skinparam noteBorderColor #C4BCA3
+skinparam classAttributeIconSize 0
+skinparam defaultFontName Inter
+skinparam ArrowColor #63666A
+skinparam class {
+  BackgroundColor #FFF3D8
+  BorderColor #8A6210
+}
+hide empty members
+
+package "security · BACK" #F7F4EC {
+  class SecurityConfig <<@Configuration>> {
+    + filterChain(http : HttpSecurity) : SecurityFilterChain
+    + passwordEncoder() : PasswordEncoder
+  }
+  class JwtAuthenticationFilter <<OncePerRequestFilter>> {
+    + doFilterInternal(req, res, chain) : Unit
+  }
+  class JwtTokenProvider {
+    + generate(user : UserDetails) : String
+    + validate(token : String) : Boolean
+    + getSubject(token : String) : String
+  }
+  class UserDetailsServiceImpl <<@Service>> {
+    + loadUserByUsername(email : String) : UserDetails
+  }
+  class GlifoUserDetails {
+    + getAuthorities() : Collection<GrantedAuthority>
+  }
+}
+
+package "auth · BACK" #F7F4EC {
+  class AuthController <<@RestController>> {
+    + register(req : RegisterRequest) : ResponseEntity<AuthResponse>
+    + login(req : LoginRequest) : ResponseEntity<AuthResponse>
+    + refresh(req : RefreshRequest) : ResponseEntity<AuthResponse>
+  }
+  class AuthService <<@Service>>
+}
+
+SecurityConfig --> JwtAuthenticationFilter
+JwtAuthenticationFilter --> JwtTokenProvider
+JwtAuthenticationFilter --> UserDetailsServiceImpl
+UserDetailsServiceImpl ..> GlifoUserDetails
+AuthController --> AuthService
+AuthService --> JwtTokenProvider
+AuthService --> UserDetailsServiceImpl
+
+note bottom of GlifoUserDetails
+  getAuthorities() returns
+  PRIVILEGE names, not role names.
+  Endpoints are annotated
+  @PreAuthorize("hasAuthority('SYLLABUS_PUBLISH')").
+  Roles are only a grouping in the DB.
+end note
+@enduml

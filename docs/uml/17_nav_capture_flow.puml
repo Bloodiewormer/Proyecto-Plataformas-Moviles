@@ -1,0 +1,55 @@
+@startuml 17_nav_capture_flow
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam noteBackgroundColor #FDF6E3
+skinparam noteBorderColor #C4BCA3
+skinparam defaultFontName Inter
+skinparam ArrowColor #63666A
+skinparam state {
+  BackgroundColor #E8EEF6
+  BorderColor #3E6E9E
+  FontName Inter
+}
+
+state "C3 · Course hub" as C3
+state "D1 · Camera" as D1
+state "D2 · Rejection\n+ concrete reason" as D2
+state "D3 · Processing\nlevel indicator" as D3
+state "E2 · Confidence map" as E2
+state "E3 · Correct fragment" as E3
+state "E4 · Formula viewer\nLaTeX + original crop\n[D]" as E4
+state "E5 · Provenance\nwhich level resolved this" as E5
+state "E1 · Note list" as E1
+
+C3 --> D1 : FAB capture
+D1 --> D2 : quality check failed
+D2 --> D1 : retry
+D2 --> C3 : cancel
+D1 --> D3 : quality OK
+D3 --> E2 : reconstruction ready
+D3 --> D1 : unrecoverable
+E2 --> E3 : tap uncertain fragment
+E3 --> E2 : save correction
+E2 --> E4 : tap formula
+E4 --> E2 : back
+E2 --> E5 : tap level badge
+E5 --> E2 : back
+E2 --> D1 : add page
+E2 --> E1 : done
+E1 --> E2 : open note
+
+note right of E3
+  A correction here also writes to
+  course_glossary. The teacher's
+  glossary and the student's
+  corrections feed the same
+  ConfidenceScorer input.
+end note
+
+note right of D2
+  Never a generic error.
+  RejectionReason maps 1:1
+  to an instruction:
+  GLARE -> "move away from the window".
+end note
+@enduml

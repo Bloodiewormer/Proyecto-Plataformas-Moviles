@@ -1,0 +1,84 @@
+@startuml 03_erd_operations
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam noteBackgroundColor #FDF6E3
+skinparam noteBorderColor #C4BCA3
+skinparam linetype ortho
+skinparam defaultFontName Inter
+skinparam ArrowColor #63666A
+skinparam class {
+  BackgroundColor #E4F0EA
+  BorderColor #2F7D62
+  FontName Inter
+}
+hide circle
+hide methods
+
+entity users #DDE7E2 {
+  * id : BIGSERIAL <<PK>>
+}
+entity courses #DDE7E2 {
+  * id : BIGSERIAL <<PK>>
+}
+
+package "OPERATIONS · level 2" #F7F4EC {
+  entity ai_calls {
+    * id : BIGSERIAL <<PK>>
+    --
+    * user_id : BIGINT <<FK>>
+    course_id : BIGINT <<FK>>
+    * call_type : VARCHAR(16) <<CHECK>>
+    * level : VARCHAR(12) <<CHECK>>
+    * input_tokens : INTEGER
+    * output_tokens : INTEGER
+    * estimated_cost : NUMERIC(10,6)
+    * latency_ms : INTEGER
+    * created_at : TIMESTAMPTZ
+  }
+  entity sync_queue {
+    * id : BIGSERIAL <<PK>>
+    --
+    * user_id : BIGINT <<FK>>
+    * entity_type : VARCHAR(40)
+    * idempotency_key : UUID <<UQ>>
+    * payload : JSONB
+    * attempts : INTEGER
+    last_error : VARCHAR(500)
+    * status : VARCHAR(12) <<CHECK>>
+    * created_at : TIMESTAMPTZ
+  }
+  entity devices {
+    * id : BIGSERIAL <<PK>>
+    --
+    * user_id : BIGINT <<FK>>
+    * fcm_token : VARCHAR(255) <<UQ>>
+    * platform : VARCHAR(12) <<CHECK>>
+    * registered_at : TIMESTAMPTZ
+  }
+  entity notifications {
+    * id : BIGSERIAL <<PK>>
+    --
+    * user_id : BIGINT <<FK>>
+    * kind : VARCHAR(30) <<CHECK>>
+    * payload : JSONB
+    sent_at : TIMESTAMPTZ
+    read_at : TIMESTAMPTZ
+  }
+  entity coverage_snapshots {
+    * id : BIGSERIAL <<PK>>
+    --
+    * user_id : BIGINT <<FK>>
+    * course_id : BIGINT <<FK>>
+    * coverage_pct : REAL
+    * taken_at : TIMESTAMPTZ
+  }
+}
+
+users ||--o{ ai_calls
+users ||--o{ sync_queue
+users ||--o{ devices
+users ||--o{ notifications
+users ||--o{ coverage_snapshots
+courses |o--o{ ai_calls
+courses ||--o{ coverage_snapshots
+@enduml

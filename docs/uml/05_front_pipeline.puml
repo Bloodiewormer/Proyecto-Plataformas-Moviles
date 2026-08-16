@@ -1,0 +1,102 @@
+@startuml 05_front_pipeline
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam noteBackgroundColor #FDF6E3
+skinparam noteBorderColor #C4BCA3
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+skinparam defaultFontName Inter
+skinparam ArrowColor #63666A
+skinparam class {
+  BackgroundColor #E8EEF6
+  BorderColor #3E6E9E
+}
+hide empty members
+
+package "pipeline · FRONT" #F7F4EC {
+
+  class PipelineEngine <<Facade>> {
+    - preprocessor : ImagePreprocessor
+    - segmenter : RegionSegmenter
+    - classifier : RegionClassifier
+    - textOcr : TextOcrEngine
+    - scorer : ConfidenceScorer
+    - policy : EscalationPolicy
+    - hasher : PerceptualHasher
+    + process(image : Bitmap, ctx : CourseContext) : PageResult
+  }
+
+  interface ImagePreprocessor <<Strategy>> {
+    + normalize(image : Bitmap) : PreprocessResult
+  }
+  class OpenCvPreprocessor {
+    + normalize(image : Bitmap) : PreprocessResult
+  }
+  class QualityAnalyzer {
+    + analyze(image : Bitmap) : QualityMetrics
+    + isUsable(m : QualityMetrics) : Boolean
+    + rejectionReason(m : QualityMetrics) : RejectionReason?
+  }
+
+  class RegionSegmenter {
+    + segment(image : Bitmap) : List<PageRegion>
+  }
+  class RegionClassifier <<Router>> {
+    + classify(region : PageRegion, ocr : OcrResult) : RegionKind
+  }
+
+  interface TextOcrEngine <<Strategy>> {
+    + recognize(region : PageRegion) : OcrResult
+  }
+  class MlKitTextOcrEngine {
+    + recognize(region : PageRegion) : OcrResult
+  }
+
+  class ConfidenceScorer <<pure>> {
+    - weights : ScoringWeights
+    + score(ocr : OcrResult, glossary : CourseGlossary) : ConfidenceScore
+  }
+
+  class EscalationPolicy <<Chain>> {
+    - steps : List<EscalationStep>
+    + resolve(region : PageRegion) : RegionResult
+  }
+  interface EscalationStep {
+    + canHandle(region : PageRegion) : Boolean
+    + handle(region : PageRegion) : RegionResult
+    + level() : ProcessingLevel
+  }
+  class LocalTextStep <<N1>>
+  class MathOcrRequestStep <<N1.5>>
+  class VisionRepairRequestStep <<N2>>
+
+  class PerceptualHasher {
+    + hash(image : Bitmap) : String
+    + isDuplicate(hash : String) : Boolean
+  }
+}
+
+PipelineEngine --> ImagePreprocessor
+PipelineEngine --> RegionSegmenter
+PipelineEngine --> RegionClassifier
+PipelineEngine --> TextOcrEngine
+PipelineEngine --> ConfidenceScorer
+PipelineEngine --> EscalationPolicy
+PipelineEngine --> PerceptualHasher
+
+ImagePreprocessor <|.. OpenCvPreprocessor
+OpenCvPreprocessor --> QualityAnalyzer
+TextOcrEngine <|.. MlKitTextOcrEngine
+EscalationPolicy o-- "1..*" EscalationStep
+EscalationStep <|.. LocalTextStep
+EscalationStep <|.. MathOcrRequestStep
+EscalationStep <|.. VisionRepairRequestStep
+
+note bottom of MathOcrRequestStep
+  N1.5 and N2 do not call the
+  network themselves. They emit a
+  RemoteWorkRequest that the note
+  repository dispatches. Keeps the
+  pipeline testable with no server.
+end note
+@enduml

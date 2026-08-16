@@ -1,0 +1,91 @@
+@startuml 14_seq_capture_to_note
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam noteBackgroundColor #FDF6E3
+skinparam noteBorderColor #C4BCA3
+skinparam defaultFontName Inter
+skinparam sequenceMessageAlign left
+skinparam ParticipantPadding 8
+skinparam BoxPadding 10
+
+box "FRONT · device" #E8EEF6
+  actor Student as S
+  participant "CaptureViewModel" as VM
+  participant "PipelineEngine" as PE
+  participant "NoteRepository" as NR
+  database "Room" as RM
+end box
+
+box "BACK · server" #FFF3D8
+  participant "NoteController" as NC
+  participant "NoteService" as NS
+  participant "AiOrchestrator" as AI
+  database "PostgreSQL" as PG
+end box
+
+box "EXTERNAL" #F5EDE9
+  participant "SimpleTex" as ST
+  participant "LLM vision" as LLM
+end box
+
+S -> VM : shutter
+VM -> PE : process(bitmap, courseContext)
+
+PE -> PE : N0 normalize + analyze quality
+alt quality unusable
+  PE --> VM : PageResult(rejectionReason = GLARE)
+  VM --> S : reject WITH CONCRETE REASON
+else usable
+  PE -> PE : perceptual hash
+  alt page already processed
+    PE --> VM : cached PageResult — ZERO calls
+  else new page
+    PE -> PE : segment into regions
+    PE -> PE : N1 ML Kit OCR on every region
+    PE -> PE : classify each region (router)
+    PE -> PE : score confidence per region
+    PE --> VM : PageResult + List<RemoteWorkRequest>
+  end
+end
+
+VM -> NR : savePage(pageResult, requests)
+NR -> RM : insert page (status PENDING)
+NR --> VM : local id — UI is already usable
+
+group Remote escalation · one HTTP call per page
+  NR -> NC : POST /notes/{id}/pages\nIdempotency-Key: <uuid>
+  NC -> NS : uploadPage(...)
+  NS -> AI : repairRegions(pageJob)
+
+  loop for each MATH region
+    AI -> ST : recognize(crop)   <<N1.5>>
+    ST --> AI : latex + confidence
+  end
+  AI -> AI : LatexValidator.compiles(latex)
+
+  opt regions still below threshold OR latex does not compile
+    AI -> LLM : repair(crops)    <<N2 — one call>>
+    LLM --> AI : repaired regions
+  end
+
+  AI -> PG : insert ai_calls rows
+  AI --> NS : List<RegionResultDto>
+  NS -> PG : update note_pages (regions, level_reached)
+  NS --> NC : PageResponse
+  NC --> NR : 200 { data: … }
+end
+
+NR -> NC : POST /notes/{id}/reconstruct
+NC -> NS : reconstruct(id)
+NS -> AI : reconstruct(noteJob)   <<IA-01>>
+AI -> LLM : structure into blocks
+LLM --> AI : content JSON
+AI --> NS : NoteContentDto
+NS -> PG : update notes.content
+NS --> NC : NoteResponse
+NC --> NR : 200 { data: … }
+
+NR -> RM : upsert note + mark DONE
+NR --> VM : Flow emits Success
+VM --> S : confidence map\n14 verified · 2 repaired · 1 escalated · 1 uncertain
+@enduml

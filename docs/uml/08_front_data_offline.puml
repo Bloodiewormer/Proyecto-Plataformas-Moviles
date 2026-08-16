@@ -1,0 +1,97 @@
+@startuml 08_front_data_offline
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam noteBackgroundColor #FDF6E3
+skinparam noteBorderColor #C4BCA3
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+skinparam defaultFontName Inter
+skinparam ArrowColor #63666A
+skinparam class {
+  BackgroundColor #E8EEF6
+  BorderColor #3E6E9E
+}
+hide empty members
+
+package "core.sync · FRONT" #F7F4EC {
+  class SyncQueue {
+    - dao : SyncOperationDao
+    + enqueue(op : SyncOperation) : Unit
+    + nextBatch(limit : Int) : List<SyncOperation>
+    + markDone(id : Long) : Unit
+    + markFailed(id : Long, error : String) : Unit
+  }
+  class SyncOperation {
+    + id : Long
+    + entityType : String
+    + idempotencyKey : UUID
+    + payload : String
+    + attempts : Int
+    + status : SyncStatus
+    + lastError : String?
+  }
+  class SyncWorker <<WorkManager>> {
+    + doWork() : Result
+  }
+  class RetryPolicy {
+    + delayFor(attempt : Int) : Duration
+    + shouldGiveUp(attempt : Int) : Boolean
+  }
+  class ConnectivityMonitor {
+    + isOnline : StateFlow<Boolean>
+  }
+  enum SyncStatus {
+    PENDING
+    IN_PROGRESS
+    FAILED
+    DONE
+  }
+}
+
+package "core.database · FRONT" #F7F4EC {
+  class GlifoDatabase <<Room @Database>> {
+    + noteDao() : NoteDao
+    + pageDao() : PageDao
+    + studyItemDao() : StudyItemDao
+    + coverageDao() : CoverageDao
+    + syncOperationDao() : SyncOperationDao
+  }
+  interface SyncOperationDao <<@Dao>>
+  interface NoteDao <<@Dao>>
+  class Converters <<@TypeConverter>> {
+    + jsonToContent(raw : String) : NoteContent
+    + contentToJson(c : NoteContent) : String
+  }
+}
+
+package "core.network · FRONT" #F7F4EC {
+  class ApiClient <<Retrofit>>
+  class AuthInterceptor <<OkHttp>> {
+    + intercept(chain) : Response
+  }
+  class ErrorMapper {
+    + map(code : Int, body : String?) : AppError
+  }
+}
+
+SyncQueue --> SyncOperationDao
+SyncQueue ..> SyncOperation
+SyncOperation --> SyncStatus
+SyncWorker --> SyncQueue
+SyncWorker --> RetryPolicy
+SyncWorker --> ApiClient
+SyncWorker --> ConnectivityMonitor
+GlifoDatabase --> SyncOperationDao
+GlifoDatabase --> NoteDao
+GlifoDatabase --> Converters
+ApiClient --> AuthInterceptor
+ApiClient --> ErrorMapper
+
+note bottom of RetryPolicy
+  Exponential backoff with jitter.
+  idempotencyKey is generated once,
+  at enqueue time — never per attempt.
+  That single choice is what makes
+  a retry safe.
+end note
+@enduml
