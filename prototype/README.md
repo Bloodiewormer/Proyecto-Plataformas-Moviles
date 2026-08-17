@@ -2,6 +2,8 @@
 
 Prototipo interactivo generado con **Figma Make** (React 19 + Vite + Tailwind CSS 4). Cubre las 39 pantallas del prototipo distribuidas en 5 tandas (T1-T5), más la paleta de modos día/noche.
 
+**[Demo en vivo (GitHub Pages)](https://bloodiewormer.github.io/Proyecto-Plataformas-Moviles/)**
+
 ## Estructura
 
 ```

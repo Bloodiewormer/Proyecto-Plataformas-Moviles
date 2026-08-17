@@ -8,6 +8,12 @@ Aplicación Android que reconstruye notas manuscritas de estudiantes en conocimi
 
 ---
 
+## Demo en vivo
+
+**[Ver prototipo interactivo en GitHub Pages](https://bloodiewormer.github.io/Proyecto-Plataformas-Moviles/)**
+
+---
+
 ## Principio de diseño
 
 > **"La IA no debe hacer todo."**
@@ -39,12 +45,12 @@ glifo/
 | `Glifo_Bitacora_Decisiones.md` | Bitácora de decisiones tomadas y valores deprecados |
 | `Glifo_Contexto_Competitivo.md` | Análisis de contexto competitivo |
 | `Contexto_Curso.md` | Contexto y requisitos del curso EIF411 |
-| `claude_Glifo_UML_Modeling.md` | Modelado UML (diagramas de clase, etc.) |
+| `Glifo_UML_Modeling.md` | Modelado UML (diagramas de clase, etc.) |
 
 ## Stack técnico
 
 - **Android:** Kotlin, Android Studio, CameraX, Room, OpenCV, Google ML Kit Text Recognition, Retrofit, Hilt, WorkManager
-- **Backend:** Spring Boot (Java), PostgreSQL, Spring Security, JWT, JPA
+- **Backend:** Spring Boot (Kotlin), PostgreSQL, Spring Security, JWT, JPA
 - **OCR matemático:** SimpleTex API (primario) con fallback a modelo de visión LLM
 - **IA generativa externa:** Claude / GPT-4o-mini
 
