@@ -10,12 +10,12 @@ plugins {
 
 android {
     namespace = "cr.ac.una.glifo"
-    compileSdk = 37
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "cr.ac.una.glifo"
         minSdk = 26
-        targetSdk = 37
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 

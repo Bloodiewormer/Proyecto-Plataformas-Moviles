@@ -6,4 +6,6 @@ import dagger.hilt.components.SingletonComponent
 
 @Module
 @InstallIn(SingletonComponent::class)
-object AppModule
+object AppModule {
+    // This module is ready for @Provides methods (e.g. for Retrofit or Room)
+}
