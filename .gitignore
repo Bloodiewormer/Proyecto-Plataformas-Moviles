@@ -51,3 +51,8 @@ prototype/.claude-replay.*
 prototype/.tmp-*
 prototype/.plugins/
 prototype/.opencode-skills/
+/.gradle/
+/build/
+/backend/build/
+/backend/.gradle/
+/.idea/
