@@ -20,6 +20,9 @@ class User {
     @Column(name = "last_name")
     var lastName: String? = null
     
+    @Column(name = "avatar_url")
+    var avatarUrl: String? = null
+    
     @Column(name = "is_active", nullable = false)
     var isActive: Boolean = true
     
