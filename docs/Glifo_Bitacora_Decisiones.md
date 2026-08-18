@@ -1,189 +1,172 @@
-# Glifo — Bitácora de decisiones
+# Glifo — Decision Log
 
-Registro histórico del proyecto. **Este archivo no describe el proyecto**: describe cómo se llegó a él.
+Historical record of the project. **This file does not describe the project**: it describes how we arrived at it.
 
-Los documentos de trabajo (`Glifo_Alcance.md`, `Glifo_Arquitectura_Estandares.md`) están escritos en presente y describen únicamente lo que se va a construir. Cualquier decisión revertida, alternativa descartada o versión anterior vive aquí y **no debe reintroducirse** en aquellos.
+Working documents (`Glifo_Alcance.md`, `Glifo_Arquitectura_Estandares.md`) are written in the present tense and describe only what is going to be built. Any reverted decision, discarded alternative, or older version lives here and **must not be reintroduced** there.
 
 ---
 
-## Índice de decisiones
+## Decision Index
 
-| ID | Decisión | Estado |
+| ID | Decision | Status |
 |---|---|---|
-| D-01 | Dirección estratégica: motor de ingesta resiliente | Cerrada |
-| D-02 | Nombre del proyecto: Glifo | Cerrada |
-| D-03 | Tres roles de usuario | Cerrada |
-| D-04 | PostgreSQL principal, Room como caché | Cerrada |
-| D-05 | Escalera ramificada de procesamiento | Cerrada |
-| D-06 | Motor de OCR matemático: SimpleTex | Cerrada |
-| D-07 | pix2tex autohospedado | **Abierta** — pendiente de consulta |
-| D-08 | Comparación de cobertura: híbrida | Cerrada |
-| D-09 | JSONB selectivo, no generalizado | Cerrada |
-| D-10 | Offline y sincronización como pilar | Cerrada |
-| D-11 | Telemetría propia + Firebase Analytics | Cerrada |
-| D-12 | Paleta: dos modos, dorado como acento | Cerrada — un punto abierto |
+| D-01 | Strategic direction: resilient ingestion engine | Closed |
+| D-02 | Project name: Glifo | Closed |
+| D-03 | Three user roles | Closed |
+| D-04 | PostgreSQL main, Room as cache | Closed |
+| D-05 | Branched processing ladder | Closed |
+| D-06 | Math OCR engine: SimpleTex | Closed |
+| D-07 | Self-hosted pix2tex | **Open** — pending professor feedback |
+| D-08 | Coverage comparison: hybrid | Closed |
+| D-09 | Selective JSONB, not generalized | Closed |
+| D-10 | Offline and sync as a core pillar | Closed |
+| D-11 | Custom telemetry + Firebase Analytics | Closed |
+| D-12 | Palette: two modes, gold as accent, escalated isolated | Closed |
+| D-13 | Backend Language: Kotlin + Spring Boot | Closed |
+| D-14 | Documentation Language: English | Closed |
+| D-15 | Student Corrections & Glossary: Suggestions model | Closed |
+| D-16 | Note Ingestion Cardinality: DRAFT state | Closed |
+| D-17 | Offline Context: LocalCourseContext | Closed |
+| D-18 | Sync Push targeting: device_id | Closed |
+| D-19 | Serialization library: Gson | Closed |
+| D-20 | AI function numbering: IA-04 replaces IA-05 | Closed |
+| D-21 | `ai_calls` view and targeted push are Must-have | Closed |
+| D-22 | LaTeX validation runs on the backend | Closed |
+| D-23 | Sync operation ordering: CREATE_NOTE before UPLOAD_PAGE | Closed |
 
 ---
 
-## D-01 · Dirección estratégica
+## D-01 · Strategic direction
 
-**Decisión.** Glifo conserva el dominio del enunciado —apuntes, cobertura contra temario, refuerzo— pero desplaza su eje de producto: de «app de apuntes que ahorra tokens» a **motor de ingesta resiliente para apuntes manuscritos**.
+**Decision.** Glifo retains the course brief's domain —notes, coverage against syllabus, reinforcement— but shifts its product axis: from "a note app that saves tokens" to a **resilient ingestion engine for handwritten notes**.
 
-**Alternativas consideradas y descartadas**
+**Alternatives considered and discarded**
 
-| Opción | Motivo del descarte |
+| Option | Reason for discard |
 |---|---|
-| Mantener la propuesta original sin cambios | El diferenciador (preprocesamiento y economía de tokens) era invisible para el usuario y no respondía a la fragilidad del OCR |
-| Replanteamiento total del problema (autopsia de exámenes, banco colaborativo de apuntes, motor de estudio sin cámara) | El enunciado es común a los nueve grupos; cambiar el problema se sale del marco asignado y descarta el trabajo previo |
+| Keep the original proposal unchanged | The differentiator (preprocessing and token economy) was invisible to the user and did not address OCR fragility. |
+| Total problem rethink (exam autopsy, collaborative note bank, camera-less study engine) | The brief is common to all nine groups; changing the problem steps out of the assigned framework and discards prior work. |
 
-**Fundamento.** El propio enunciado identifica el OCR sobre manuscrito de baja calidad como su riesgo principal, y propone como mitigación que el estudiante corrija a mano. Esa mitigación no escala en cursos con notación matemática. El territorio de la ingesta fiable no estaba ocupado por ningún otro grupo.
+**Rationale.** The brief itself identifies OCR on poor-quality handwriting as its main risk, proposing manual student correction as mitigation. That mitigation does not scale for courses with mathematical notation. The territory of reliable ingestion was unoccupied by any other group.
 
 ---
 
-## D-02 · Nombre
+## D-02 · Name
 
-**Decisión.** El proyecto se llama **Glifo**.
+**Decision.** The project is named **Glifo**.
 
-**Contexto.** No podía conservar el nombre NotaViva: es el del enunciado guía del curso, propuesto por Keneth Jara (Grupo Charlie), y el docente pidió nombres distintos por equipo.
+**Context.** It could not retain the name NotaViva: that is the course's guide brief (proposed by Group Charlie), and the professor requested distinct names per team.
 
-**Alternativas evaluadas**
+**Alternatives evaluated**
 
-| Candidato | Resultado |
+| Candidate | Result |
 |---|---|
-| **Glifo** | **Elegido.** Unidad mínima de la escritura; describe exactamente lo que la app procesa |
-| Grifo | Descartado como nombre: en buena parte del ámbito hispanohablante significa «llave de agua». Se conserva como **base de la identidad visual** |
-| Runa | Descartado: buen significado, pero común en tiendas de aplicaciones y pierde el juego glifo/grifo |
-| Calco, Trazo, Nitidez | Descartados por menor precisión semántica |
+| **Glifo** | **Chosen.** Minimum unit of writing; describes exactly what the app processes. |
+| Grifo (Griffin) | Discarded as a name: in much of the Spanish-speaking world it means "water faucet/tap". Retained as the **base of the visual identity**. |
+| Runa, Calco, Nitidez | Discarded for lower semantic precision or app-store saturation. |
 
 ---
 
 ## D-03 · Roles
 
-**Decisión.** Tres roles: estudiante, docente, administrador.
+**Decision.** Three roles: student, teacher, administrator.
 
-**Motivo del cambio.** El diseño inicial contemplaba un único rol y una versión previa listaba explícitamente el panel del docente entre las funciones eliminadas. El docente calificó el mínimo de dos roles como mandatorio y señaló su ausencia en la presentación del equipo. El enunciado guía contempla tres.
+**Reason for change.** Initial design had a single role. The professor marked a minimum of two roles as mandatory. The guide brief envisions three. 
 
-**Elemento diferenciador incorporado.** El rol docente no es un panel de consulta: mantiene el **glosario de notación canónica** del curso, que alimenta directamente el cálculo de confianza del pipeline.
-
----
-
-## D-04 · Persistencia
-
-**Decisión.** PostgreSQL como base principal; Room como caché local y cola de sincronización.
-
-**Motivo del cambio.** El diseño inicial era local-first con Room como almacenamiento principal. PostgreSQL es obligatorio para los nueve grupos, y la credencial del servicio de IA no puede residir en el APK, lo que exige un backend intermedio de todos modos.
+**Differentiator.** The teacher role is not just a dashboard: it maintains the course's **canonical notation glossary**, which directly feeds the pipeline's confidence calculation.
 
 ---
 
-## D-05 · Escalera de procesamiento
+## D-04 · Persistence
 
-**Decisión.** Pipeline ramificado: N0 preprocesamiento → N1 OCR local sobre todas las regiones → clasificador como enrutador → N1.5 OCR matemático para fórmulas → N2 reparación selectiva por visión para lo no resuelto y para dibujos → N3 página completa a solicitud.
+**Decision.** PostgreSQL as the primary database; Room as local cache and sync queue.
 
-**Evolución del diseño**
-
-1. Versión inicial: OCR único sin plan alternativo. El docente señaló la ausencia de un mecanismo de respaldo como riesgo crítico.
-2. Segunda versión: escalera lineal N0→N1→N2→N3.
-3. **Versión vigente:** escalera ramificada. El clasificador de regiones pasó de etiquetar a enrutar, lo que elevó su prioridad a imprescindible.
-
-**Decisión de orden.** El clasificador se ejecuta **después** de N1, no antes: ML Kit es local y gratuito, y su comportamiento sobre una región es mejor señal de clasificación que la geometría por sí sola.
+**Reason for change.** The initial design was local-first with Room as the main storage. PostgreSQL is mandatory for all nine groups, and AI service credentials cannot reside in the APK, demanding a backend regardless.
 
 ---
 
-## D-06 · Motor de OCR matemático
+## D-05 · Processing ladder
 
-**Decisión.** SimpleTex como implementación primaria de `MathOcrEngine`, con respaldo automático sobre el modelo de visión.
+**Decision.** Branched pipeline: N0 preprocessing → N1 local text OCR on all regions → classifier as router → N1.5 math OCR for formulas → N2 selective vision repair for unresolved regions and drawings → N3 full page on demand.
 
-**Restricción del equipo:** ninguna solución de pago. Si igual se cobra por imagen, un motor dedicado solo se justifica siendo gratuito, marcadamente más barato o marcadamente más preciso.
-
-**Alternativas evaluadas**
-
-| Motor | Resultado |
-|---|---|
-| **SimpleTex** | **Elegido.** Gratuito con cuota diaria amplia; devuelve confianza numérica derivada del modelo; soporta manuscrito |
-| Modelo de visión con instrucción de LaTeX | **Respaldo.** Admite contexto del curso y puede declarar que no entendió, pero su autoevaluación no es una medida calibrada |
-| Mathpix | Descartado: de pago, sin capa gratuita permanente |
-| Tesseract | Descartado: débil en manuscrito, que es el caso relevante |
-| ML Kit Digital Ink | Descartado: opera sobre trazos en pantalla, no sobre fotografías |
-| pix2tex, Surya, texify autohospedados | Ver D-07 |
-
-**Criterio decisivo.** Se priorizó que el motor entregue una señal de confianza **derivada del modelo**, no autorreportada, para poder decidir automáticamente si una región se acepta o escala.
+**Order decision.** The classifier runs **after** N1, not before. ML Kit is local and free; its behavior on a region (fragmented output vs coherent text) is a better classification signal than geometry alone.
 
 ---
 
-## D-07 · pix2tex autohospedado — **abierta**
+## D-06 · Math OCR engine
 
-**Estado.** Sin resolver. Pendiente de consulta con el docente.
+**Decision.** SimpleTex as the primary implementation of `MathOcrEngine`, with automatic fallback to the vision model.
 
-**Propuesta.** Desplegar pix2tex como microservicio REST propio y consumirlo como una implementación más de `MathOcrEngine`.
-
-**A favor:** independencia de proveedores externos; los apuntes no salen de infraestructura propia; sin cuotas; mayor peso académico.
-
-**En contra:** introduce un segundo despliegue; la variante con PyTorch excede la memoria de las capas gratuitas de hosting —la variante ONNX sí encaja—; el arranque en frío de decenas de segundos es un riesgo para la demostración en vivo; precisión reportada entre 60 % y 70 % sobre fotografías con iluminación deficiente, que es el insumo real; tiende a producir salida inventada sobre regiones que no son fórmulas.
-
-**Preguntas planteadas al docente**
-
-1. ¿Un microservicio Python independiente es admisible, o contradice el requisito de arquitectura monolítica?
-2. ¿Autohospedar aporta valor en la evaluación frente a consumir un servicio externo gratuito?
-3. ¿Existe infraestructura universitaria disponible?
-4. ¿Es aceptable el arranque en frío para la defensa final?
-
-**Independientemente del resultado**, pix2tex se ejecuta localmente sobre el conjunto de calibración para la comparación de motores del artículo científico. Esa medición no requiere desplegar nada.
+**Evaluation criteria.** The engine must deliver a confidence score **derived from the model**, allowing automatic acceptance or escalation routing. SimpleTex offers this and a permanent free tier. Mathpix was discarded (paid only), Tesseract (weak on handwriting), ML Kit Digital Ink (requires screen strokes, not photos).
 
 ---
 
-## D-08 · Comparación de cobertura
+## D-07 · Self-hosted pix2tex — **open**
 
-**Decisión.** Prefiltro local determinista resuelve la mayoría de los temas; solo los casos ambiguos se envían a adjudicación semántica por IA.
+**Status.** Unresolved. Pending consultation with the professor.
 
-**Motivo del cambio.** El diseño previo hacía la comparación enteramente local. El enunciado guía justifica la selección del proyecto, entre otras razones, por incorporar tres llamadas de IA con propósitos distintos: visión, comparación semántica y generación. Eliminar la comparación semántica suprimía uno de esos tres pilares.
+**Proposal.** Deploy pix2tex as our own REST microservice and consume it as another `MathOcrEngine` implementation.
+**Questions for the professor:**
+1. Is an independent Python microservice permissible, or does it contradict the monolithic architecture requirement?
+2. Does self-hosting add evaluation value over consuming a free external service?
+3. Is university infrastructure available?
+4. Is cold-start latency acceptable for the final defense?
 
-El enfoque híbrido conserva la llamada y aplica la misma política de escalamiento del pipeline a un segundo problema.
+Regardless of the outcome, pix2tex runs locally on the calibration set for the scientific article comparison.
+
+---
+
+## D-08 · Coverage comparison
+
+**Decision.** Deterministic local pre-filter resolves most topics; only ambiguous cases are sent to AI semantic adjudication.
+
+**Reason for change.** Previous design was entirely local. The guide brief justifies the project's selection because it uses three distinct AI calls: vision, semantic comparison, and generation. The hybrid approach preserves the semantic call while applying the pipeline's escalation policy.
 
 ---
 
 ## D-09 · JSONB
 
-**Decisión.** Aplicación selectiva, con criterio documentado, no generalizada.
+**Decision.** Selective application based on documented criteria, not generalized.
 
-**Contexto.** El docente recomendó evaluar campos JSON a los nueve grupos, y fue una de las dos observaciones sobre el modelo de datos en la primera entrega.
-
-**Criterio adoptado:** JSONB donde la estructura es variable y no se consulta por campo interno; relacional donde hay integridad referencial o agregación frecuente.
+**Adopted criteria:** JSONB where the structure is variable and no internal field is queried (e.g., `study_items.payload`, `notes.content`, `note_pages.regions`). Relational modeling where there is referential integrity or frequent aggregation (`topic_coverage`, `users`).
 
 ---
 
-## D-10 · Offline y sincronización
+## D-10 · Offline and sync
 
-**Decisión.** Pilar del producto, no funcionalidad secundaria.
+**Decision.** Core product pillar, not secondary functionality.
 
-**Motivo.** Corresponde al tema de investigación aplicada asignado al equipo, evaluado por separado y con ronda de preguntas de los demás grupos. Una versión previa de la planificación lo había reducido a prioridad menor; se revirtió.
-
-**Alcance:** consumo offline, cola de captura, sincronización unidireccional con reintentos e idempotencia. La resolución bidireccional de conflictos queda declarada como trabajo futuro.
-
----
-
-## D-11 · Telemetría
-
-**Decisión.** Registro propio de llamadas de IA (`ai_calls`) más eventos personalizados de Firebase Analytics y Crashlytics.
-
-**Motivo.** El argumento central del proyecto es cuantitativo: la proporción de regiones resueltas en cada nivel del pipeline es un dato que debe producirse, no afirmarse. La misma instrumentación alimenta el artículo científico y la ronda de preguntas de investigación aplicada.
-
-Crashlytics se incorpora porque OpenCV y ML Kit son bibliotecas nativas y sus fallos no se reproducen en el emulador.
+**Rationale.** It corresponds to the applied research topic assigned to the team.
+**Scope:** Offline consumption, offline capture queue, unidirectional sync with exponential backoff and idempotency. Bidirectional conflict resolution is future work.
 
 ---
 
-## D-12 · Paleta
+## D-11 · Telemetry
 
-**Decisión.** Dos modos completos —noche y día— con la misma estructura de tokens, y el **dorado como color de acción**. Se adopta la paleta materializada en el prototipo de las cinco tandas.
+**Decision.** Custom `ai_calls` ledger + Firebase Analytics and Crashlytics.
 
-**Motivo del cambio.** La paleta original nació en documento y nunca se probó sobre pantallas reales. Al producir los 39 frames se vio que el acento turquesa `#3FC5C0` y el dorado heráldico `#C9A227` competían: dos colores saturados de familias distintas peleando por la atención en la misma pantalla, sin que ninguno de los dos tuviera un dominio claro. Unificar en el dorado dejó una sola señal de interacción y liberó el turquesa.
+**Rationale.** The project's central argument is quantitative: the proportion of regions resolved at each pipeline level must be proven with data, not asserted. Crashlytics is included because OpenCV and ML Kit are native libraries whose crashes don't reproduce in standard emulators.
 
-**Consecuencia.** El token `heraldic` desaparece. El dorado ya no puede usarse como adorno de marca: si aparece, el elemento se puede tocar o está activo. La identidad de marca pasa a descansar enteramente en el logotipo del grifo.
+---
 
-**Elementos incorporados.** `surfaceHigh` y `border` como tokens de primer nivel; el juego de variantes `Soft` / `Faint` / `Line` sistematizado sobre todo color semántico; `accentText` y `onAccent` para resolver contraste del dorado en ambos modos.
+## D-12 · Palette and Visual Identity
 
-**Valores anteriores — no reintroducir**
+**Decision.** Two complete modes (Day and Night) with the same token structure, and **gold as the color of action**. The palette materialized in the five-batch prototype is the canonical one.
 
-| Token | Versión descartada |
+**Reason for the change.** The original palette was born on paper and was never tested on real screens. Producing the 39 frames exposed the problem: the turquoise accent `#3FC5C0` and the heraldic gold `#C9A227` were competing — two saturated colors from different families fighting for attention on the same screen, with neither clearly dominant. Unifying on gold left a single interaction signal and freed the turquoise entirely.
+
+**Consequences.**
+
+1. **`heraldic` is removed.** Heraldic gold and the accent are now the same color, so gold can no longer be used as brand decoration: if it appears, the element can be touched or is active. Brand identity moves entirely onto the griffin logo.
+2. **Tokens promoted to first class:** `surfaceHigh` and `border`; the `Soft` / `Faint` / `Line` variant set systematized across every semantic color; `accentText` and `onAccent` added to resolve gold's contrast in both modes.
+3. **Colour collision resolved (closed before Lab 3).** `escalated` and `alert` shared `#E0693A` / `#B94117`. Escalating to a vision model is normal pipeline operation, not a failure, and presenting it in the error color contradicted the central argument of the product. `escalated` moved to its own amber: **`#F59E0B` (Night) / `#D97706` (Day)**. `alert` keeps the rust.
+4. **Geometric trust coding retired from inline text.** The old symbol set —filled circle, square, triangle, dotted circle— did not survive contact with running text: there is nowhere to put a triangle inside a paragraph. Replaced by the dual-coding rule in `Glifo_Arquitectura_Estandares.md` §12.3: color + underline style (solid vs dotted) + background fill + explicit textual label. Geometric markers survive only as compact status chips in lists, never as the sole carrier.
+
+**Why dual coding at all.** Roughly 8 % of men have some color vision deficiency, and green/amber is the worst-discriminated pair. If the confidence map depended on color alone, the application's central function would be inaccessible to those users.
+
+### Previous values — do not reintroduce
+
+| Token | Discarded version |
 |---|---|
 | `background` | `#0B1420` |
 | `surface` | `#132234` |
@@ -192,58 +175,163 @@ Crashlytics se incorpora porque OpenCV y ML Kit son bibliotecas nativas y sus fa
 | `textPrimary` | `#E8E4D9` |
 | `textSecondary` | `#8FA3B8` |
 | `alert` | `#D85A30` |
-| Verificado | `#5DCAA5` |
-| Reparado | `#85B7EB` |
-| Escalado | `#EF9F27` |
-| Incierto | `#F0997B` |
+| Verified | `#5DCAA5` |
+| Repaired | `#85B7EB` |
+| Escalated | `#EF9F27` |
+| Uncertain | `#F0997B` |
+| `escalated` (interim, collided with `alert`) | `#E0693A` / `#B94117` |
 
-También se descarta la codificación por figura geométrica —círculo lleno, cuadrado, triángulo, círculo punteado—, que no sobrevivió al contacto con texto en línea: no hay dónde poner un triángulo dentro de un párrafo. La sustituye la combinación de subrayado, relleno y etiqueta textual descrita en `Glifo_Arquitectura_Estandares.md` §12.3, que cumple la misma función de doble codificación.
+**Propagation status.** Applied in `Glifo_Alcance.md`, `Glifo_Arquitectura_Estandares.md`, `Glifo_Diseno_Arquitectura.md`, `Glifo_UML_Modeling.md`, and across the prototype: `src/App.tsx`, the five wireframe batches, `Glifo_Paleta_Modos.html` and `Glifo_Biblioteca_Componentes.md`. The narrative that defended the shared token was rewritten in the last two rather than deleted, so the reversal is on record.
 
-**Punto abierto.** `escalated` y `alert` comparten valor (`#E0693A` / `#B94117`). El escalamiento a visión es funcionamiento normal, no una falla, y el argumento central del proyecto se debilita si se presenta con el color de error. Pendiente: separar `escalated` hacia un ámbar propio, distinguible de `verified` y de `alert` en ambos modos. **Plazo: antes del Laboratorio 3 (9 de septiembre)**, que es cuando el mapa de confianza se defiende en clase.
+Also discarded: the geometric-figure encoding (filled circle, square, triangle, dotted circle) as the primary carrier, and `accent` and `accentText` treated as a single token — in Day mode `accent` is `#FFD372` (a fill) while `accentText` is `#8A6210` (gold as text). Collapsing them turns every primary button brown.
 
 ---
 
-## Funcionalidades evaluadas y excluidas del alcance
+## D-13 · Backend Language
 
-Registro de lo que **no** se construye, para evitar que reaparezca en planificaciones posteriores.
+**Decision.** Kotlin + Spring Boot.
 
-| Funcionalidad | Motivo |
+**Rationale.** Unifies the language across the repository, allowing code review in both directions. Eliminates Lombok and Mockito (replaced by MockK). The `kotlin-spring` and `kotlin-jpa` compiler plugins are mandatory to handle `final` classes and no-arg constructors cleanly.
+
+---
+
+## D-14 · Documentation Language
+
+**Decision.** English for all code, identifiers, DB objects, API paths, payloads, commit messages, and technical documentation. Spanish is strictly reserved for user-facing UI text.
+
+**Rationale.** Aligns with the scientific article requirement and eliminates "Spanglish" in the codebase.
+
+---
+
+## D-15 · Student Corrections and Glossary
+
+**Decision.** Student corrections update their personal note (`notes.content`) and generate a `glossary_suggestion`. 
+
+**Rationale.** The teacher role has the exclusive `GLOSSARY_WRITE` privilege. Allowing students to write directly to `course_glossary` violates the security model. The suggestion model maintains collaborative learning while keeping the canonical glossary safe and architecture clean.
+
+---
+
+## D-16 · Note Creation and Cardinality
+
+**Decision.** A `Note` can have 0 pages temporarily during the `DRAFT` state.
+
+**Rationale.** Eliminates the database contradiction where `POST /notes` followed by `POST /notes/{id}/pages` broke the `1..N` cardinality rule. The state machine (`DRAFT` → `PROCESSING` → `READY`) handles this properly.
+
+---
+
+## D-17 · Offline Context for Pipeline
+
+**Decision.** Room stores a version-controlled `LocalCourseContext`.
+
+**Rationale.** The `PipelineEngine` and `ConfidenceScorer` need glossary data to function offline. Copying the entire DB is unfeasible. `LocalCourseContext` holds just enough data (with `glossary_version`) to power the pipeline, enabling cache invalidation upon reconnection.
+
+---
+
+## D-18 · Push Notifications for Sync
+
+**Decision.** `sync_queue` records must include `device_id` (FK to `devices`).
+
+**Rationale.** If a user has a phone and a tablet, the FCM "Sync complete" push must only target the physical device that uploaded the pending batch.
+
+---
+
+## D-19 · Serialization Library
+
+**Decision.** Gson.
+
+**Rationale.** Resolves the conflict between the course framework and the architecture document. `kotlinx.serialization` is powerful for sealed classes, but Gson was already presented in earlier design iterations to the professor and aligns with standard Retrofit integrations in this context.
+
+**Consequence.** `study_items.payload` carries three item kinds (`Glifo_UML_Modeling.md` §5.3). Without a sealed-class resolver, deserialization dispatches on the `kind` discriminator by hand. That is a small amount of explicit code in one place, which is the price paid for not reversing a decision the professor has already seen.
+
+---
+
+## D-20 · AI function numbering
+
+**Decision.** Semantic coverage adjudication is **IA-04**. The identifier IA-05 is retired.
+
+**Reason.** An earlier plan reserved IA-04 for *contradiction detection between notes*. That function was removed from scope (high false-positive risk; flagging a contradiction that does not exist destroys trust in the product), leaving a gap in the numbering: the inventory ran OCR-M · IA-00 · IA-01 · IA-02 · IA-03 · IA-05, with no IA-04. A gap with no written explanation is exactly the kind of detail that gets asked about in a defense. Adjudication was renumbered down to close it.
+
+**Current inventory:** OCR-M (math OCR), IA-00 (selective vision repair), IA-01 (note reconstruction), IA-02 (flashcards and quizzes, batch), IA-03 (on-demand explanation), IA-04 (coverage semantic adjudication, batch).
+
+---
+
+## D-21 · Priority of the `ai_calls` view and the targeted push
+
+**Decision.** Both are **Must-have**.
+
+**Reason — `ai_calls` view (H2).** An earlier revision marked the consumption screen as Optional in `Glifo_Alcance.md` §6.6 while §12 listed it as minimum-product item 9 and §14 spends minute 4:15 of the defense on it. The *recording* of `ai_calls` was never in dispute; only the screen. The cost argument is the project's thesis, and a thesis with no screen behind it is an assertion. Promoted to Must-have; §6.6, §12, §14 and `Glifo_UML_Modeling.md` §12.1 now agree.
+
+**Reason — targeted push (D-18).** Same shape of contradiction: §6.5 had it as Should-have while the MVP (§12, item 8) ends the offline flow with "notify via push", and the applied-research topic is offline and synchronization. Either it is Must-have or it comes out of the MVP and out of every claim that sync completes with a notification. Promoted. It does **not** enter the cut list in §11.
+
+**Cost.** Neither changes the hour budget: both were already inside the Must + Should total of ~284 hours.
+
+---
+
+## D-22 · Where LaTeX validation runs
+
+**Decision.** `LatexValidator` (JLaTeXMath) runs on the **backend**, immediately after N1.5. It is deterministic and uses no AI.
+
+**Reason.** The validation gates were described as "deterministic, local", which read as *on the device*. Two of the three gates are: confidence scoring and the glossary check are pure functions over `LocalCourseContext`. The LaTeX gate is not — the LaTeX string is produced by N1.5, which is already a backend call, so validating it in the same request avoids a round trip and keeps the escalation decision where the data is.
+
+**Clarification that this is not an AI call.** `LatexValidator` lives in the `ai/validation` package because it sits in the AI request path, not because it invokes a model. It appears in the "processes not using AI" list in `Glifo_Alcance.md` §8 and `Glifo_Diseno_Arquitectura.md` §9, and that stays true.
+
+**Not to be confused with rendering.** `JLaTeXMath-Android` on the client *renders* already-validated LaTeX for display. It does not validate.
+
+---
+
+## D-23 · Ordering of sync operations
+
+**Decision.** The outbox enqueues `CREATE_NOTE` before `UPLOAD_PAGE`, and the `SyncWorker` drains them in that order. Both the online and the offline sequence diagrams model the same order.
+
+**Reason.** D-16 established that a `Note` may hold 0 pages while in `DRAFT`. What it did not state was the consequence for the queue: `POST /notes/{id}/pages` needs an `{id}` that exists on the server, so a page operation that reaches the server before its note operation fails with a 404 that no retry can fix — the note will never appear on its own. Ordering is therefore part of the contract, not an implementation detail.
+
+**How the local id is reconciled.** The device creates the note with a local id. When `CREATE_NOTE` succeeds, the worker maps `localId → serverId` in Room before dispatching any page operation for that note. The idempotency key is per operation and is generated at enqueue time, so a retried `CREATE_NOTE` returns 409 and the mapping is read from the conflict response rather than creating a second note.
+
+**Status transitions.** `DRAFT` on creation, `PROCESSING` when the first page lands, `READY` when reconstruction (IA-01) writes `notes.content`. A note in `READY` with zero pages is the invalid state, and it is prevented by the transition, not by a foreign key.
+
+---
+
+## Features evaluated and excluded from scope
+
+Record of what is **not** built, with the reason each was rejected, so it does not reappear in later planning.
+
+| Feature | Reason |
 |---|---|
-| Detección de contradicciones entre apuntes | Alto riesgo de falsos positivos; señalar una contradicción inexistente destruye la confianza en el producto |
-| Comparación semántica mediante embeddings | Requiere modelo adicional y almacenamiento vectorial; el prefiltro léxico con glosario y adjudicación por IA da resultado comparable |
-| Detección automática de materia | El flujo natural es seleccionar el curso antes de capturar |
-| Resolución bidireccional de conflictos de sincronización | Proyecto en sí mismo; declarada como trabajo futuro |
-| Presupuesto de consumo por curso con modo degradado | El registro de llamadas basta para sostener el argumento de costo |
-| Planificación completa de estudio orientada a evaluaciones | Reducida a fecha de examen manual con ordenamiento por prioridad |
-| Rachas, logros y comparación social entre estudiantes | Ocupado por otros equipos; añade multiusuario y consideraciones de privacidad sin aportar diferenciación |
-| Compartir apuntes por mensajería o correo | Superficie adicional sin relación con el eje del proyecto |
-| Preguntas abiertas evaluadas por IA | Exige una llamada por respuesta; contradice la política de agrupación |
-| Rúbrica de evaluación completa con ponderaciones | Territorio de otro equipo; no toca el motor |
-| Inscripción por código QR con aprobación docente | Añade estados y flujo de trabajo; un código de curso cumple la misma función |
-| Panel administrativo con suspensión por consumo | Requiere política de cuotas y telemetría en tiempo real |
-| Resumen semanal por correo | Canal adicional que mantener |
-| Autenticación biométrica | Marginal para el alcance |
-| Segunda base de datos NoSQL | JSONB cubre lo documental sin añadir un despliegue |
-| Búsqueda semántica avanzada, texto a voz, calendario integrado | Fuera del alcance desde el inicio |
+| Contradiction detection between notes | High false-positive risk; flagging a contradiction that does not exist destroys trust in the product |
+| Semantic comparison via embeddings | Requires an additional model and vector storage; the lexical pre-filter with the glossary plus AI adjudication gives comparable results |
+| Automatic subject detection | The natural flow is selecting the course before capturing |
+| Bidirectional sync conflict resolution | A project in itself; declared future work |
+| Per-course consumption budget with degraded mode | The call ledger is enough to sustain the cost argument |
+| Full assessment-driven study planning | Reduced to a manual exam date with priority ordering |
+| Streaks, achievements, and social comparison between students | Occupied by other teams; adds multi-user and privacy considerations without differentiation |
+| Note sharing via messaging or email | Additional surface unrelated to the project's axis |
+| Open-ended questions graded by AI | Requires one call per answer; contradicts the batching policy |
+| Full grading rubric with weightings | Another team's territory; does not touch the engine |
+| QR enrollment with teacher approval | Adds states and workflow; a course code performs the same function |
+| Admin panel with consumption-based suspension | Requires a quota policy and real-time telemetry |
+| Weekly email summary | An additional channel to maintain |
+| Biometric authentication | Marginal for the scope |
+| A second NoSQL database | JSONB covers the document-shaped data without adding a deployment |
+| Advanced semantic search, text-to-speech, calendar integration | Out of scope from the start |
 
 ---
 
-## Correcciones al marco del curso
+## Corrections to the course framework
 
-Registro de datos que se corrigieron tras verificación, para que no se reintroduzcan.
+Record of facts that were corrected after verification, so they are not reintroduced. Every row here was wrong in an earlier version of the project documents.
 
-| Dato | Versión incorrecta | Versión verificada |
+| Fact | Incorrect version | Verified version |
 |---|---|---|
-| Tamaño del equipo | 2 integrantes; «máximo 2 personas» por grupo | **3 integrantes.** El límite de 2 aplica a laboratorios individuales y al artículo científico, no a los equipos de proyecto |
-| Modo de entrega | Entrega por aula virtual | **Defensa en vivo en clase.** No se sube nada; el aula virtual solo publica la nota |
-| Fechas efectivas | Fechas de cierre del calendario | **La última clase del miércoles antes del cierre** |
-| Duración del Laboratorio 2 | 3 semanas | **2 semanas efectivas**, una compartida con la corrección del Laboratorio 1 |
-| Alcance del Laboratorio 2 | Implementación completa | Solo Activities: menú, autenticación, navegación y listas. La IA no interviene hasta el Laboratorio 6 |
+| Team size | 2 members; "maximum 2 people" per group | **3 members.** The limit of 2 applies to individual labs and the scientific article, not to project teams |
+| Delivery mode | Submission through the virtual classroom | **Live defense in class.** Nothing is uploaded; the virtual classroom only publishes the grade |
+| Effective dates | The calendar's closing dates | **The last Wednesday class before the closing date** |
+| Lab 2 duration | 3 weeks | **2 effective weeks**, one of them shared with the Lab 1 correction |
+| Lab 2 scope | Full implementation | Activities only: menu, authentication, navigation, and lists. AI does not appear until Lab 6 |
 
 ---
 
-## Resultado del Laboratorio 1
+## Lab 1 Result
 
-Nota obtenida: **85**. Deducción única en el rubro de diagrama UML de objetos de base de datos (1.5 de 3), con dos observaciones: incorporar las tablas de roles y privilegios, y evaluar el uso de JSON. Ambas resueltas en D-03 y D-09.
+Grade obtained: **85**. Single deduction on the database UML diagram (1.5 out of 3), with two observations: incorporate roles/privileges tables, and explore the use of JSON. Both resolved via D-03, D-04, and D-09.
 
-La observación del docente sobre el segundo rol de usuario no formó parte de esa deducción; corresponde a un requisito aplicable a las entregas siguientes.
+The observation-by-observation closure, with the one-line defense for each, is in `Glifo_UML_Modeling.md` §12.2.

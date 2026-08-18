@@ -5,6 +5,7 @@ CREATE TABLE users (
     password_hash VARCHAR(255) NOT NULL,
     first_name VARCHAR(100),
     last_name VARCHAR(100),
+    avatar_url VARCHAR(512),
     is_active BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -73,9 +74,151 @@ CREATE TABLE course_glossary (
     kind VARCHAR(20) NOT NULL CHECK (kind IN ('TERM', 'SYMBOL', 'NOTATION'))
 );
 
+-- Glossary Suggestions & Notes
+CREATE TABLE glossary_suggestions (
+    id BIGSERIAL PRIMARY KEY,
+    course_id BIGINT NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    note_id BIGINT,
+    original_text VARCHAR(255) NOT NULL,
+    suggested_correction VARCHAR(255) NOT NULL,
+    status VARCHAR(12) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'ACCEPTED', 'REJECTED')),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    resolved_at TIMESTAMPTZ
+);
+
+CREATE TABLE notes (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    course_id BIGINT NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+    syllabus_topic_id BIGINT REFERENCES syllabus_topics(id) ON DELETE SET NULL,
+    class_date DATE NOT NULL,
+    title VARCHAR(200) NOT NULL,
+    status VARCHAR(12) NOT NULL DEFAULT 'DRAFT' CHECK (status IN ('DRAFT', 'PROCESSING', 'READY', 'ARCHIVED')),
+    content JSONB,
+    content_generated_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE glossary_suggestions ADD CONSTRAINT fk_glossary_suggestions_note FOREIGN KEY (note_id) REFERENCES notes(id) ON DELETE SET NULL;
+
+CREATE TABLE note_pages (
+    id BIGSERIAL PRIMARY KEY,
+    note_id BIGINT NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
+    page_index INTEGER NOT NULL,
+    perceptual_hash CHAR(16) NOT NULL,
+    storage_uri VARCHAR(512) NOT NULL,
+    level_reached VARCHAR(12) NOT NULL DEFAULT 'N0' CHECK (level_reached IN ('N0', 'N1', 'N1_5', 'N2', 'N3')),
+    overall_confidence REAL NOT NULL DEFAULT 0.0,
+    quality_metrics JSONB,
+    regions JSONB,
+    processed_at TIMESTAMPTZ,
+    UNIQUE(note_id, page_index)
+);
+
+CREATE TABLE topic_coverage (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    syllabus_topic_id BIGINT NOT NULL REFERENCES syllabus_topics(id) ON DELETE CASCADE,
+    state VARCHAR(12) NOT NULL DEFAULT 'UNSEEN' CHECK (state IN ('UNSEEN', 'SEEN', 'PARTIAL', 'COVERED')),
+    score REAL NOT NULL DEFAULT 0.0,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(user_id, syllabus_topic_id)
+);
+
+CREATE TABLE study_items (
+    id BIGSERIAL PRIMARY KEY,
+    course_id BIGINT NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+    syllabus_topic_id BIGINT NOT NULL REFERENCES syllabus_topics(id) ON DELETE CASCADE,
+    kind VARCHAR(20) NOT NULL CHECK (kind IN ('FLASHCARD', 'MULTIPLE_CHOICE', 'TRUE_FALSE')),
+    payload JSONB NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+ALTER TABLE study_items ADD CONSTRAINT study_items_kind_matches_payload CHECK (payload ->> 'kind' = kind);
+
+CREATE TABLE attempts (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    study_item_id BIGINT NOT NULL REFERENCES study_items(id) ON DELETE CASCADE,
+    response JSONB NOT NULL,
+    is_correct BOOLEAN NOT NULL,
+    answered_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE review_schedule (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    study_item_id BIGINT NOT NULL REFERENCES study_items(id) ON DELETE CASCADE,
+    due_at TIMESTAMPTZ NOT NULL,
+    interval_days INTEGER NOT NULL DEFAULT 1,
+    ease REAL NOT NULL DEFAULT 2.5,
+    UNIQUE(user_id, study_item_id)
+);
+
+CREATE TABLE ai_calls (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    course_id BIGINT REFERENCES courses(id) ON DELETE SET NULL,
+    call_type VARCHAR(16) NOT NULL CHECK (call_type IN ('OCR_M', 'IA_00', 'IA_01', 'IA_02', 'IA_03', 'IA_04')),
+    level VARCHAR(12) NOT NULL CHECK (level IN ('N1', 'N1_5', 'N2', 'N3', 'BATCH', 'ON_DEMAND')),
+    input_tokens INTEGER NOT NULL,
+    output_tokens INTEGER NOT NULL,
+    estimated_cost NUMERIC(10,6) NOT NULL,
+    latency_ms INTEGER NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE devices (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    fcm_token VARCHAR(255) NOT NULL UNIQUE,
+    platform VARCHAR(12) NOT NULL CHECK (platform IN ('ANDROID', 'IOS', 'WEB')),
+    registered_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE sync_queue (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    device_id BIGINT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+    entity_type VARCHAR(40) NOT NULL,
+    idempotency_key UUID NOT NULL UNIQUE,
+    payload JSONB NOT NULL,
+    attempts INTEGER NOT NULL DEFAULT 0,
+    last_error VARCHAR(500),
+    status VARCHAR(12) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'PROCESSING', 'DONE', 'FAILED')),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE notifications (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    kind VARCHAR(30) NOT NULL CHECK (kind IN ('SYNC_COMPLETE', 'NOTE_READY', 'STUDY_REMINDER', 'SYSTEM')),
+    payload JSONB NOT NULL,
+    sent_at TIMESTAMPTZ,
+    read_at TIMESTAMPTZ
+);
+
+CREATE TABLE coverage_snapshots (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    course_id BIGINT NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+    coverage_pct REAL NOT NULL,
+    taken_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Indexes
 CREATE INDEX idx_courses_owner ON courses(owner_user_id);
 CREATE INDEX idx_enrollments_user ON enrollments(user_id);
 CREATE INDEX idx_syllabus_topics_course ON syllabus_topics(course_id, parent_id, order_index);
+CREATE INDEX idx_notes_user_course ON notes(user_id, course_id);
+CREATE INDEX idx_notes_status ON notes(status);
+CREATE INDEX idx_note_pages_note ON note_pages(note_id, page_index);
+CREATE INDEX idx_study_items_course_topic ON study_items(course_id, syllabus_topic_id);
+CREATE INDEX idx_attempts_user ON attempts(user_id, study_item_id);
+CREATE INDEX idx_topic_coverage_user ON topic_coverage(user_id);
+CREATE INDEX idx_ai_calls_user ON ai_calls(user_id, created_at);
+CREATE INDEX idx_sync_queue_status ON sync_queue(status, created_at);
+CREATE INDEX idx_glossary_suggestions_course ON glossary_suggestions(course_id, status);
 
 -- Seed Roles
 INSERT INTO roles (name, description) VALUES

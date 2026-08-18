@@ -38,7 +38,7 @@ alt quality unusable
 else usable
   PE -> PE : perceptual hash
   alt page already processed
-    PE --> VM : cached PageResult — ZERO calls
+    PE --> VM : cached PageResult â€” ZERO calls
   else new page
     PE -> PE : segment into regions
     PE -> PE : N1 ML Kit OCR on every region
@@ -50,10 +50,17 @@ end
 
 VM -> NR : savePage(pageResult, requests)
 NR -> RM : insert page (status PENDING)
-NR --> VM : local id — UI is already usable
+NR --> VM : local id â€” UI is already usable
+
+group Note first, page second â€” same order as offline (D-16)
+  NR -> NC : POST /notes\nIdempotency-Key: <uuidNote>
+  NC -> PG : insert note (status = DRAFT)
+  NC --> NR : 201 { id }
+end
 
 group Remote escalation · one HTTP call per page
   NR -> NC : POST /notes/{id}/pages\nIdempotency-Key: <uuid>
+  NC -> PG : update notes.status = PROCESSING
   NC -> NS : uploadPage(...)
   NS -> AI : repairRegions(pageJob)
 
@@ -64,7 +71,7 @@ group Remote escalation · one HTTP call per page
   AI -> AI : LatexValidator.compiles(latex)
 
   opt regions still below threshold OR latex does not compile
-    AI -> LLM : repair(crops)    <<N2 — one call>>
+    AI -> LLM : repair(crops)    <<N2 â€” one call>>
     LLM --> AI : repaired regions
   end
 
@@ -72,7 +79,7 @@ group Remote escalation · one HTTP call per page
   AI --> NS : List<RegionResultDto>
   NS -> PG : update note_pages (regions, level_reached)
   NS --> NC : PageResponse
-  NC --> NR : 200 { data: … }
+  NC --> NR : 200 { data: â€¦ }
 end
 
 NR -> NC : POST /notes/{id}/reconstruct
@@ -81,9 +88,9 @@ NS -> AI : reconstruct(noteJob)   <<IA-01>>
 AI -> LLM : structure into blocks
 LLM --> AI : content JSON
 AI --> NS : NoteContentDto
-NS -> PG : update notes.content
+NS -> PG : update notes.content, status = READY
 NS --> NC : NoteResponse
-NC --> NR : 200 { data: … }
+NC --> NR : 200 { data: â€¦ }
 
 NR -> RM : upsert note + mark DONE
 NR --> VM : Flow emits Success

@@ -1,130 +1,132 @@
-# NotaViva — Contexto del Curso EIF411
+# NotaViva — EIF411 Course Context
 
-> **Propósito:** documento de entrada neutral. Registra el marco fijo en el que se desarrolla el proyecto — calendario, entregables obligatorios, stack exigido y tiempo disponible — más el enunciado de NotaViva tal como fue planteado y seleccionado.
+> **Purpose:** Neutral input document. Records the fixed framework in which the project is developed — calendar, mandatory deliverables, required stack, and available time — plus the NotaViva brief exactly as it was proposed and selected.
 >
-> No contiene decisiones de diseño, arquitectura ni alcance del equipo. Esas viven en el documento de visión del proyecto, que se mantiene por separado.
+> It does not contain the team's design, architecture, or scope decisions. Those live in the project's technical documentation, which is maintained separately.
 >
-> **Última actualización:** 13 de agosto de 2026.
+> **Last update:** August 16, 2026 — Document translated to English (per D-14), backend stack updated to Kotlin (D-13), serialization locked to Gson (D-19).
 
 ---
 
-## 1. Identificación del curso
+## 1. Course Identification
 
-| Campo | Valor |
+| Field | Value |
 |---|---|
-| Curso | Diseño y Programación de Plataformas Móviles |
-| Código | EIF 411 |
-| Carrera | Ingeniería de Sistemas de Información (ISIN) — Bachillerato |
-| Universidad | Universidad Nacional (UNA), Escuela de Informática, Facultad de Ciencias Exactas y Naturales |
-| Nivel | III nivel, bachillerato |
-| Periodo | II Ciclo 2026 |
-| Modalidad | Presencial remoto |
-| Naturaleza | Teórico-práctico |
-| Créditos | 4 |
-| Horas semanales | 11 (2 teoría · 2 laboratorio · 7 estudio independiente) |
-| Sesión | Miércoles 18:00 – 21:20 |
-| Consulta | Martes 17:00 – 19:00 |
-| Docente | Maikol Guzmán Alán — maikol.guzman.alan@una.cr |
-| Requisito | EIF209 Programación IV |
-| Correquisito | No aplica |
+| Course | Mobile Platform Design and Programming |
+| Code | EIF 411 |
+| Major | Information Systems Engineering (ISIN) — Bachelor's |
+| University | Universidad Nacional (UNA), School of Informatics |
+| Level | Level III, Bachelor's |
+| Term | II Term 2026 |
+| Modality | Remote in-person |
+| Nature | Theoretical-practical |
+| Credits | 4 |
+| Weekly hours | 11 (2 theory · 2 lab · 7 independent study) |
+| Session | Wednesday 18:00 – 21:20 |
+| Consultation | Tuesday 17:00 – 19:00 |
+| Professor | Maikol Guzmán Alán — maikol.guzman.alan@una.cr |
+| Prerequisite | EIF209 Programming IV |
+| Co-requisite | N/A |
 
-**Equipo:** X-Ray — **Brandon Brenes, David González y Felipe Ugalde (3 personas)**, en todos los rubros incluido el artículo científico.
+**Team:** X-Ray — **Brandon Brenes, David González, and Felipe Ugalde (3 members)**.
+
+> **Correction:** A previous version of this document indicated a team of 2 and a cap of "maximum 2 people" per group. This is incorrect. The team consists of **3 members for all grading rubrics, including the scientific article**. The nine groups in the cohort consist of 3 or 4 people, according to the professor's roll call during the August 12 session.
 
 ---
 
-## 2. Evaluación
+## 2. Evaluation
 
-| Rubro | Valor |
+| Rubric | Value |
 |---|---|
-| Laboratorios en clase | 60 % |
-| Artículo científico (en inglés, grupal — X-Ray lo hace entre los 3) | 10 % |
-| Proyecto final | 30 % |
+| In-class labs | 60 % |
+| Scientific article (in English, group — X-Ray does it among the 3) | 10 % |
+| Final project | 30 % |
 | **Total** | **100 %** |
 
-- El proyecto final es trabajo en grupo con **calificación individual**, según el aporte de cada estudiante.
-- Nota mínima de aprobación: **70 %**.
-- No hay examen extraordinario; la nota de aprovechamiento es la suma directa de los rubros.
+- The final project is group work with **individual grading**, based on each student's contribution.
+- Minimum passing grade: **70 %**.
+- There is no extraordinary makeup exam; the final grade is the direct sum of the rubrics.
 
-### Reglas de entrega
+### Delivery Rules
 
-1. Todo entregable que no se presente a tiempo, no compile o no tenga funcionalidad mínima se califica con **0**.
-2. **Funcionalidad mínima = al menos el 40 %** de la funcionalidad solicitada, funcionando al momento de la ejecución.
-3. El plagio en código, documentación o algoritmos activa el reglamento interno de la UNA.
-4. **Los laboratorios NO se suben a ninguna plataforma.** Se revisan en vivo, en clase, en modo defensa. El docente fue explícito: *"yo no reviso nada en el aula virtual, nada, absolutamente nada"*. El aula virtual se usa únicamente para publicar la nota.
-5. El **código sí se sube a GitHub Classroom**.
-6. **Ciclo de corrección:** las observaciones de un laboratorio se corrigen y se vuelven a presentar en vivo la semana siguiente, al final de la clase. El docente devuelve el 100 % de la nota si la corrección está completa: *"si me lo enseñan, les devuelvo el 100 % la nota"*. Si no se presenta la corrección, la nota queda como está.
+1. Any deliverable not presented on time, that does not compile, or lacks minimal functionality receives a **0**.
+2. **Minimal functionality = at least 40%** of the requested functionality, working at runtime.
+3. Plagiarism in code, documentation, or algorithms triggers UNA's internal regulations.
+4. **Labs are NOT uploaded to any platform.** They are reviewed live, in class, in defense mode. The professor was explicit: *"I don't review anything in the virtual classroom, nothing, absolutely nothing."* The virtual classroom is only used to publish grades.
+5. The **code IS uploaded to GitHub Classroom**.
+6. **Correction cycle:** Lab observations are corrected and presented live again the following week, at the end of the class. The professor returns 100% of the points if the correction is complete: *"if you show it to me, I return 100% of the grade."* If the correction is not presented, the original grade stands.
 
-### Consecuencia práctica sobre las fechas
+### Practical Consequence on Dates
 
-Como todo se defiende en clase y la sesión es el **miércoles 18:00–21:20**, la fecha operativa de cada laboratorio es **la última clase del miércoles anterior al cierre**, no la fecha de cierre del calendario. Ver §4.1.
+Since everything is defended in class and the session is **Wednesday 18:00–21:20**, the operative date for each lab is **the last Wednesday class before the deadline**, not the calendar deadline. See §4.1.
 
 ---
 
-## 3. Contenido del programa
+## 3. Program Content
 
-### Objetivo general
-Introducir al estudiante en el tema de los dispositivos móviles contemplando conceptos, arquitectura, características, categorías y alcance del paradigma.
+### General Objective
+Introduce the student to the topic of mobile devices, covering concepts, architecture, features, categories, and the scope of the paradigm.
 
-### Objetivos específicos
-1. Conceptos, arquitecturas y categorías de dispositivos móviles.
-2. Elementos de GUI y animación.
-3. Programación distribuida mediante sockets e hilos.
-4. Almacenamiento en dispositivos móviles como sistema persistente.
-5. Visualización en emulador y ejecución en dispositivo.
-6. Análisis de tecnologías móviles dominantes del mercado.
-7. Integración de servicios de IA (modelos de lenguaje, agentes y protocolos como MCP) como componentes funcionales en aplicaciones móviles nativas.
+### Specific Objectives
+1. Concepts, architectures, and categories of mobile devices.
+2. GUI elements and animation.
+3. Distributed programming using sockets and threads.
+4. Storage in mobile devices as a persistent system.
+5. Emulatior visualization and device execution.
+6. Analysis of dominant mobile technologies in the market.
+7. Integration of AI services (LLMs, agents, and protocols like MCP) as functional components in native mobile applications.
 
-### Módulos
+### Modules
 
-| Módulo | Semanas | Temas |
+| Module | Weeks | Topics |
 |---|---|---|
-| **1. Patrones de diseño** | 2 | MVC, MVP, MVVM, Singleton, Observer, Iterator · Fundamentos de Kotlin |
-| **2. Introducción a plataformas móviles** | 2 | Arquitecturas iOS/Android/Windows Phone · Historia de smartphones y tablets · Frameworks · Configuraciones y perfiles · Emuladores (mín. 2) · Generación de APK |
-| **3. GUI y prototipado asistido por IA** | 4 | Prototipado en papel y mockups · Layouts XML (legado) y Jetpack Compose · Activities, Widgets, Eventos · Usabilidad, internacionalización, accesibilidad, estilos |
-| **4. Programación distribuida y redes** | 3 | Tareas asíncronas · Comunicación entre procesos · Sockets, HTTP/HTTPS, push, XML/JSON, NFC, Bluetooth, WiFi · Media (cámara, audio, video, localización) · Front-end ↔ back-end |
-| **5. Tipos de almacenamiento** | 2 | Archivos locales (binarios y texto) · Bases de datos locales y remotas · Almacenamiento en la nube |
-| **6. Temas de actualidad** | 2 | Seguridad (cuentas, permisos, firma, roles, datos sensibles) · Rendimiento (memoria, batería, fugas, bitácoras) · Publicación en tiendas · Integración de IA generativa |
+| **1. Design Patterns** | 2 | MVC, MVP, MVVM, Singleton, Observer, Iterator · Kotlin fundamentals |
+| **2. Intro to Mobile Platforms** | 2 | iOS/Android/Windows Phone architectures · History of smartphones & tablets · Frameworks · Configurations & profiles · Emulators (min. 2) · APK generation |
+| **3. GUI & AI-Assisted Prototyping** | 4 | Paper prototyping and mockups · XML Layouts (legacy) and Jetpack Compose · Activities, Widgets, Events · Usability, i18n, accessibility, styling |
+| **4. Distributed Programming & Networks** | 3 | Async tasks · Inter-process communication · Sockets, HTTP/HTTPS, push, XML/JSON, NFC, Bluetooth, WiFi · Media (camera, audio, video, GPS) · Front-end ↔ back-end |
+| **5. Storage Types** | 2 | Local files (binary and text) · Local and remote databases · Cloud storage |
+| **6. Current Topics** | 2 | Security (accounts, permissions, signing, roles, sensitive data) · Performance (memory, battery, leaks, logs) · Store publishing · Generative AI integration |
 
-### Eje transversal declarado
+### Declared Transversal Axis
 
-El programa incorpora la IA generativa **como componente estructural** de las aplicaciones desarrolladas, incluyendo integración de LLMs y protocolos de interoperabilidad como **MCP (Model Context Protocol)**.
+The program incorporates generative AI **as a structural component** of the developed apps, including LLM integration and interoperability protocols like **MCP (Model Context Protocol)**.
 
-Submódulo 6.4:
-- IA generativa embebida en apps (asistentes, generación de contenido, recomendación).
-- Consumo de APIs de LLMs (OpenAI, Claude, Gemini) desde Android con Kotlin.
-- MCP: concepto y casos de uso para conectar apps con herramientas externas.
-- Consideraciones de costo, privacidad y manejo de datos sensibles al integrar IA.
+Submodule 6.4:
+- Generative AI embedded in apps (assistants, content generation, recommendation).
+- LLM API consumption (OpenAI, Claude, Gemini) from Android using Kotlin.
+- MCP: concept and use cases to connect apps with external tools.
+- Cost, privacy, and sensitive data considerations when integrating AI.
 
-### Estrategia metodológica
-1. Laboratorios grupales — X-Ray los trabaja entre los 3 integrantes.
-2. Artículo científico en inglés, grupal — los 3 integrantes.
-3. Proyecto final de desarrollo móvil.
+### Methodological Strategy
+1. Group labs — X-Ray works on them among the 3 members.
+2. Scientific article in English, group — all 3 members.
+3. Final mobile development project.
 
-Cada una de las 15 sesiones incluye laboratorio, tarea de investigación y evaluación corta.
+Each of the 15 sessions includes a lab, a research task, and a short evaluation.
 
 ---
 
-## 4. Calendario de entregables
+## 4. Deliverables Calendar
 
-### 4.1 Tabla maestra
+### 4.1 Master Table
 
-| # | Entregable | Apertura | Cierre oficial | **Defensa real (miércoles)** | Estado |
+| # | Deliverable | Open | Official Close | **Real Defense (Wed)** | Status |
 |---|---|---|---|---|---|
-| Lab 1 | Wireframes (Figma) + diagrama de entidades/clases | mié 29 jul | jue 13 ago | **defendido mié 12 ago** | **85** — corrección el **mié 19 ago** |
-| Lab 2 | Activities en Android/Kotlin | sáb 8 ago | sáb 29 ago | **mié 26 ago** | abierto |
-| Lab 3 | Manejo de errores, Hilt, Retrofit, consumo de APIs de prueba | mié 26 ago | dom 13 sep | **mié 9 sep** | — |
-| Lab 4 | Fundamentos del backend y persistencia de datos | mié 9 sep | sáb 26 sep | **mié 23 sep** | — |
-| Lab 5 | Servicios, Web API, DTO y testing | mié 23 sep | sáb 17 oct | **mié 14 oct** | — |
-| Lab 6 | Seguridad, Inteligencia Artificial y Cloud | mié 30 sep | sáb 31 oct | **mié 28 oct** | — |
-| — | Investigación aplicada | mié 11 nov | dom 15 nov | **mié 11 nov** | — |
-| — | Proyecto Final | mié 11 nov | dom 15 nov | **mié 11 nov** | — |
+| Lab 1 | Wireframes (Figma) + ERD/Class diagram | Wed Jul 29 | Thu Aug 13 | **Defended Wed Aug 12** | **85** — correction **Wed Aug 19** |
+| Lab 2 | Android/Kotlin Activities | Sat Aug 8 | Sat Aug 29 | **Wed Aug 26** | Open |
+| Lab 3 | Error handling, Hilt, Retrofit, mock API | Wed Aug 26 | Sun Sep 13 | **Wed Sep 9** | — |
+| Lab 4 | Backend fundamentals & data persistence | Wed Sep 9 | Sat Sep 26 | **Wed Sep 23** | — |
+| Lab 5 | Services, Web API, DTO & testing | Wed Sep 23 | Sat Oct 17 | **Wed Oct 14** | — |
+| Lab 6 | Security, AI & Cloud | Wed Sep 30 | Sat Oct 31 | **Wed Oct 28** | — |
+| — | Applied Research | Wed Nov 11 | Sun Nov 15 | **Wed Nov 11** | — |
+| — | Final Project | Wed Nov 11 | Sun Nov 15 | **Wed Nov 11** | — |
 
-> La columna de defensa real adelanta cada entrega entre 1 y 4 días respecto al cierre oficial. El caso más apretado es el **Lab 2: 2 semanas efectivas, no 3**, y una de ellas compartida con la corrección del Lab 1 (19 ago).
+> The "Real Defense" column advances each delivery between 1 and 4 days regarding the official closing date. The tightest case is **Lab 2: 2 effective weeks, not 3**, with one of them shared with the Lab 1 correction (Aug 19).
 
-### 4.2 Solapamientos
+### 4.2 Overlaps
 
-```
-AGO        |13|    |20|    |27|      SEP |03| |10| |17| |24|   OCT |01| |08| |15| |22| |29|  NOV |05| |12|15
+```text
+AUG        |13|    |20|    |27|      SEP |03| |10| |17| |24|   OCT |01| |08| |15| |22| |29|  NOV |05| |12|15
 Lab 1  ====X
 Lab 2      ===============X
 Lab 3              ==================X
@@ -134,270 +136,251 @@ Lab 6                                      =================================X
 Inv/Final                                                                             ==X
 ```
 
-- **26 ago – 13 sep:** Lab 2 (cierre) y Lab 3 abiertos.
-- **23 – 26 sep:** Labs 4, 5 y 6 abiertos simultáneamente.
-- **1 – 10 nov:** único periodo del semestre sin entregables abiertos.
+- **Aug 26 – Sep 13:** Lab 2 (closing) and Lab 3 open.
+- **Sep 23 – Sep 26:** Labs 4, 5, and 6 open simultaneously.
+- **Nov 1 – Nov 10:** Only period of the semester with no open deliverables.
 
-### 4.3 Tiempo disponible
+### 4.3 Available Time
 
-- Del 13 de agosto al 15 de noviembre: **~13.5 semanas**.
-- Estudio independiente asignado por el programa: 7 h/semana por persona → **~95 h por persona**, **~285 h de equipo** (3 integrantes) en el semestre.
-- Ese total incluye el artículo científico, las tareas de investigación y las evaluaciones cortas de cada sesión, no solo el desarrollo.
-- Advertencia de capacidad: 3 personas no rinden 1.5× de 2. La coordinación tiene costo, y en las semanas de solapamiento (ver §4.2) la capacidad efectiva baja.
+- From August 13 to November 15: **~13.5 weeks**.
+- Independent study assigned by the program: 7 h/week per person → **~95 h per person**, **~285 h per team** (3 members) in the semester.
+- This total includes the scientific article, research tasks, and short evaluations for each session, not just development.
+- Capacity warning: 3 people do not yield 1.5× the output of 2. Coordination has a cost, and during overlap weeks (see §4.2), effective capacity drops.
 
 ---
 
-## 5. Detalle de cada laboratorio
+## 5. Lab Details
 
-### Lab 1 — Wireframes de la aplicación
-**29 jul – 13 ago · defendido el 12 ago · nota 85**
+### Lab 1 — App Wireframes
+**Jul 29 – Aug 13 · defended Aug 12 · score 85**
 
-Objetivo: desarrollar el prototipo de la aplicación utilizando **Figma** como herramienta de diseño, y el **diagrama de relación de entidades/clases (base de datos)**.
+Objective: Develop the application prototype using **Figma** and the **entity-relationship/class diagram (database)**.
 
-**Resultado obtenido — única deducción:**
+**Obtained result — single deduction:**
 
-| Rubro | Puntaje | Descriptor |
+| Rubric | Score | Descriptor |
 |---|---|---|
-| Diagrama UML de Objetos de BD | **1.5 / 3** | *Diagrama presente pero con relaciones o entidades incompletas* |
+| DB Objects UML Diagram | **1.5 / 3** | *Diagram present but with incomplete relationships or entities* |
 
-Observaciones del docente sobre ese rubro:
-- **Ocupan las tablas `privilege`, `roles`.**
-- **Explorar el uso de JSON.**
+Professor's observations on that rubric:
+- **You need the `privilege`, `roles` tables.**
+- **Explore the use of JSON.**
 
-Todos los demás rubros quedaron en su valor máximo. La observación que el docente hizo al cierre de la sesión sobre el segundo rol de usuario (*"al grupo X-Ray me faltó ver el rol diferente… es casi que pierden 50 % del curso"*) **no fue una deducción del Lab 1**: es un requisito hacia adelante que impacta el Lab 2, donde login, registro, menú y navegación deben existir para dos roles distintos.
+All other rubrics received maximum points. The observation the professor made at the end of the session about the second user role (*"I missed seeing the different role in the X-Ray group... you almost lose 50% of the course"*) **was not a deduction from Lab 1**: it is a forward-looking requirement impacting Lab 2, where login, registration, menu, and navigation must exist for two distinct roles.
 
-**Corrección a presentar el miércoles 19 de agosto** para recuperar los 15 puntos.
+**Correction to be presented on Wednesday, August 19** to recover the 15 points.
 
-### Lab 2 — Activities en Android
-**8 ago – 29 ago**
+### Lab 2 — Activities in Android
+**Aug 8 – Aug 29**
 
-Objetivo: desarrollar en Android con Kotlin las pantallas más importantes definidas en el prototipo. Elementos que el enunciado exige contemplar:
-- Menú
+Objective: Develop the most important screens defined in the prototype in Android with Kotlin. Elements the brief demands to be covered:
+- Menu
 - Login
-- Registro
+- Register
 - Main
-- Navegación
-- Listas
+- Navigation
+- Lists
 
-### Lab 3 — Manejo de errores, Hilt, Retrofit y consumo de APIs de prueba
-**26 ago – 13 sep**
+### Lab 3 — Error handling, Hilt, Retrofit, and mock API consumption
+**Aug 26 – Sep 13**
 
-Objetivo: evaluar la implementación de una arquitectura moderna en Android mediante:
-- Inyección de dependencias con **Hilt**.
-- Consumo de servicios web con **Retrofit** (GET, POST según corresponda).
-- Deserialización automática con **Gson** o **kotlinx.serialization**.
-- Buenas prácticas en el manejo de errores durante las llamadas a servicios.
-- Integración con una **API simulada (mock)** para simular escenarios reales de consumo de datos.
+Objective: Evaluate the implementation of a modern Android architecture through:
+- Dependency injection with **Hilt**.
+- Web service consumption with **Retrofit** (GET, POST as appropriate).
+- Automatic deserialization with **Gson** (Fixed per D-19).
+- Best practices in error handling during service calls.
+- Integration with a **simulated API (mock)** to test real data consumption scenarios.
 
-### Lab 4 — Fundamentos del backend y persistencia de datos
-**9 sep – 26 sep**
+### Lab 4 — Backend fundamentals and data persistence
+**Sep 9 – Sep 26**
 
-Objetivo: asegurar comprensión de conceptos base de backend y persistencia. Temas:
-- Introducción al backend.
-- Programación distribuida (conceptos y ejemplos básicos).
-- Capa de datos: diseño de base de datos (modelado relacional, claves primarias y foráneas).
-- Relaciones entre entidades.
-- **Patrón Repositorio.**
+Objective: Ensure understanding of base backend and persistence concepts. Topics:
+- Intro to backend.
+- Distributed programming (concepts and basic examples).
+- Data layer: database design (relational modeling, primary and foreign keys).
+- Relationships between entities.
+- **Repository Pattern.**
 
-### Lab 5 — Servicios, Web API, DTO y testing
-**23 sep – 17 oct**
+### Lab 5 — Services, Web API, DTO, and testing
+**Sep 23 – Oct 17**
 
-Objetivo: validar la implementación de lógica de negocio y exposición de servicios por medio de una API REST. Temas:
-- Capa de servicios.
-- Capa de WebAPI (controladores REST).
-- DTOs de entrada y salida.
-- Pruebas con **Postman** (endpoints, headers, status codes).
+Objective: Validate the implementation of business logic and service exposure via a REST API. Topics:
+- Service layer.
+- WebAPI layer (REST controllers).
+- Input and output DTOs.
+- Testing with **Postman** (endpoints, headers, status codes).
 
-### Lab 6 — Seguridad, Inteligencia Artificial y Cloud
-**30 sep – 31 oct**
+### Lab 6 — Security, Artificial Intelligence, and Cloud
+**Sep 30 – Oct 31**
 
-Objetivo: evaluar aspectos avanzados como seguridad, integración con servicios externos e implementación en la nube. Temas:
-- **Seguridad con JWT usando Spring Security.**
-- **Integración con APIs externas** (ChatGPT, Claude, Gemini, etc.).
+Objective: Evaluate advanced aspects such as security, external service integration, and cloud deployment. Topics:
+- **Security with JWT using Spring Security.**
+- **Integration with external APIs** (ChatGPT, Claude, Gemini, etc.).
 - **Cloud deployment** (Render, Railway, Heroku, AWS).
 
-### Investigación aplicada
-**11 nov – 15 nov**
+### Applied Research
+**Nov 11 – Nov 15**
 
-Objetivo: integrar al proyecto un tema adicional, seleccionado al inicio del curso, que permita profundizar en aspectos complementarios del desarrollo de software. Se evalúa la **creatividad y efectividad** con que se apliquen los conocimientos investigados.
+Objective: Integrate an additional topic into the project, selected at the start of the course, to deepen complementary software development aspects. Evaluation is based on the **creativity and effectiveness** of applying the researched knowledge.
 
-Requisitos de presentación:
-- Introducción clara y concisa al tema, comprensible para compañeros no familiarizados con él.
-- **Ronda de preguntas obligatoria:** cada grupo que no expone debe formular al menos una pregunta técnica o crítica al grupo expositor. Se puede designar un portavoz rotativo. Se evalúa la pertinencia (relación con el tema, comprensión del contenido) y el nivel de profundidad (superficial vs. reflexiva; detalles técnicos, implicaciones o aplicaciones).
+Presentation requirements:
+- Clear, concise intro to the topic, understandable for unfamiliar peers.
+- **Mandatory Q&A round:** Every non-presenting group must ask at least one technical or critical question. A rotating spokesperson can be designated. Evaluated on relevance and depth.
 
-**Tema asignado a X-Ray:** *Implementación de almacenamiento local y sincronización de datos.*
+**Topic assigned to X-Ray:** *Local storage implementation and data synchronization.*
 
-**Estado de los demás temas:**
+### Final Project
+**Nov 11 – Nov 15**
 
-| Tema | Cupo |
-|---|---|
-| Notificaciones push con Firebase Cloud Messaging | Lleno |
-| Técnicas en la nube para procesamiento de imágenes | Lleno |
-| **APIs / MCP REST públicas para obtener y mostrar datos** | **Libre (0/1)** |
-| Bases de datos NoSQL (Firebase, MongoDB) | Lleno |
-| Análisis y monitoreo (Firebase Analytics, Crashlytics, AppCenter) | Lleno |
-| **Pruebas automatizadas (unitarias, integración y UI)** | **Libre (0/1)** |
-| Autenticación biométrica | Lleno |
-| Desarrollo multiplataforma (React Native, Flutter, Ionic) | Lleno |
-| MCP Server | Lleno |
-| Almacenamiento local y sincronización de datos | Asignado a X-Ray |
-| Localización y soporte multiidioma | Lleno |
-
-Los dos temas con cupo libre siguen disponibles para cambio.
-
-### Proyecto Final
-**11 nov – 15 nov**
-
-Objetivo: culminar el desarrollo del prototipo integrando todos los laboratorios del curso. La entrega debe incluir:
-1. Versión final de la aplicación distribuida mediante **Firebase App Distribution**.
-2. Pantallas de inicio de sesión integradas con el sistema de seguridad basado en **JWT** y conectadas al **API del backend**.
-3. Todos los ajustes necesarios para asegurar funcionamiento correcto y estable.
-4. **Encuesta de satisfacción a al menos 5 personas externas al grupo**, considerando:
-   - Aspectos generales de usabilidad y funcionalidad.
-   - Recomendaciones de mejora.
-   - Identificación de errores o fallos detectados durante la prueba.
+Objective: Culminate prototype development by integrating all course labs. Delivery must include:
+1. Final app version distributed via **Firebase App Distribution**.
+2. Login screens integrated with **JWT** security and connected to the **backend API**.
+3. All necessary adjustments to ensure correct and stable operation.
+4. **Satisfaction survey for at least 5 external people**, considering:
+   - General usability and functionality.
+   - Improvement recommendations.
+   - Bugs or errors detected during the test.
 
 ---
 
-## 6. Stack exigido por el curso
+## 6. Required Stack
 
-Cada elemento aparece evaluado en un laboratorio específico. Es el conjunto mínimo obligatorio, independientemente de las decisiones técnicas propias del equipo.
+Each element is evaluated in a specific lab. It is the mandatory minimum set, regardless of the team's own technical decisions.
 
-| Capa | Tecnología | Exigido en |
+| Layer | Technology | Required In |
 |---|---|---|
-| Lenguaje / IDE | Kotlin, Android Studio | Todo el curso |
-| Arquitectura | MVVM (entre los patrones del Módulo 1) | Módulo 1 |
-| UI | Jetpack Compose (o layouts XML legado) | Módulo 3 / Lab 2 |
-| Prototipado | Figma | Lab 1 |
-| Inyección de dependencias | Hilt | Lab 3 |
-| Cliente HTTP | Retrofit + Gson / kotlinx.serialization | Lab 3 |
-| Persistencia local | Base de datos local | Módulo 5 / Investigación aplicada |
-| Backend | Spring Boot (implícito por el uso de Spring Security) | Labs 4–6 |
-| Patrones de datos | Repositorio, DTOs | Labs 4–5 |
-| Seguridad | JWT + Spring Security | Lab 6 / Proyecto Final |
-| Despliegue | Render, Railway, Heroku o AWS | Lab 6 |
-| Distribución | Firebase App Distribution | Proyecto Final |
-| Pruebas de API | Postman | Lab 5 |
-| IA generativa | API externa de LLM (OpenAI, Claude, Gemini) | Lab 6 / Módulo 6 |
-| Emuladores | Al menos 2 configurados | Módulo 2 |
+| Language / IDE | Kotlin, Android Studio | Full course |
+| Architecture | MVVM | Module 1 |
+| UI | Jetpack Compose (or legacy XML) | Module 3 / Lab 2 |
+| Prototyping | Figma | Lab 1 |
+| Dependency Injection | Hilt | Lab 3 |
+| HTTP Client | Retrofit + **Gson (D-19)** | Lab 3 |
+| Local Persistence | Local database (Room) | Module 5 / App. Research |
+| Backend | Spring Boot on **Kotlin (D-13)** | Labs 4–6 |
+| Data Patterns | Repository, DTOs | Labs 4–5 |
+| Security | JWT + Spring Security | Lab 6 / Final |
+| Deployment | Render, Railway, Heroku or AWS | Lab 6 |
+| Distribution | Firebase App Distribution | Final |
+| API Testing | Postman | Lab 5 |
+| Generative AI | External LLM API | Lab 6 / Module 6 |
+| Emulators | At least 2 configured | Module 2 |
 
 ---
 
-## 7. Enunciado del proyecto: NotaViva
+## 7. Project Brief: NotaViva
 
-*Fuente: matriz How–Now–Wow de la cohorte, formulario cerrado el 29 de julio de 2026.*
+*Source: Cohort's How–Now–Wow matrix, closed July 29, 2026.*
 
-### 7.1 Definición
+### 7.1 Definition
 
-**NotaViva** — propuesta original del Grupo Charlie (Keneth Jara Herrera), planteada con GPT-4o-mini (visión + texto). Fue **seleccionada como aplicación guía del curso**, por lo que los nueve grupos desarrollan variantes de ella.
+**NotaViva** — Original proposal from Group Charlie (Keneth Jara Herrera), pitched with GPT-4o-mini (vision + text). It was **selected as the course's guiding application**, meaning all nine groups develop variants of it.
 
-> El estudiante fotografía sus apuntes, la IA los reconstruye como texto estructurado, los audita contra el temario oficial del curso y genera quizzes sobre los vacíos detectados. El ciclo cierra: **organizar → auditar → reforzar**.
+> The student photographs their notes, the AI reconstructs them as structured text, audits them against the official course syllabus, and generates quizzes covering detected gaps. The cycle closes: **organize → audit → reinforce**.
 
-### 7.2 Evaluación obtenida
+### 7.2 Score Obtained
 
-Ponderación de la matriz: IA central 35 % · Viabilidad 30 % · Innovación 20 % · Cobertura del curso 15 %.
+Matrix weighting: Core AI 35% · Viability 30% · Innovation 20% · Course Coverage 15%.
 
-| Eje | NotaViva |
+| Axis | NotaViva |
 |---|---|
-| IA central | 9.5 |
-| Viabilidad | 8.0 |
-| Innovación | 8.5 |
-| Cobertura del curso | 9.5 |
-| **Total** | **8.83 — 1.º de 9, cuadrante WOW** |
+| Core AI | 9.5 |
+| Viability | 8.0 |
+| Innovation | 8.5 |
+| Course Coverage | 9.5 |
+| **Total** | **8.83 — 1st out of 9, WOW quadrant** |
 
-### 7.3 Justificación de la selección
+### 7.3 Selection Rationale
 
-Es la única propuesta que cubre los cinco ejes técnicos del curso sin forzarlos:
-- Cámara como entrada indispensable, no decorativa
-- Autenticación
-- CRUD real
-- Tres roles
-- Notificaciones push
-- Tres llamadas de IA con propósitos distintos: **visión, comparación semántica y generación**
+It is the only proposal that covers the five technical axes of the course without forcing them:
+- Camera as an indispensable input, not decorative.
+- Authentication.
+- Real CRUD.
+- Three roles.
+- Push notifications.
+- Three distinct AI calls: **vision, semantic comparison, and generation**.
 
-Ventaja pedagógica señalada: el caso de uso es el propio curso — se puede cargar el temario de EIF411 y probar la app contra el material real de las clases.
+Pedagogical advantage: The use case is the course itself — you can load the EIF411 syllabus and test the app against real class materials.
 
-### 7.4 Riesgo identificado en el enunciado
+### 7.4 Identified Risk in the Brief
 
-> **Riesgo:** el OCR sobre letra manuscrita de baja calidad es el punto frágil.
+> **Risk:** OCR on poor-quality handwriting is the fragile point.
 >
-> **Mitigación planteada en la propuesta original:** pantalla de revisión donde el estudiante corrige la transcripción antes de que la IA compare. Reduce la dependencia del OCR sin desmontar el flujo.
+> **Proposed Mitigation in original brief:** A review screen where the student corrects the transcription before the AI compares it. Reduces OCR dependency without breaking the flow.
 
-### 7.5 Señales de la cohorte aplicables al proyecto
+### 7.5 Cohort Signals Applicable to the Project
 
-| Señal | Contenido |
+| Signal | Content |
 |---|---|
-| **Colisión de alcance** | NotaViva (Charlie) y cUNA (Bravo) proponen el mismo mecanismo: comparar apuntes del estudiante contra material oficial para detectar vacíos. La observación recomienda asignar territorios distintos antes de arrancar. |
-| **API key en el cliente** | Aplica a las nueve propuestas: la llave del modelo no puede vivir en el APK. Se señala la necesidad de definir un backend intermedio mínimo antes de la primera llamada al modelo. |
-| **Nivel de la cohorte** | Ningún equipo planteó un chatbot pegado al final; 6 de 9 propuestas describen la IA operando dentro del flujo, con entrada y salida definidas. |
-| **Cobertura de sensores** | Tres propuestas de la cohorte quedaron sin capacidades nativas. NotaViva no está entre ellas: la cámara es entrada obligatoria del flujo. |
+| **Scope collision** | NotaViva (Charlie) and cUNA (Bravo) propose the same mechanism: comparing student notes against official material to detect gaps. The observation recommends assigning distinct territories before starting. |
+| **API key on the client** | Applies to all nine proposals: the model key cannot live in the APK. It flags the need to define a minimal intermediary backend before the first model call. |
+| **Cohort level** | No team proposed a chatbot bolted on at the end; 6 of 9 proposals describe AI operating inside the flow, with defined input and output. |
+| **Sensor coverage** | Three cohort proposals ended up with no native capabilities. NotaViva is not among them: the camera is a mandatory input to the flow. |
 
-### 7.6 Nota sobre el equipo X-Ray
+### 7.6 Note on Team X-Ray
 
-La propuesta original de X-Ray fue **Simula** (David González): entrenador conversacional con IA. Obtuvo la puntuación más alta de la cohorte en IA central (10.0) y la más baja en cobertura del curso (4.0), por ser una aplicación exclusivamente de texto, sin cámara, GPS ni permisos.
-
-Al desarrollar NotaViva, el equipo trabaja sobre un enunciado con cobertura de curso 9.5.
+X-Ray's original proposal was **Simula** (David González): an AI conversational trainer. It scored the cohort's highest in Core AI (10.0) but lowest in Course Coverage (4.0) because it was exclusively text-based, requiring no camera, GPS, or permissions.
+By developing NotaViva, the team works on a brief with a 9.5 course coverage.
 
 ---
 
-## 8. Requisitos obligatorios consolidados
+## 8. Consolidated Mandatory Requirements
 
-Lista de verificación derivada únicamente de los enunciados oficiales, sin decisiones de diseño:
+Checklist derived strictly from official briefs, excluding internal design choices:
 
-- [ ] Wireframes en Figma
-- [ ] Diagrama de relación de entidades/clases
-- [ ] Menú, login, registro, main, navegación y listas en Kotlin
-- [ ] Hilt (inyección de dependencias)
-- [ ] Retrofit + deserialización automática
-- [ ] Manejo de errores en llamadas a servicios
-- [ ] Consumo de API mock
-- [ ] Base de datos con modelado relacional y relaciones entre entidades
-- [ ] Patrón Repositorio
-- [ ] Capa de servicios
-- [ ] Controladores REST con DTOs de entrada y salida
-- [ ] Pruebas de endpoints con Postman
+- [ ] Wireframes in Figma
+- [ ] Entity-relationship/class diagram
+- [ ] Menu, login, register, main, navigation, and lists in Kotlin
+- [ ] Hilt (Dependency Injection)
+- [ ] Retrofit + automatic deserialization (Gson)
+- [ ] Error handling in service calls
+- [ ] Mock API consumption
+- [ ] Database with relational modeling and relationships
+- [ ] Repository Pattern
+- [ ] Service layer
+- [ ] REST controllers with input and output DTOs
+- [ ] Endpoint testing with Postman
 - [ ] JWT + Spring Security
-- [ ] Integración con API externa de LLM
-- [ ] Backend desplegado en la nube
-- [ ] Al menos 2 emuladores configurados
-- [ ] APK distribuido por Firebase App Distribution
-- [ ] Encuesta de satisfacción a 5 personas externas
-- [ ] Investigación aplicada presentada, con ronda de preguntas
-- [ ] Artículo científico en inglés
+- [ ] External LLM API integration
+- [ ] Backend deployed to the cloud
+- [ ] At least 2 configured emulators
+- [ ] APK distributed via Firebase App Distribution
+- [ ] Satisfaction survey (5 external people)
+- [ ] Applied research presented, with Q&A round
+- [ ] Scientific article in English
 
-### 8.1 Requisitos transversales dictados en clase (sesión 12 ago)
+### 8.1 Transversal Requirements Dictated in Class (Aug 12 Session)
 
-Aplican a los nueve grupos y no aparecen en los enunciados escritos:
+Applicable to all nine groups, not found in written briefs:
 
-- [ ] **Mínimo 2 roles de usuario** — el docente lo calificó de mandatorio: *"si no tienen dos, es casi que pierden 50 % del curso"*. El enunciado de NotaViva contempla 3.
-- [ ] **Tablas `users` · `roles` · `privileges` + puentes `user_roles` · `role_privileges`**, con el esquema exacto dictado por el docente
-- [ ] **`users` en plural** — `user` es palabra reservada en Postgres
-- [ ] **Todos los nombres de entidades en inglés**
-- [ ] **PostgreSQL obligatorio para todos los grupos** como base de datos principal
-- [ ] **Menú de navegación obligatorio** en la app
-- [ ] **Si se implementan notificaciones, deben ser push reales** — no simuladas
-- [ ] **Si se implementa modo offline, debe ser real**, con base de datos en el dispositivo; si no, declararlo explícitamente como funcionalidad futura
-- [ ] **Autenticación conforme al estándar del framework** (Spring Security)
-- [ ] **Nombre de aplicación distinto** al de los demás grupos
-- [ ] **Paleta de color propia** — el docente desaconsejó explícitamente el morado por defecto de las herramientas de IA
-- [ ] **Evaluar campos JSON/JSONB** para quizzes, preguntas, opciones y flashcards, en lugar de normalizarlo todo
-- [ ] **Reducir el tamaño del modelo de datos** — *"bases de datos muy grandes se vuelven hiper complejas de manejar"*
-- [ ] **`SharedPreferences`** para configuración de la app, no una tabla de settings
-- [ ] **Documentar el ejercicio de diálogo con IA** sobre el modelo de datos — el docente lo pidió a todos los grupos y forma parte de su enfoque del curso
-- [ ] Arquitectura **monolítica** en esta etapa; elementos serverless más adelante
-- [ ] Se permite **fragmentar** la persistencia: la principal es relacional, pero una sección concreta puede moverse a NoSQL
-- [ ] Está **explícitamente permitido inspirarse en las propuestas de los otros grupos**
+- [ ] **Minimum 2 user roles** — mandatory. The NotaViva brief actually outlines 3.
+- [ ] **`users`, `roles`, `privileges` tables + `user_roles`, `role_privileges` bridges**, matching the professor's dictated schema.
+- [ ] **`users` in plural** — `user` is a reserved word in Postgres.
+- [ ] **All entity names must be in English**.
+- [ ] **PostgreSQL is mandatory** as the main DB.
+- [ ] **Navigation menu is mandatory** in the app.
+- [ ] **If notifications are implemented, they must be real push notifications**, not simulated.
+- [ ] **If offline mode is implemented, it must be real**, with a local DB; otherwise, explicitly declare it as a future feature.
+- [ ] **Authentication matching the framework standard** (Spring Security).
+- [ ] **Application name must be distinct** from other groups.
+- [ ] **Custom color palette** — professor explicitly advised against default AI "purple".
+- [ ] **Evaluate JSON/JSONB fields** for quizzes, questions, options, and flashcards, rather than fully normalizing everything.
+- [ ] **Reduce data model size** — *"very large databases become hyper-complex to manage."*
+- [ ] **Use `SharedPreferences`** for app settings, not a settings table.
+- [ ] **Document the AI dialogue exercise** used for the data model.
+- [ ] **Monolithic architecture** at this stage; serverless elements come later.
+- [ ] Persistence can be **fragmented**: main is relational, but a specific section can use NoSQL.
+- [ ] It is **explicitly permitted to take inspiration from other groups' proposals**.
 
 ---
 
-## 9. Bibliografía del curso
+## 9. Course Bibliography
 
 - AlMulla, B., Assi, M., & Hassan, S. (2026). *Understanding the Challenges and Opportunities of Generative AI Apps: An Empirical Study.* arXiv:2506.16453
 - Anthropic (2024). *Introducing the Model Context Protocol.*
-- Model Context Protocol (2024). Especificación oficial y documentación técnica.
+- Model Context Protocol (2024). Official specification and technical documentation.
 - McWherter, J., & Gowell, S. (2012). *Professional mobile application development.* John Wiley & Sons.
 - Miguel, R. M. (2012). *Desarrollo de aplicaciones para Android.* Grupo Editorial RA-MA.
-- Robledo, D. (2016). *Desarrollo de aplicaciones para Android I.* Ministerio de Educación, Cultura y Deporte.
+- Robledo, D. (2016). *Desarrollo de aplicaciones para Android I.* Ministerio de Educación.
 - Lecheta, R. R. (2017). *Android Essencial con Kotlin.* Novatec Editora.
 - Fonseca Camargo, Y., Pertuz Toscano, K., & Martelo López, E. (2018). *Aplicaciones nativas vs. aplicaciones híbridas en el desarrollo de aplicaciones móviles para Android e iOS.*
 - Sánchez Rueda, F. (2020). *Comparativa Kotlin y Java en desarrollo Android.*

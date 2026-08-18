@@ -87,6 +87,18 @@ package "ACADEMIC DOMAIN" as pkgCourse #F7F4EC {
     * canonical_form : VARCHAR(255)
     * kind : VARCHAR(20) <<CHECK>>
   }
+  entity glossary_suggestions {
+    * id : BIGSERIAL <<PK>>
+    --
+    * course_id : BIGINT <<FK>>
+    * user_id : BIGINT <<FK>>
+    note_id : BIGINT <<FK>>
+    * original_text : VARCHAR(255)
+    * suggested_correction : VARCHAR(255)
+    * status : VARCHAR(12) <<CHECK>>
+    * created_at : TIMESTAMPTZ
+    resolved_at : TIMESTAMPTZ
+  }
 }
 
 package "INGESTION" as pkgNote #F7F4EC {
@@ -98,6 +110,7 @@ package "INGESTION" as pkgNote #F7F4EC {
     syllabus_topic_id : BIGINT <<FK>>
     * class_date : DATE
     * title : VARCHAR(200)
+    * status : VARCHAR(12) <<CHECK>>
     content : JSONB
     content_generated_at : TIMESTAMPTZ
     * created_at : TIMESTAMPTZ
@@ -166,12 +179,15 @@ users ||--o{ enrollments
 courses ||--o{ enrollments
 courses ||--o{ syllabus_topics
 courses ||--o{ course_glossary
+courses ||--o{ glossary_suggestions
+users ||--o{ glossary_suggestions
 syllabus_topics |o--o{ syllabus_topics : parent
 
 users ||--o{ notes
 courses ||--o{ notes
 syllabus_topics |o--o{ notes
-notes ||--|{ note_pages
+notes ||--o{ note_pages
+notes |o--o{ glossary_suggestions
 
 users ||--o{ topic_coverage
 syllabus_topics ||--o{ topic_coverage

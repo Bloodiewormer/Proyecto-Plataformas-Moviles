@@ -39,6 +39,7 @@ package "OPERATIONS · level 2" #F7F4EC {
     * id : BIGSERIAL <<PK>>
     --
     * user_id : BIGINT <<FK>>
+    * device_id : BIGINT <<FK>>
     * entity_type : VARCHAR(40)
     * idempotency_key : UUID <<UQ>>
     * payload : JSONB
@@ -76,6 +77,7 @@ package "OPERATIONS · level 2" #F7F4EC {
 
 users ||--o{ ai_calls
 users ||--o{ sync_queue
+devices ||--o{ sync_queue
 users ||--o{ devices
 users ||--o{ notifications
 users ||--o{ coverage_snapshots

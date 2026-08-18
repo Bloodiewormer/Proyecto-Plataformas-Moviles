@@ -2,7 +2,7 @@
 
 **Team X-Ray** — Brandon Brenes · David González · Felipe Ugalde
 EIF411 · Mobile Platform Design and Programming · II Term 2026
-Technical reference document · version 1.0 · 16 August 2026
+Technical reference document · version 2.2
 
 > **What this document is.** The complete modeling package for Glifo: entity–relationship
 > diagram, UML class diagrams, development stack, API surface, UI/UX map and file layout.
@@ -12,10 +12,11 @@ Technical reference document · version 1.0 · 16 August 2026
 > conventions (`Glifo_Arquitectura_Estandares.md`) or decision history
 > (`Glifo_Bitacora_Decisiones.md`). It models what those documents describe.
 >
-> **Language.** This document is written entirely in English — diagrams, notes, prose and
-> identifiers. This is a deliberate departure from `Glifo_Arquitectura_Estandares.md` §7.3,
-> which currently reads "code in English; comments, documentation and UI text in Spanish".
-> See §12.3 for the amendment that has to be applied to that document.
+> **Language (D-14).** This document is written entirely in English — diagrams, notes, prose
+> and identifiers. The amendment proposed in an earlier revision of §12.3 was adopted and is
+> now recorded as **D-14** in `Glifo_Bitacora_Decisiones.md`: English for code, identifiers,
+> database objects, API paths, payloads, commit messages and technical documentation; Spanish
+> reserved for user-facing interface text.
 
 ---
 
@@ -40,14 +41,19 @@ Technical reference document · version 1.0 · 16 August 2026
 
 ### 1.1 Rendering
 
-Every diagram is provided as a PNG image in the `docs/images/` directory. If you need to view
-or edit the source, each diagram has a link to its corresponding `.puml` file in `docs/uml/`.
+Every diagram is a fenced `plantuml` block. Three ways to render:
 
-To render the source files:
-- **IDE:** Use the PlantUML Integration plugin (IntelliJ / Android Studio) or the PlantUML
-  extension (VS Code).
-- **Web:** Paste the code into `plantuml.com/plantuml`.
-- **Batch:** Run `java -jar plantuml.jar docs/uml/*.puml` to export all diagrams to PNG.
+| Method | Setup | Use for |
+|---|---|---|
+| PlantUML Integration plugin (IntelliJ / Android Studio) | Install once, open the `.puml` | Daily work, live preview |
+| PlantUML extension (VS Code) | Install once, `Alt+D` | Daily work |
+| `plantuml.com/plantuml` | Nothing | Quick share, no install |
+| `java -jar plantuml.jar docs/uml/*.puml` | JDK + jar | Batch export before a defense |
+
+Each block is **self-contained**: copy from `@startuml` to `@enduml`, paste, render. No
+includes, no external theme file. The four-line `skinparam` header repeats in every diagram
+on purpose — a diagram that only renders correctly with a companion file is a diagram that
+will not render five minutes before a defense.
 
 ### 1.2 Files on disk
 
@@ -129,8 +135,14 @@ on the server side **starts at the controller**. Nothing spans the gap. The gap 
 
 ### 3.1 Deployment view
 
-![Deployment Stack](file:///C:/Users/David/StudioProjects/Proyecto-Plataformas-Moviles/docs/images/01_stack_deployment.png)
-[Source Code (PlantUML)](file:///C:/Users/David/StudioProjects/Proyecto-Plataformas-Moviles/docs/uml/01_stack_deployment.puml)
+<details>
+<summary>View Diagram Source</summary>
+
+
+</details>
+
+![Deployment Stack](file:///C:/Users/Bloodie/StudioProjects/Proyecto-Plataformas-Moviles/docs/images/01_stack_deployment.png)
+[Ver código fuente](/docs/uml/01_stack_deployment.puml)
 
 ### 3.2 Technology inventory
 
@@ -158,7 +170,7 @@ suggestions, not requirements.
 | Dependency injection | Hilt | ● | `Contexto_Curso` §6, Lab 3 | 3 |
 | HTTP client | Retrofit | ● | `Contexto_Curso` §6, `Diseno` §10 | 3 |
 | — OkHttp interceptor | OkHttp | ○ | Implied by `AuthInterceptor` in `Estandares` §2 | 3 |
-| Serialization | **Gson or kotlinx.serialization** | ⚠ | **Conflict — see note below** | 3 |
+| Serialization | **Gson** | ● | **D-19.** Conflict closed in favour of Gson | 3 |
 | Local persistence | Room | ● | `Estandares` §2, `Alcance` §6.5 | 4 |
 | Background work | WorkManager | ● | `Estandares` §2 (`SyncWorker`) | 4 |
 | Camera | CameraX | ● | `Alcance` §6.2 | 2 |
@@ -170,22 +182,22 @@ suggestions, not requirements.
 | Crash + analytics | Crashlytics · Firebase Analytics | ● | `Alcance` §6.6 | 3 / 6 |
 | Distribution | Firebase App Distribution | ● | `Contexto_Curso` §6 | final |
 
-> **⚠ Serialization conflict to resolve.** `Contexto_Curso.md` §6 allows either
-> ("Retrofit + Gson / kotlinx.serialization"), but `Glifo_Diseno_Arquitectura.md` §10 commits
-> to **Gson** — and that is the document shown to the professor. `Glifo_Arquitectura_Estandares.md`
-> does not say. Earlier revisions of this document silently wrote *kotlinx.serialization*;
-> that was an unrecorded change of an existing decision. **Pick one and record it.** The
-> argument for kotlinx.serialization is sealed-class support, which §5.3's three item kinds
-> would use directly. The argument for Gson is that `Diseno` already says so and the professor
-> has seen it.
+> **Serialization — closed as D-19.** `Contexto_Curso.md` §6 allowed either
+> ("Retrofit + Gson / kotlinx.serialization"), `Glifo_Diseno_Arquitectura.md` §10 committed to
+> **Gson**, and `Glifo_Arquitectura_Estandares.md` was silent. Resolved in favour of **Gson**:
+> `Diseno` is the document the professor has already seen, and Gson is the standard Retrofit
+> pairing in this course's framework. The counter-argument —kotlinx.serialization's sealed-class
+> support, which §5.3's three item kinds would use directly— is real but does not outweigh
+> changing a decision already presented. Consequence: §5.3 deserialization is dispatched on the
+> `kind` discriminator by hand rather than by a sealed-class resolver.
 
 **BACK — Spring Boot on Kotlin**
 
 | Concern | Technology | Source | Where it is fixed / why proposed | Lab |
 |---|---|:--:|---|:--:|
-| Language | **Kotlin** (JVM target 21) | ○ | **Proposed D-13.** No document names a JVM language; `Estandares` §7.2 currently assumes Java | 4 |
+| Language | **Kotlin** (JVM target 21) | ● | **D-13.** Adopted; `Estandares` §7.2 is now written for Kotlin | 4 |
 | Framework | Spring Boot, monolithic | ● | `Diseno` §10, `Estandares` §1.1 | 4 |
-| Compiler plugins | `kotlin-spring` · `kotlin-jpa` | ○ | Mandatory *consequence* of D-13, not an independent choice | 4 |
+| Compiler plugins | `kotlin-spring` · `kotlin-jpa` | ● | Mandatory *consequence* of D-13, not an independent choice | 4 |
 | Web | Spring Web MVC | ● | `Estandares` §1.1 (Controllers · DTOs) | 5 |
 | Persistence | Spring Data JPA + Hibernate | ● | `Estandares` §1.1 (Repositories · Entities · JPA) | 4 |
 | JSON | Jackson + `jackson-module-kotlin` | ○ | Spring Boot's default; no document specifies server-side JSON | 4 |
@@ -193,12 +205,12 @@ suggestions, not requirements.
 | — JWT library | JJWT | ○ | Library not named anywhere | 6 |
 | Validation | Jakarta Bean Validation | ● | `Estandares` §1.1 ("Validación"), §7.2 (`@Valid`) | 5 |
 | Mapping | Extension functions | ○ | `Estandares` §5 requires a Mapper *pattern*, not a library. See §7.2 | 5 |
-| Boilerplate | none needed | ● | `Estandares` §7.2 uses `@RequiredArgsConstructor` (Lombok). Kotlin removes the need | 4 |
+| Boilerplate | none needed | ● | Lombok is gone under D-13; Kotlin removes the need | 4 |
 | Migrations | Flyway | ○ | **Not in any document.** Proposed in §11.5 — see the note below | 4 |
 | API docs | springdoc-openapi | ○ | `Estandares` §3 lists `OpenApiConfig`, so OpenAPI is intended; the library is not named | 5 |
 | LaTeX validation | JLaTeXMath | ● | `Estandares` §3 (`ai/validation/LatexValidator`) | 6 |
 | Testing | JUnit 5 · MockMvc | ● | `Estandares` §10.2 | 5 |
-| — Mocking | MockK, replacing Mockito | ○ | `Estandares` §10.2 specifies Mockito. Changing it is a consequence of D-13 | 5 |
+| — Mocking | MockK, replacing Mockito | ● | `Estandares` §10.2 now specifies MockK on both tiers. Consequence of D-13 | 5 |
 | API testing | Postman collection | ● | `Contexto_Curso` §6, Lab 5 | 5 |
 | Build | Gradle + Kotlin DSL | ○ | **Not in any document.** Kotlin's default and matches the Android module | 4 |
 
@@ -228,19 +240,25 @@ suggestions, not requirements.
 ### 4.1 Why two levels
 
 The professor's instruction was to reduce the size of the data model — *"very large databases
-become hyper-complex to manage"*. The schema in `Glifo_Arquitectura_Estandares.md` §6.3 has
-23 tables. Presenting 23 boxes on a projector fails for a reason that has nothing to do with
-the design: nobody can read it, so nobody can evaluate it.
+become hyper-complex to manage"*. The original schema had 23 tables. Presenting 23 boxes on a
+projector fails for a reason that has nothing to do with the design: nobody can read it, so
+nobody can evaluate it.
 
 The answer is not to delete functionality. It is to separate **the model that carries the
 domain** from **the tables that carry operations**.
 
 | Level | Tables | Contains | Defended |
 |---|---|---|---|
-| **Level 1 — Core** | 15 | Access control, academic domain, ingestion, study | Yes. This is the diagram on screen |
+| **Level 1 — Core** | 16 | Access control, academic domain, ingestion, study | Yes. This is the diagram on screen |
 | **Level 2 — Operations** | 5 | Telemetry, sync outbox, devices, notifications, snapshots | Annex. Shown only if asked |
 
-Twenty-three became twenty, and only fifteen are on the main diagram.
+Twenty-three became twenty-one, and only sixteen are on the main diagram.
+
+**Why sixteen and not fifteen.** An earlier revision of this document said fifteen. **D-15**
+added `glossary_suggestions` to the core afterwards: students correcting a fragment must not
+write to `course_glossary` directly, because `GLOSSARY_WRITE` is a teacher privilege. The
+suggestion table is the boundary that keeps the security model intact, so it belongs on the
+defended diagram, not in the annex.
 
 ### 4.2 What was merged, and why
 
@@ -258,6 +276,15 @@ columns that was given its own box.
 And four tables were **never created**, because the JSON decision in §5 removed the need for
 them: `quizzes`, `questions`, `question_options`, `answer_keys`. That is covered in §5.2.
 
+**How to state the count, so the arithmetic is not attacked.** These two groups are not
+subtractable from the same starting number — the four merged tables existed in the predecessor
+model, the four quiz tables never did. Do not try to present `23 − 4 − 4`. The defensible
+sentence is:
+
+> The current model has **21 tables: 16 core and 5 operational.** The predecessor model had 23.
+> Four strict-1:1 tables were absorbed into their parents, and four quiz tables were replaced
+> by a single JSONB column as the model evolved.
+
 **The honest counter-argument.** Merging a 1:1 into its parent makes the parent row wider and
 means a `SELECT * FROM notes` drags a JSONB document it may not need. That is real. It is
 acceptable here because `notes` is never scanned in bulk — it is always filtered by
@@ -265,32 +292,94 @@ acceptable here because `notes` is never scanned in bulk — it is always filter
 becomes a hot path, the fix is a projection query (`SELECT id, title, class_date …`), not
 re-splitting the table.
 
-### 4.3 Level 1 — core schema
+### 4.3 Unique constraints — mandatory
 
-![Core ERD](file:///C:/Users/David/StudioProjects/Proyecto-Plataformas-Moviles/docs/images/02_erd_core.png)
-[Source Code (PlantUML)](file:///C:/Users/David/StudioProjects/Proyecto-Plataformas-Moviles/docs/uml/02_erd_core.puml)
+Cardinality alone does not protect the model. Four uniqueness rules are enforced at the
+database level, not in service code, because a race between two devices belonging to the same
+user will otherwise produce duplicates that no application check catches.
 
-**Reading the cardinality.** `||--o{` is one-to-zero-or-many. `||--|{` is one-to-one-or-many
-— a note always has at least one page, which is enforced by the fact that a note is created
-*by* capturing a page. `|o--o{` is optional-to-many: `notes.syllabus_topic_id` is nullable
-because topic detection can fail and the note still exists.
+| Table | Unique on | What it prevents |
+|---|---|---|
+| `enrollments` | (`user_id`, `course_id`) | The same student joining a course twice with two taps |
+| `note_pages` | (`note_id`, `page_index`) | Two offline captures claiming the same page slot on sync |
+| `topic_coverage` | (`user_id`, `syllabus_topic_id`) | Two coverage rows for one topic, which would make the delta meaningless |
+| `sync_queue` | `idempotency_key` | A retried delivery being processed twice |
+| `review_schedule` | (`user_id`, `study_item_id`) | Two competing schedules for the same item, which would make "next due" ambiguous |
 
-### 4.4 Level 2 — operations annex
+`users.email`, `courses.join_code`, `roles.name`, `privileges.name` and `devices.fcm_token`
+are unique by their own definition and are marked `<<UQ>>` in the diagrams below.
 
-![Operations ERD](file:///C:/Users/David/StudioProjects/Proyecto-Plataformas-Moviles/docs/images/03_erd_operations.png)
-[Source Code (PlantUML)](file:///C:/Users/David/StudioProjects/Proyecto-Plataformas-Moviles/docs/uml/03_erd_operations.puml)
+**Why `review_schedule` is unique per (user, item).** The SM-2 state — `due_at`,
+`interval_days`, `ease` — is *the current schedule*, not a history. An attempt updates the row
+in place; the history lives in `attempts`. Two rows for the same pair would mean two answers to
+"when is this due", and the study queue query has no basis to choose between them.
+
+**`course_glossary` is deliberately left non-unique on `term`, for now.** The obvious rule
+would be `UNIQUE(course_id, term)`, and it is wrong as stated: `kind` distinguishes a symbol
+from an abbreviation from a term, and the same string can legitimately appear as more than one
+kind — `σ` as a symbol and as an abbreviation in a statistics course. The candidate rule is
+therefore `UNIQUE(course_id, term, kind)`. **It is not adopted until the semantics of `kind`
+are frozen**, because adding a unique constraint later is a migration and removing one is a
+data-loss conversation. Tracked as open item 13 in §12.4.
+
+### 4.4 Level 1 — core schema
+
+<details>
+<summary>View Diagram Source</summary>
+
+</details>
+
+![Core ERD](file:///C:/Users/Bloodie/StudioProjects/Proyecto-Plataformas-Moviles/docs/images/02_erd_core.png)
+[Ver código fuente](/docs/uml/02_erd_core.puml)
+
+**Reading the cardinality.** `||--o{` is one-to-zero-or-many. `|o--o{` is optional-to-many:
+`notes.syllabus_topic_id` is nullable because topic detection can fail and the note still
+exists.
+
+**Why `notes ||--o{ note_pages` and not `||--|{` (D-16).** An earlier revision required a note
+to have at least one page. That contradicted the API: `POST /notes` followed by
+`POST /notes/{id}/pages` leaves the note pageless for the duration of the upload, and offline
+capture makes that window arbitrarily long. The `notes.status` state machine resolves it:
+
+~~~text
+DRAFT  ──►  PROCESSING  ──►  READY  ──►  ARCHIVED
+  │
+  └─ 0..N pages allowed here, and only here
+~~~
+
+A note in `READY` with zero pages is the invalid state, and that is enforced by the transition,
+not by the foreign key.
+
+### 4.5 Level 2 — operations annex
+
+These five tables serve telemetry, offline sync and notifications. They are deliberately
+kept off the main diagram: none of them participates in the domain flow, and four of the
+five are write-mostly logs.
+
+<details>
+<summary>View Diagram Source</summary>
+
+</details>
+
+![Operations ERD](file:///C:/Users/Bloodie/StudioProjects/Proyecto-Plataformas-Moviles/docs/images/03_erd_operations.png)
+[Ver código fuente](/docs/uml/03_erd_operations.puml)
 
 **Note on `sync_queue`.** The authoritative outbox lives in **Room, on the device** — that is
 the whole point of the applied-research topic. The server-side `sync_queue` table is the
 landing record used to enforce idempotency: the client generates `idempotency_key` as a UUID
 before the first attempt and resends it on every retry, so a duplicate delivery is detected
 by a unique-constraint violation rather than by guesswork. Both sides are modeled: this
-table in §4.4, the Room side in §6.4.
+table in §4.5, the Room side in §6.4.
+
+**Note on `sync_queue.device_id` (D-18).** The queue row records *which physical device*
+uploaded the batch. Without it, a user with a phone and a tablet gets the "sync complete"
+push on both, including the one that was not involved. The FCM target is resolved by joining
+`sync_queue.device_id → devices.fcm_token`, not by fanning out to every device of the user.
 
 **Correction — `coverage_snapshots` must not be load-bearing.** An earlier revision of this
 document had the F3 Delta screen read from `coverage_snapshots`. That is a design error against
-`Glifo_Alcance.md`: §6.3 marks *"Delta de cobertura entre sesiones"* as **Deseable** while
-*"Instantáneas históricas"* is **Opcional**, and §11 lists the snapshots as the **second** item
+`Glifo_Alcance.md`: §6.3 marks *"Coverage delta between sessions"* as **Should-have** while
+*"Historical snapshots"* is **Could-have**, and §11 lists the snapshots as the **second** item
 to drop when slack is needed. Coupling a feature that stays to a table that leaves means the
 first schedule cut silently breaks the delta.
 
@@ -305,14 +394,23 @@ GROUP BY state;
 ```
 
 `topic_coverage.updated_at` already exists and is already maintained. `coverage_snapshots`
-remains in the annex for the **weekly progress chart** (`Glifo_Alcance.md` §6.3, Opcional),
+remains in the annex for the **weekly progress chart** (`Glifo_Alcance.md` §6.3, Could-have),
 which genuinely needs a point-in-time series and genuinely disappears if it is cut. Nothing
-above Opcional reads that table.
+above Could-have reads that table.
 
-### 4.5 Access control — detail
+### 4.6 Access control — detail
 
-![Access Control ERD](file:///C:/Users/David/StudioProjects/Proyecto-Plataformas-Moviles/docs/images/04_erd_access_control.png)
-[Source Code (PlantUML)](file:///C:/Users/David/StudioProjects/Proyecto-Plataformas-Moviles/docs/uml/04_erd_access_control.puml)
+This block is the direct answer to the Lab 1 observation (*"you need the `privilege` and
+`roles` tables"*) and it is modeled on the structure in the reference images, **adapted, not
+copied**.
+
+<details>
+<summary>View Diagram Source</summary>
+
+</details>
+
+![Access Control ERD](file:///C:/Users/Bloodie/StudioProjects/Proyecto-Plataformas-Moviles/docs/images/04_erd_access_control.png)
+[Ver código fuente](/docs/uml/04_erd_access_control.puml)
 
 #### What was adapted from the reference structure, and why
 
@@ -614,8 +712,11 @@ it.
 | `SyncStatus` | `PENDING` · `IN_PROGRESS` · `FAILED` · `DONE` | `sync_queue.status` |
 | `EnrollmentStatus` | `ACTIVE` · `PENDING` · `REMOVED` | `enrollments.status` |
 | `GlossaryKind` | `TERM` · `SYMBOL` · `NOTATION` | `course_glossary.kind` |
-| `AiCallType` | `OCR_M` · `IA_00` · `IA_01` · `IA_02` · `IA_03` · `IA_05` | `ai_calls.call_type` |
+| `AiCallType` | `OCR_M` · `IA_00` · `IA_01` · `IA_02` · `IA_03` · `IA_04` | `ai_calls.call_type` |
 | `NotificationKind` | `SYNC_COMPLETE` · `REVIEW_DUE` · `COVERAGE_DROP` | `notifications.kind` |
+| `NoteStatus` | `DRAFT` · `PROCESSING` · `READY` · `ARCHIVED` | `notes.status` (D-16) |
+| `SuggestionStatus` | `PENDING` · `APPROVED` · `REJECTED` | `glossary_suggestions.status` (D-15) |
+| `DevicePlatform` | `ANDROID` · `IOS` · `WEB` | `devices.platform` |
 | `RejectionReason` | `TOO_BLURRY` · `TOO_DARK` · `GLARE` · `SKEW_EXCESSIVE` · `NO_TEXT_DETECTED` | `quality_metrics.rejectionReason` |
 
 ---
@@ -627,8 +728,13 @@ it is where the diagram stops.
 
 ### 6.1 Pipeline engine — the differentiator
 
-![Pipeline Engine](file:///C:/Users/David/StudioProjects/Proyecto-Plataformas-Moviles/docs/images/05_front_pipeline.png)
-[Source Code (PlantUML)](file:///C:/Users/David/StudioProjects/Proyecto-Plataformas-Moviles/docs/uml/05_front_pipeline.puml)
+<details>
+<summary>View Diagram Source</summary>
+
+</details>
+
+![Pipeline Engine](file:///C:/Users/Bloodie/StudioProjects/Proyecto-Plataformas-Moviles/docs/images/05_front_pipeline.png)
+[Ver código fuente](/docs/uml/05_front_pipeline.puml)
 
 **The design point in that note.** `MathOcrRequestStep` and `VisionRepairRequestStep` are the
 two steps that need the server, and they were the temptation to draw an arrow from the
@@ -640,8 +746,13 @@ no emulator and no network — which the standards document lists as a high-prio
 
 ### 6.2 Pipeline data contracts
 
-![Pipeline Contracts](file:///C:/Users/David/StudioProjects/Proyecto-Plataformas-Moviles/docs/images/06_front_pipeline_contracts.png)
-[Source Code (PlantUML)](file:///C:/Users/David/StudioProjects/Proyecto-Plataformas-Moviles/docs/uml/06_front_pipeline_contracts.puml)
+<details>
+<summary>View Diagram Source</summary>
+
+</details>
+
+![Pipeline Contracts](file:///C:/Users/Bloodie/StudioProjects/Proyecto-Plataformas-Moviles/docs/images/06_front_pipeline_contracts.png)
+[Ver código fuente](/docs/uml/06_front_pipeline_contracts.puml)
 
 **`RegionResult.finalText` and `latex` are both nullable, and never both null.** A drawing
 region resolved at N2 has a caption but no LaTeX; a formula has LaTeX but no plain text.
@@ -651,20 +762,52 @@ concession and it is worth naming before someone else names it.
 
 ### 6.3 MVVM slice — the canonical screen
 
-![MVVM Slice](file:///C:/Users/David/StudioProjects/Proyecto-Plataformas-Moviles/docs/images/07_front_mvvm_slice.png)
-[Source Code (PlantUML)](file:///C:/Users/David/StudioProjects/Proyecto-Plataformas-Moviles/docs/uml/07_front_mvvm_slice.puml)
+Every screen in Glifo follows this exact shape. Rather than draw 39 near-identical diagrams,
+this is the template, instantiated here on the note-detail screen because it is the most
+complex one.
+
+<details>
+<summary>View Diagram Source</summary>
+
+</details>
+
+![MVVM Slice](file:///C:/Users/Bloodie/StudioProjects/Proyecto-Plataformas-Moviles/docs/images/07_front_mvvm_slice.png)
+[Ver código fuente](/docs/uml/07_front_mvvm_slice.puml)
 
 ### 6.4 Data layer and the offline outbox
 
-![Offline Data Outbox](file:///C:/Users/David/StudioProjects/Proyecto-Plataformas-Moviles/docs/images/08_front_data_offline.png)
-[Source Code (PlantUML)](file:///C:/Users/David/StudioProjects/Proyecto-Plataformas-Moviles/docs/uml/08_front_data_offline.puml)
+This is the applied-research topic, so it gets its own diagram rather than being a footnote
+inside the repository box.
+
+<details>
+<summary>View Diagram Source</summary>
+
+</details>
+
+![Offline Data and Outbox](file:///C:/Users/Bloodie/StudioProjects/Proyecto-Plataformas-Moviles/docs/images/08_front_data_offline.png)
+[Ver código fuente](/docs/uml/08_front_data_offline.puml)
 
 **Room mirrors Postgres, it does not duplicate it.** The Room schema holds only what the
 device needs to work offline: `notes`, `note_pages`, `study_items`, `topic_coverage`,
-`review_schedule`, plus `sync_operations`. It does **not** hold `users`, `roles`,
-`privileges`, `ai_calls` or `enrollments` — an offline device has no reason to know the
-privilege table, and caching it would be a security surface with no benefit. The authority
-for identity is the JWT in `EncryptedSharedPreferences`, and it expires.
+`review_schedule`, plus the `SyncOperation` outbox and `LocalCourseContextEntity`. It does
+**not** hold `users`, `roles`, `privileges`, `ai_calls` or `enrollments` — an offline device
+has no reason to know the privilege table, and caching it would be a security surface with no
+benefit. The authority for identity is the JWT in `EncryptedSharedPreferences`, and it expires.
+
+**`LocalCourseContext` is the one exception to "Room caches what was generated" (D-17).**
+Everything else in Room is output the server already produced. This is *input* the pipeline
+needs before it can produce anything: `ConfidenceScorer` scores a region against the course
+glossary, so with no glossary on the device there is no confidence score, and with no score
+there is no escalation decision — the ladder stops at N1 and the whole offline capture story
+collapses. Copying the full glossary table was rejected as unbounded; the context row carries
+`glossaryEntries` as a serialized subset plus `syllabusVersion` and `glossaryVersion`, so the
+sync worker can compare versions on reconnect and refresh only when the teacher actually
+changed something.
+
+**Naming, to avoid a recurring confusion.** The device-side outbox class is `SyncOperation`,
+persisted by Room through `SyncOperationDao`. The server-side landing table is `sync_queue`
+(§4.5). There is no PostgreSQL table called `sync_operations`; where the two need to be
+distinguished in prose, write *Room: `SyncOperation`* and *Backend: `sync_queue`*.
 
 ---
 ## 7. UML class diagrams — backend
@@ -678,13 +821,21 @@ class on the network side is a `@RestController`, and that is where the diagram 
 
 ### 7.1 Domain entities — the JPA mirror of the core ERD
 
-![Backend Domain Entities](file:///C:/Users/David/StudioProjects/Proyecto-Plataformas-Moviles/docs/images/09_back_domain.png)
-[Source Code (PlantUML)](file:///C:/Users/David/StudioProjects/Proyecto-Plataformas-Moviles/docs/uml/09_back_domain.puml)
+This diagram and §4.4 are the same sixteen tables. If they ever disagree, the migration file
+wins and one of the two diagrams is wrong.
+
+<details>
+<summary>View Diagram Source</summary>
+
+</details>
+
+![Backend Domain Entities](file:///C:/Users/Bloodie/StudioProjects/Proyecto-Plataformas-Moviles/docs/images/09_back_domain.png)
+[Ver código fuente](/docs/uml/09_back_domain.puml)
 
 **Nullability is new information in this diagram.** Under Java every field was implicitly
 nullable and the diagram could not say which ones actually were. Under Kotlin, `String?`
 versus `String` is a compiler-enforced statement that maps one-to-one onto
-`@Column(nullable = true/false)` and onto the `NOT NULL` markers in §4.3. The three documents
+`@Column(nullable = true/false)` and onto the `NOT NULL` markers in §4.4. The three documents
 — ERD, entity diagram, migration file — can now be checked against each other mechanically.
 
 **Composition vs association is not decoration here.** `Course *-- SyllabusTopic` is a filled
@@ -695,8 +846,15 @@ explicit administrative action. The diamonds in this diagram are the cascade pol
 
 ### 7.2 Web / service / persistence slice — the canonical resource
 
-![Web Service Slice](file:///C:/Users/David/StudioProjects/Proyecto-Plataformas-Moviles/docs/images/10_back_web_service_slice.png)
-[Source Code (PlantUML)](file:///C:/Users/David/StudioProjects/Proyecto-Plataformas-Moviles/docs/uml/10_back_web_service_slice.puml)
+Again, one template rather than one diagram per resource.
+
+<details>
+<summary>View Diagram Source</summary>
+
+</details>
+
+![Web and Service Slice](file:///C:/Users/Bloodie/StudioProjects/Proyecto-Plataformas-Moviles/docs/images/10_back_web_service_slice.png)
+[Ver código fuente](/docs/uml/10_back_web_service_slice.puml)
 
 **Why the mapper is a file of functions and not an interface.** `Glifo_Arquitectura_Estandares.md`
 §5 requires the **Adapter/Mapper pattern** and §7.2 requires the **name** `<Recurso>Mapper`. It
@@ -713,8 +871,13 @@ the reflex unnecessary.)*
 
 ### 7.3 AI orchestration
 
-![AI Orchestration](file:///C:/Users/David/StudioProjects/Proyecto-Plataformas-Moviles/docs/images/11_back_ai_orchestration.png)
-[Source Code (PlantUML)](file:///C:/Users/David/StudioProjects/Proyecto-Plataformas-Moviles/docs/uml/11_back_ai_orchestration.puml)
+<details>
+<summary>View Diagram Source</summary>
+
+</details>
+
+![AI Orchestration](file:///C:/Users/Bloodie/StudioProjects/Proyecto-Plataformas-Moviles/docs/images/11_back_ai_orchestration.png)
+[Ver código fuente](/docs/uml/11_back_ai_orchestration.puml)
 
 **Why the external boundary is a separate coloured package.** `SimpleTexClient` and
 `LlmClient` are interfaces we declare but do not implement — Spring generates the proxy. Put
@@ -725,8 +888,13 @@ two implementations precisely because the terracotta box on the left has a daily
 
 ### 7.4 Security
 
-![Backend Security](file:///C:/Users/David/StudioProjects/Proyecto-Plataformas-Moviles/docs/images/12_back_security.png)
-[Source Code (PlantUML)](file:///C:/Users/David/StudioProjects/Proyecto-Plataformas-Moviles/docs/uml/12_back_security.puml)
+<details>
+<summary>View Diagram Source</summary>
+
+</details>
+
+![Backend Security](file:///C:/Users/Bloodie/StudioProjects/Proyecto-Plataformas-Moviles/docs/images/12_back_security.png)
+[Ver código fuente](/docs/uml/12_back_security.puml)
 
 ### 7.5 Kotlin on the backend — what changes
 
@@ -895,6 +1063,12 @@ interface NoteApi {
         @Header("Idempotency-Key") key: String,
     ): ApiEnvelope<PageResponse>
 
+    @POST("api/v1/notes/{id}/reconstruct")
+    suspend fun reconstruct(
+        @Path("id") noteId: Long,
+        @Header("Idempotency-Key") key: String,
+    ): ApiEnvelope<NoteResponse>
+
     @PATCH("api/v1/notes/{id}/fragments/{spanId}")
     suspend fun correctFragment(
         @Path("id") noteId: Long,
@@ -916,8 +1090,13 @@ Never try to make one diagram do both. §9 has the sequences, §8.3 has the inve
 
 ### 8.2 Component diagram — the seam
 
-![API Seam](file:///C:/Users/David/StudioProjects/Proyecto-Plataformas-Moviles/docs/images/13_component_api_seam.png)
-[Source Code (PlantUML)](file:///C:/Users/David/StudioProjects/Proyecto-Plataformas-Moviles/docs/uml/13_component_api_seam.puml)
+<details>
+<summary>View Diagram Source</summary>
+
+</details>
+
+![API Seam](file:///C:/Users/Bloodie/StudioProjects/Proyecto-Plataformas-Moviles/docs/images/13_component_api_seam.png)
+[Ver código fuente](/docs/uml/13_component_api_seam.puml)
 
 ### 8.3 Endpoint inventory
 
@@ -925,15 +1104,15 @@ Never try to make one diagram do both. §9 has the sequences, §8.3 has the inve
 `Idempotency-Key` header — every endpoint the offline outbox can replay.
 
 **`Prio` is not decoration.** `Glifo_Alcance.md` §11 budgets ~284 hours of work against ~285
-hours of team capacity and states plainly *"Queda sin margen."* A flat list of thirty endpoints
+hours of team capacity and states plainly *"There is zero slack."* A flat list of thirty endpoints
 hides that. Every row below carries the priority its feature has in `Glifo_Alcance.md` §6, and
 the five features §11 names as the first to drop are numbered in cut order.
 
 | Mark | Tier | Means |
 |:--:|---|---|
-| **I** | must-have | *Imprescindible* — in the minimum product, `Glifo_Alcance.md` §12 |
-| **D** | should-have | *Deseable* |
-| **O** | could-have | *Opcional* |
+| **I** | **Must-have** | In the minimum product, `Glifo_Alcance.md` §12 |
+| **D** | **Should-have** | Ships if the budget holds; on the §11 cut list |
+| **O** | **Could-have** | First to go |
 | **①–⑤** | — | Position on the cut list in `Glifo_Alcance.md` §11, applied in order to recover slack |
 
 *(The letters are the initials of the Spanish tier names used in `Glifo_Alcance.md` §6. They
@@ -983,7 +1162,7 @@ table — the same reason the document keeps `Glifo_*` filenames in Spanish.)*
 | Verb | Path | Privilege | Prio | Idem | Lab |
 |---|---|---|:--:|:--:|:--:|
 | GET | `/courses/{id}/coverage` | `COVERAGE_READ_OWN` | **I** | | 5 |
-| POST | `/courses/{id}/coverage/evaluate` *(IA-05)* | `COVERAGE_READ_OWN` | **I** | ✓ | 6 |
+| POST | `/courses/{id}/coverage/evaluate` *(IA-04)* | `COVERAGE_READ_OWN` | **I** | ✓ | 6 |
 | GET | `/courses/{id}/coverage/delta?since=` | `COVERAGE_READ_OWN` | D | | 5 |
 | POST | `/courses/{id}/study-items/generate` *(IA-02)* | `STUDY_ITEM_GENERATE` | **I** | ✓ | 6 |
 | GET | `/courses/{id}/study-items?topicId=` | `COURSE_READ` | **I** | | 6 |
@@ -995,26 +1174,22 @@ table — the same reason the document keeps `Glifo_*` filenames in Spanish.)*
 
 | Verb | Path | Privilege | Prio | Idem | Lab |
 |---|---|---|:--:|:--:|:--:|
-| GET | `/courses/{id}/ai-usage` | `USAGE_READ_OWN` | ⚠ | | 6 |
+| GET | `/courses/{id}/ai-usage` | `USAGE_READ_OWN` | **I** | | 6 |
 | POST | `/devices` | authenticated | **I** | ✓ | 6 |
 | GET | `/admin/users` | `USER_MANAGE` | D | | 6 |
 | PATCH | `/admin/users/{id}/roles` | `ROLE_MANAGE` | D | | 6 |
 
-> **⚠ Contradiction in the source documents, for the team to resolve.**
-> `Glifo_Alcance.md` §6.6 marks *"Vista de consumo para estudiante y docente"* as **Opcional**,
-> but §12 lists as minimum-product item 9: *"`ai_calls` visible: llamadas, nivel y ahorro."*
-> The **recording** of `ai_calls` is Imprescindible in §6.6 and is not in dispute; the
-> **screen that displays it** is Opcional in one section and mandatory in another.
+> **Resolved — H2 is Must-have.** An earlier revision had `Glifo_Alcance.md` §6.6 marking the
+> AI-usage view as Optional while §12 listed it as minimum-product item 9. The **recording** of
+> `ai_calls` was never in dispute; only the **screen that displays it** was.
 >
-> This one matters more than its size suggests. The defense script in `Glifo_Alcance.md` §14
-> spends minute 4:15 on *"cinco páginas, tres motores gratuitos, dos llamadas al modelo de
-> pago"* — which is this screen. If H2 is genuinely optional it should come out of the
-> defense script; if it stays in the script it is not optional. **Recommendation: promote it
-> to Imprescindible in §6.6**, since the cost argument is the project's thesis and an argument
-> with no screen behind it is an assertion.
+> It was resolved in favour of Must-have. The defense script in `Glifo_Alcance.md` §14 spends
+> minute 4:15 on *"five pages, three free engines, two paid model calls"* — which is this
+> screen. The cost argument is the project's thesis, and an argument with no screen behind it
+> is an assertion. §6.6, §12 and §14 now agree.
 
-**Two endpoints that only exist at Deseable or below.** `full-vision` (N3) is first on the cut
-list, and `explanation` (IA-03) is Opcional. Both are in this inventory so the API surface is
+**Two endpoints that only exist at Should-have or below.** `full-vision` (N3) is first on the
+cut list, and `explanation` (IA-03) is Could-have. Both are in this inventory so the API surface is
 complete, but neither belongs in a Lab 6 commitment. If the schedule tightens, `full-vision`
 is the first thing to go and the pipeline still runs N0→N1→N1.5→N2 unchanged — which is
 exactly why §11 lists it first: it is the only escalation level whose removal costs nothing
@@ -1034,8 +1209,13 @@ defended as applied research.
 
 ### 9.1 Capture → reconstructed note
 
-![Capture Flow Sequence](file:///C:/Users/David/StudioProjects/Proyecto-Plataformas-Moviles/docs/images/14_seq_capture_to_note.png)
-[Source Code (PlantUML)](file:///C:/Users/David/StudioProjects/Proyecto-Plataformas-Moviles/docs/uml/14_seq_capture_to_note.puml)
+<details>
+<summary>View Diagram Source</summary>
+
+</details>
+
+![Capture Flow Sequence](file:///C:/Users/Bloodie/StudioProjects/Proyecto-Plataformas-Moviles/docs/images/14_seq_capture_to_note.png)
+[Ver código fuente](/docs/uml/14_seq_capture_to_note.puml)
 
 **What this diagram is designed to prove during the defense.** Read the `EXTERNAL` box: for a
 good photograph it is never touched. For a photograph with one handwritten formula, only
@@ -1043,10 +1223,22 @@ SimpleTex is touched, once per formula. The paid vision model is reached only in
 `opt` block. That is the cost argument of the project, and it is visible in the diagram
 rather than asserted in prose.
 
+**The two sequences share one ordering rule.** Both §9.1 and §9.2 create the note before the
+page, because `POST /notes/{id}/pages` needs an `{id}` that exists. Online the two calls are
+milliseconds apart and the `DRAFT` window is invisible; offline it can last days. It is the
+same state machine either way — `DRAFT → PROCESSING → READY` — and modeling it identically in
+both is what stops someone implementing the online path against a note that is assumed to
+already exist and then discovering the offline path cannot satisfy that assumption (D-16).
+
 ### 9.2 Offline capture and deferred sync
 
-![Offline Sync Sequence](file:///C:/Users/David/StudioProjects/Proyecto-Plataformas-Moviles/docs/images/15_seq_offline_sync.png)
-[Source Code (PlantUML)](file:///C:/Users/David/StudioProjects/Proyecto-Plataformas-Moviles/docs/uml/15_seq_offline_sync.puml)
+<details>
+<summary>View Diagram Source</summary>
+
+</details>
+
+![Offline Sync Sequence](file:///C:/Users/Bloodie/StudioProjects/Proyecto-Plataformas-Moviles/docs/images/15_seq_offline_sync.png)
+[Ver código fuente](/docs/uml/15_seq_offline_sync.puml)
 
 ---
 
@@ -1074,18 +1266,33 @@ composable. Every screen already exists in the Figma prototype.
 
 ### 10.2 Top-level navigation
 
-![Top Level Navigation](file:///C:/Users/David/StudioProjects/Proyecto-Plataformas-Moviles/docs/images/16_nav_toplevel.png)
-[Source Code (PlantUML)](file:///C:/Users/David/StudioProjects/Proyecto-Plataformas-Moviles/docs/uml/16_nav_toplevel.puml)
+<details>
+<summary>View Diagram Source</summary>
+
+</details>
+
+![Top Level Navigation](file:///C:/Users/Bloodie/StudioProjects/Proyecto-Plataformas-Moviles/docs/images/16_nav_toplevel.png)
+[Ver código fuente](/docs/uml/16_nav_toplevel.puml)
 
 ### 10.3 Capture flow
 
-![Capture Flow](file:///C:/Users/David/StudioProjects/Proyecto-Plataformas-Moviles/docs/images/17_nav_capture_flow.png)
-[Source Code (PlantUML)](file:///C:/Users/David/StudioProjects/Proyecto-Plataformas-Moviles/docs/uml/17_nav_capture_flow.puml)
+<details>
+<summary>View Diagram Source</summary>
+
+</details>
+
+![Capture Flow](file:///C:/Users/Bloodie/StudioProjects/Proyecto-Plataformas-Moviles/docs/images/17_nav_capture_flow.png)
+[Ver código fuente](/docs/uml/17_nav_capture_flow.puml)
 
 ### 10.4 Study flow
 
-![Study Flow](file:///C:/Users/David/StudioProjects/Proyecto-Plataformas-Moviles/docs/images/18_nav_study_flow.png)
-[Source Code (PlantUML)](file:///C:/Users/David/StudioProjects/Proyecto-Plataformas-Moviles/docs/uml/18_nav_study_flow.puml)
+<details>
+<summary>View Diagram Source</summary>
+
+</details>
+
+![Study Flow](file:///C:/Users/Bloodie/StudioProjects/Proyecto-Plataformas-Moviles/docs/images/18_nav_study_flow.png)
+[Ver código fuente](/docs/uml/18_nav_study_flow.puml)
 
 ### 10.5 UI rules that the diagrams encode
 
@@ -1263,7 +1470,7 @@ of `LoginRequest.kt` containing four lines.
 notification`. Five of those six are the domain. `security`, `config` and `common` are the
 framework, and they are the *last* three entries on purpose. Compare with the default Spring
 tutorial layout — `controller/ service/ repository/ model/` — which would put every one of
-Glifo's fifteen entities into four undifferentiated folders.
+Glifo's sixteen entities into four undifferentiated folders.
 
 **Where a new file goes** is answerable without asking anyone: an endpoint that returns a
 course glossary is `course/controller/`; a new AI call type is `ai/service/`; a new
@@ -1274,7 +1481,7 @@ course glossary is `course/controller/`; a new AI call type is `ai/service/`; a 
 ```
 database/
 ├── migration/                       Flyway, applied in order, never edited after merge
-│   ├── V1__baseline_schema.sql              15 core tables + CHECK constraints
+│   ├── V1__baseline_schema.sql              16 core tables + CHECK constraints
 │   ├── V2__seed_access_control.sql          roles, privileges, role_privileges
 │   ├── V3__operations_tables.sql            ai_calls, sync_queue, devices, notifications, snapshots
 │   ├── V4__indexes.sql                      FK indexes, (user_id, course_id), unique join_code
@@ -1312,18 +1519,18 @@ conditions are visible here and nowhere else.
 | D3 Processing | **I** | `UploadPageUseCase` | `POST /notes/{id}/pages` | `note_pages`, `ai_calls` |
 | E1 Note list | **I** | `GetNotesUseCase` | `GET /notes` | `notes` |
 | E2 Confidence map | **I** | `GetNoteUseCase` | `GET /notes/{id}` | `notes.content`, `note_pages.regions` |
-| E3 Correct fragment | **I** | `CorrectFragmentUseCase` | `PATCH /notes/{id}/fragments/{spanId}` | `notes.content`, `course_glossary` |
+| E3 Correct fragment | **I** | `CorrectFragmentUseCase` | `PATCH /notes/{id}/fragments/{spanId}` | `notes.content`, `glossary_suggestions` — **not** `course_glossary` (D-15) |
 | E4 Formula viewer | D | — *(reads cached content)* | — | `notes.content`, `note_pages.storage_uri` |
 | E5 Provenance | **I** | — *(reads cached content)* | — | `note_pages.regions` |
 | F1 Coverage | **I** | `GetCoverageUseCase` | `GET /courses/{id}/coverage` | `topic_coverage`, `syllabus_topics` |
 | F2 Topic detail | **I** | `GetTopicDetailUseCase` | `GET /courses/{id}/topics` | `syllabus_topics`, `topic_coverage`, `notes` |
-| F3 Delta | D | `GetCoverageDeltaUseCase` | `GET /courses/{id}/coverage/delta` | `topic_coverage` **only** — see §4.4 |
+| F3 Delta | D | `GetCoverageDeltaUseCase` | `GET /courses/{id}/coverage/delta` | `topic_coverage` **only** — see §4.5 |
 | G1 Study hub | **I** | `GetDueItemsUseCase` | `GET /review-schedule?dueBefore=` | `review_schedule`, `study_items` |
 | G2 Flashcards | **I** | `SubmitAttemptUseCase` | `POST /attempts` | `attempts`, `review_schedule` |
 | G3 Quiz | **I** | `SubmitAttemptUseCase` | `POST /attempts` | `attempts`, `study_items` |
 | G4 Result | **I** | `RecalculateCoverageUseCase` | `POST /courses/{id}/coverage/evaluate` | `topic_coverage`, `ai_calls` |
-| H1 Sync queue | D ③ | `GetSyncStateUseCase` | — *(local)* | `sync_operations` *(Room)*, `sync_queue` *(L2)* |
-| H2 AI usage | ⚠ | `GetUsageUseCase` | `GET /courses/{id}/ai-usage` | `ai_calls` *(L2)* |
+| H1 Sync queue | D ③ | `GetSyncStateUseCase` | — *(local)* | Room: `SyncOperation` · Backend: `sync_queue` *(L2)* |
+| H2 AI usage | **I** | `GetUsageUseCase` | `GET /courses/{id}/ai-usage` | `ai_calls` *(L2)* |
 | I2 New course | **I** | `CreateCourseUseCase` | `POST /courses` | `courses` |
 | I3 Publish syllabus | **I** | `PublishSyllabusUseCase` | `POST /courses/{id}/syllabus` | `courses`, `syllabus_topics` |
 | I4 Glossary | D | `UpsertGlossaryUseCase` | `POST /courses/{id}/glossary` | `course_glossary` |
@@ -1334,20 +1541,21 @@ conditions are visible here and nowhere else.
 
 **Three things this table proves on inspection.**
 
-1. Every one of the fifteen core tables appears at least once, so nothing was modeled
+1. Every one of the sixteen core tables appears at least once, so nothing was modeled
    speculatively.
 2. D1, D2, E4, E5 and H1 have no endpoint at all — those five screens work with the network
    off, which is the offline claim stated as a property of the design rather than as a promise.
-3. **The Imprescindible column is a closed, self-consistent product.** Strike every `D`, `O`
+3. **The Must-have column is a closed, self-consistent product.** Strike every `D`, `O`
    and `⚠` row and what remains still runs end to end: log in, join a course, capture,
-   confidence map, correct, coverage, study, sync. No Imprescindible screen depends on a
-   Deseable one. That is the property that makes the §11 cut list safe to execute under
+   confidence map, correct, coverage, study, sync. No Must-have screen depends on a
+   Should-have one. That is the property that makes the §11 cut list safe to execute under
    deadline pressure, and it is worth stating out loud because it is not automatic.
 
-**The administrator role is Deseable, not core.** `Glifo_Alcance.md` §6.1 and
-`Glifo_Diseno_Arquitectura.md` §13 both place it under Deseable. Earlier revisions of this
+**The administrator role is Should-have, not core.** `Glifo_Alcance.md` §6.1 places it there,
+and `Glifo_Diseno_Arquitectura.md` §15 records that the MVP commits to two operational roles
+with Admin as the third. Earlier revisions of this
 document treated the J-zone screens as part of the core product. They are not — but the
-`users` · `roles` · `privileges` **tables** and the `ROLE_ADMIN` seed row are Imprescindible,
+`users` · `roles` · `privileges` **tables** and the `ROLE_ADMIN` seed row are Must-have,
 because they answer the Lab 1 deduction and they are what `@PreAuthorize` reads. The schema is
 core; the administration UI on top of it is not. Do not let the second get cut and take the
 first with it.
@@ -1359,37 +1567,37 @@ where each is closed.
 
 | Observation | Closed by | One-line defense |
 |---|---|---|
-| *"You need the `privilege` and `roles` tables"* | §4.5 | Five tables, composite keys on the bridges, sixteen seeded privileges, and Spring Security annotated against privileges rather than roles — so a fourth role is a data change, not a code change |
-| *"Explore the use of JSON"* | §5 | A stated criterion with a list of where it was **not** applied; seven JSONB columns; four normalized tables eliminated from the quiz model; a `CHECK` constraint keeping the discriminator column and the payload honest |
-| *(carried from the closing remark)* second user role | §4.5, §10.2 | Three roles seeded, three distinct home screens, and a role router keyed on privileges |
-| *(implicit)* "reduce the model size" | §4.1–4.2 | 23 tables → 15 on the defended diagram, with the merge justification being strict 1:1 cardinality in every case |
+| *"You need the `privilege` and `roles` tables"* | §4.6 | Five tables, composite keys on the bridges, sixteen seeded privileges, and Spring Security annotated against privileges rather than roles — so a fourth role is a data change, not a code change |
+| *"Explore the use of JSON"* | §5 | A stated criterion with a list of where it was **not** applied; eight JSONB columns; four normalized tables eliminated from the quiz model; a `CHECK` constraint keeping the discriminator column and the payload honest |
+| *(carried from the closing remark)* second user role | §4.6, §10.2 | Three roles seeded, three distinct home screens, and a role router keyed on privileges |
+| *(implicit)* "reduce the model size" | §4.1–4.2 | 23 tables → **16** on the defended diagram, with the merge justification being strict 1:1 cardinality in every case. The annex holds 5 more, available if asked |
 
-### 12.3 Amendments required to `Glifo_Arquitectura_Estandares.md`
+### 12.3 Amendments applied to `Glifo_Arquitectura_Estandares.md`
 
-Two changes in this document contradict the standards document as it stands. Both need to be
-applied there, and both need a decision record.
+Two changes proposed in an earlier revision of this document have since been **adopted and
+applied**. They are recorded as **D-13** and **D-14** in `Glifo_Bitacora_Decisiones.md`. The
+reasoning is preserved below because it is what has to be defended if either is questioned.
 
-#### (a) Backend language — Java → Kotlin · proposed **D-13**
+#### (a) Backend language — Java → Kotlin · **D-13, adopted**
 
 `Glifo_Arquitectura_Estandares.md` describes a Java backend in three places, all of which
 have to be rewritten:
 
 | Section | Currently says | Becomes |
 |---|---|---|
-| §1.1 topology | "BACKEND — Spring Boot monolítico" with Java packages | Unchanged in shape; language line updated |
-| §3 backend packages | `GlifoApplication.java`, `.java` throughout | `src/main/kotlin`, `.kt` throughout — see §11.4 here |
-| §7.2 Java conventions | Lombok, `@RequiredArgsConstructor`, getters/setters, Java sample | Kotlin conventions and sample — see §7.5 here |
+| §1.1 topology | "BACKEND — Spring Boot monolítico" with Java packages | **Applied:** "Monolithic Spring Boot (Kotlin)" |
+| §3 backend packages | `GlifoApplication.java`, `.java` throughout | **Applied:** `src/main/kotlin`, `.kt` throughout — see §11.4 here |
+| §7.2 Java conventions | Lombok, `@RequiredArgsConstructor`, getters/setters, Java sample | **Applied:** Kotlin conventions, the Entity Trap note, and the compiler-plugin note — see §7.5 here |
 
-Add to §5 (design patterns): the **Builder** row currently justified by "prompts composed of
-optional parts" should note that Kotlin's named and default arguments cover most of what a
-Builder was for; `PromptBuilder` survives because it accumulates state across conditional
+Applied to §5 (design patterns): the **Builder** row now notes that Kotlin's named and default
+arguments cover most of what a Builder was for; `PromptBuilder` survives because it accumulates state across conditional
 branches, which named arguments do not do.
 
 **The honest trade, measured against the right number.** The constraint that decides this is
 not the course regulations — it is `Glifo_Alcance.md` §11: **~284 hours of work against ~285
-hours of team capacity**, a budget its own author annotates *"Queda sin margen."* Any language
+hours of team capacity**, a budget its own author annotates *"There is zero slack."* Any language
 change spends learning time out of a budget with one hour of slack, and `Glifo_Alcance.md`
-§11.4 assigns the backend to a **single person** (Frente B), so the cost is not spread.
+§11 *Work Fronts* assigns the backend to a **single person** (Front B), so the cost is not spread.
 
 Against that: the team already writes Kotlin daily on the Android side, one language across
 the repository means code review works in both directions, two dependencies disappear
@@ -1397,7 +1605,7 @@ the repository means code review works in both directions, two dependencies disa
 Spanish-language Spring tutorials and more Stack Overflow answers — real, but it applies to
 a language the team uses less often.
 
-**The deciding question is not "which language is better" but "how fluent is Frente B in
+**The deciding question is not "which language is better" but "how fluent is Front B in
 Kotlin outside Android?"** If the answer is *fluent*, the cost rounds to zero and the
 benefits stand. If the answer is *has only written Kotlin against the Android SDK*, then
 Spring + JPA + Hibernate in an unfamiliar dialect is being learned on the critical path, and
@@ -1408,16 +1616,15 @@ should be answered before Lab 4 opens on 9 September rather than during it.
 project from `start.spring.io` with Kotlin + Gradle selected, which wires all three plugins
 correctly, rather than converting a Java skeleton by hand.
 
-#### (b) Document and code language — Spanish → English · proposed **D-14**
+#### (b) Document and code language — Spanish → English · **D-14, adopted**
 
-Adopting all-English for this document contradicts §7.3 of the standards document, which
-currently reads:
+Adopting all-English contradicted §7.3 of the standards document, which then read:
 
 > **Idioma:** el código en inglés; los comentarios, la documentación y los textos de la
 > interfaz en español.
 
-That line has to be replaced. The proposed replacement, which keeps the one distinction that
-actually matters:
+That line was replaced with the following, which keeps the one distinction that actually
+matters:
 
 > **Language.** Code, identifiers, database objects, API paths, JSON payload fields, commit
 > messages and technical documentation are written in English. **User-facing interface text
@@ -1428,31 +1635,44 @@ actually matters:
 
 Two consequences to note before this is applied:
 
-1. **Test names.** §7.1 currently prescribes Spanish test names in backticks
-   (``fun `debería marcar incierto…`()``). Under the amendment they become
+1. **Test names.** §7.1 previously prescribed Spanish test names in backticks
+   (``fun `debería marcar incierto…`()``). Under the amendment they became
    ``fun `should mark uncertain when latex does not compile`()``. This is a rename across
    however many tests exist at the time — cheap now, expensive in November.
 2. **This is a real trade, not an obvious improvement.** Spanish comments are easier for the
    team to write quickly and the professor reads Spanish. The argument for English is that
    the scientific article is required to be in English, the identifiers already are, and a
    codebase that mixes languages inside one file is harder to read than one that does not.
-   The decision belongs in `Glifo_Bitacora_Decisiones.md` as **D-14**, with this paragraph
+   The decision is recorded in `Glifo_Bitacora_Decisiones.md` as **D-14**, with this paragraph
    as its rationale.
+
+#### (c) Amendments still pending
+
+| Change | Where | Status |
+|---|---|---|
+| Confidence-state palette: `escalated` separated to amber | `Estandares` §12.3 | **Applied.** Recorded as D-12 |
+| `glossary_suggestions` on the core diagram | `Estandares` §6.3, §4.4 | **Applied.** Recorded as D-15 |
+| `notes.status` state machine and 0..N pages | `Estandares` §6.3 | **Applied.** Recorded as D-16 |
+| `sync_queue.device_id` | `Estandares` §6.3 | **Applied.** Recorded as D-18 |
+| Prototype token values for `escalated*` | prototype, 8 files | **Applied.** Documents and prototype now agree |
 
 ### 12.4 Open items
 
 | # | Item | Owner | Deadline |
 |---|---|---|---|
-| 1 | **D-12 colour collision.** `escalated` and `alert` share `#E0693A` / `#B94117`. Escalation to vision is normal operation, not a failure, and the confidence map is defended at Lab 3 | Front | 9 Sep, before Lab 3 |
+| ~~1~~ | **CLOSED — D-12 colour collision.** `escalated` moved to its own amber (`#F59E0B` / `#D97706`), `alert` keeps the rust. Documents updated; **the prototype token block still carries the old value and must be brought in line before Lab 3** | Front | 9 Sep, before Lab 3 |
 | 2 | **D-07 pix2tex.** Still open pending the four questions to the professor. Affects whether `MathOcrEngine` gets a third implementation | Engine | Ask on 19 Aug |
 | 3 | **Storage for page crops.** `note_pages.storage_uri` is modeled but the backing store is undecided — object storage, filesystem on the host, or `BYTEA`. Free hosting tiers have ephemeral filesystems, which rules out the middle option in practice | Back | Lab 4, 23 Sep |
-| 4 | **Refresh-token strategy.** `POST /auth/refresh` is in the inventory but no table stores refresh tokens, since `users.token_expired` was deliberately dropped (§4.5). Either accept short-lived access tokens with re-login, or add a `refresh_tokens` table to Level 2 | Back | Lab 6, 28 Oct |
+| 4 | **Refresh-token strategy.** `POST /auth/refresh` is in the inventory but no table stores refresh tokens, since `users.token_expired` was deliberately dropped (§4.6). Either accept short-lived access tokens with re-login, or add a `refresh_tokens` table to Level 2 | Back | Lab 6, 28 Oct |
 | 5 | **`RegionResult` nullable pair** (§6.2). Tolerated for flat JSONB serialization. Revisit only if a third content type appears | Engine | — |
 | 6 | **Full-text search on `study_items.payload`** — not in scope; one GIN index if it ever is | Back | — |
-| 7 | **Serialization conflict.** `Glifo_Diseno_Arquitectura.md` §10 commits to **Gson**; `Contexto_Curso.md` §6 allows either; `Glifo_Arquitectura_Estandares.md` is silent. §5.3's three sealed item kinds argue for kotlinx.serialization. Pick one and record it | Front | Lab 3, 9 Sep |
-| 8 | **`ai_calls` view priority.** `Glifo_Alcance.md` §6.6 says Opcional, §12 puts it in the minimum product, §14 spends 30 seconds of the defense on it. Resolve in favour of one | All | 19 Aug |
+| ~~7~~ | **CLOSED — D-19.** Gson. §5.3 deserialization dispatches on the `kind` discriminator by hand instead of using a sealed-class resolver | Front | — |
+| ~~8~~ | **CLOSED.** `ai_calls` view is **Must-have** in `Glifo_Alcance.md` §6.6, §12.9 and §14. All three now agree | All | — |
 | 9 | **Ratify or reject the `○` rows in §3.2** — Flyway, Gradle, springdoc, JJWT, MockK, Jackson, Navigation Compose, JLaTeXMath-Android. None appear in any project document; all were proposed here | All | Lab 4, 23 Sep |
-| 10 | **Frente B's Kotlin fluency outside Android** (§12.3a). Determines whether D-13 costs zero or costs the one-hour margin in `Glifo_Alcance.md` §11 | Back | Before 9 Sep |
+| ~~10~~ | **CLOSED — D-13 adopted.** The residual risk (Front B learning Spring + JPA in Kotlin on the critical path) is now a schedule risk, not an open decision. Mitigation: generate from `start.spring.io` | Back | — |
+| ~~11~~ | **CLOSED — prototype/document drift on `escalated`.** The amber was applied across all eight prototype files (`src/App.tsx`, the five wireframe batches, the palette page and the component library), including the derived `Soft`/`Faint`/`Line` variants and the narrative that had defended the shared token. `alert` untouched. Type-checks and builds clean | Front | — |
+| 12 | **Traceability matrix coverage** (§12.1). The matrix models the screens that carry a use case; the remaining prototype screens are navigation, empty, and confirmation states with no endpoint of their own. Confirm that reading before the defense rather than during it | All | Before 9 Sep |
+| 13 | **`course_glossary` uniqueness.** Candidate rule `UNIQUE(course_id, term, kind)`, blocked on freezing the semantics of `kind` (§4.3). Adding it later is a migration; adding it wrongly is data loss | Back | Lab 4, 23 Sep |
 
 ### 12.5 Checklist before the 19 August correction
 
@@ -1460,13 +1680,14 @@ Two consequences to note before this is applied:
       presentation resolution
 - [ ] Have `V1__baseline_schema.sql` and `V2__seed_access_control.sql` written — a diagram
       backed by runnable DDL is a stronger answer than a diagram
-- [ ] Be able to state, in one sentence each: why the bridge tables exist, why seven columns
-      are JSONB, and why the model went from 23 tables to 15
+- [ ] Be able to state, in one sentence each: why the bridge tables exist, why eight columns
+      are JSONB, and why the model went from 23 tables to 16
 - [ ] Have §5.2 ready — the four tables JSON eliminated is the concrete answer to *"explore
       the use of JSON"*
 - [ ] Bring the four D-07 questions to ask in person
-- [ ] Decide **D-13** (Kotlin backend) and **D-14** (all-English) as a team, then apply both
-      §12.3 amendments to `Glifo_Arquitectura_Estandares.md`
+- [x] Decide **D-13** (Kotlin backend) and **D-14** (all-English) as a team, and apply both
+      §12.3 amendments to `Glifo_Arquitectura_Estandares.md` — done
+- [x] Bring the prototype in line with the D-12 amber before the confidence map is defended — done
 - [ ] Generate the backend skeleton from `start.spring.io` with **Kotlin + Gradle** selected,
       and confirm `plugin.spring` and `plugin.jpa` are both in `build.gradle.kts` — this is
       cheap now and is a lost afternoon in Lab 4
@@ -1478,9 +1699,9 @@ Two consequences to note before this is applied:
 | # | Diagram | Tier | Section |
 |---|---|---|---|
 | 01 | `stack_deployment` | ALL | §3.1 |
-| 02 | `erd_core` | DB | §4.3 |
-| 03 | `erd_operations` | DB | §4.4 |
-| 04 | `erd_access_control` | DB | §4.5 |
+| 02 | `erd_core` | DB | §4.4 |
+| 03 | `erd_operations` | DB | §4.5 |
+| 04 | `erd_access_control` | DB | §4.6 |
 | 05 | `front_pipeline` | FRONT | §6.1 |
 | 06 | `front_pipeline_contracts` | FRONT | §6.2 |
 | 07 | `front_mvvm_slice` | FRONT | §6.3 |
@@ -1495,6 +1716,3 @@ Two consequences to note before this is applied:
 | 16 | `nav_toplevel` | FRONT | §10.2 |
 | 17 | `nav_capture_flow` | FRONT | §10.3 |
 | 18 | `nav_study_flow` | FRONT | §10.4 |
-
-Eighteen diagrams. Every one of them fits on a projected slide and answers one question.
-That was the constraint: not fewer diagrams, but no overloaded ones.

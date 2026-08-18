@@ -60,6 +60,14 @@ package "course · BACK" #F7F4EC {
     + canonicalForm : String
     + kind : GlossaryKind
   }
+  class GlossarySuggestion <<@Entity>> {
+    + id : Long? = null
+    + originalText : String
+    + suggestedCorrection : String
+    + status : SuggestionStatus
+    + createdAt : Instant
+    + resolvedAt : Instant?
+  }
 }
 
 package "note · BACK" #F7F4EC {
@@ -67,6 +75,7 @@ package "note · BACK" #F7F4EC {
     + id : Long? = null
     + classDate : LocalDate
     + title : String
+    + status : NoteStatus
     + content : JsonNode?
     + contentGeneratedAt : Instant?
   }
@@ -115,12 +124,15 @@ User "1" --> "*" Enrollment
 Course "1" --> "*" Enrollment
 Course "1" *-- "*" SyllabusTopic
 Course "1" *-- "*" GlossaryEntry
+Course "1" *-- "*" GlossarySuggestion
+User "1" --> "*" GlossarySuggestion
 SyllabusTopic "0..1" --> "*" SyllabusTopic : parent
 
 User "1" --> "*" Note
 Course "1" --> "*" Note
 SyllabusTopic "0..1" --> "*" Note
-Note "1" *-- "1..*" NotePage
+Note "1" *-- "0..*" NotePage : "0..N while DRAFT"
+Note "0..1" --> "*" GlossarySuggestion
 
 User "1" --> "*" TopicCoverage
 SyllabusTopic "1" --> "*" TopicCoverage
@@ -141,7 +153,7 @@ note as N1
   `id : Long? = null` is the JPA idiom:
   null means "not yet persisted".
   Nullability is now visible in the
-  diagram — the Java version could
+  diagram â€” the Java version could
   not express it.
 end note
 @enduml

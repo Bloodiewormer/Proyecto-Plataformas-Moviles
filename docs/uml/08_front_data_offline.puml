@@ -55,13 +55,39 @@ package "core.database · FRONT" #F7F4EC {
     + studyItemDao() : StudyItemDao
     + coverageDao() : CoverageDao
     + syncOperationDao() : SyncOperationDao
+    + courseContextDao() : LocalCourseContextDao
   }
   interface SyncOperationDao <<@Dao>>
   interface NoteDao <<@Dao>>
+  interface LocalCourseContextDao <<@Dao>> {
+    + upsert(ctx : LocalCourseContextEntity) : Unit
+    + forCourse(courseId : Long) : LocalCourseContextEntity?
+    + versions(courseId : Long) : ContextVersions?
+  }
+  class LocalCourseContextEntity <<Room @Entity>> {
+    + courseId : Long
+    + courseName : String
+    + syllabusVersion : Int
+    + glossaryVersion : Int
+    + glossaryEntries : String
+    + cachedAt : Instant
+  }
   class Converters <<@TypeConverter>> {
     + jsonToContent(raw : String) : NoteContent
     + contentToJson(c : NoteContent) : String
   }
+}
+
+package "pipeline · FRONT" #F7F4EC {
+  class LocalCourseContext <<domain>> {
+    + courseId : Long
+    + courseName : String
+    + syllabusVersion : Int
+    + glossaryVersion : Int
+    + glossaryEntries : List<GlossaryEntry>
+  }
+  class PipelineEngine <<Facade>>
+  class ConfidenceScorer <<pure>>
 }
 
 package "core.network · FRONT" #F7F4EC {
@@ -83,14 +109,29 @@ SyncWorker --> ApiClient
 SyncWorker --> ConnectivityMonitor
 GlifoDatabase --> SyncOperationDao
 GlifoDatabase --> NoteDao
+GlifoDatabase --> LocalCourseContextDao
 GlifoDatabase --> Converters
+LocalCourseContextDao --> LocalCourseContextEntity
+LocalCourseContextEntity ..> LocalCourseContext : mapper
+PipelineEngine --> LocalCourseContext
+PipelineEngine --> ConfidenceScorer
+ConfidenceScorer ..> LocalCourseContext : reads glossary
+SyncWorker ..> LocalCourseContextDao : refreshes on reconnect
 ApiClient --> AuthInterceptor
 ApiClient --> ErrorMapper
+
+note bottom of LocalCourseContext
+  D-17. Without this, the pipeline
+  cannot run offline: ConfidenceScorer
+  needs the course glossary to score a
+  region. glossaryVersion is what makes
+  the cache invalidatable on reconnect.
+end note
 
 note bottom of RetryPolicy
   Exponential backoff with jitter.
   idempotencyKey is generated once,
-  at enqueue time — never per attempt.
+  at enqueue time â€” never per attempt.
   That single choice is what makes
   a retry safe.
 end note

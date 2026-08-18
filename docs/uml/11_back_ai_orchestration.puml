@@ -37,7 +37,7 @@ package "ai · BACK" #F7F4EC {
   class ReconstructionService <<IA-01>>
   class GenerationService <<IA-02>>
   class ExplanationService <<IA-03>>
-  class SemanticJudgeService <<IA-05>>
+  class SemanticJudgeService <<IA-04>>
 
   class PromptBuilder <<Builder>> {
     + withGlossary(g : List<GlossaryEntry>) : PromptBuilder

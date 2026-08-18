@@ -1,424 +1,437 @@
-# Glifo — Alcance
+# Glifo — Scope
 
-**Grupo X-Ray** — Brandon Brenes · David González · Felipe Ugalde
-Desarrollo de Aplicaciones Móviles · II Ciclo 2026
+**Team X-Ray** — Brandon Brenes · David González · Felipe Ugalde
+Mobile Application Development · II Term 2026
+Scope document · version 2.1
 
-> **Documentos relacionados**
-> · `Glifo_Arquitectura_Estandares.md` — arquitectura, paquetes, clases, convenciones
-> · `Glifo_Diseno_Arquitectura.md` — versión para consulta con el docente
-> · `Glifo_Contexto_Competitivo.md` — propuestas de los demás equipos
-> · `Glifo_Bitacora_Decisiones.md` — histórico de decisiones y alternativas descartadas
-> · `Contexto_Curso.md` — marco del curso
+> **Related Documents**
+> · `Glifo_Arquitectura_Estandares.md` — architecture, packages, classes, conventions
+> · `Glifo_Diseno_Arquitectura.md` — version for consultation with the professor
+> · `Glifo_UML_Modeling.md` — visual modeling and API seam
+> · `Glifo_Bitacora_Decisiones.md` — historical record of decisions
+> · `Contexto_Curso.md` — course framework
 
 ---
 
-## 1. Identidad
+## 1. Identity
 
-**Glifo.** Un glifo es la unidad mínima de la escritura: el signo individual trazado a mano. Es exactamente aquello que la aplicación lee, evalúa y decide si comprendió.
+**Glifo.** A glyph is the minimum unit of writing: the individual hand-drawn sign. It is exactly what the application reads, evaluates, and decides whether it understood.
 
-La identidad visual se construye sobre el **grifo mitológico** —cabeza de águila, cuerpo de león—, que aporta las dos ideas del producto: vista aguda para leer lo que cuesta leer, y guarda del contenido del estudiante.
+The visual identity is built upon the **mythological griffin** (grifo) —eagle's head, lion's body— bringing the two core ideas of the product: sharp sight to read what is hard to read, and guardianship of the student's content.
 
-> El glifo es la unidad de la escritura. El grifo, su guardián.
+> The glyph is the unit of writing. The griffin, its guardian.
 
-### Paleta base
+**Legal constraint.** The aesthetic inspiration cannot include third-party intellectual property. The mythological griffin is public domain.
 
-Glifo define **dos modos completos** —noche y día—, no un tema oscuro con una variante clara. Ambos comparten la misma estructura de tokens; solo cambian los valores. El azul pizarra viene del cuerpo del grifo; el dorado, de su carácter heráldico.
+### Base Palette
 
-| Token | Noche | Día | Uso |
+Glifo defines **two complete modes** —Night and Day— rather than a dark theme with a light variant bolted on. Both share the exact same token structure; only the values change.
+
+| Token | Night | Day | Usage |
 |---|---|---|---|
-| `background` | `#161E27` | `#EDEAE0` | Fondo |
-| `surface` | `#2E3B4B` | `#F7F4EC` | Tarjetas y superficies |
-| `surfaceHigh` | `#3B4A5C` | `#D7D1B9` | Relleno interno, pistas de barras |
-| `border` | `#4A5A6E` | `#C4BCA3` | Contorno de tarjeta y separadores |
-| `accent` | `#FFD372` | `#FFD372` | Acción primaria y estado activo |
-| `textPrimary` | `#D7D1B9` | `#2E3B4B` | Texto principal |
-| `textSecondary` | `#959595` | `#63666A` | Texto secundario |
-| `alert` | `#E0693A` | `#B94117` | Errores y destructivos |
+| `background` | `#161E27` | `#EDEAE0` | App background |
+| `surface` | `#2E3B4B` | `#F7F4EC` | Cards and elevated surfaces |
+| `surfaceHigh` | `#3B4A5C` | `#D7D1B9` | Inner fill over `surface`: progress tracks, fields, crops |
+| `border` | `#4A5A6E` | `#C4BCA3` | Card outlines and separators |
+| `accent` | `#FFD372` | `#FFD372` | Primary action fill and active state |
+| `accentText` | `#FFD372` | `#8A6210` | The accent applied to text or icon over a background |
+| `textPrimary` | `#D7D1B9` | `#2E3B4B` | Main text |
+| `textSecondary`| `#959595` | `#63666A` | Secondary text |
+| `alert` | `#E0693A` | `#B94117` | Destructive actions and errors |
 
-El juego completo de tokens derivados —`accentText`, `onAccent`, las variantes `Soft`, `Faint` y `Line`, `btnSecBorder`, `btnSecText` y `scrim`— está en `Glifo_Arquitectura_Estandares.md` §12.2.
+The full set of derived tokens —`onAccent`, `scrim`, the `Soft` / `Faint` / `Line` variants of every semantic color, `btnSecBorder`, `btnSecText` and `neutralSoft`— is in `Glifo_Arquitectura_Estandares.md` §12.3.
 
-**El dorado es el color de la acción, no el de la marca.** No se usa como decoración: si aparece, el elemento se puede tocar o está activo. La identidad de marca descansa en el logotipo, no en un color reservado.
+**Gold is the color of action, not brand decoration.** If it appears, the element can be touched or is active. Brand identity rests on the griffin logo, not on a reserved color.
 
-### Estados de confianza
+> `accent` and `accentText` are **not** the same token in Day mode. `accent` is the fill of a primary button (`#FFD372` in both modes); `accentText` is gold used as text or icon over a background, darkened to `#8A6210` in Day mode to reach legible contrast. Never `#FFD372` as text over a light background.
 
-Escala funcional del mapa de confianza. Cada estado lleva **codificación no cromática además del color**: cerca del 8 % de los hombres presenta alguna deficiencia en la percepción del color, y el par verde/ámbar es el peor discriminado.
+### Confidence States
 
-| Estado | Noche | Día | Codificación no cromática | Nivel |
+Functional scale of the confidence map. Every state carries **non-chromatic coding in addition to color**: roughly 8 % of men have some color vision deficiency, and the green/amber pair is the worst discriminated. If the confidence map depended on color alone, the central function of the application would be inaccessible to those users.
+
+| State | Night | Day | Non-Chromatic Coding | Level |
 |---|---|---|---|---|
-| Verificado | `#5FA88C` | `#2F7D62` | Subrayado sólido, sin relleno | N1 |
-| Reparado | `#8FB7DC` | `#3E6E9E` | Subrayado sólido + relleno suave | N1.5 |
-| Escalado | `#E0693A` | `#B94117` | Subrayado sólido + relleno tenue | N2 |
-| Incierto | `#959595` | `#63666A` | Subrayado punteado + relleno suave | — |
+| **Verified** | `#5FA88C` | `#2F7D62` | Solid underline 2px, no fill | N1 |
+| **Repaired** | `#8FB7DC` | `#3E6E9E` | Solid underline 2px, `repairedSoft` fill | N1.5 |
+| **Escalated**| `#F59E0B` | `#D97706` | Solid underline 2px, `escalatedFaint` fill | N2 |
+| **Uncertain**| `#959595` | `#63666A` | **Dotted** underline 2px, `uncertainSoft` fill | UNR |
 
-Además, todo fragmento no resuelto en N1 lleva una **etiqueta textual** con su estado y el nivel que lo resolvió (`REPARADO · N1.5`). El color nunca es el único portador de la información.
+Additionally, any fragment not resolved at N1 carries a **textual label** detailing its state and level (e.g., `REPAIRED · N1.5`, `ESCALATED · N2`, `UNCERTAIN`), and the note header summarizes the distribution (`14 verified · 2 repaired · 1 escalated · 1 uncertain`). Color is never the sole information carrier.
+
+**Escalation is not failure.** `escalated` uses its own amber, distinct from `alert`. Escalating to a vision model is normal pipeline operation; presenting it in the error color would contradict the core argument of the product. See `Glifo_Bitacora_Decisiones.md` D-12.
 
 ---
 
-## 2. Problema y propuesta
+## 2. Problem and Proposal
 
-El ciclo del enunciado —apuntes, cobertura contra el temario, refuerzo dirigido— depende de un primer paso: que la fotografía de un apunte manuscrito se convierta de forma fiel en contenido estructurado.
+The cycle required by the brief —notes, coverage against syllabus, directed reinforcement— depends entirely on a first step: that a photograph of a handwritten note is faithfully converted into structured content.
 
-En cursos con notación matemática ese paso falla. Un OCR de texto no reconoce fracciones, exponentes, matrices ni límites: devuelve una cadena de caracteres sin relación con lo escrito. El resultado es un apunte reconstruido que parece correcto, y material de estudio generado sobre ese error.
+In courses with mathematical notation, this step fails. Standard text OCR does not recognize fractions, exponents, matrices, or limits. The result is a reconstructed note that *looks* correct to the system, but generates study material based on an error.
 
-> **Glifo digitaliza apuntes manuscritos —fórmulas y diagramas incluidos— escalando el procesamiento solo cuando hace falta, y muestra al estudiante qué entendió con certeza, qué tuvo que reparar y qué necesita revisión.**
+> **Glifo digitizes handwritten notes —formulas and diagrams included— scaling processing only when necessary, and shows the student what it understood securely, what it had to repair, and what requires human review.**
 
-| Compromiso | Implementación |
+| Commitment | Implementation |
 |---|---|
-| Nada se inventa en silencio | Cada fragmento lleva un nivel de confianza calculado y visible |
-| Ninguna foto se queda sin procesar | Escalamiento automático cuando el motor actual no alcanza el umbral |
-| El costo es una decisión de diseño | Cada nivel tiene costo conocido; se registra cuál resolvió cada región |
+| Nothing is invented in silence | Every fragment carries a calculated, visible confidence level |
+| No photo is left unprocessed | Automatic escalation to the next engine when the threshold is missed |
+| Cost is a design decision | Every level has a known cost; the system records which level resolved each region |
 
-**Encuadre:** Glifo no es «local en vez de nube». Es **local primero, nube cuando hace falta, y solo en la región que la necesita.**
+**Framing:** Glifo is not "local instead of cloud." It is **local-first, cloud when necessary, and only for the specific region that needs it.**
 
 ---
 
-## 3. Principios
+## 3. Principles
 
-1. **La IA no hace todo.** Se maximiza el procesamiento local y determinista antes de invocar cualquier modelo.
-2. **Toda llamada de IA produce un resultado persistente.** Nunca se recalcula lo ya guardado.
-3. **Nunca una llamada por ítem.** Generación y reparación viajan siempre en lote.
-4. **Contexto mínimo.** El temario se procesa una vez y nunca se reenvía completo.
-5. **La incertidumbre se muestra.** Si el sistema no pudo leer algo, lo marca; no lo completa.
+1. **AI does not do everything.** Local, deterministic processing is maximized before invoking any model.
+2. **Every AI call produces a persistent result.** Already computed content is never sent to AI again.
+3. **Never one call per item.** Generation and repair always travel in batches.
+4. **Minimal context.** The syllabus is processed once and never sent entirely again.
+5. **Uncertainty is displayed.** If the system couldn't read something, it marks it; it does not hallucinate an answer.
 
 ---
 
 ## 4. Roles
 
-| Rol | Responsabilidades |
+| Role | Responsibilities |
 |---|---|
-| **Estudiante** | Capturar, revisar y corregir la reconstrucción, estudiar, consultar cobertura y consumo |
-| **Docente** | Crear cursos, publicar el temario, mantener el **glosario de notación canónica**, consultar brechas del grupo |
-| **Administrador** | Usuarios, roles y privilegios; estado del sistema |
+| **Student** | Capture notes, review and correct the reconstruction, study, check coverage and AI usage. Student corrections generate *glossary suggestions*. |
+| **Teacher** | Create courses, publish syllabus, maintain the **canonical notation glossary** (approving student suggestions), check group coverage gaps. |
+| **Admin** | Manage users, roles, and privileges; monitor system status. |
 
-El glosario que mantiene el docente alimenta directamente el cálculo de confianza del pipeline. Es una entrada funcional, no un panel de consulta.
+The glossary maintained by the teacher directly feeds the pipeline's confidence calculation. It is a functional input, not just a reference dashboard.
+
+**MVP commitment:** two operational roles (Student and Teacher) over the full `users` · `roles` · `privileges` · `user_roles` · `role_privileges` structure. The Admin role is Should-have and is seeded as data, not as new code — Spring Security is annotated against privileges, not roles.
 
 ---
 
-## 5. Flujo principal
+## 5. Main Flow
 
 ```text
-DOCENTE
-  crea curso → publica temario (PDF) → define glosario de notación
-  → procesado una sola vez → persistido
+TEACHER
+  creates course → publishes syllabus (PDF) → defines canonical glossary
+  → processed once → persisted
 
-ESTUDIANTE
-  se une por código
+STUDENT
+  joins via code
         │
         ▼
-  CAPTURA (CameraX) → hash perceptual
-        │            └─ página ya procesada → se reutiliza, sin llamadas
+  CAPTURE (CameraX) → perceptual hash
+        │            └─ page already processed → reused, zero calls
         ▼
-  ╔═══════ ESCALERA RAMIFICADA ═══════════════════════╗
-  ║ N0  OpenCV local                                   ║
-  ║     deskew · perspectiva · contraste                ║
-  ║     métricas de calidad · segmentación en regiones  ║
-  ║     └─ irrecuperable → repetir CON MOTIVO           ║
+  ╔═══════ BRANCHED LADDER ═══════════════════════════╗
+  ║ N0  Local OpenCV pre-processing                    ║
+  ║     deskew · perspective · contrast                 ║
+  ║     quality metrics · region segmentation           ║
+  ║     └─ unrecoverable → prompt retry WITH REASON     ║
   ║                        │                            ║
-  ║ N1  ML Kit OCR local sobre TODAS las regiones       ║
+  ║ N1  Local ML Kit OCR on ALL regions                 ║
   ║                        │                            ║
-  ║          CLASIFICADOR DE REGIÓN (enrutador)         ║
+  ║             REGION CLASSIFIER (Router)              ║
   ║          │             │              │             ║
-  ║       TEXTO        MATEMÁTICA      DIBUJO           ║
-  ║      resuelto          ▼              │             ║
-  ║       en N1     N1.5 OCR MATEMÁTICO   │             ║
+  ║        TEXT          MATH          DRAWING          ║
+  ║      resolved          ▼              │             ║
+  ║       at N1     N1.5 MATH OCR         │             ║
   ║          │        → LaTeX + conf      │             ║
   ║          └─────────────┬──────────────┘             ║
   ║                        ▼                            ║
-  ║     COMPUERTAS: confianza bajo umbral               ║
-  ║                 o LaTeX que no compila              ║
+  ║     VALIDATION GATES (deterministic, NO AI):        ║
+  ║       confidence below threshold      [device]      ║
+  ║       LaTeX does not compile          [backend]     ║
   ║                        ▼                            ║
-  ║ N2  REPARACIÓN SELECTIVA POR VISIÓN                 ║
-  ║     recortes · UNA SOLA LLAMADA POR PÁGINA          ║
+  ║ N2  SELECTIVE VISION REPAIR                         ║
+  ║     crops · ONE CALL PER PAGE                       ║
   ║                        ▼                            ║
-  ║ N3  Página completa · a solicitud del estudiante    ║
+  ║ N3  Full page to vision · on student demand         ║
   ╚═════════════════════════════════════════════════════╝
         │
         ▼
-  IA-01 RECONSTRUCCIÓN → JSON + confianza por fragmento
+  IA-01 RECONSTRUCTION → JSON + confidence per fragment
         │
         ▼
-  REVISIÓN CON MAPA DE CONFIANZA
-     └─ las correcciones alimentan el glosario del curso
+  REVIEW WITH CONFIDENCE MAP
+     └─ manual corrections generate glossary suggestions
         │
         ▼
-  COBERTURA
-     prefiltro local resuelve la mayoría
-     └─ zona gris → IA-05 adjudicación semántica en lote
+  SYLLABUS COVERAGE
+     local pre-filter resolves the majority
+     └─ ambiguous zone → IA-04 batch semantic adjudication
         │
         ▼
-  ESTADOS POR TEMA + DELTA DE PROGRESO
+  STATES PER TOPIC + PROGRESS DELTA
         │
         ▼
-  IA-02 flashcards + quiz de los vacíos · 1 llamada por lote
+  IA-02 flashcards + quizzes of the gaps · 1 call per batch
         │
         ▼
-  EVALUACIÓN LOCAL → repetición espaciada → los fallos se reprograman
+  LOCAL EVALUATION → deterministic spaced repetition
 ```
 
 ---
 
-## 6. Funcionalidades
+## 6. Features
 
-### 6.1 Base del curso
+*(Priorities: Must-have, Should-have, Could-have)*
 
-| Funcionalidad | Lab | Prioridad |
+### 6.1 Course Baseline
+
+| Feature | Lab | Priority |
 |---|---|---|
-| Autenticación, registro, navegación, listas | 2 | Imprescindible |
-| Menú de navegación | 2 | Imprescindible |
-| `users` · `roles` · `privileges` + puentes | 4 | Imprescindible |
-| Rol estudiante y rol docente | 2 | Imprescindible |
-| Rol administrador | 6 | Deseable |
-| Hilt | 3 | Imprescindible |
-| Retrofit, Gson, manejo de errores | 3 | Imprescindible |
-| Consumo de API simulada | 3 | Imprescindible |
-| Spring Boot: Repository, Services, DTOs | 4–5 | Imprescindible |
-| PostgreSQL con JSONB | 4 | Imprescindible |
-| Colección de Postman | 5 | Imprescindible |
-| JWT y Spring Security | 6 | Imprescindible |
-| Despliegue en la nube | 6 | Imprescindible |
-| Firebase App Distribution | Final | Imprescindible |
-| Notificaciones push | 6 | Imprescindible |
-| Encuesta a cinco personas externas | Final | Imprescindible |
-| Artículo científico | — | Imprescindible |
-| Investigación aplicada | 11 nov | Imprescindible |
+| Auth, register, navigation, lists | 2 | Must-have |
+| Navigation drawer/menu | 2 | Must-have |
+| `users` · `roles` · `privileges` + bridge tables | 4 | Must-have |
+| Student and Teacher roles | 2 | Must-have |
+| Administrator role | 6 | Should-have |
+| Hilt DI | 3 | Must-have |
+| Retrofit, Gson, error handling | 3 | Must-have |
+| Mock API consumption | 3 | Must-have |
+| Spring Boot: Repository, Services, DTOs | 4–5 | Must-have |
+| PostgreSQL with JSONB | 4 | Must-have |
+| Postman collection | 5 | Must-have |
+| JWT and Spring Security | 6 | Must-have |
+| Cloud deployment | 6 | Must-have |
+| Firebase App Distribution | Final | Must-have |
+| Real Push notifications | 6 | Must-have |
+| Survey to 5 external users | Final | Must-have |
 
-### 6.2 Captura e ingesta — núcleo del proyecto
+### 6.2 Capture and Ingestion — Core of the Project
 
-| Funcionalidad | Lab | Prioridad |
+| Feature | Lab | Priority |
 |---|---|---|
-| CameraX y pantalla de captura | 2 | Imprescindible |
-| **N0** preprocesamiento OpenCV | 2 | Imprescindible |
-| Diagnóstico de calidad con motivo concreto | 2 | Imprescindible |
-| Segmentación en regiones | 3 | Imprescindible |
-| **Clasificador de región como enrutador** | 3 | Imprescindible |
-| **N1** OCR de texto local | 3 | Imprescindible |
-| **ConfidenceScorer** y calibración | 3 | Imprescindible |
-| **Mapa de confianza en la interfaz** | 3 | Imprescindible |
-| Corrección manual de fragmento | 3 | Imprescindible |
-| **N1.5** OCR matemático a LaTeX | 6 | Imprescindible |
-| **N2** reparación selectiva por visión | 6 | Imprescindible |
-| Validación de LaTeX como señal de confianza | 6 | Deseable |
-| Renderizado LaTeX con recorte original al lado | 6 | Deseable |
-| **N3** página completa a solicitud | 6 | Deseable |
-| Deduplicación por hash perceptual | 4 | Deseable |
-| Glosario de notación canónica | 5 | Deseable |
-| Importar desde galería | 2 | Opcional |
-| Apunte multipágina | — | Opcional |
-| Consenso entre motores como señal | 6 | Opcional |
+| CameraX and capture screen | 2 | Must-have |
+| **N0** OpenCV pre-processing | 2 | Must-have |
+| Quality diagnostic with concrete rejection reason | 2 | Must-have |
+| Region segmentation | 3 | Must-have |
+| **Region classifier as router** | 3 | Must-have |
+| **N1** Local text OCR | 3 | Must-have |
+| **ConfidenceScorer** and calibration | 3 | Must-have |
+| **Confidence Map overlay in UI** | 3 | Must-have |
+| Manual fragment correction | 3 | Must-have |
+| **N1.5** Math OCR to LaTeX | 6 | Must-have |
+| **N2** Selective vision repair | 6 | Must-have |
+| LaTeX validation via JLaTeXMath (backend, deterministic) | 6 | Should-have |
+| LaTeX rendering alongside original crop | 6 | Should-have |
+| **N3** Full page request | 6 | Should-have |
+| Deduplication via perceptual hash | 4 | Should-have |
+| Canonical notation glossary | 5 | Should-have |
+| Import from gallery | 2 | Could-have |
+| Multi-page continuous scanning | — | Could-have |
 
-### 6.3 Conocimiento y cobertura
+### 6.3 Knowledge and Coverage
 
-| Funcionalidad | Lab | Prioridad |
+| Feature | Lab | Priority |
 |---|---|---|
-| Cursos e inscripción por código | 5 | Imprescindible |
-| Temario procesado una vez y persistido | 5 | Imprescindible |
-| **IA-01** reconstrucción a JSON | 6 | Imprescindible |
-| Prefiltro local de cobertura | 5 | Imprescindible |
-| **IA-05** adjudicación semántica | 6 | Imprescindible |
-| Estados con definición operativa | 5 | Imprescindible |
-| Detección automática de tema | 5 | Deseable |
-| Fallback manual del temario | 5 | Deseable |
-| **Delta de cobertura** entre sesiones | 5 | Deseable |
-| Instantáneas históricas | 5 | Opcional |
-| Gráfica de progreso semanal | 6 | Opcional |
+| Courses and join via code | 5 | Must-have |
+| Syllabus processed once and persisted | 5 | Must-have |
+| **IA-01** Reconstruction to JSON | 6 | Must-have |
+| Coverage local pre-filter | 5 | Must-have |
+| **IA-04** Semantic adjudication | 6 | Must-have |
+| States with operative definitions | 5 | Must-have |
+| Automatic topic detection | 5 | Should-have |
+| Manual syllabus fallback | 5 | Should-have |
+| **Coverage delta** between sessions | 5 | Should-have |
+| Historical snapshots | 5 | Could-have |
+| Weekly progress chart | 6 | Could-have |
 
-### 6.4 Estudio
+### 6.4 Study
 
-| Funcionalidad | Lab | Prioridad |
+| Feature | Lab | Priority |
 |---|---|---|
-| **IA-02** flashcards y quiz en lote | 6 | Imprescindible |
-| Evaluación local determinista | 6 | Imprescindible |
-| Repetición espaciada determinista | 6 | Imprescindible |
-| Reprogramación de ítems fallados | 6 | Deseable |
-| Autoevaluación en flashcards | 6 | Deseable |
-| Métricas de dominio | 6 | Deseable |
-| Historial de quizzes | 6 | Opcional |
-| **IA-03** explicación bajo demanda | 6 | Opcional |
-| Fecha de examen y priorización | — | Opcional |
-| Flashcards creadas por el usuario | — | Opcional |
+| **IA-02** Flashcards and quizzes in batch | 6 | Must-have |
+| Deterministic local grading | 6 | Must-have |
+| Deterministic spaced repetition | 6 | Must-have |
+| Rescheduling of failed items | 6 | Should-have |
+| Flashcard self-evaluation | 6 | Should-have |
+| Mastery metrics | 6 | Should-have |
+| Quiz history | 6 | Could-have |
+| **IA-03** On-demand explanation | 6 | Could-have |
+| Exam dates and prioritization | — | Could-have |
 
-### 6.5 Offline y sincronización
+### 6.5 Offline and Synchronization
 
-Corresponde al tema de investigación aplicada del equipo.
+*(Corresponds to the applied research topic assigned to the team).*
 
-| Funcionalidad | Lab | Prioridad |
+| Feature | Lab | Priority |
 |---|---|---|
-| Room como caché de lectura | 4 | Imprescindible |
-| Consumo offline de todo lo generado | 4 | Imprescindible |
-| Cola de captura offline | 4 | Imprescindible |
-| Sincronización unidireccional | 5 | Imprescindible |
-| **Reintentos con backoff e idempotencia** | 5 | Imprescindible |
-| Indicador de estado de sincronización | 5 | Deseable |
-| Notificación push al completar la cola | 6 | Deseable |
+| Room as read cache | 4 | Must-have |
+| Offline consumption of all generated content | 4 | Must-have |
+| **LocalCourseContext cache for offline pipeline** | 4 | Must-have |
+| Offline capture queue (Outbox) | 4 | Must-have |
+| Unidirectional synchronization | 5 | Must-have |
+| **Retries with backoff and idempotency** | 5 | Must-have |
+| Sync status indicator | 5 | Should-have |
+| Push notification to specific `device_id` when queue drains | 6 | **Must-have** |
 
-### 6.6 Telemetría y pruebas
+### 6.6 Telemetry and Testing
 
-| Funcionalidad | Lab | Prioridad |
+| Feature | Lab | Priority |
 |---|---|---|
-| Registro `ai_calls` con nivel alcanzado | 6 | Imprescindible |
-| Firebase Analytics con eventos propios | 6 | Deseable |
-| Crashlytics | 3 | Deseable |
-| Pruebas unitarias del ConfidenceScorer | 5 | Deseable |
-| Vista de consumo para estudiante y docente | 6 | Opcional |
-| Pruebas de la política de sincronización | 5 | Opcional |
+| Record `ai_calls` with reached level | 6 | Must-have |
+| **AI usage view for Student and Teacher** | 6 | **Must-have** |
+| Firebase Analytics with custom events | 6 | Should-have |
+| Crashlytics | 3 | Should-have |
+| Unit tests for ConfidenceScorer | 5 | Should-have |
+| Sync policy tests | 5 | Could-have |
 
 ---
 
-## 7. Fuera de alcance
+## 7. Out of Scope
 
-Se declaran explícitamente como trabajo futuro:
+Declared explicitly as future work:
+- Bidirectional sync conflict resolution
+- Semantic comparison via vector embeddings
+- Contradiction detection between notes
+- Complete study planning tied to calendar assessments
+- Hard usage quotas with degraded modes
+- Streaks, achievements, and social comparison
+- Sharing notes via external channels
+- Biometric authentication
 
-- Resolución bidireccional de conflictos de sincronización
-- Comparación semántica mediante embeddings
-- Detección de contradicciones entre apuntes
-- Planificación completa de estudio orientada a evaluaciones
-- Presupuesto de consumo por curso con modo degradado
-- Rachas, logros y comparación social
-- Compartir apuntes por canales externos
-- Autenticación biométrica
-- Búsqueda semántica avanzada, texto a voz, calendario integrado
-
-El registro completo de alternativas evaluadas y sus motivos está en `Glifo_Bitacora_Decisiones.md`.
+The full record of evaluated alternatives, with the reason each was rejected, is in `Glifo_Bitacora_Decisiones.md`.
 
 ---
 
-## 8. Llamadas de IA
+## 8. AI Calls
 
-| ID | Función | Disparador | Agrupación |
+| ID | Function | Trigger | Batching |
 |---|---|---|---|
-| **OCR-M** | Fórmula → LaTeX (N1.5), gratuito | Región clasificada como matemática | Por región |
-| **IA-00** | Reparación selectiva por visión | Regiones que no superan las compuertas | **Una llamada por página** |
-| **IA-01** | Reconstrucción a estructura JSON | Una vez por apunte | Lote |
-| **IA-02** | Flashcards y quizzes | Una vez por conjunto de temas | **Lote** |
-| **IA-03** | Explicación bajo demanda | A solicitud | Resultado cacheado |
-| **IA-05** | Adjudicación semántica de cobertura | Solo la zona gris del prefiltro | Lote |
+| **OCR-M** | Formula → LaTeX (N1.5) | Region classified as math | Per region |
+| **IA-00** | Selective vision repair | Regions failing validation gates | **One call per page** |
+| **IA-01** | Reconstruction to JSON structure | Once per note | Batch |
+| **IA-02** | Flashcards and quizzes | Once per topic set | **Batch** |
+| **IA-03** | On-demand concept explanation | User request | Cached result |
+| **IA-04** | Coverage semantic adjudication | Only the gray zone of the pre-filter | Batch |
 
-**Sin IA:** preprocesamiento, OCR de texto, segmentación, clasificación, deduplicación, cálculo de confianza, validación de LaTeX, prefiltro de cobertura, delta de progreso, corrección de quizzes, repetición espaciada y progreso.
-
----
-
-## 9. Arquitectura y modelo de datos
-
-Detallados en `Glifo_Arquitectura_Estandares.md`. Resumen:
-
-- **Cliente Android** en Kotlin, Compose y MVVM con Hilt, en tres capas más el paquete `pipeline`.
-- **Backend Spring Boot monolítico** con Spring Security y JWT, organizado por dominio, con `AiOrchestrator` como fachada de las llamadas de IA.
-- **PostgreSQL** como base principal con JSONB selectivo; **Room** como caché y cola.
-- Aproximadamente veinte entidades, nomenclatura en inglés, `users` en plural.
-- Las credenciales de servicios externos residen únicamente en el backend.
+**No AI is used for:** pre-processing, text OCR, segmentation, classification, deduplication, confidence calculation, LaTeX validation, coverage pre-filtering, progress delta, quiz grading, spaced repetition scheduling.
 
 ---
 
-## 10. Calendario
+## 9. Architecture and Data Model
 
-Todos los laboratorios se defienden en vivo en la clase del miércoles. **La fecha operativa es la última clase antes del cierre oficial.**
+Detailed in `Glifo_UML_Modeling.md` and `Glifo_Arquitectura_Estandares.md`. Summary:
 
-| Defensa | Lab | Exigencia del curso | Trabajo de Glifo en paralelo |
+- **Android Client** in Kotlin, Compose, MVVM with Hilt.
+- **Backend Monolith in Kotlin/Spring Boot** with Spring Security and JWT, organized by domain, using `AiOrchestrator` as the facade for LLM calls.
+- **PostgreSQL** as main DB with selective JSONB; **Room** as cache and outbox.
+- **16 core tables** on the defended diagram, plus a 5-table operations annex. English nomenclature.
+- All external service credentials reside strictly in the backend.
+
+---
+
+## 10. Schedule
+
+All labs are defended live during Wednesday classes. **The operative date is the last class before the official deadline.**
+
+| Defense | Lab | Course Requirement | Glifo Parallel Work |
 |---|---|---|---|
-| **19 ago** | Corrección Lab 1 | Tablas de acceso · JSON razonado · modelo acotado | Rol docente en el prototipo · pantallas de la escalera |
-| **26 ago** | Lab 2 | Menú, autenticación, navegación, listas · dos flujos de rol · paleta y nombre | OpenCV compilando · CameraX · **N0** · rechazo con motivo |
-| **9 sep** | Lab 3 | Hilt · Retrofit · errores · API simulada | **N1** · segmentación · **ConfidenceScorer** · **mapa de confianza** · Crashlytics |
-| **23 sep** | Lab 4 | Backend · PostgreSQL · Repository | Esquema completo · **Room y cola offline** · deduplicación |
-| **14 oct** | Lab 5 | Services · REST · DTOs · Postman | Temario · prefiltro de cobertura · **sincronización con reintentos** · glosario · pruebas |
-| **28 oct** | Lab 6 | JWT · Spring Security · **API de IA** · nube | **N1.5 y N2** · IA-01 · IA-02 · IA-05 · LaTeX · `ai_calls` · Analytics · push |
-| 1–10 nov | — | Sin entregas abiertas | Integración · encuesta · artículo · ensayo de defensa |
-| **11 nov** | Final | APK · JWT · encuesta | Defensa e investigación aplicada con ronda de preguntas |
+| **19 Aug** | Lab 1 Corr. | Access tables · JSON rationale · bounded model | Teacher role in prototype · ladder screens |
+| **26 Aug** | Lab 2 | Menu, auth, navigation, lists · two role flows | OpenCV compiling · CameraX · **N0** · rejection reasons |
+| **9 Sep** | Lab 3 | Hilt · Retrofit · errors · Mock API | **N1** · segmentation · **ConfidenceScorer** · **confidence map** |
+| **23 Sep** | Lab 4 | Backend · PostgreSQL · Repository | Full schema · **Room and offline queue** · deduplication |
+| **14 Oct** | Lab 5 | Services · REST · DTOs · Postman | Syllabus · coverage pre-filter · **sync with retries** · glossary |
+| **28 Oct** | Lab 6 | JWT · Spring Security · **AI API** · cloud | **N1.5 and N2** · IA-01/02/04 · LaTeX · `ai_calls` · push |
+| 1–10 Nov | — | No open deliverables | Integration · survey · article · defense rehearsal |
+| **11 Nov** | Final | APK · JWT · survey | Defense and applied research with Q&A round |
 
-**El Laboratorio 2 tiene dos semanas efectivas**, una compartida con la corrección del Laboratorio 1.
-**Semana crítica: 23 de septiembre** — defensa del Laboratorio 4 con los Laboratorios 5 y 6 ya abiertos.
+**Critical week: September 23** — Lab 4 defense while Labs 5 and 6 are already open.
 
 ---
 
-## 11. Capacidad y reparto
+## 11. Capacity and Distribution
 
-Tres integrantes · siete horas semanales de estudio independiente cada uno · trece semanas y media ≈ **285 horas de equipo**, incluidos el artículo científico, las tareas de investigación y las evaluaciones cortas.
+Three members · 7 hours/week of independent study each · 13.5 weeks ≈ **285 team hours**, including the scientific article and weekly evaluations.
 
-| Bloque | Horas |
+| Block | Hours |
 |---|---|
-| Base obligatoria del curso | ~165 |
-| Captura e ingesta | ~106 |
-| Conocimiento y cobertura | ~52 |
-| Estudio | ~42 |
-| Offline y sincronización | ~33 |
-| Telemetría y pruebas | ~24 |
-| **Catálogo completo** | **~422** |
+| Course baseline | ~165 |
+| Capture and ingestion | ~106 |
+| Knowledge and coverage | ~52 |
+| Study | ~42 |
+| Offline and sync | ~33 |
+| Telemetry and testing | ~24 |
+| **Complete catalog** | **~422** |
 
-El catálogo completo no cabe. Aplicando el filtro de prioridades:
+The complete catalog exceeds capacity. Applying priority filters:
 
-| Nivel | Horas |
+| Level | Hours |
 |---|---|
-| Imprescindible | ~223 |
-| Deseable | ~61 |
-| **Imprescindible + deseable** | **~284** |
-| Opcional | ~38 |
+| Must-have | ~223 |
+| Should-have | ~61 |
+| **Must + Should** | **~284** |
+| Could-have | ~38 |
 
-Queda sin margen. **Para recuperar colchón se bajan a opcional, en este orden:** N3 a solicitud, instantáneas históricas, indicador de sincronización, autoevaluación en flashcards, fallback manual del temario. Eso devuelve unas trece horas sin tocar el motor.
+There is zero slack. **To recover buffer, drop items in this order:**
+1. N3 (Full page request)
+2. Historical snapshots
+3. Sync status indicator
+4. Flashcard self-evaluation
+5. Manual syllabus fallback
 
-Tres personas no rinden una vez y media lo de dos: la coordinación cuesta, y el despliegue en la nube no sale a la primera.
+The targeted push (§6.5) was promoted from Should-have to Must-have without changing these
+totals: it was already inside the Must + Should budget, and it is item 8 of the MVP. It is
+therefore **not** on the cut list — dropping it would break the offline story the applied
+research is built on.
 
-### Frentes de trabajo
+### Work Fronts
 
-| Frente | Alcance | Labs |
-|---|---|---|
-| **A — Cliente** | Compose, navegación, roles en interfaz, Hilt, Retrofit, mapa de confianza | 2, 3 |
-| **B — Backend** | Spring Boot, PostgreSQL, Repository, DTOs, JWT, Postman, despliegue | 4, 5, 6 |
-| **C — Motor** | OpenCV, ML Kit, escalera, Room, cola, sincronización, push, **investigación aplicada** | 2, 3, 4 · 11 nov |
-
-Los frentes definen responsabilidad principal, no exclusividad. La nota es individual y hay dos defensas orales: todos revisan el trabajo de todos.
-
----
-
-## 12. Producto mínimo
-
-Debe funcionar de extremo a extremo el 11 de noviembre:
-
-1. Autenticación con dos roles reales sobre la estructura de acceso completa y JWT
-2. Docente: crear curso, publicar temario, código de inscripción. Estudiante: unirse
-3. Captura con **escalera N0 → N1 → N1.5 → N2** y nivel alcanzado visible
-4. **Mapa de confianza** con corrección manual
-5. **Al menos una fórmula manuscrita** reconocida y renderizada
-6. Cobertura con cuatro estados y **delta** entre sesiones
-7. Flashcards y quiz en lote, corregidos localmente
-8. **Cola offline**: capturar sin conexión, sincronizar al volver, notificar por push
-9. `ai_calls` visible: llamadas, nivel y ahorro
-10. Backend desplegado y APK distribuido
-
----
-
-## 13. Riesgos
-
-| Riesgo | Mitigación |
+| Front | Scope |
 |---|---|
-| Integración de OpenCV en Android | Primera tarea del Laboratorio 2, antes que cualquier otra. Solo los módulos necesarios |
-| La segmentación no discrimina bien | Degradar a página completa: mayor costo, el sistema sigue operando |
-| Calibración de umbrales | Conjunto fijo de fotografías definido en la primera semana; ajustar y medir contra él |
-| Transcripción incorrecta de fórmula | El recorte original se conserva y se muestra junto al LaTeX |
-| Disponibilidad o latencia del OCR matemático | Probar en el Laboratorio 5. `MathOcrEngine` es intercambiable, con respaldo sobre el modelo de visión |
-| Error de clasificación de región | Si el motor devuelve baja confianza, la región escala igual. Cuesta latencia, no corrección |
-| Sincronización parcial | Reintentos con backoff e identificadores idempotentes |
-| Despliegue en la nube | Abordarlo en el Laboratorio 5, no en el 6 |
-| Sobrealcance | El filtro de prioridades no se renegocia a mitad de camino |
-| Fallo del demo en vivo | Tres fotografías preparadas: buena (N1), regular (N1.5), mala (N2) |
+| **A — Client** | Compose, navigation, roles in UI, Hilt, Retrofit, confidence map |
+| **B — Backend** | Spring Boot, PostgreSQL, Repository, DTOs, JWT, deployment |
+| **C — Engine** | OpenCV, ML Kit, ladder, Room, sync queue, push, **applied research** |
+
+Fronts define primary responsibility, not exclusivity. All members review all code.
 
 ---
 
-## 14. Guion de defensa
+## 12. Minimum Product (MVP)
 
-| Min | Contenido |
+Must function end-to-end on November 11:
+
+1. Authentication with two real roles over the full access structure and JWT.
+2. Teacher: create course, publish syllabus. Student: join.
+3. Capture with **N0 → N1 → N1.5 → N2 ladder** and visible reached level.
+4. **Confidence Map** with manual correction (generating glossary suggestions).
+5. **At least one handwritten formula** recognized and rendered.
+6. Coverage with four states and **delta** between sessions.
+7. Flashcards and quizzes generated in batch, graded locally.
+8. **Offline Queue**: capture offline with `LocalCourseContext`, sync upon reconnect, notify via push.
+9. `ai_calls` screen visible: calls, level, and savings proven.
+10. Backend deployed and APK distributed.
+
+---
+
+## 13. Risks
+
+| Risk | Mitigation |
 |---|---|
-| 0:00 | Los nueve proyectos asumen que la foto de un apunte se lee bien. El enunciado señala el OCR manuscrito como su riesgo principal. Ese riesgo es nuestro proyecto |
-| 0:30 | Foto buena → procesada localmente, **cero llamadas** |
-| 1:15 | Foto con una integral manuscrita → el clasificador enruta esa región al motor matemático mientras el resto se resuelve localmente → aparece la fórmula en LaTeX, con el recorte original al lado |
-| 2:15 | Foto mala → escalamiento a visión, o rechazo **con motivo concreto** |
-| 3:00 | Mapa de confianza. *Nunca completamos lo que no pudimos leer* |
-| 3:45 | Cobertura, delta y quiz — rápido, es lo que todos tienen |
-| 4:15 | Contador: *cinco páginas, tres motores gratuitos, dos llamadas al modelo de pago* |
-| 4:45 | Los dos roles y el glosario del docente |
+| OpenCV integration in Android | First task of Lab 2. Include only necessary modules to save size. |
+| Segmentation fails to discriminate | Degrade to full-page processing (higher cost, but system keeps operating). |
+| Threshold calibration | Fixed set of calibration photographs defined week 1; adjust weights against it. |
+| Incorrect formula transcription | Original crop is preserved and shown next to the LaTeX. |
+| Math OCR engine latency/downtime | Test in Lab 5. `MathOcrEngine` is swappable, falls back to vision model. |
+| Region classification error | If N1.5 gets text, confidence will be low and it will escalate anyway. Costs latency, not correctness. |
+| Partial synchronization | Retries with exponential backoff and idempotent UUIDs. |
+| Cloud deployment | Tackle it during Lab 5, not waiting for Lab 6. |
 
 ---
 
-## 15. Síntesis
+## 14. Defense Script
 
-El ciclo funcional de Glifo es el del enunciado y lo comparten los nueve equipos.
+| Min | Content |
+|---|---|
+| 0:00 | All nine projects assume note photos read well. The brief highlights poor OCR as the main risk. That risk *is* our project. |
+| 0:30 | Good photo → processed locally, **zero network calls**. |
+| 1:15 | Photo with an integral → router sends only that region to math engine while the rest is local → LaTeX renders with original crop next to it. |
+| 2:15 | Bad photo → escalating to vision, or rejection **with concrete reason**. |
+| 3:00 | Confidence Map. *We never silently hallucinate what we couldn't read.* |
+| 3:45 | Coverage, delta, and quiz — brief, since everyone has this. |
+| 4:15 | Ledger: *five pages, three free engines, only two paid model calls.* |
+| 4:45 | The two roles and the teacher's glossary. |
 
-La contribución propia está en **garantizar el primer paso de ese ciclo**: convertir de forma verificable una fotografía de apuntes manuscritos, notación matemática incluida, en contenido estructurado; escalando el costo únicamente sobre las regiones que lo requieren, y explicitando el nivel de certeza de cada fragmento en lugar de presentar como cierto lo que no pudo leerse.
+---
+
+## 15. Synthesis
+
+Glifo's functional cycle is the one from the brief, shared by all nine teams.
+
+The proprietary contribution lies in **guaranteeing the first step of that cycle**: verifiably converting a photograph of handwritten notes, including mathematical notation, into structured content; scaling processing cost solely on the regions that require it, and making the confidence level of every fragment explicit to the student rather than presenting unreadable text as fact.

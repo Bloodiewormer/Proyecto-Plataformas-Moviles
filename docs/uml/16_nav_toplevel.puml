@@ -33,7 +33,7 @@ state "STUDENT" as Student #E8EEF6 {
   state "F1 · Coverage" as F1
   state "G1 · Study" as G1
   state "H1 · Sync queue\n[D - cut 3]" as H1
-  state "H2 · AI usage\n[unresolved - see 8.3]" as H2
+  state "H2 · AI usage" as H2
   B2 --> C1
   B2 --> E1
   B2 --> F1
@@ -84,7 +84,7 @@ note bottom of RoleRouter
 end note
 
 note as Legend
-  **Scope priority** — Alcance 6 and 11
+  **Scope priority** â€” Alcance 6 and 11
   unmarked    = I, must-have
   [D]         = D, should-have
   [D - cut n] = should-have, position n

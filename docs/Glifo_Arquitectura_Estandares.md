@@ -1,289 +1,219 @@
-# Glifo — Arquitectura y Estándares
+# Glifo — Architecture and Standards
 
-**Grupo X-Ray** — Brandon Brenes · David González · Felipe Ugalde
-Documento técnico de referencia · versión 1.0
+**Team X-Ray** — Brandon Brenes · David González · Felipe Ugalde
+Technical reference document · version 2.2
 
-> Define **cómo se construye** Glifo: capas, estructura de paquetes, clases, patrones, convenciones de código y estándares de trabajo.
+> Defines **how** Glifo is built: layers, package structure, classes, patterns, coding conventions, and work standards.
 >
-> · `Glifo_Alcance.md` — qué se construye
-> · `Glifo_Diseno_Arquitectura.md` — versión para consulta con el docente
-> · `Glifo_Bitacora_Decisiones.md` — histórico de decisiones
+> · `Glifo_Alcance.md` — what is built
+> · `Glifo_Diseno_Arquitectura.md` — version for consultation with the professor
+> · `Glifo_UML_Modeling.md` — full modeling package and API seam
+> · `Glifo_Bitacora_Decisiones.md` — historical record of decisions
 
 ---
 
-## Índice
+## Index
 
-1. [Visión general de la arquitectura](#1-visión-general-de-la-arquitectura)
-2. [Estructura de paquetes — Android](#2-estructura-de-paquetes--android)
-3. [Estructura de paquetes — Backend](#3-estructura-de-paquetes--backend)
-4. [Diagramas de clases](#4-diagramas-de-clases)
-5. [Patrones de diseño aplicados](#5-patrones-de-diseño-aplicados)
-6. [Modelo de datos](#6-modelo-de-datos)
-7. [Convenciones de código](#7-convenciones-de-código)
-8. [Convenciones REST](#8-convenciones-rest)
-9. [Manejo de errores](#9-manejo-de-errores)
-10. [Estándares de pruebas](#10-estándares-de-pruebas)
-11. [Flujo de trabajo con Git](#11-flujo-de-trabajo-con-git)
-12. [Identidad visual y tokens de diseño](#12-identidad-visual-y-tokens-de-diseño)
+1. [Architecture Overview](#1-architecture-overview)
+2. [Package Structure — Android](#2-package-structure--android)
+3. [Package Structure — Backend](#3-package-structure--backend)
+4. [Class Diagrams](#4-class-diagrams)
+5. [Applied Design Patterns](#5-applied-design-patterns)
+6. [Data Model](#6-data-model)
+7. [Coding Conventions](#7-coding-conventions)
+8. [REST Conventions](#8-rest-conventions)
+9. [Error Handling](#9-error-handling)
+10. [Testing Standards](#10-testing-standards)
+11. [Git Workflow](#11-git-workflow)
+12. [Visual Identity and Design Tokens](#12-visual-identity-and-design-tokens)
+- [Annex — Pre-Pull-Request checklist](#annex--pre-pull-request-checklist)
 
 ---
 
-## 1. Visión general de la arquitectura
+## 1. Architecture Overview
 
-### 1.1 Topología
+### 1.1 Topology
 
-```
+~~~text
 ┌──────────────────────────────────────────────────────────┐
-│  CLIENTE ANDROID                                          │
+│  ANDROID CLIENT                                           │
 │  Kotlin · Jetpack Compose · MVVM · Hilt                   │
 │                                                            │
 │  ┌────────────────────────────────────────────────────┐  │
-│  │ PRESENTACIÓN   Composables · ViewModels · UiState  │  │
+│  │ PRESENTATION   Composables · ViewModels · UiState  │  │
 │  ├────────────────────────────────────────────────────┤  │
-│  │ DOMINIO        Modelos · UseCases · Interfaces     │  │
+│  │ DOMAIN         Models · UseCases · Interfaces      │  │
 │  ├────────────────────────────────────────────────────┤  │
-│  │ DATOS          Repositorios · Room · Retrofit      │  │
+│  │ DATA           Repositories · Room · Retrofit      │  │
 │  ├────────────────────────────────────────────────────┤  │
-│  │ PIPELINE       OpenCV · ML Kit · Confianza         │  │
+│  │ PIPELINE       OpenCV · ML Kit · Confidence        │  │
 │  └────────────────────────────────────────────────────┘  │
 └───────────────────────────┬──────────────────────────────┘
-                            │ HTTPS · JSON · JWT
+                            │ HTTPS · JSON (Gson) · JWT
 ┌───────────────────────────▼──────────────────────────────┐
-│  BACKEND — Spring Boot monolítico                         │
+│  BACKEND — Monolithic Spring Boot (Kotlin)                │
 │                                                            │
 │  ┌────────────────────────────────────────────────────┐  │
-│  │ WEB            Controllers · DTOs · Validación     │  │
+│  │ WEB            Controllers · DTOs · Validation     │  │
 │  ├────────────────────────────────────────────────────┤  │
-│  │ SERVICIO       Lógica de negocio · Orquestación IA │  │
+│  │ SERVICE        Business Logic · AI Orchestration   │  │
 │  ├────────────────────────────────────────────────────┤  │
-│  │ PERSISTENCIA   Repositories · Entities · JPA       │  │
+│  │ PERSISTENCE    Repositories · Entities · JPA       │  │
 │  └────────────────────────────────────────────────────┘  │
 │                                                            │
-│  PostgreSQL (relacional + JSONB)                          │
+│  PostgreSQL (Relational + JSONB)                          │
 └──────────────────────────────────────────────────────────┘
-```
+~~~
 
-### 1.2 Reglas de dependencia
+### 1.2 Dependency Rules
 
-La dirección de las dependencias es **siempre hacia adentro**:
+The direction of dependencies is **always inwards**:
 
-```
-Presentación → Dominio ← Datos
-```
+~~~text
+Presentation → Domain ← Data
+~~~
 
-- **Dominio no depende de nada.** No conoce Android, Room, Retrofit ni Spring. Es Kotlin puro.
-- **Datos implementa interfaces del dominio.** El dominio declara `NoteRepository`; la capa de datos provee `NoteRepositoryImpl`.
-- **Presentación consume el dominio**, nunca la capa de datos directamente.
+- **Domain depends on nothing.** It knows nothing about Android, Room, Retrofit, or Spring. It is pure Kotlin.
+- **Data implements domain interfaces.** The domain declares `NoteRepository`; the data layer provides `NoteRepositoryImpl`.
+- **Presentation consumes the domain**, never the data layer directly.
 
-**Consecuencia práctica:** el `ConfidenceScorer` y el `EscalationPolicy` viven en el dominio, no dependen del framework, y por eso son testeables sin emulador.
+### 1.3 Execution Boundaries
 
-### 1.3 Qué corre dónde
-
-| Responsabilidad | Cliente | Backend | Motivo |
+| Responsibility | Client | Backend | Reason |
 |---|---|---|---|
-| Preprocesamiento de imagen (N0) | ✓ | | Reduce datos antes de transmitir |
-| OCR de texto (N1) | ✓ | | ML Kit es local y gratuito |
-| Clasificación de regiones | ✓ | | Depende del resultado de N1 |
-| Cálculo de confianza | ✓ | | Función pura, sin dependencias |
-| OCR matemático (N1.5) | | ✓ | Requiere credencial de servicio |
-| Reparación por visión (N2, N3) | | ✓ | Requiere credencial de servicio |
-| Validación de LaTeX | | ✓ | JLaTeXMath es una biblioteca Java |
-| Prefiltro de cobertura | ✓ | | Determinista, funciona sin conexión |
-| Adjudicación semántica | | ✓ | Requiere credencial de servicio |
-| Repetición espaciada | ✓ | | Determinista, funciona sin conexión |
-| Registro de consumo | | ✓ | Fuente única de verdad |
+| Image preprocessing (N0) | ✓ | | Reduces data before transmission |
+| Text OCR (N1) | ✓ | | ML Kit is local and free |
+| Region classification | ✓ | | Depends on N1 outcome |
+| Confidence scoring | ✓ | | Pure function, no dependencies |
+| Math OCR (N1.5) | | ✓ | Requires external service credentials |
+| Vision repair (N2, N3) | | ✓ | Requires external service credentials |
+| Coverage pre-filter | ✓ | | Deterministic, works offline |
+| Semantic adjudication | | ✓ | Requires external service credentials |
+| Spaced repetition | ✓ | | Deterministic, works offline |
 
-**Regla absoluta:** ninguna credencial de servicio externo existe en el APK.
+**Absolute rule:** No external service credential ever exists in the APK.
 
 ---
 
-## 2. Estructura de paquetes — Android
+## 2. Package Structure — Android
 
-Paquete raíz: `cr.ac.una.glifo`
+Root package: `cr.ac.una.glifo`
 
-```
+~~~text
 cr.ac.una.glifo/
 │
 ├── GlifoApplication.kt              @HiltAndroidApp
 ├── MainActivity.kt
 │
-├── di/                              Módulos de Hilt
-│   ├── NetworkModule.kt
-│   ├── DatabaseModule.kt
-│   ├── PipelineModule.kt
-│   └── RepositoryModule.kt
+├── di/                              Hilt Modules
 │
-├── core/                            Transversal, sin lógica de negocio
-│   ├── common/
-│   │   ├── Result.kt                Envoltorio de resultado
-│   │   ├── AppError.kt              Jerarquía de errores de dominio
-│   │   └── Constants.kt
-│   ├── network/
-│   │   ├── ApiClient.kt
-│   │   ├── AuthInterceptor.kt       Inyecta el JWT
-│   │   └── ErrorMapper.kt           HTTP → AppError
-│   ├── database/
-│   │   ├── GlifoDatabase.kt
-│   │   ├── Converters.kt            JSON ↔ objeto
-│   │   └── dao/
-│   ├── sync/
-│   │   ├── SyncQueue.kt
-│   │   ├── SyncWorker.kt            WorkManager
-│   │   └── RetryPolicy.kt           Backoff exponencial
-│   └── ui/
-│       ├── theme/                   Color · Type · Shape
-│       └── component/               Componentes reutilizables
+├── core/                            Cross-cutting, no business logic
+│   ├── common/                      Result.kt · AppError.kt · Constants.kt
+│   ├── network/                     ApiClient.kt · AuthInterceptor.kt · ErrorMapper.kt
+│   ├── database/                    GlifoDatabase.kt · Converters.kt · dao/ · entity/
+│   ├── sync/                        SyncManager.kt · SyncWorker.kt · RetryPolicy.kt · SyncOperation.kt
+│   └── ui/                          theme/ · component/
 │
-├── pipeline/                        ◄── EL DIFERENCIADOR
-│   ├── PipelineEngine.kt            Fachada
-│   ├── model/
-│   │   ├── PageRegion.kt
-│   │   ├── RegionKind.kt            TEXT · MATH · DRAWING
-│   │   ├── ProcessingLevel.kt       N0 · N1 · N1_5 · N2 · N3
-│   │   ├── QualityMetrics.kt
-│   │   └── ConfidenceScore.kt
-│   ├── preprocess/
-│   │   ├── ImagePreprocessor.kt     Interfaz
-│   │   ├── OpenCvPreprocessor.kt
-│   │   └── QualityAnalyzer.kt       Desenfoque · luz · reflejo
-│   ├── segment/
-│   │   ├── RegionSegmenter.kt
-│   │   └── RegionClassifier.kt      Enrutador
-│   ├── ocr/
-│   │   ├── TextOcrEngine.kt         Interfaz
-│   │   └── MlKitTextOcrEngine.kt
-│   ├── confidence/
-│   │   ├── ConfidenceScorer.kt      Función pura
-│   │   └── ScoringWeights.kt
-│   ├── escalation/
-│   │   ├── EscalationPolicy.kt
-│   │   └── EscalationStep.kt        Chain of Responsibility
-│   └── hash/
-│       └── PerceptualHasher.kt
+├── pipeline/                        ◄── THE DIFFERENTIATOR, at the top level
+│   ├── PipelineEngine.kt            Facade
+│   ├── model/                       PageRegion.kt · RegionKind.kt · ProcessingLevel.kt · CourseContext.kt
+│   ├── preprocess/                  ImagePreprocessor.kt · OpenCvPreprocessor.kt · QualityAnalyzer.kt
+│   ├── segment/                     RegionSegmenter.kt · RegionClassifier.kt
+│   ├── ocr/                         TextOcrEngine.kt · MlKitTextOcrEngine.kt
+│   ├── confidence/                  ConfidenceScorer.kt · ScoringWeights.kt
+│   ├── escalation/                  EscalationPolicy.kt · EscalationStep.kt
+│   └── hash/                        PerceptualHasher.kt
 │
-└── feature/                         Un paquete por funcionalidad
+├── engine/                          Deterministic local engines, outside the pipeline
+│   ├── coverage/                    CoverageEngine.kt      local coverage pre-filter
+│   └── srs/                         SrsScheduler.kt        deterministic spaced repetition
+│
+└── feature/                         One package per capability
     ├── auth/
-    │   ├── data/
-    │   │   ├── remote/  AuthApi.kt · dto/
-    │   │   ├── local/   TokenStore.kt
-    │   │   └── AuthRepositoryImpl.kt
-    │   ├── domain/
-    │   │   ├── model/       User.kt · Role.kt
-    │   │   ├── AuthRepository.kt        Interfaz
-    │   │   └── usecase/     LoginUseCase.kt
-    │   └── presentation/
-    │       ├── LoginScreen.kt
-    │       ├── LoginViewModel.kt
-    │       └── LoginUiState.kt
-    │
-    ├── capture/         Cámara y captura
-    ├── note/            Apuntes y mapa de confianza
-    ├── coverage/        Cobertura y delta
-    ├── study/           Flashcards, quizzes, repaso
-    └── teacher/         Curso, temario, glosario
-```
+    ├── capture/
+    ├── note/
+    ├── coverage/
+    ├── study/
+    ├── course/                      Teacher-side courses, syllabus, glossary
+    └── admin/                       Users, roles
+~~~
 
-### Convención de módulo de funcionalidad
+### Feature Module Convention
 
-Cada paquete bajo `feature/` replica la misma estructura de tres capas:
+Every package under `feature/` replicates the same three-layer structure:
 
-```
-feature/<nombre>/
+~~~text
+feature/<n>/
 ├── data/
-│   ├── remote/      ApiService + DTOs + mappers
-│   ├── local/       DAO + entidades Room
+│   ├── remote/      <X>Api.kt + DTOs + mappers
+│   ├── local/       DAO + Room entities
 │   └── <X>RepositoryImpl.kt
 ├── domain/
-│   ├── model/       Modelos de dominio (data class puras)
+│   ├── model/       Domain models (pure data classes)
 │   ├── <X>Repository.kt
-│   └── usecase/     Un archivo por caso de uso
+│   └── usecase/     One file per use case
 └── presentation/
     ├── <X>Screen.kt
     ├── <X>ViewModel.kt
     └── <X>UiState.kt
-```
-
-**Motivo:** cualquiera del equipo abre una funcionalidad desconocida y sabe dónde está cada cosa sin preguntar.
+~~~
 
 ---
 
-## 3. Estructura de paquetes — Backend
+## 3. Package Structure — Backend
 
-Paquete raíz: `cr.ac.una.glifo`
+Root package: `cr.ac.una.glifo`
 
-Organización **por dominio**, no por capa técnica. Todo lo de un concepto vive junto.
+Organized **by aggregate**, not by technical layer. Source root is `src/main/kotlin`. All files end in `.kt`.
 
-```
+~~~text
 cr.ac.una.glifo/
 │
-├── GlifoApplication.java
+├── GlifoApplication.kt
 │
-├── config/
-│   ├── SecurityConfig.java
-│   ├── JwtConfig.java
-│   ├── CorsConfig.java
-│   └── OpenApiConfig.java
+├── config/                          SecurityConfig.kt · OpenApiConfig.kt
+├── common/                          exception/ · response/ · audit/
+├── security/                        JwtTokenProvider.kt · JwtAuthenticationFilter.kt
 │
-├── common/
-│   ├── exception/
-│   │   ├── GlobalExceptionHandler.java   @RestControllerAdvice
-│   │   ├── ResourceNotFoundException.java
-│   │   ├── BusinessException.java
-│   │   └── ApiError.java
-│   ├── response/
-│   │   ├── ApiResponse.java
-│   │   └── PageResponse.java
-│   └── audit/
-│       └── Auditable.java                createdAt · updatedAt
+├── user/                            One package per aggregate
+│   ├── controller/UserController.kt
+│   ├── service/UserService.kt
+│   ├── repository/UserRepository.kt
+│   ├── entity/User.kt · Role.kt · Privilege.kt
+│   ├── dto/UserRequest.kt · UserResponse.kt
+│   └── mapper/UserMappers.kt        (top-level extension functions)
 │
-├── security/
-│   ├── JwtTokenProvider.java
-│   ├── JwtAuthenticationFilter.java
-│   └── UserDetailsServiceImpl.java
+├── course/                          courses · enrollments · syllabus_topics · glossary · glossary_suggestions
+├── note/                            notes · pages
+├── study/                           coverage · items · attempts · schedule
 │
-├── user/                                  Un paquete por agregado
-│   ├── controller/UserController.java
-│   ├── service/UserService.java
-│   ├── repository/UserRepository.java
-│   ├── entity/User.java · Role.java · Privilege.java
-│   ├── dto/UserRequest.java · UserResponse.java
-│   └── mapper/UserMapper.java
+├── ai/                              ◄── ORCHESTRATION
+│   ├── AiOrchestrator.kt            Facade
+│   ├── engine/                      MathOcrEngine.kt · SimpleTexEngine.kt · VisionMathEngine.kt
+│   │                                MathOcrEngineFactory.kt
+│   ├── service/                     VisionRepairService.kt      IA-00
+│   │                                ReconstructionService.kt    IA-01
+│   │                                GenerationService.kt        IA-02
+│   │                                ExplanationService.kt       IA-03
+│   │                                SemanticJudgeService.kt     IA-04
+│   ├── prompt/                      PromptBuilder.kt
+│   ├── validation/                  LatexValidator.kt
+│   └── ledger/                      CostLedgerService.kt · AiCall.kt
 │
-├── course/          courses · enrollments · syllabi · glossary
-├── note/            notes · pages · processing · contents
-├── study/           coverage · items · attempts · schedule
-│
-├── ai/                                    ◄── ORQUESTACIÓN
-│   ├── AiOrchestrator.java                Fachada
-│   ├── engine/
-│   │   ├── MathOcrEngine.java             Interfaz  (Strategy)
-│   │   ├── SimpleTexEngine.java
-│   │   ├── VisionMathEngine.java          Respaldo
-│   │   └── MathOcrEngineFactory.java
-│   ├── service/
-│   │   ├── VisionRepairService.java       IA-00
-│   │   ├── ReconstructionService.java     IA-01
-│   │   ├── GenerationService.java         IA-02
-│   │   ├── ExplanationService.java        IA-03
-│   │   └── SemanticJudgeService.java      IA-05
-│   ├── validation/
-│   │   └── LatexValidator.java            JLaTeXMath
-│   └── ledger/
-│       ├── CostLedgerService.java
-│       └── AiCall.java
-│
-└── notification/
-    ├── PushService.java                   FCM
-    └── DeviceController.java
-```
+└── notification/                    PushService.kt · DeviceController.kt
+~~~
+
+The five services under `ai/service/` map one to one onto the AI call inventory in `Glifo_Alcance.md` §8. If a service is missing here, the corresponding AI function has no home.
 
 ---
 
-## 4. Diagramas de clases
+## 4. Class Diagrams
 
-Los diagramas están escritos en **PlantUML**. Para renderizarlos: el plugin *PlantUML Integration* en Android Studio o IntelliJ, la extensión *PlantUML* en VS Code, o el servidor público `plantuml.com/plantuml`. Los archivos `.puml` sueltos se versionan en `docs/uml/`.
+Diagrams are written in **PlantUML**. To render them: the *PlantUML Integration* plugin in Android Studio or IntelliJ, the *PlantUML* extension in VS Code, or the public server at `plantuml.com/plantuml`. Standalone `.puml` files are versioned in `docs/uml/`, one file per diagram, named after the `@startuml` identifier.
 
-### 4.1 Pipeline de ingesta — el núcleo
+The four diagrams below are the ones that govern **how code is written**. The full modeling package —ERD, sequence diagrams, navigation maps, API seam— lives in `Glifo_UML_Modeling.md`.
+
+### 4.1 Ingestion pipeline — the core
 
 ```plantuml
 @startuml Glifo_Pipeline
@@ -362,7 +292,7 @@ EscalationStep ..> ProcessingLevel
 @enduml
 ```
 
-**Contratos de datos del pipeline**
+**Pipeline data contracts**
 
 ```plantuml
 @startuml Glifo_Contratos_Pipeline
@@ -416,11 +346,13 @@ enum ProcessingLevel {
 PageRegion --> RegionKind
 RegionResult *-- ConfidenceScore
 RegionResult --> ProcessingLevel
-RegionResult ..> PageRegion : resuelve
+RegionResult ..> PageRegion : resolves
 @enduml
 ```
 
-### 4.2 Orquestación de IA en el backend
+> `RegionResult` carries `finalText` and `latex` as a nullable pair rather than a sealed hierarchy. Tolerated because it serializes flat into JSONB. Revisit only if a third content type appears.
+
+### 4.2 AI orchestration in the backend
 
 ```plantuml
 @startuml Glifo_Orquestacion_IA
@@ -465,7 +397,7 @@ class VisionRepairService <<IA-00>>
 class ReconstructionService <<IA-01>>
 class GenerationService <<IA-02>>
 class ExplanationService <<IA-03>>
-class SemanticJudgeService <<IA-05>>
+class SemanticJudgeService <<IA-04>>
 
 AiOrchestrator --> MathOcrEngineFactory
 AiOrchestrator --> LatexValidator
@@ -476,13 +408,19 @@ AiOrchestrator --> GenerationService
 AiOrchestrator --> ExplanationService
 AiOrchestrator --> SemanticJudgeService
 
-MathOcrEngineFactory ..> MathOcrEngine : crea
+MathOcrEngineFactory ..> MathOcrEngine : creates
 MathOcrEngine <|.. SimpleTexEngine
 MathOcrEngine <|.. VisionMathEngine
+
+note bottom of CostLedgerService
+  Every call goes through here.
+  No entry in ai_calls means no
+  evidence for the cost argument.
+end note
 @enduml
 ```
 
-### 4.3 Dominio principal
+### 4.3 Core domain
 
 ```plantuml
 @startuml Glifo_Dominio
@@ -514,12 +452,6 @@ class Course {
   + term : String
 }
 
-class Syllabus {
-  + id : Long
-  + sourceFile : String
-  + parsedAt : Instant
-}
-
 class SyllabusTopic {
   + id : Long
   + code : String
@@ -527,19 +459,30 @@ class SyllabusTopic {
   + orderIndex : Int
 }
 
+class GlossaryEntry {
+  + id : Long
+  + term : String
+  + canonicalForm : String
+}
+
+class GlossarySuggestion {
+  + id : Long
+  + originalText : String
+  + suggestedCorrection : String
+  + status : SuggestionStatus
+}
+
 class Note {
   + id : Long
   + classDate : LocalDate
   + title : String
+  + status : NoteStatus
 }
 
 class NotePage {
   + id : Long
   + perceptualHash : String
   + pageIndex : Int
-}
-
-class PageProcessing {
   + levelReached : ProcessingLevel
   + overallConfidence : Float
   + regions : Jsonb
@@ -565,19 +508,32 @@ User "*" -- "*" Role : user_roles
 Role "*" -- "*" Privilege : role_privileges
 User "1" --> "*" Note
 User "1" --> "*" TopicCoverage
-Course "1" --> "1" Syllabus
+User "1" --> "*" GlossarySuggestion
 Course "1" --> "*" Note
 Course "1" o-- "*" User : enrollments
-Syllabus "1" *-- "*" SyllabusTopic
+Course "1" *-- "*" SyllabusTopic
+Course "1" *-- "*" GlossaryEntry
+Course "1" *-- "*" GlossarySuggestion
 SyllabusTopic "1" --> "*" TopicCoverage
 SyllabusTopic "1" --> "*" StudyItem
-Note "1" *-- "*" NotePage
-NotePage "1" *-- "1" PageProcessing
+Note "1" *-- "0..*" NotePage : "0..N while DRAFT"
 StudyItem "1" --> "*" ReviewSchedule
+
+note right of NotePage
+  page_processing was merged into
+  note_pages: strict 1:1 cardinality.
+  See Glifo_UML_Modeling.md 4.2.
+end note
+
+note right of GlossarySuggestion
+  Students never write to the canonical
+  glossary. GLOSSARY_WRITE belongs to
+  Teacher. See D-15.
+end note
 @enduml
 ```
 
-### 4.4 Capa de presentación (patrón por pantalla)
+### 4.4 Presentation layer (per-screen pattern)
 
 ```plantuml
 @startuml Glifo_Presentacion
@@ -629,327 +585,226 @@ GetNoteUseCase --> NoteRepository
 NoteRepository <|.. NoteRepositoryImpl
 
 note right of NoteRepository
-  Declarada en dominio,
-  implementada en datos.
-  La dependencia apunta hacia adentro.
+  Declared in domain,
+  implemented in data.
+  The dependency points inwards.
 end note
 @enduml
 ```
 
+**This is the canonical screen.** Every other screen replicates the same five pieces: stateless Composable, ViewModel exposing one immutable `StateFlow<UiState>`, a sealed `UiState`, a use case, and a repository interface owned by the domain.
+
 ---
 
-## 5. Patrones de diseño aplicados
+## 5. Applied Design Patterns
 
-| Patrón | Dónde | Por qué |
+| Pattern | Where | Why |
 |---|---|---|
-| **Chain of Responsibility** | `EscalationPolicy` con `EscalationStep` | La escalera N0→N1→N1.5→N2→N3 es exactamente una cadena: cada eslabón decide si resuelve o delega al siguiente. Añadir un nivel no toca los existentes |
-| **Strategy** | `MathOcrEngine`, `TextOcrEngine`, `ImagePreprocessor` | El motor concreto es intercambiable en configuración. Permite sustituir SimpleTex sin tocar la arquitectura |
-| **Factory** | `MathOcrEngineFactory` | Resuelve qué implementación usar según configuración y disponibilidad |
-| **Repository** | Todas las funcionalidades, ambos lados | Exigido por el curso. Aísla el dominio del origen de los datos (Room, red, Postgres) |
-| **Facade** | `PipelineEngine`, `AiOrchestrator` | Una entrada única a un subsistema complejo. Los ViewModels no conocen los pasos internos |
-| **Adapter / Mapper** | `*Mapper` entre DTO ↔ dominio ↔ entidad | Cada capa tiene su propia representación; el mapper impide que un DTO de red contamine el dominio |
-| **Observer** | `StateFlow` y `Flow` en ViewModels | La UI reacciona a cambios de estado sin polling |
-| **Singleton** | Componentes con `@Singleton` en Hilt | Base de datos, cliente HTTP y motores del pipeline se instancian una vez |
-| **Builder** | Construcción de prompts en los servicios de IA | Prompts compuestos por partes opcionales (glosario, tema, restricciones) |
+| **Chain of Responsibility** | `EscalationPolicy` with `EscalationStep` | The N0→N1→N1.5→N2→N3 ladder is a chain. Each link decides whether to resolve or delegate. |
+| **Strategy** | `MathOcrEngine`, `TextOcrEngine` | Concrete engines are interchangeable. |
+| **Factory** | `MathOcrEngineFactory` | Resolves which implementation to use based on configuration. |
+| **Repository** | All features, both tiers | Isolates domain from data origins (Room, Network, Postgres). |
+| **Facade** | `PipelineEngine`, `AiOrchestrator` | Single entry point to complex subsystems. |
+| **Adapter / Mapper** | `*Mappers.kt` | Extension functions mapping DTOs ↔ domain ↔ entities. Prevents leakage across boundaries. |
+| **Observer** | `StateFlow` in ViewModels | UI reacts to state changes without polling. |
+| **Builder** | `PromptBuilder` | Composes prompts combining context, limits, and glossary rules. |
 
-**Nota sobre Singleton:** se gestiona con el ciclo de vida de Hilt, no con `object` de Kotlin ni instancias estáticas. La configuración de la aplicación va en `SharedPreferences`, no en una entidad persistida.
-
----
-
-## 6. Modelo de datos
-
-### 6.1 Convenciones
-
-| Regla | Detalle |
-|---|---|
-| Idioma | Inglés en tablas, columnas, índices y restricciones |
-| Tablas | Plural, `snake_case` — `notes`, `note_pages` |
-| `users` | Siempre plural: `user` es palabra reservada en PostgreSQL |
-| Llave primaria | `id BIGSERIAL PRIMARY KEY` |
-| Llave foránea | `<entidad_singular>_id` — `course_id` |
-| Auditoría | `created_at`, `updated_at` en toda entidad mutable |
-| Booleanos | Prefijo `is_` / `has_` |
-| Enumeraciones | `VARCHAR` con `CHECK`, no `ENUM` nativo |
-
-### 6.2 Criterio de uso de JSONB
-
-JSONB se aplica **solo** cuando la estructura es variable y no se consulta por campo interno.
-
-| Se usa | Justificación |
-|---|---|
-| `page_processing.regions` | Cantidad y forma de regiones varía por página |
-| `page_processing.quality_metrics` | Conjunto variable de métricas de diagnóstico |
-| `note_contents.content` | El apunte estructurado es un documento |
-| `study_items.payload` | La estructura difiere por tipo de ítem |
-| `attempts.response` | El formato depende del tipo de pregunta |
-| `notifications.payload` | Carga útil variable por tipo de notificación |
-
-| No se usa | Justificación |
-|---|---|
-| `topic_coverage` | Se filtra y agrega constantemente |
-| `syllabus_topics`, `enrollments` | Relaciones con cardinalidad |
-| `users`, `roles`, `privileges` | Integridad referencial obligatoria |
-| `ai_calls` | Se agrega por tipo, nivel y periodo |
-
-### 6.3 Esquema
-
-**Control de acceso**
-```sql
-users            (id, email, password_hash, is_active, created_at, updated_at)
-roles            (id, name, description)
-privileges       (id, name, description)
-user_roles       (user_id, role_id)
-role_privileges  (role_id, privilege_id)
-```
-
-**Dominio académico**
-```sql
-courses          (id, name, code, owner_user_id, term, created_at)
-enrollments      (id, user_id, course_id, status, joined_at)
-syllabi          (id, course_id, source_file, parsed_at)
-syllabus_topics  (id, syllabus_id, parent_id, code, title, order_index)
-course_glossary  (id, course_id, term, canonical_form, kind)
-```
-
-**Ingesta**
-```sql
-notes            (id, user_id, course_id, class_date, title, created_at)
-note_pages       (id, note_id, perceptual_hash, storage_uri, page_index)
-page_processing  (id, note_page_id, level_reached, overall_confidence,
-                  quality_metrics JSONB, regions JSONB, processed_at)
-note_contents    (id, note_id, content JSONB, generated_at)
-```
-
-**Estudio**
-```sql
-topic_coverage     (id, user_id, syllabus_topic_id, state, score, updated_at)
-coverage_snapshots (id, user_id, course_id, coverage_pct, taken_at)
-study_items        (id, course_id, syllabus_topic_id, kind, payload JSONB)
-attempts           (id, user_id, study_item_id, response JSONB,
-                    is_correct, answered_at)
-review_schedule    (id, user_id, study_item_id, due_at, interval_days, ease)
-```
-
-**Operación**
-```sql
-ai_calls       (id, user_id, course_id, call_type, level, input_tokens,
-                output_tokens, estimated_cost, latency_ms, created_at)
-sync_queue     (id, user_id, entity_type, idempotency_key,
-                payload JSONB, attempts, last_error, status)
-devices        (id, user_id, fcm_token, platform, registered_at)
-notifications  (id, user_id, kind, payload JSONB, sent_at, read_at)
-```
-
-**Enumeraciones**
-```
-ProcessingLevel : N0 · N1 · N1_5 · N2 · N3 · UNRESOLVED
-RegionKind      : TEXT · MATH · DRAWING
-CoverageState   : SOLID · PARTIAL · ABSENT · UNCERTAIN
-ItemKind        : FLASHCARD · MULTIPLE_CHOICE · TRUE_FALSE
-SyncStatus      : PENDING · IN_PROGRESS · FAILED · DONE
-```
+**Note on Builder under Kotlin (D-13).** Kotlin's named and default arguments cover most of what a Builder was for. `PromptBuilder` survives because it accumulates state across conditional branches, which named arguments do not do.
 
 ---
 
-## 7. Convenciones de código
+## 6. Data Model
+
+### 6.1 Conventions
+
+| Rule | Detail |
+|---|---|
+| Language | English for tables, columns, indexes, constraints |
+| Tables | Plural, `snake_case` (e.g., `notes`, `note_pages`) |
+| `users` | Always plural (`user` is a reserved word in Postgres) |
+| Primary Key | `id BIGSERIAL PRIMARY KEY` |
+| Foreign Key | `<singular_entity>_id` (e.g., `course_id`) |
+| Unique Constraints | Enforced at the DB level for relational integrity (e.g., `user_id` + `course_id` in enrollments). Exact definitions live in the ERD. |
+| Audit | `created_at`, `updated_at` on mutable entities |
+| Booleans | Prefix `is_` or `has_` |
+| Enums | `VARCHAR` with `CHECK` constraints |
+
+**Size.** 16 core tables on the defended diagram plus a 5-table operations annex, 21 total. The reduction from 23 is justified merge by merge in `Glifo_UML_Modeling.md` §4.2.
+
+### 6.2 JSONB Criteria
+
+JSONB is used **only** when the structure is variable **and** no internal field is queried or aggregated. If either half fails, the data is normalized.
+
+| Used For | Reason |
+|---|---|
+| `note_pages.regions` | Variable number and shape of regions per page. |
+| `note_pages.quality_metrics` | The metric set grows as N0 improves; read whole, never filtered. |
+| `notes.content` | Reconstructed note is a document tree. |
+| `study_items.payload` | Structure differs completely by item kind. |
+| `attempts.response` | Response format depends on question type. |
+| `sync_queue.payload` | Serialized outbox operation. |
+| `notifications.payload` | Payload shape depends on notification kind. |
+| `coverage_snapshots.summary` | Reporting-only freeze; never queried by field. |
+
+**Not used for:** `topic_coverage`, `users`, `roles`, `privileges`, `ai_calls` — these require strict referential integrity or are aggregated constantly.
+
+### 6.3 Schema Highlights
+
+**Notes & Ingestion**
+- `notes`: Includes `status` (`DRAFT`, `PROCESSING`, `READY`, `ARCHIVED`) to support the 0..N page cardinality during offline capture (D-16).
+- `note_pages`: absorbs the former `page_processing` table — strict 1:1 cardinality, so the join bought nothing.
+- `sync_queue`: Includes `device_id` so FCM push notifications only target the physical device that uploaded the pending batch (D-18).
+
+**Study & Dictionary**
+- `study_items.payload`: collapsing questions, options, and correct answers into JSONB removed four normalized tables from the quiz model. A `CHECK` constraint keeps the `kind` discriminator and the payload honest.
+- `glossary_suggestions`: Replaces direct write access to `course_glossary`. Students create suggestions when correcting fragments, keeping the `GLOSSARY_WRITE` boundary with teachers (D-15).
+- `LocalCourseContext`: Synchronized to Room for offline pipeline execution. Stores `course_id`, `course_name`, `syllabus_version`, `glossary_version`, and `glossary_entries` so the local `ConfidenceScorer` can function and the cache can be invalidated on reconnect (D-17).
+
+---
+
+## 7. Coding Conventions
 
 ### 7.1 Kotlin — Android
 
-Estilo oficial de Kotlin, verificado con **ktlint**.
-
-| Elemento | Convención | Ejemplo |
+| Element | Convention | Example |
 |---|---|---|
-| Clase, interfaz, objeto | `PascalCase` | `ConfidenceScorer` |
-| Función, propiedad | `camelCase` | `calculateScore()` |
-| Constante | `UPPER_SNAKE_CASE` | `DEFAULT_THRESHOLD` |
+| Class, Interface | `PascalCase` | `ConfidenceScorer` |
+| Function, Property | `camelCase` | `calculateScore()` |
+| Constant | `UPPER_SNAKE_CASE` | `DEFAULT_THRESHOLD` |
 | Composable | `PascalCase` | `NoteDetailScreen()` |
-| Archivo | Nombre de su tipo principal | `ConfidenceScorer.kt` |
-| Paquete | Minúsculas, sin guiones | `pipeline.confidence` |
-| Test | `debería_...` en backticks | ``fun `debería marcar incierto cuando el latex no compila`()`` |
+| Test Method | `should <do> when <condition>` | ``fun `should mark uncertain when latex fails`()`` |
 
-**Reglas de Compose**
+**Compose Rules**
+- Composables are **stateless**. State is hoisted to the ViewModel.
+- Every screen exposes a single immutable `UiState`.
+- Prefix `on` for event lambdas: `onCorrectFragment`.
 
-- Los composables son **sin estado**. El estado se eleva al ViewModel.
-- Un composable nunca invoca un repositorio ni un caso de uso.
-- Cada pantalla expone un único `UiState` inmutable.
-- Prefijo `on` para lambdas de evento: `onCorrectFragment`.
+**ViewModel & Domain Rules**
+- Expose immutable `StateFlow<UiState>`.
+- I/O operations are suspendable and are invoked through domain use cases/repositories. ViewModels launch them using `viewModelScope`.
+- Domain models are pure immutable `data class`.
 
-```kotlin
-@Composable
-fun NoteDetailScreen(
-    state: NoteDetailUiState,
-    onCorrectFragment: (String, String) -> Unit,
-    onRequestFullVision: () -> Unit,
-)
-```
+### 7.2 Kotlin — Backend
 
-**Reglas de ViewModel**
-
-- Expone `StateFlow<UiState>` inmutable; el `MutableStateFlow` es privado.
-- Toda operación de E/S es `suspend` y corre en `viewModelScope`.
-- Sin referencias a `Context`, `View` ni tipos de Android.
-
-```kotlin
-@HiltViewModel
-class NoteDetailViewModel @Inject constructor(
-    private val getNote: GetNoteUseCase,
-) : ViewModel() {
-    private val _uiState = MutableStateFlow<NoteDetailUiState>(Loading)
-    val uiState: StateFlow<NoteDetailUiState> = _uiState.asStateFlow()
-}
-```
-
-**Reglas del dominio**
-
-- Solo Kotlin puro. Ningún `import android.*` ni `import androidx.*`.
-- Los modelos son `data class` inmutables.
-- Un caso de uso expone un único `operator fun invoke()`.
-
-**Asincronía**
-
-- `suspend` para operaciones puntuales.
-- `Flow` para flujos continuos.
-- Despachadores inyectados, nunca `Dispatchers.IO` embebido — de lo contrario las pruebas no son deterministas.
-
-### 7.2 Java — Backend
-
-| Elemento | Convención | Ejemplo |
+| Element | Convention | Example |
 |---|---|---|
-| Entidad | Singular, `PascalCase` | `NotePage` |
-| Controller | `<Recurso>Controller` | `NoteController` |
-| Service | `<Recurso>Service` | `NoteService` |
-| Repository | `<Recurso>Repository` | `NoteRepository` |
-| DTO de entrada | `<Acción>Request` | `CreateNoteRequest` |
-| DTO de salida | `<Recurso>Response` | `NoteResponse` |
-| Mapper | `<Recurso>Mapper` | `NoteMapper` |
+| Entity | Singular, `PascalCase` | `NotePage` |
+| Controller | `<Resource>Controller` | `NoteController` |
+| Service | `<Resource>Service` | `NoteService` |
+| Input DTO | `<Action>Request` | `CreateNoteRequest` |
+| Output DTO | `<Resource>Response` | `NoteResponse` |
 
-**Reglas de capa**
+**Backend Layer Rules**
+- **Controllers** have no business logic.
+- **Services** contain business logic and open transactions (`@Transactional`).
+- **Entities never cross the HTTP boundary**. They must be mapped to DTOs.
+- **Injection by primary constructor**, never `@Autowired` on fields.
 
-- El **controller** no contiene lógica de negocio: valida, delega, responde.
-- El **service** contiene la lógica y es el único que abre transacciones.
-- El **repository** no contiene lógica de negocio.
-- Una **entidad JPA nunca cruza la frontera HTTP**. Siempre se convierte a DTO.
-- Inyección **por constructor**, nunca por campo con `@Autowired`.
+**The Entity Trap (Important)**
+- A JPA `@Entity` must **not** be a `data class`. `data class` automatically generates `equals`/`hashCode` and `toString` encompassing all fields, which breaks Hibernate lazy-loading proxies and collections. Use plain `class` with `var` properties.
+- DTOs **should** be `data class`.
 
-```java
+**The compiler-plugin trap (D-13).** `kotlin-spring` (opens `final` classes so Spring can proxy them) and `kotlin-jpa` (generates the no-arg constructor JPA requires) are mandatory. Generate the project from `start.spring.io` with Kotlin + Gradle selected, which wires them correctly, rather than converting a Java skeleton by hand.
+
+**Canonical Controller Example (Kotlin)**
+~~~kotlin
 @RestController
 @RequestMapping("/api/v1/notes")
-@RequiredArgsConstructor
-public class NoteController {
-    private final NoteService noteService;
-
+class NoteController(
+    private val noteService: NoteService
+) {
     @PostMapping
-    public ResponseEntity<NoteResponse> create(@Valid @RequestBody CreateNoteRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(noteService.create(request));
-    }
+    fun create(@Valid @RequestBody request: CreateNoteRequest): ResponseEntity<NoteResponse> =
+        ResponseEntity.status(HttpStatus.CREATED).body(noteService.create(request))
 }
-```
+~~~
 
-### 7.3 Reglas transversales
+### 7.3 Language Rule (D-14)
 
-- **Sin números mágicos.** Todo umbral es una constante con nombre.
-- **Sin comentarios que expliquen qué hace el código.** Si hace falta, el nombre está mal. Los comentarios explican **por qué**.
-- **Sin `TODO` en la rama principal.** Van a issues.
-- **Sin credenciales en el repositorio.** Variables de entorno y `local.properties`, que está en `.gitignore`.
-- **Idioma:** el código en inglés; los comentarios, la documentación y los textos de la interfaz en español.
+**Language:** Code, identifiers, database objects, API paths, JSON payload fields, commit messages, and technical documentation are written in **English**.
+**User-facing interface text is written in Spanish**, because the end-users are Spanish-speaking students. UI strings live in `res/values-es/strings.xml`, with `res/values/strings.xml` acting as the English default — which also satisfies the internationalization requirement in Module 3 of the course programme.
 
 ---
 
-## 8. Convenciones REST
+## 8. REST Conventions
 
-### 8.1 Estructura de rutas
+### 8.1 Route Structure
 
-```
-/api/v1/<recurso-en-plural>
-```
+~~~text
+/api/v1/<plural-resource>
+~~~
+- Plural nouns, `kebab-case` for routes, `camelCase` for JSON body.
+- Pagination via query params: `?page=0&size=20`.
 
-| Método | Ruta | Acción |
-|---|---|---|
-| `GET` | `/api/v1/notes` | Listar |
-| `GET` | `/api/v1/notes/{id}` | Obtener uno |
-| `POST` | `/api/v1/notes` | Crear |
-| `PUT` | `/api/v1/notes/{id}` | Reemplazar |
-| `PATCH` | `/api/v1/notes/{id}` | Actualizar parcialmente |
-| `DELETE` | `/api/v1/notes/{id}` | Eliminar |
-| `GET` | `/api/v1/courses/{id}/coverage` | Subrecurso |
+### 8.2 Status Codes
 
-**Reglas**
-
-- Sustantivos en plural, nunca verbos en la ruta.
-- `kebab-case` en rutas; `camelCase` en el cuerpo JSON.
-- Filtros y paginación por query string: `?page=0&size=20&sort=createdAt,desc`.
-- La versión va en la ruta, no en cabeceras.
-
-### 8.2 Códigos de estado
-
-| Código | Uso |
+| Code | Use |
 |---|---|
-| `200` | Éxito con cuerpo |
-| `201` | Recurso creado — incluye cabecera `Location` |
-| `204` | Éxito sin cuerpo |
-| `400` | Validación fallida |
-| `401` | Sin autenticar |
-| `403` | Autenticado sin privilegio |
-| `404` | Recurso inexistente |
-| `409` | Conflicto de estado |
-| `422` | Semánticamente inválido |
-| `429` | Límite de consumo excedido |
-| `500` | Error no controlado |
+| `200` | Success with body |
+| `201` | Resource created — includes `Location` header |
+| `204` | Success without body |
+| `400` | Validation failed |
+| `401` | Not authenticated |
+| `403` | Authenticated but lacking the privilege |
+| `404` | Resource does not exist |
+| `409` | State conflict |
+| `422` | Semantically invalid |
+| `429` | Consumption limit exceeded |
+| `500` | Unhandled error |
 
-### 8.3 Sobre de respuesta
+### 8.3 Response Envelope
 
-Éxito:
-```json
+**Success:**
+~~~json
 { "data": { }, "meta": { "page": 0, "size": 20, "total": 137 } }
-```
+~~~
 
-Error:
-```json
+**Error:**
+~~~json
 {
   "error": {
     "code": "VALIDATION_ERROR",
-    "message": "El nombre del curso es obligatorio",
-    "details": [{ "field": "name", "issue": "no puede estar vacío" }],
+    "message": "Course name is required",
+    "details": [{ "field": "name", "issue": "cannot be empty" }],
     "timestamp": "2026-09-15T14:32:10Z",
     "path": "/api/v1/courses"
   }
 }
-```
+~~~
 
 ---
 
-## 9. Manejo de errores
+## 9. Error Handling
 
 ### 9.1 Backend
 
-Todas las excepciones se concentran en un único manejador.
+All exceptions are routed through a single `@RestControllerAdvice`.
 
-```java
+~~~kotlin
 @RestControllerAdvice
-public class GlobalExceptionHandler {
+class GlobalExceptionHandler {
 
-    @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ApiError> handleNotFound(ResourceNotFoundException ex) { }
+    @ExceptionHandler(ResourceNotFoundException::class)
+    fun handleNotFound(ex: ResourceNotFoundException): ResponseEntity<ApiError> = TODO()
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException ex) { }
+    @ExceptionHandler(MethodArgumentNotValidException::class)
+    fun handleValidation(ex: MethodArgumentNotValidException): ResponseEntity<ApiError> = TODO()
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiError> handleUnexpected(Exception ex) { }
+    @ExceptionHandler(Exception::class)
+    fun handleUnexpected(ex: Exception): ResponseEntity<ApiError> = TODO()
 }
-```
+~~~
 
-**Reglas**
-
-- Nunca se devuelve un `stack trace` al cliente.
-- Nunca se devuelve el mensaje crudo de una excepción de infraestructura.
-- Todo error se registra en el log con un identificador de correlación.
+**Rules**
+- Never return a stack trace to the client.
+- Never return the raw message of an infrastructure exception.
+- Always log errors with a correlation ID.
 
 ### 9.2 Android
 
-Los errores se modelan como tipos, no como excepciones que suben sin control.
+Errors are modeled as types, not as exceptions propagating uncontrolled.
 
-```kotlin
+~~~kotlin
 sealed interface AppError {
     data object NoConnection : AppError
     data object Unauthorized : AppError
@@ -962,234 +817,246 @@ sealed interface Result<out T> {
     data class Success<T>(val value: T) : Result<T>
     data class Failure(val error: AppError) : Result<Nothing>
 }
-```
+~~~
 
-`ErrorMapper` traduce códigos HTTP a `AppError`. La capa de presentación decide cómo mostrarlo. **Un error de red nunca se presenta como un error de la aplicación.**
+`ErrorMapper` translates HTTP codes into `AppError`. The presentation layer decides how to show it. **A network error is never presented as an application error.**
 
-### 9.3 Errores específicos del pipeline
+### 9.3 Pipeline-specific errors
 
-El pipeline **no lanza excepciones ante contenido ilegible**. Devuelve un resultado con `uncertain = true` y el motivo. Fallar en leer no es un error del sistema: es información que el usuario debe ver.
+The pipeline **does not throw exceptions on unreadable content**. It returns a result with `uncertain = true` and the reason. Failing to read is not a system error: it is information the user must see.
+
+This is the technical expression of the product's central promise. An exception thrown here would surface as a generic error screen, and the student would lose the one thing the application exists to tell them.
 
 ---
 
-## 10. Estándares de pruebas
+## 10. Testing Standards
 
-### 10.1 Prioridades
+### 10.1 Priorities
 
-| Componente | Tipo | Prioridad | Motivo |
+| Component | Type | Priority | Reason |
 |---|---|---|---|
-| `ConfidenceScorer` | Unitaria | **Alta** | Función pura; el conjunto de calibración es el fixture |
-| `EscalationPolicy` | Unitaria | **Alta** | Lógica de decisión central |
-| `RegionClassifier` | Unitaria | Alta | Errores de ruteo afectan todo el flujo |
-| `RetryPolicy` / `SyncQueue` | Unitaria | Alta | Corresponde al tema de investigación aplicada |
-| Casos de uso | Unitaria | Media | Con repositorios simulados |
-| Controllers | Integración | Media | `MockMvc` |
-| ViewModels | Unitaria | Media | Con `Turbine` sobre `StateFlow` |
-| Composables | Instrumentada | Baja | Costosa; solo pantallas críticas |
+| `ConfidenceScorer` | Unit | **High** | Pure function; the calibration set is the fixture |
+| `EscalationPolicy` | Unit | **High** | Central decision logic |
+| `RegionClassifier` | Unit | High | Routing errors affect the whole flow |
+| `RetryPolicy` / `SyncQueue` | Unit | High | Corresponds to the applied research topic |
+| Use cases | Unit | Medium | With mocked repositories |
+| Controllers | Integration | Medium | `MockMvc` |
+| ViewModels | Unit | Medium | With `Turbine` over `StateFlow` |
+| Composables | Instrumented | Low | Expensive; critical screens only |
 
-### 10.2 Herramientas
+### 10.2 Tools
 
 - **Android:** JUnit 5, MockK, Turbine, `kotlinx-coroutines-test`.
-- **Backend:** JUnit 5, Mockito, `spring-boot-starter-test`, MockMvc.
-- **API:** colección de Postman versionada en el repositorio.
+- **Backend:** JUnit 5, MockK, `spring-boot-starter-test`, MockMvc. *(Mockito was replaced by MockK under D-13: Mockito cannot mock Kotlin `final` classes without an extra agent.)*
+- **API:** Postman collection versioned in the repository.
 
-### 10.3 Convención
+### 10.3 Convention
 
-Estructura `dado / cuando / entonces`, nombres descriptivos en español:
+Given/When/Then structure, descriptive names in English (D-14):
 
-```kotlin
+~~~kotlin
 @Test
-fun `debería escalar a N2 cuando la confianza está bajo el umbral`() {
-    // dado
-    // cuando
-    // entonces
+fun `should escalate to N2 when confidence is below threshold`() {
+    // given
+    // when
+    // then
 }
-```
+~~~
 
 ---
 
-## 11. Flujo de trabajo con Git
+## 11. Git Workflow
 
-### 11.1 Ramas
+### 11.1 Branches
 
-```
-main            Siempre compila y despliega. Protegida.
-develop         Integración continua del equipo.
-feature/<x>     Trabajo en curso.
-fix/<x>         Correcciones.
-```
+~~~text
+main            Always compiles and deploys. Protected.
+develop         Team continuous integration.
+feature/<x>     Work in progress.
+fix/<x>         Corrections.
+~~~
 
-| Prefijo | Uso | Ejemplo |
+| Prefix | Use | Example |
 |---|---|---|
-| `feature/` | Funcionalidad nueva | `feature/confidence-scorer` |
-| `fix/` | Corrección | `fix/camera-rotation` |
-| `chore/` | Configuración, dependencias | `chore/hilt-setup` |
-| `docs/` | Documentación | `docs/architecture` |
+| `feature/` | New capability | `feature/confidence-scorer` |
+| `fix/` | Correction | `fix/camera-rotation` |
+| `chore/` | Configuration, dependencies | `chore/hilt-setup` |
+| `docs/` | Documentation | `docs/architecture` |
 
-### 11.2 Mensajes de commit
+### 11.2 Commit Messages
 
-Formato **Conventional Commits**:
+**Conventional Commits**:
 
-```
-<tipo>(<ámbito>): <descripción en imperativo>
+~~~text
+<type>(<scope>): <description in imperative>
 
-feat(pipeline): agregar clasificador de regiones
-fix(sync): evitar duplicados al reintentar la cola
-docs(arch): documentar la política de escalamiento
-test(confidence): cubrir el umbral de escalamiento
-```
+feat(pipeline): add region classifier
+fix(sync): prevent duplicates on queue retry
+docs(arch): document the escalation policy
+test(confidence): cover the escalation threshold
+~~~
 
-Tipos: `feat` · `fix` · `docs` · `test` · `refactor` · `chore`.
+Types: `feat` · `fix` · `docs` · `test` · `refactor` · `chore`.
 
-### 11.3 Reglas
+### 11.3 Rules
 
-- **Nadie hace push directo a `main`.**
-- Toda rama entra por Pull Request con al menos **una revisión** de otro integrante.
-- La rama debe compilar antes de solicitar revisión.
-- Un PR resuelve un solo asunto.
-- **Motivo de la revisión obligatoria:** la nota es individual y hay dos defensas orales. Revisar el código de los demás es cómo cada integrante entiende las partes que no escribió.
+- **Nobody pushes directly to `main`.**
+- Every branch enters through a Pull Request with at least **one review** from another member.
+- The branch must compile before review is requested.
+- One PR resolves one concern.
+- **Why review is mandatory:** the grade is individual and there are two oral defenses. Reviewing each other's code is how each member understands the parts they did not write.
 
-### 11.4 Reparto de frentes
+### 11.4 Work Fronts
 
-| Frente | Alcance |
+| Front | Scope |
 |---|---|
-| **A — Cliente** | Compose, navegación, roles en UI, Hilt, Retrofit, mapa de confianza |
-| **B — Backend** | Spring Boot, Postgres, Repository, DTOs, JWT, Postman, despliegue |
-| **C — Motor** | OpenCV, ML Kit, escalera, Room, cola de sincronización, push |
+| **A — Client** | Compose, navigation, roles in UI, Hilt, Retrofit, confidence map |
+| **B — Backend** | Spring Boot, Postgres, Repository, DTOs, JWT, Postman, deployment |
+| **C — Engine** | OpenCV, ML Kit, ladder, Room, sync queue, push, applied research |
 
-Los frentes definen la responsabilidad principal, no la exclusividad. Todos revisan el trabajo de todos.
+Fronts define primary responsibility, not exclusivity. Everyone reviews everyone's work.
 
 ---
 
-## 12. Identidad visual y tokens de diseño
+## 12. Visual Identity and Design Tokens
 
-### 12.1 Concepto
+### 12.1 Concept
 
-**Glifo** — el glifo es la unidad mínima de la escritura; el grifo, su guardián. La identidad visual se construye sobre el grifo mitológico: cabeza de águila (vista aguda, leer lo que cuesta leer) y cuerpo de león (guardián de un tesoro).
+**Glifo** — the glyph is the minimum unit of writing; the griffin (*grifo*), its guardian. The visual identity is built on the mythological griffin: eagle's head (sharp sight, reading what is hard to read) and lion's body (guardian of a treasure).
 
-**Restricción legal:** la inspiración estética no puede incluir símbolos de propiedad intelectual de terceros. El grifo mitológico es de dominio público.
+**Legal constraint:** aesthetic inspiration cannot include third-party intellectual property symbols. The mythological griffin is public domain.
 
-### 12.2 Sistema de color
+### 12.2 Color System
 
-Glifo define **dos modos completos**, noche y día. No es un tema oscuro con una variante clara añadida después: ambos modos declaran el mismo conjunto de tokens y solo difieren en los valores. Ningún componente conoce el modo activo; todos leen tokens.
+Glifo defines **two complete modes**, Night and Day. It is not a dark theme with a light variant added afterwards: both modes declare the same set of tokens and differ only in values. No component knows the active mode; all of them read tokens.
 
-El azul pizarra procede del cuerpo del grifo y el dorado de su carácter heráldico. La paleta se aparta deliberadamente del morado por defecto de las herramientas de diseño asistido.
+The slate blue comes from the griffin's body and the gold from its heraldic character. The palette deliberately departs from the default purple of AI design tools.
 
-**Tokens de superficie y texto**
+**Surface and text tokens**
 
-| Token | Noche | Día | Uso |
+| Token | Night | Day | Use |
 |---|---|---|---|
-| `background` | `#161E27` | `#EDEAE0` | Fondo de la aplicación |
-| `surface` | `#2E3B4B` | `#F7F4EC` | Tarjetas, barra superior, superficies elevadas |
-| `surfaceHigh` | `#3B4A5C` | `#D7D1B9` | Relleno interno sobre `surface`: pista de barras de progreso, campos, recortes |
-| `border` | `#4A5A6E` | `#C4BCA3` | Contorno de tarjeta, separadores, borde de campo |
-| `textPrimary` | `#D7D1B9` | `#2E3B4B` | Texto principal |
-| `textSecondary` | `#959595` | `#63666A` | Texto secundario, metadatos, leyendas |
-| `scrim` | `rgba(8,12,17,.72)` | `rgba(46,59,75,.5)` | Velo bajo diálogos y hojas modales |
+| `background` | `#161E27` | `#EDEAE0` | App background |
+| `surface` | `#2E3B4B` | `#F7F4EC` | Cards, top bar, elevated surfaces |
+| `surfaceHigh` | `#3B4A5C` | `#D7D1B9` | Inner fill over `surface`: progress bar tracks, fields, crops |
+| `border` | `#4A5A6E` | `#C4BCA3` | Card outline, separators, field border |
+| `textPrimary` | `#D7D1B9` | `#2E3B4B` | Main text |
+| `textSecondary` | `#959595` | `#63666A` | Secondary text, metadata, captions |
+| `scrim` | `rgba(8,12,17,.72)` | `rgba(46,59,75,.5)` | Veil under dialogs and modal sheets |
 
-**Tokens de acento**
+**Accent tokens**
 
-| Token | Noche | Día | Uso |
+| Token | Night | Day | Use |
 |---|---|---|---|
-| `accent` | `#FFD372` | `#FFD372` | Relleno de acción primaria, indicador activo, barra de progreso |
-| `accentText` | `#FFD372` | `#8A6210` | El acento aplicado a texto o icono sobre fondo, con contraste suficiente |
-| `onAccent` | `#1A1206` | `#2E3B4B` | Texto e icono sobre un relleno de acento |
-| `accentSoft` | `rgba(255,211,114,.16)` | `rgba(196,143,20,.20)` | Fondo de chip o etiqueta activa |
-| `accentFaint` | `rgba(255,211,114,.08)` | `rgba(196,143,20,.10)` | Fondo de fila seleccionada |
-| `accentLine` | `rgba(255,211,114,.42)` | `rgba(160,116,15,.5)` | Borde de elemento activo |
-| `btnSecBorder` | `#FFD372` | `#A07413` | Contorno de botón secundario |
-| `btnSecText` | `#FFD372` | `#8A6210` | Texto de botón secundario |
+| `accent` | `#FFD372` | `#FFD372` | Primary action fill, active indicator, progress bar |
+| `accentText` | `#FFD372` | `#8A6210` | The accent applied to text or icon over a background, with sufficient contrast |
+| `onAccent` | `#1A1206` | `#2E3B4B` | Text and icon over an accent fill |
+| `accentSoft` | `rgba(255,211,114,.16)` | `rgba(196,143,20,.20)` | Chip or active label background |
+| `accentFaint` | `rgba(255,211,114,.08)` | `rgba(196,143,20,.10)` | Selected row background |
+| `accentLine` | `rgba(255,211,114,.42)` | `rgba(160,116,15,.5)` | Active element border |
+| `btnSecBorder` | `#FFD372` | `#A07413` | Secondary button outline |
+| `btnSecText` | `#FFD372` | `#8A6210` | Secondary button text |
 
-**Tokens de alerta**
+> **`accent` and `accentText` are different tokens.** In Day mode `accent` stays `#FFD372` because it is a *fill*, with `onAccent` sitting on top of it. `accentText` darkens to `#8A6210` because it is gold used *as text or icon over a background*. Collapsing the two turns every primary button in Day mode brown.
 
-| Token | Noche | Día |
+**Alert tokens**
+
+| Token | Night | Day |
 |---|---|---|
 | `alert` | `#E0693A` | `#B94117` |
 | `alertSoft` | `rgba(224,105,58,.18)` | `rgba(185,65,23,.14)` |
 | `alertFaint` | `rgba(224,105,58,.09)` | `rgba(185,65,23,.07)` |
 | `alertLine` | `rgba(224,105,58,.45)` | `rgba(185,65,23,.42)` |
 
-**Convención de variantes.** Todo color semántico expone hasta cuatro formas derivadas con el mismo criterio:
+**Variant convention.** Every semantic color exposes up to four derived forms under the same criterion:
 
-| Sufijo | Opacidad noche | Opacidad día | Para qué |
+| Suffix | Night opacity | Day opacity | For what |
 |---|---|---|---|
-| — | 1.0 | 1.0 | Texto, icono, trazo |
-| `Soft` | .16 – .20 | .14 | Relleno de chip, etiqueta o resaltado |
-| `Faint` | .08 – .10 | .07 | Fondo de fila o bloque |
-| `Line` | .42 – .45 | .38 – .50 | Borde |
+| — | 1.0 | 1.0 | Text, icon, stroke |
+| `Soft` | .16 – .20 | .14 | Chip, label, or highlight fill |
+| `Faint` | .08 – .10 | .07 | Row or block background |
+| `Line` | .42 – .45 | .38 – .50 | Border |
 
-`neutralSoft` (`rgba(149,149,149,.18)` en noche, `rgba(99,102,106,.14)` en día) cubre los rellenos sin carga semántica.
+`neutralSoft` (`rgba(149,149,149,.18)` Night, `rgba(99,102,106,.14)` Day) covers fills with no semantic load.
 
-### 12.2.1 Reglas de uso del acento
+### 12.2.1 Accent usage rules
 
-**El dorado es el color de la acción, no el de la marca.** El token `heraldic` desapareció: el dorado heráldico y el acento son ahora el mismo color, y por lo tanto el dorado no puede usarse como decoración de marca sin destruir la señal.
+**Gold is the color of action, not of the brand.** The `heraldic` token is gone: heraldic gold and the accent are now the same color, so gold cannot be used as brand decoration without destroying the signal.
 
-- Si un elemento es dorado, **se puede tocar o está activo**. No hay excepciones decorativas.
-- La identidad de marca descansa en el logotipo del grifo, no en un color reservado.
-- Sobre relleno de acento se usa `onAccent`; el acento como texto sobre fondo usa `accentText`, que en modo día es un dorado oscurecido para alcanzar contraste legible. Nunca `#FFD372` como texto sobre fondo claro.
+- If an element is gold, **it can be touched or it is active**. No decorative exceptions.
+- Brand identity rests on the griffin logo, not on a reserved color.
+- Over an accent fill use `onAccent`; the accent as text over a background uses `accentText`. Never `#FFD372` as text over a light background.
+- **The Glifo logo must not use `accentText`.** It uses a neutral or primary text color, to preserve the rule that gold means interaction.
 
-### 12.3 Estados de confianza
+### 12.3 Confidence states
 
-Escala funcional, no decorativa. Es el vocabulario visual del mapa de confianza y **cada estado se codifica por color y por forma simultáneamente.**
+A functional scale, not a decorative one. It is the visual vocabulary of the confidence map, and **every state is coded by color and by non-chromatic form simultaneously.**
 
-| Estado | Noche | Día | Significado | Nivel |
+| State | Night | Day | Meaning | Level |
 |---|---|---|---|---|
-| Verificado | `#5FA88C` | `#2F7D62` | OCR local, alta confianza | N1 |
-| Reparado | `#8FB7DC` | `#3E6E9E` | Fórmula resuelta en LaTeX | N1.5 |
-| Escalado | `#E0693A` | `#B94117` | Requirió modelo de visión | N2 |
-| Incierto | `#959595` | `#63666A` | Nadie lo leyó con certeza | — |
+| **Verified** | `#5FA88C` | `#2F7D62` | Local OCR, high confidence | N1 |
+| **Repaired** | `#8FB7DC` | `#3E6E9E` | Formula resolved into LaTeX | N1.5 |
+| **Escalated** | `#F59E0B` | `#D97706` | Required a vision model | N2 |
+| **Alert** | `#E0693A` | `#B94117` | Destructive / error | — |
+| **Uncertain** | `#959595` | `#63666A` | Nobody read it with certainty | UNR |
 
-Cada estado expone las variantes `Soft`, `Faint` y `Line` según §12.2.
+Each state exposes the `Soft`, `Faint`, and `Line` variants per §12.2.
 
-**Codificación sobre texto en línea.** Los fragmentos del apunte se marcan con subrayado y relleno, no solo con color:
+**Escalated is separate from alert (D-12).** Escalating to vision is normal pipeline operation, not a failure. Presenting it in the error color would contradict the product's own argument. The previously shared value (`#E0693A` / `#B94117` for both) must not be reintroduced. Applied in the documents and in all eight prototype files.
 
-| Estado | Subrayado | Relleno |
+**Inline text coding.** Note fragments are marked with underline and fill, not color alone:
+
+| State | Underline | Fill |
 |---|---|---|
-| Verificado | Sólido 2 px | Ninguno |
-| Reparado | Sólido 2 px | `repairedSoft` |
-| Escalado | Sólido 2 px | `escalatedFaint` |
-| Incierto | **Punteado** 2 px | `uncertainSoft` |
+| Verified | Solid 2 px | None |
+| Repaired | Solid 2 px | `repairedSoft` |
+| Escalated | Solid 2 px | `escalatedFaint` |
+| Uncertain | **Dotted** 2 px | `uncertainSoft` |
 
-**Codificación por etiqueta.** Todo fragmento no resuelto en N1 lleva además una etiqueta textual con estado y nivel —`REPARADO · N1.5`, `ESCALADO · N2`, `INCIERTO`—, y el encabezado del apunte resume el reparto (`14 verificados · 2 reparados · 1 escalado · 1 incierto`).
+**Label coding.** Every fragment not resolved at N1 also carries a textual label with state and level —`REPAIRED · N1.5`, `ESCALATED · N2`, `UNCERTAIN`— and the note header summarizes the distribution (`14 verified · 2 repaired · 1 escalated · 1 uncertain`).
 
-**Motivo de la doble codificación:** alrededor del 8 % de los hombres presenta alguna deficiencia en la percepción del color, y el par verde/ámbar es el que peor se distingue. Si el mapa de confianza dependiera solo del color, la función central de la aplicación sería inaccesible para esas personas. Por eso el color nunca es el único portador de la información: la etiqueta textual siempre lo acompaña.
+**Why dual coding:** roughly 8 % of men have some color vision deficiency, and the green/amber pair is the worst discriminated. If the confidence map depended on color alone, the central function of the application would be inaccessible to those users. That is why color is never the sole carrier: the textual label always accompanies it.
 
-**Punto abierto — colisión `escalated` / `alert`.** Ambos tokens comparten valor (`#E0693A` en noche, `#B94117` en día). El escalamiento a visión es funcionamiento normal del pipeline, no una falla, y presentarlo con el color de error contradice el discurso del producto. Se resuelve separando `escalated` hacia un ámbar propio antes del Laboratorio 3, que es cuando el mapa de confianza se defiende. Ver `Glifo_Bitacora_Decisiones.md` D-12.
+**On geometric coding.** The earlier scheme —filled circle, square, triangle, dotted circle— did not survive contact with inline text: there is nowhere to put a triangle inside a paragraph. Inside running text it is replaced by the underline + fill + label combination above. Geometric markers remain valid as compact status chips in lists and headers, where there is room for them, but they are never the only carrier there either.
 
-### 12.4 Tipografía y espaciado
+### 12.4 Typography and spacing
 
-| Elemento | Valor |
+| Element | Value |
 |---|---|
-| Familia | Inter, con la tipográfica del sistema como respaldo |
-| Título | 22 sp · peso 500 |
-| Subtítulo | 18 sp · peso 500 |
-| Cuerpo | 16 sp · peso 400 |
-| Secundario | 14 sp · peso 400 |
-| Leyenda y metadato | 12 – 13 sp · peso 400 |
-| Etiqueta de estado | 11 sp · peso 600 · versalitas con `letter-spacing` 0.5 |
-| Fórmulas | Monoespaciada —JetBrains Mono o Roboto Mono— para LaTeX crudo |
-| Escala de espaciado | 4 · 8 · 12 · 16 · 24 · 32 dp |
-| Radio de esquina | 8 dp controles y etiquetas · 12 dp tarjetas · 3 dp resaltado de fragmento · completo en píldoras y barras |
-| Altura de control | 48 dp botón · 56 dp barra superior |
+| Family | Inter, with the system typeface as fallback |
+| Title | 22 sp · weight 500 |
+| Subtitle | 18 sp · weight 500 |
+| Body | 16 sp · weight 400 |
+| Secondary | 14 sp · weight 400 |
+| Caption and metadata | 12 – 13 sp · weight 400 |
+| Status label | 11 sp · weight 600 · small caps with `letter-spacing` 0.5 |
+| Formulas | Monospaced —JetBrains Mono or Roboto Mono— for raw LaTeX |
+| Spacing scale | 4 · 8 · 12 · 16 · 24 · 32 dp |
+| Corner radius | 8 dp controls and labels · 12 dp cards · 3 dp fragment highlight · full on pills and bars |
+| Control height | **48 dp button · 56 dp top bar** |
 
-### 12.5 Reglas de interfaz
+The 48 dp button and 56 dp top bar heights are strict and override any prototype component modeled at other values.
 
-- **Un apunte nunca se muestra sin su indicador de confianza.**
-- **El recorte original siempre está disponible** junto a toda fórmula transcrita.
-- Cuando se rechaza una captura, se indica **el motivo concreto**, no un mensaje genérico.
-- El nivel del pipeline que resolvió cada región es consultable desde la interfaz.
+### 12.5 Interface rules
+
+- **A note is never shown without its confidence indicator.**
+- **The original crop is always available** next to every transcribed formula.
+- When a capture is rejected, **the concrete reason** is stated, never a generic message.
+- The pipeline level that resolved each region is inspectable from the interface.
 
 ---
 
-## Anexo — Verificación rápida antes de un Pull Request
+## Annex — Pre-Pull-Request checklist
 
-- [ ] Compila y las pruebas pasan
-- [ ] Sin credenciales ni URLs de desarrollo en el código
-- [ ] Nombres en inglés; entidades y tablas conforme a §6.1
-- [ ] Ninguna entidad JPA expuesta por HTTP
-- [ ] Inyección por constructor
-- [ ] Sin lógica de negocio en controllers ni composables
-- [ ] Errores modelados, no propagados sin control
-- [ ] Sin números mágicos
-- [ ] Commits con el formato de §11.2
-- [ ] El dominio no importa Android, Room, Retrofit ni Spring
+- [ ] It compiles and the tests pass
+- [ ] No credentials or development URLs in the code
+- [ ] Names in English; entities and tables conform to §6.1
+- [ ] No JPA entity exposed over HTTP
+- [ ] Constructor injection
+- [ ] No business logic in controllers or composables
+- [ ] Errors modeled, not propagated uncontrolled
+- [ ] No magic numbers
+- [ ] Commits in the §11.2 format
+- [ ] The domain does not import Android, Room, Retrofit, or Spring
+- [ ] No `@Entity` declared as `data class` (§7.2)
+- [ ] UI strings in `res/values-es/strings.xml`, not hardcoded (§7.3)

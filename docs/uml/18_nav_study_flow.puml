@@ -41,10 +41,10 @@ note bottom of G4
 end note
 
 note bottom of F3
-  [D] Deseable. Computed from
+  [D] Should-have. Computed from
   topic_coverage.updated_at alone,
-  NOT from coverage_snapshots —
-  snapshots are Opcional and second
+  NOT from coverage_snapshots â€”
+  snapshots are Could-have and second
   on the cut list. See 4.4.
 end note
 @enduml

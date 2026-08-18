@@ -62,6 +62,8 @@ package "feature.note.data · FRONT" #F7F4EC {
   }
   interface NoteApi <<Retrofit>> {
     + getNote(id : Long) : NoteResponse
+    + createNote(body : CreateNoteRequest) : NoteResponse
+    + reconstruct(id : Long) : NoteResponse
     + patchFragment(id : Long, spanId : String, body : CorrectionRequest) : NoteResponse
     + requestFullVision(id : Long, pageId : Long) : PageResponse
   }

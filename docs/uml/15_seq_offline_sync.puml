@@ -20,54 +20,89 @@ end box
 
 box "BACK · server" #FFF3D8
   participant "NoteController" as NC
+  participant "PushService" as PS
   database "PostgreSQL" as PG
 end box
 
-== Offline ==
-S -> VM : capture (airplane mode)
+box "EXTERNAL" #F5EDE9
+  participant "Firebase FCM" as FCM
+end box
+
+== Offline · note is created first (D-16) ==
+S -> VM : start note (airplane mode)
+VM -> NR : createDraftNote(courseId)
+NR -> RM : insert Note(status = DRAFT, localId)
+NR -> SQ : enqueue(CREATE_NOTE, key = uuidNote)
+SQ -> RM : insert SyncOperation (PENDING)
+NR --> VM : draft ready
+note right of RM
+  A DRAFT note with zero pages is
+  legal, and only here. That is the
+  whole point of D-16: POST /notes
+  and POST /notes/{id}/pages cannot
+  be atomic across a dead network.
+end note
+
+== Offline · pages accumulate ==
+S -> VM : capture page
 VM -> NR : savePage(result)
-NR -> RM : insert page
-NR -> SQ : enqueue(UPLOAD_PAGE, idempotencyKey = uuid4())
-SQ -> RM : insert sync_operations (PENDING)
+NR -> RM : insert page (localNoteId)
+NR -> SQ : enqueue(UPLOAD_PAGE, key = uuidPage, after = uuidNote)
+SQ -> RM : insert SyncOperation (PENDING)
 NR --> VM : local success
-VM --> S : "Saved. 1 pending upload."
+VM --> S : "Saved. 2 pending operations."
 
-== Connectivity returns ==
+== Connectivity returns · ordering matters ==
 SW -> SQ : nextBatch(limit = 10)
-SQ --> SW : [op#1]
-SW -> NC : POST /notes/{id}/pages\nIdempotency-Key: <same uuid>
+SQ --> SW : [CREATE_NOTE, UPLOAD_PAGE]
 
-alt 2xx
-  NC -> PG : insert page + sync_queue row
-  NC --> SW : 201
-  SW -> SQ : markDone(op#1)
-else 409 duplicate key
-  NC --> SW : 409 ALREADY_PROCESSED
-  SW -> SQ : markDone(op#1)
-  note right of SW
-    A duplicate is a SUCCESS, not
-    a failure. This is the whole
-    reason the key is generated at
-    enqueue time and never per attempt.
-  end note
-else 5xx or timeout
-  NC --> SW : error
-  SW -> RP : delayFor(attempt)
-  RP --> SW : backoff + jitter
-  SW -> SQ : markFailed(op#1, error)
-  SW --> SW : reschedule
+group CREATE_NOTE first â€” the page has nowhere to land otherwise
+  SW -> NC : POST /notes\nIdempotency-Key: uuidNote
+  NC -> PG : insert note (DRAFT)
+  NC --> SW : 201 { serverId }
+  SW -> RM : map localId -> serverId
+  SW -> SQ : markDone(CREATE_NOTE)
 end
 
-== Queue drained ==
+group then each page
+  SW -> NC : POST /notes/{serverId}/pages\nIdempotency-Key: uuidPage
+  alt 2xx
+    NC -> PG : insert page + sync_queue row (device_id)
+    NC --> SW : 201
+    SW -> SQ : markDone(UPLOAD_PAGE)
+  else 409 duplicate key
+    NC --> SW : 409 ALREADY_PROCESSED
+    SW -> SQ : markDone(UPLOAD_PAGE)
+    note right of SW
+      A duplicate is a SUCCESS, not
+      a failure. This is the whole
+      reason the key is generated at
+      enqueue time and never per attempt.
+    end note
+  else 5xx or timeout
+    NC --> SW : error
+    SW -> RP : delayFor(attempt)
+    RP --> SW : backoff + jitter
+    SW -> SQ : markFailed(UPLOAD_PAGE, error)
+    SW --> SW : reschedule
+  end
+end
+
+== Queue drained · note leaves DRAFT ==
 SW -> SQ : nextBatch()
 SQ --> SW : [] empty
-NC -> S : FCM push · "Sync complete"
+NC -> PG : update note.status = PROCESSING -> READY
+NC -> PS : sendSyncComplete(deviceId)
+PS -> FCM : push(fcmToken, "Sync complete")
+FCM --> S : notification
 
-note right of NC
-  Sent by the server once the last
-  operation for this device is
-  acknowledged. Real FCM, not a
-  locally-raised notification — the
-  course requires push to be real.
+note right of PS
+  deviceId is resolved by joining
+  sync_queue.device_id -> devices.fcm_token
+  (D-18). The push targets the phone that
+  uploaded the batch, not every device the
+  user owns. Real FCM, not a locally-raised
+  notification â€” the course requires push
+  to be real.
 end note
 @enduml
