@@ -1,0 +1,20 @@
+{
+    "logs": [
+        {
+            "outputFile": "cr.ac.una.glifo.app-mergeDebugResources-75:/values-watch-v21/values-watch-v21.xml",
+            "map": [
+                {
+                    "source": "C:\\Users\\Brandon Brenes\\.gradle\\caches\\9.7.0\\transforms\\1422aef5c322b4a5db83e33141f51653\\transformed\\appcompat-1.7.0\\res\\values-watch-v21\\values-watch-v21.xml",
+                    "from": {
+                        "startLines": "2,6,10",
+                        "startColumns": "4,4,4",
+                        "startOffsets": "55,271,499",
+                        "endLines": "5,9,13",
+                        "endColumns": "12,12,12",
+                        "endOffsets": "266,494,724"
+                    }
+                }
+            ]
+        }
+    ]
+}

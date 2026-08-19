@@ -12,10 +12,14 @@ import cr.ac.una.glifo.core.network.dto.LoginRequest
 import cr.ac.una.glifo.core.network.dto.NoteDetailResponse
 import cr.ac.una.glifo.core.network.dto.NoteResponse
 import cr.ac.una.glifo.core.network.dto.RegisterRequest
+import cr.ac.una.glifo.core.network.dto.UpdateRolesRequest
+import cr.ac.una.glifo.core.network.dto.UpdateStatusRequest
+import cr.ac.una.glifo.core.network.dto.UserAdminDto
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
@@ -27,6 +31,22 @@ interface GlifoApi {
 
     @POST("auth/login")
     suspend fun login(@Body request: LoginRequest): AuthResponse
+
+    // Admin
+    @GET("admin/users")
+    suspend fun getAdminUsers(): ApiResponse<List<UserAdminDto>>
+
+    @PATCH("admin/users/{id}/roles")
+    suspend fun updateUserRoles(
+        @Path("id") id: Long,
+        @Body request: UpdateRolesRequest
+    ): ApiResponse<UserAdminDto>
+
+    @PATCH("admin/users/{id}/status")
+    suspend fun updateUserStatus(
+        @Path("id") id: Long,
+        @Body request: UpdateStatusRequest
+    ): ApiResponse<UserAdminDto>
 
     // Courses
     @GET("courses")

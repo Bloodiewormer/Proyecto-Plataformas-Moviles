@@ -16,12 +16,13 @@ import cr.ac.una.glifo.core.ui.theme.GlifoTheme
 fun HomeScreen(
     onNavigateToCourse: (Long) -> Unit,
     onNavigateToSettings: () -> Unit,
-    onNavigateToStudy: () -> Unit
+    onNavigateToStudy: () -> Unit,
+    onNavigateToAdmin: () -> Unit = {}
 ) {
     Scaffold(
         topBar = {
             GlifoTopBar(
-                title = "Hola, Estudiante"
+                title = "Glifo"
             )
         },
         bottomBar = {
@@ -49,6 +50,38 @@ fun HomeScreen(
                 .padding(padding)
                 .padding(16.dp)
         ) {
+            // Admin Section Card (GLI-050)
+            GlifoCard(
+                onClick = onNavigateToAdmin,
+                modifier = Modifier.padding(bottom = 16.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(
+                            text = "🛡️ Panel de Administración",
+                            color = GlifoTheme.colors.textPrimary,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Gestionar usuarios y roles del sistema",
+                            color = GlifoTheme.colors.textSecondary,
+                            fontSize = 12.sp
+                        )
+                    }
+                    Text(
+                        text = "ADMIN",
+                        color = GlifoTheme.colors.alert,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
             Text(
                 text = "Mis cursos",
                 color = GlifoTheme.colors.textPrimary,

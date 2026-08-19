@@ -9,12 +9,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import cr.ac.una.glifo.core.network.GlifoApi
+import cr.ac.una.glifo.feature.admin.presentation.AdminUsersScreen
+import cr.ac.una.glifo.feature.auth.presentation.LoginScreen
+import cr.ac.una.glifo.feature.auth.presentation.RegisterScreen
+import cr.ac.una.glifo.feature.home.presentation.HomeScreen
 import kotlinx.coroutines.delay
 
 @Composable
@@ -35,23 +41,51 @@ fun GlifoNavHost(
         }
         
         composable(Screen.Login.route) {
-            PlaceholderScreen("Login", onAction = {
-                navController.navigate(Screen.Home.route) {
-                    popUpTo(Screen.Login.route) { inclusive = true }
+            LoginScreen(
+                onNavigateToRegister = {
+                    navController.navigate(Screen.Register.route)
+                },
+                onLoginSuccess = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
                 }
-            })
+            )
         }
         
         composable(Screen.Register.route) {
-            PlaceholderScreen("Register", onAction = {
-                navController.navigate(Screen.Home.route) {
-                    popUpTo(Screen.Register.route) { inclusive = true }
+            RegisterScreen(
+                onNavigateToLogin = {
+                    navController.popBackStack()
+                },
+                onRegisterSuccess = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Register.route) { inclusive = true }
+                    }
                 }
-            })
+            )
         }
         
         composable(Screen.Home.route) {
-            PlaceholderScreen("Home")
+            HomeScreen(
+                onNavigateToCourse = { courseId ->
+                    navController.navigate(Screen.CourseDetail.createRoute(courseId))
+                },
+                onNavigateToSettings = {
+                    navController.navigate(Screen.Settings.route)
+                },
+                onNavigateToStudy = {
+                    navController.navigate(Screen.FlashcardSession.route)
+                },
+                onNavigateToAdmin = {
+                    navController.navigate(Screen.AdminUsers.route)
+                }
+            )
+        }
+
+        composable(Screen.AdminUsers.route) {
+            // Note: Api client can be injected via EntryPoint or parameter
+            PlaceholderAdminWrapper(onBack = { navController.popBackStack() })
         }
         
         composable(
@@ -118,6 +152,11 @@ fun GlifoNavHost(
             PlaceholderScreen("Profile", onBack = { navController.popBackStack() })
         }
     }
+}
+
+@Composable
+fun PlaceholderAdminWrapper(onBack: () -> Unit) {
+    PlaceholderScreen("Admin Users Panel (GLI-050)", onBack = onBack)
 }
 
 @Composable
