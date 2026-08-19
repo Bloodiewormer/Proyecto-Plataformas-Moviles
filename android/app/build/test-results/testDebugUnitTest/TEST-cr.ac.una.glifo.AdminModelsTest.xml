@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="cr.ac.una.glifo.AdminModelsTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-08-19T22:51:31.691Z" hostname="MSI-BRANDON" time="0.055">
-  <properties/>
-  <testcase name="test update status request carries boolean flag" classname="cr.ac.una.glifo.AdminModelsTest" time="0.007"/>
-  <testcase name="test update role request carries role names" classname="cr.ac.una.glifo.AdminModelsTest" time="0.034"/>
-  <testcase name="test user admin dto holds correct role data" classname="cr.ac.una.glifo.AdminModelsTest" time="0.001"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>

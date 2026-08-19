@@ -1,8 +1,0 @@
-cr.ac.una.glifo.app-pngs-0 C:\Users\Brandon Brenes\Documents\MOVILES\android\app\build\generated\res\pngs\debug
-cr.ac.una.glifo.app-updated_navigation_xml-1 C:\Users\Brandon Brenes\Documents\MOVILES\android\app\build\generated\updated_navigation_xml\debug
-cr.ac.una.glifo.app-packageDebugResources-2 C:\Users\Brandon Brenes\Documents\MOVILES\android\app\build\intermediates\incremental\debug\packageDebugResources\merged.dir
-cr.ac.una.glifo.app-packageDebugResources-3 C:\Users\Brandon Brenes\Documents\MOVILES\android\app\build\intermediates\incremental\debug\packageDebugResources\stripped.dir
-cr.ac.una.glifo.app-debug-4 C:\Users\Brandon Brenes\Documents\MOVILES\android\app\build\intermediates\merged_res\debug\mergeDebugResources
-cr.ac.una.glifo.app-debug-5 C:\Users\Brandon Brenes\Documents\MOVILES\android\app\src\debug\res
-cr.ac.una.glifo.app-main-6 C:\Users\Brandon Brenes\Documents\MOVILES\android\app\src\main\res
-gradleHome-0 C:\Users\Brandon Brenes\.gradle
