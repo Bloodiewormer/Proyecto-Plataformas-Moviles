@@ -11,16 +11,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cr.ac.una.glifo.core.datastore.TokenManager
+import cr.ac.una.glifo.core.network.GlifoApi
+import cr.ac.una.glifo.core.network.dto.LoginRequest
 import cr.ac.una.glifo.core.ui.component.GlifoButton
 import cr.ac.una.glifo.core.ui.component.GlifoTextField
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
     onNavigateToRegister: () -> Unit,
-    onLoginSuccess: () -> Unit
+    onLoginSuccess: () -> Unit,
+    glifoApi: GlifoApi? = null,
+    tokenManager: TokenManager? = null
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -88,9 +92,31 @@ fun LoginScreen(
                         isLoading = true
                         error = null
                         coroutineScope.launch {
-                            delay(1000)
-                            isLoading = false
-                            onLoginSuccess()
+                            try {
+                                if (glifoApi != null && tokenManager != null) {
+                                    val response = glifoApi.login(LoginRequest(email = email.trim(), password = password))
+                                    val authData = response.data
+                                    tokenManager.saveToken(
+                                        token = authData.token,
+                                        userId = authData.user.id,
+                                        userEmail = authData.user.email,
+                                        roles = authData.user.roles
+                                    )
+                                } else {
+                                    // Fallback for previews/mocking
+                                    tokenManager?.saveToken(
+                                        token = "mock-token",
+                                        userId = 1L,
+                                        userEmail = email.trim(),
+                                        roles = listOf("ROLE_STUDENT")
+                                    )
+                                }
+                                isLoading = false
+                                onLoginSuccess()
+                            } catch (e: Exception) {
+                                isLoading = false
+                                error = e.message ?: "Credenciales inválidas"
+                            }
                         }
                     }
                 }

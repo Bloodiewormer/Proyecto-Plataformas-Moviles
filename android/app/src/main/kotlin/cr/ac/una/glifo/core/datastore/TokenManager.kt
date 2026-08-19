@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -20,13 +21,15 @@ class TokenManager @Inject constructor(private val context: Context) {
         private val TOKEN_KEY = stringPreferencesKey("jwt_token")
         private val USER_ID_KEY = longPreferencesKey("user_id")
         private val USER_EMAIL_KEY = stringPreferencesKey("user_email")
+        private val USER_ROLES_KEY = stringSetPreferencesKey("user_roles")
     }
 
-    suspend fun saveToken(token: String, userId: Long, userEmail: String) {
+    suspend fun saveToken(token: String, userId: Long, userEmail: String, roles: List<String> = emptyList()) {
         context.dataStore.edit { preferences ->
             preferences[TOKEN_KEY] = token
             preferences[USER_ID_KEY] = userId
             preferences[USER_EMAIL_KEY] = userEmail
+            preferences[USER_ROLES_KEY] = roles.toSet()
         }
     }
 
@@ -36,6 +39,14 @@ class TokenManager @Inject constructor(private val context: Context) {
 
     suspend fun getUserId(): Long? {
         return context.dataStore.data.first()[USER_ID_KEY]
+    }
+
+    suspend fun getUserEmail(): String? {
+        return context.dataStore.data.first()[USER_EMAIL_KEY]
+    }
+
+    suspend fun getRoles(): Set<String> {
+        return context.dataStore.data.first()[USER_ROLES_KEY] ?: emptySet()
     }
 
     suspend fun clearAll() {
@@ -50,5 +61,17 @@ class TokenManager @Inject constructor(private val context: Context) {
 
     val isLoggedInFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
         preferences[TOKEN_KEY] != null
+    }
+
+    val rolesFlow: Flow<Set<String>> = context.dataStore.data.map { preferences ->
+        preferences[USER_ROLES_KEY] ?: emptySet()
+    }
+
+    val isAdminFlow: Flow<Boolean> = rolesFlow.map { roles ->
+        roles.any { it.contains("ADMIN", ignoreCase = true) }
+    }
+
+    val isTeacherFlow: Flow<Boolean> = rolesFlow.map { roles ->
+        roles.any { it.contains("TEACHER", ignoreCase = true) || it.contains("DOCENTE", ignoreCase = true) }
     }
 }

@@ -9,12 +9,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import cr.ac.una.glifo.feature.auth.presentation.LoginScreen
+import cr.ac.una.glifo.feature.auth.presentation.RegisterScreen
+import cr.ac.una.glifo.feature.course.presentation.CourseDetailScreen
+import cr.ac.una.glifo.feature.home.presentation.HomeScreen
+import cr.ac.una.glifo.feature.home.presentation.HomeViewModel
 import kotlinx.coroutines.delay
 
 @Composable
@@ -26,32 +32,46 @@ fun GlifoNavHost(
         
         composable(Screen.Splash.route) {
             LaunchedEffect(Unit) {
-                delay(2000)
+                delay(1500)
                 navController.navigate(Screen.Login.route) {
                     popUpTo(Screen.Splash.route) { inclusive = true }
                 }
             }
-            PlaceholderScreen("Splash")
+            PlaceholderScreen("Glifo Splash")
         }
         
         composable(Screen.Login.route) {
-            PlaceholderScreen("Login", onAction = {
-                navController.navigate(Screen.Home.route) {
-                    popUpTo(Screen.Login.route) { inclusive = true }
+            LoginScreen(
+                onNavigateToRegister = { navController.navigate(Screen.Register.route) },
+                onLoginSuccess = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
                 }
-            })
+            )
         }
         
         composable(Screen.Register.route) {
-            PlaceholderScreen("Register", onAction = {
-                navController.navigate(Screen.Home.route) {
-                    popUpTo(Screen.Register.route) { inclusive = true }
+            RegisterScreen(
+                onNavigateToLogin = { navController.popBackStack() },
+                onRegisterSuccess = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Register.route) { inclusive = true }
+                    }
                 }
-            })
+            )
         }
         
         composable(Screen.Home.route) {
-            PlaceholderScreen("Home")
+            val homeViewModel: HomeViewModel = hiltViewModel()
+            HomeScreen(
+                onNavigateToCourse = { courseId ->
+                    navController.navigate(Screen.CourseDetail.createRoute(courseId))
+                },
+                onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
+                onNavigateToStudy = { navController.navigate(Screen.StudyHub.createRoute(1L)) },
+                viewModel = homeViewModel
+            )
         }
         
         composable(
@@ -59,7 +79,12 @@ fun GlifoNavHost(
             arguments = listOf(navArgument("courseId") { type = NavType.LongType })
         ) { backStackEntry ->
             val courseId = backStackEntry.arguments?.getLong("courseId") ?: 0L
-            PlaceholderScreen("CourseDetail ($courseId)", onBack = { navController.popBackStack() })
+            CourseDetailScreen(
+                courseId = courseId,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToNotes = { navController.navigate(Screen.NoteList.createRoute(courseId)) },
+                onNavigateToCapture = { navController.navigate(Screen.Capture.createRoute(courseId)) }
+            )
         }
 
         composable(

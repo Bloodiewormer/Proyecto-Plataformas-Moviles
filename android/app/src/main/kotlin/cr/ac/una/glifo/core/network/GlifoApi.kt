@@ -23,10 +23,10 @@ import retrofit2.http.Query
 interface GlifoApi {
     // Auth
     @POST("auth/register")
-    suspend fun register(@Body request: RegisterRequest): AuthResponse
+    suspend fun register(@Body request: RegisterRequest): ApiResponse<AuthResponse>
 
     @POST("auth/login")
-    suspend fun login(@Body request: LoginRequest): AuthResponse
+    suspend fun login(@Body request: LoginRequest): ApiResponse<AuthResponse>
 
     // Courses
     @GET("courses")
