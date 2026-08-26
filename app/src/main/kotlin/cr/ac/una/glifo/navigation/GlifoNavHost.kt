@@ -50,9 +50,6 @@ fun GlifoNavHost(
             SplashScreen(
                 onNavigateToLogin = {
                     navController.navigate(Screen.Login.route)
-                },
-                onNavigateToRegister = {
-                    navController.navigate(Screen.Register.route)
                 }
             )
         }
@@ -65,18 +62,9 @@ fun GlifoNavHost(
                 onNavigateToForgotPassword = {
                     navController.navigate(Screen.ForgotPassword.route)
                 },
-                onLoginStudentSuccess = {
+                onLoginSuccess = {
+                    // Default to student home.
                     navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Splash.route) { inclusive = true }
-                    }
-                },
-                onLoginTeacherSuccess = {
-                    navController.navigate(Screen.HomeTeacher.route) {
-                        popUpTo(Screen.Splash.route) { inclusive = true }
-                    }
-                },
-                onLoginAdminSuccess = {
-                    navController.navigate(Screen.HomeAdmin.route) {
                         popUpTo(Screen.Splash.route) { inclusive = true }
                     }
                 }
@@ -98,7 +86,8 @@ fun GlifoNavHost(
 
         composable(Screen.ForgotPassword.route) {
             ForgotPasswordScreen(
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onSendLink = { navController.popBackStack() }
             )
         }
 
