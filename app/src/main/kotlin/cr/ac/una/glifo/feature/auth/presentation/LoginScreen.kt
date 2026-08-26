@@ -24,6 +24,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun LoginScreen(
     onNavigateToRegister: () -> Unit,
+    onNavigateToForgotPassword: () -> Unit,
     onLoginSuccess: () -> Unit
 ) {
     var email by remember { mutableStateOf("") }
@@ -148,7 +149,7 @@ fun LoginScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(44.dp)
-                        .clickable { /* Handle forgot password */ },
+                        .clickable { onNavigateToForgotPassword() },
                     contentAlignment = Alignment.Center
                 ) {
                     Text(

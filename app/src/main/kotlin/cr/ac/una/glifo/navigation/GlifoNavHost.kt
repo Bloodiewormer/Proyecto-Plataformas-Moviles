@@ -43,6 +43,9 @@ fun GlifoNavHost(
                 onNavigateToRegister = {
                     navController.navigate(Screen.Register.route)
                 },
+                onNavigateToForgotPassword = {
+                    navController.navigate(Screen.ForgotPassword.route)
+                },
                 onLoginSuccess = {
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
@@ -60,6 +63,17 @@ fun GlifoNavHost(
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
+                }
+            )
+        }
+        
+        composable(Screen.ForgotPassword.route) {
+            cr.ac.una.glifo.feature.auth.presentation.ForgotPasswordScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onSendLink = {
+                    navController.popBackStack()
                 }
             )
         }
