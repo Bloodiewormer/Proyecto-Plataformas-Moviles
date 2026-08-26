@@ -3,130 +3,159 @@ package cr.ac.una.glifo.feature.auth.presentation
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.ui.component.GlifoButton
-import cr.ac.una.glifo.core.ui.component.GlifoButtonVariant
-import cr.ac.una.glifo.core.ui.component.GlifoField
-import cr.ac.una.glifo.core.ui.component.GlifoLogo
+import cr.ac.una.glifo.core.ui.component.GlifoTextField
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
     onNavigateToRegister: () -> Unit,
     onNavigateToForgotPassword: () -> Unit,
-    onLoginStudentSuccess: () -> Unit,
-    onLoginTeacherSuccess: () -> Unit = onLoginStudentSuccess,
-    onLoginAdminSuccess: () -> Unit = onLoginStudentSuccess
+    onLoginSuccess: () -> Unit
 ) {
-    val colors = GlifoTheme.colors
-    var email by remember { mutableStateOf("bbrenes@est.una.ac.cr") }
+    var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+    
+    val coroutineScope = rememberCoroutineScope()
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.background)
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .verticalScroll(rememberScrollState())
-            .padding(14.dp)
+            .background(GlifoTheme.colors.background)
+            .padding(horizontal = 24.dp, vertical = 24.dp)
     ) {
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Small Logo without ring
-        GlifoLogo(size = 44.dp, showRing = false)
-
-        Text(
-            text = "Entrar a Glifo",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Medium,
-            color = colors.textPrimary,
-            modifier = Modifier.padding(top = 18.dp, bottom = 5.dp)
-        )
-
-        Text(
-            text = "Usá tu correo institucional.",
-            fontSize = 13.sp,
-            color = colors.textSecondary,
-            modifier = Modifier.padding(bottom = 22.dp)
-        )
-
-        GlifoField(
-            label = "Correo",
-            value = email,
-            onValueChange = { email = it },
-            isFocused = true
-        )
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        GlifoField(
-            label = "Contraseña",
-            value = password,
-            placeholder = "••••••••",
-            onValueChange = { password = it }
-        )
-
-        Spacer(modifier = Modifier.height(18.dp))
-
-        GlifoButton(
-            text = "Entrar como Estudiante",
-            onClick = onLoginStudentSuccess
-        )
-
-        Spacer(modifier = Modifier.height(6.dp))
-
-        GlifoButton(
-            text = "Entrar como Docente",
-            variant = GlifoButtonVariant.Secondary,
-            onClick = onLoginTeacherSuccess
-        )
-
-        Spacer(modifier = Modifier.height(6.dp))
-
-        GlifoButton(
-            text = "Entrar como Admin",
-            variant = GlifoButtonVariant.Secondary,
-            onClick = onLoginAdminSuccess
-        )
-
-        Spacer(modifier = Modifier.height(6.dp))
-
-        GlifoButton(
-            text = "Olvidé mi contraseña",
-            variant = GlifoButtonVariant.Text,
-            onClick = onNavigateToForgotPassword
-        )
-
-        Spacer(modifier = Modifier.weight(1f, fill = false))
-        Spacer(modifier = Modifier.height(40.dp))
-
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 8.dp, bottom = 14.dp),
+                .weight(1f),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.Start
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_glifo_mark),
+                contentDescription = null,
+                tint = GlifoTheme.colors.textPrimary,
+                modifier = Modifier.size(44.dp)
+            )
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            Text(
+                text = "Entrar a Glifo",
+                color = GlifoTheme.colors.textPrimary,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Medium
+            )
+            
+            Spacer(modifier = Modifier.height(5.dp))
+            
+            Text(
+                text = "Usá tu correo institucional.",
+                color = GlifoTheme.colors.textSecondary,
+                fontSize = 13.sp
+            )
+            
+            Spacer(modifier = Modifier.height(22.dp))
+
+            GlifoTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = "Correo",
+                modifier = Modifier.fillMaxWidth()
+            )
+            
+            Spacer(modifier = Modifier.height(10.dp))
+
+            GlifoTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = "Contraseña",
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            if (error != null) {
+                Text(
+                    text = error!!,
+                    color = GlifoTheme.colors.alert,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(top = 8.dp).fillMaxWidth()
+                )
+            }
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            if (isLoading) {
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = GlifoTheme.colors.accent)
+                }
+            } else {
+                GlifoButton(
+                    text = "Iniciar sesión",
+                    onClick = {
+                        if (email.isBlank() || password.isBlank()) {
+                            error = "Llená todos los campos"
+                        } else {
+                            isLoading = true
+                            error = null
+                            coroutineScope.launch {
+                                delay(1000)
+                                isLoading = false
+                                onLoginSuccess()
+                            }
+                        }
+                    }
+                )
+                
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp)
+                        .clickable { onNavigateToForgotPassword() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Olvidé mi contraseña",
+                        color = GlifoTheme.colors.accentText,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = "¿Todavía no tenés cuenta?",
-                fontSize = 13.sp,
-                color = colors.textSecondary
+                color = GlifoTheme.colors.textSecondary,
+                fontSize = 13.sp
             )
             Text(
                 text = "Crear cuenta",
+                color = GlifoTheme.colors.accentText,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
-                color = colors.accentText,
-                modifier = Modifier.clickable(onClick = onNavigateToRegister)
+                modifier = Modifier.clickable { onNavigateToRegister() }
             )
         }
     }

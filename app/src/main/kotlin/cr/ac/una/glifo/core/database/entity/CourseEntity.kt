@@ -9,7 +9,6 @@ class CourseEntity(
     val name: String,
     val code: String,
     val joinCode: String,
-    val emoji: String?,
     val syllabusStatus: String?,
     val isSynced: Boolean = true
 )
