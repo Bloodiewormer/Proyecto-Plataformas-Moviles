@@ -1,38 +1,74 @@
 package cr.ac.una.glifo.navigation
 
 sealed class Screen(val route: String) {
+    // A — Acceso
     data object Splash : Screen("splash")
     data object Login : Screen("login")
     data object Register : Screen("register")
+    data object ForgotPassword : Screen("forgot_password")
+
+    // B — Inicio por rol
     data object Home : Screen("home")
-    
+    data object HomeTeacher : Screen("home_teacher")
+    data object HomeAdmin : Screen("home_admin")
+
+    // C — Cursos Estudiante
+    data object Courses : Screen("courses")
+    data object JoinCourse : Screen("join_course")
     data object CourseDetail : Screen("course/{courseId}") {
-        fun createRoute(courseId: Long) = "course/$courseId"
+        fun createRoute(courseId: Long = 1L) = "course/$courseId"
     }
-    
-    data object NoteList : Screen("notes/{courseId}") {
-        fun createRoute(courseId: Long) = "notes/$courseId"
-    }
-    
-    data object NoteDetail : Screen("note/{noteId}") {
-        fun createRoute(noteId: Long) = "note/$noteId"
-    }
-    
+
+    // D — Captura
     data object Capture : Screen("capture/{courseId}") {
-        fun createRoute(courseId: Long) = "capture/$courseId"
+        fun createRoute(courseId: Long = 1L) = "capture/$courseId"
     }
-    
+    data object CaptureReview : Screen("capture_review")
+    data object CaptureProcessing : Screen("capture_processing")
+
+    // E — Apuntes
+    data object NoteList : Screen("notes/{courseId}") {
+        fun createRoute(courseId: Long = 1L) = "notes/$courseId"
+    }
+    data object NoteDetail : Screen("note/{noteId}") {
+        fun createRoute(noteId: Long = 1L) = "note/$noteId"
+    }
+    data object CorrectFragment : Screen("correct_fragment")
+    data object FormulaViewer : Screen("formula_viewer")
+    data object RegionProvenance : Screen("region_provenance")
+
+    // F — Cobertura
+    data object Coverage : Screen("coverage/{courseId}") {
+        fun createRoute(courseId: Long = 1L) = "coverage/$courseId"
+    }
+    data object TopicDetail : Screen("topic_detail")
+    data object CoverageDelta : Screen("coverage_delta")
+
+    // G — Estudio
     data object StudyHub : Screen("study_hub/{courseId}") {
-        fun createRoute(courseId: Long) = "study_hub/$courseId"
+        fun createRoute(courseId: Long = 1L) = "study_hub/$courseId"
     }
-    
     data object FlashcardSession : Screen("flashcards")
     data object QuizSession : Screen("quiz")
-    
-    data object Coverage : Screen("coverage/{courseId}") {
-        fun createRoute(courseId: Long) = "coverage/$courseId"
-    }
-    
+    data object QuizResult : Screen("quiz_result")
+
+    // H — Sync e IA
+    data object SyncQueue : Screen("sync")
+    data object AiCost : Screen("ai_cost")
+
+    // I — Docente
+    data object TeacherCourses : Screen("teacher_courses")
+    data object TeacherNewCourse : Screen("teacher_new_course")
+    data object TeacherSyllabus : Screen("teacher_syllabus")
+    data object TeacherGlossary : Screen("teacher_glossary")
+    data object TeacherGaps : Screen("teacher_gaps")
+
+    // J — Administración
+    data object AdminUsers : Screen("admin_users")
+    data object AdminUserDetail : Screen("admin_user_detail")
+    data object AdminRoles : Screen("admin_roles")
+
+    // K — Perfil y Ajustes
     data object Settings : Screen("settings")
     data object Profile : Screen("profile")
 }

@@ -1,18 +1,21 @@
 package cr.ac.una.glifo.feature.auth.presentation
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cr.ac.una.glifo.core.ui.component.GlifoButton
-import cr.ac.una.glifo.core.ui.component.GlifoTextField
-import cr.ac.una.glifo.core.ui.component.GlifoTopBar
+import cr.ac.una.glifo.core.ui.component.GlifoField
+import cr.ac.una.glifo.core.ui.component.GlifoTopAppBar
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
 
 @Composable
@@ -20,84 +23,96 @@ fun RegisterScreen(
     onNavigateToLogin: () -> Unit,
     onRegisterSuccess: () -> Unit
 ) {
-    var name by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
+    val colors = GlifoTheme.colors
+    var fullName by remember { mutableStateOf("Brandon Brenes") }
+    var email by remember { mutableStateOf("bbrenes@est.una.ac.cr") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
-    var error by remember { mutableStateOf<String?>(null) }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(GlifoTheme.colors.background)
+            .background(colors.background)
     ) {
-        GlifoTopBar(title = "Crear cuenta", onNavigateBack = onNavigateToLogin)
-        
+        GlifoTopAppBar(
+            title = "Crear cuenta",
+            isBack = true,
+            onNavigationClick = onNavigateToLogin
+        )
+
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp)
+                .weight(1f)
+                .navigationBarsPadding()
+                .verticalScroll(rememberScrollState())
+                .padding(14.dp)
         ) {
-            GlifoTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = "Nombre completo"
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            GlifoTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = "Correo"
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            GlifoTextField(
-                value = password,
-                onValueChange = { password = it },
-                label = "Contraseña"
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            GlifoTextField(
-                value = confirmPassword,
-                onValueChange = { confirmPassword = it },
-                label = "Confirmar contraseña",
-                isError = error != null,
-                errorMessage = error
+            GlifoField(
+                label = "Nombre completo",
+                value = fullName,
+                onValueChange = { fullName = it }
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(10.dp))
+
+            GlifoField(
+                label = "Correo",
+                value = email,
+                onValueChange = { email = it }
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            GlifoField(
+                label = "Contraseña",
+                value = password,
+                placeholder = "Mínimo 8 caracteres",
+                onValueChange = { password = it }
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            GlifoField(
+                label = "Confirmar contraseña",
+                value = confirmPassword,
+                placeholder = "••••••",
+                onValueChange = { confirmPassword = it },
+                isError = true
+            )
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp, bottom = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Warning,
+                    contentDescription = null,
+                    tint = colors.alert,
+                    modifier = Modifier.size(16.dp)
+                )
+                Text(
+                    text = "Las dos contraseñas deben coincidir.",
+                    color = colors.alert,
+                    fontSize = 12.sp
+                )
+            }
 
             GlifoButton(
                 text = "Crear cuenta",
-                onClick = {
-                    if (password != confirmPassword) {
-                        error = "Las dos contraseñas deben coincidir."
-                    } else {
-                        error = null
-                        onRegisterSuccess()
-                    }
-                }
+                onClick = onRegisterSuccess
             )
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(14.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "¿Ya tienes cuenta?",
-                    color = GlifoTheme.colors.textSecondary,
-                    fontSize = 14.sp
-                )
-                Text(
-                    text = "Inicia sesión",
-                    color = GlifoTheme.colors.accentText,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.clickable { onNavigateToLogin() }
-                )
-            }
+            Text(
+                text = "Vas a entrar como estudiante. Si sos docente, pedile el cambio de rol al administrador.",
+                fontSize = 13.sp,
+                color = colors.textSecondary,
+                lineHeight = 20.sp
+            )
         }
     }
 }
