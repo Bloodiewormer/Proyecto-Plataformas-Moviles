@@ -492,7 +492,7 @@ data class TeacherGapTopic(val state: ConfidenceState, val label: String, val pe
 
 object DummyTeacherProvider {
 
-    fun getGlossaryEntries(): List<GlossaryEntry> = listOf(
+    private val glossaryEntries = mutableListOf(
         GlossaryEntry("Sumatoria", "\\sum_{n=1}^{\\infty}", "SÍMBOLO", isSymbol = true),
         GlossaryEntry("Converge", "conv. · cnv · converg.", "TÉRMINO", isSymbol = false),
         GlossaryEntry("Radio de convergencia", "R", "TÉRMINO", isSymbol = false),
@@ -500,17 +500,23 @@ object DummyTeacherProvider {
         GlossaryEntry("Límite n→∞", "\\lim_{n \\to \\infty}", "SÍMBOLO", isSymbol = true)
     )
 
+    fun getGlossaryEntries(): List<GlossaryEntry> = glossaryEntries
+
+    fun addGlossaryEntry(term: String, notation: String, isSymbol: Boolean) {
+        glossaryEntries.add(0, GlossaryEntry(term.trim(), notation.trim(), if (isSymbol) "SÍMBOLO" else "TÉRMINO", isSymbol))
+    }
+
     fun getGlossarySuggestions(): List<GlossarySuggestion> = listOf(
         GlossarySuggestion("diverge", "corregido 7 veces esta semana")
     )
 
     fun getSyllabusFileName(): String = "programa-EIF411.pdf"
 
-    fun getSyllabusUnits(): List<SyllabusUnitRow> = listOf(
+    private val syllabusUnits = mutableListOf(
         SyllabusUnitRow(
             label = "3 · Series",
             topicCount = 5,
-            topics = listOf(
+            topics = mutableListOf(
                 SyllabusTopicRow("3.1 Sucesiones", hasIssue = false),
                 SyllabusTopicRow("3.2 Series geométricas", hasIssue = false),
                 SyllabusTopicRow("3.3 Criterio de comparación", hasIssue = true)
@@ -518,6 +524,15 @@ object DummyTeacherProvider {
         ),
         SyllabusUnitRow(label = "4 · Cálculo vectorial", topicCount = 7, topics = emptyList())
     )
+
+    fun getSyllabusUnits(): List<SyllabusUnitRow> = syllabusUnits
+
+    /** Appends a manually-entered topic to the first unit (the one already expanded in the UI). */
+    fun addSyllabusTopic(label: String) {
+        val first = syllabusUnits.firstOrNull() ?: return
+        val updatedTopics = first.topics + SyllabusTopicRow(label.trim(), hasIssue = false)
+        syllabusUnits[0] = first.copy(topicCount = first.topicCount + 1, topics = updatedTopics)
+    }
 
     fun getGaps(): List<TeacherGapTopic> = listOf(
         TeacherGapTopic(ConfidenceState.Escalated, "4.3 Sockets e hilos", 70f, "19/27"),
@@ -532,9 +547,12 @@ data class AdminUserRow(
     val initials: String,
     val name: String,
     val email: String,
-    val roleLabel: String,
+    val role: String, // "DOCENTE" | "ESTUDIANTE" | "ADMIN" — the real role, kept even while inactive
     val isActive: Boolean
-)
+) {
+    /** What the badge/chip should show — "INACTIVO" overrides the real role visually. */
+    val displayLabel: String get() = if (!isActive) "INACTIVO" else role
+}
 
 data class AdminRoleInfo(
     val name: String,
@@ -547,17 +565,30 @@ data class AdminRoleInfo(
 
 object DummyAdminProvider {
 
-    fun getUsers(): List<AdminUserRow> = listOf(
+    private val users = mutableListOf(
         AdminUserRow("MG", "Maikol Guzmán", "docente@una.ac.cr", "DOCENTE", isActive = true),
         AdminUserRow("BB", "Brandon Brenes", "estudiante@est.una.ac.cr", "ESTUDIANTE", isActive = true),
         AdminUserRow("DG", "David González", "dgonzalez@est.una.ac.cr", "ESTUDIANTE", isActive = true),
         AdminUserRow("FU", "Felipe Ugalde", "fugalde@est.una.ac.cr", "ESTUDIANTE", isActive = true),
-        AdminUserRow("KJ", "Keneth Jara", "kjara@est.una.ac.cr", "INACTIVO", isActive = false)
+        AdminUserRow("KJ", "Keneth Jara", "kjara@est.una.ac.cr", "ESTUDIANTE", isActive = false)
     )
 
-    fun findUser(name: String): AdminUserRow = getUsers().find { it.name == name } ?: getUsers()[2]
+    fun getUsers(): List<AdminUserRow> = users
 
-    fun getRecentSignups(): List<AdminUserRow> = getUsers().takeLast(2)
+    fun findUser(name: String): AdminUserRow = users.find { it.name == name } ?: users[2]
+
+    fun getRecentSignups(): List<AdminUserRow> = users.takeLast(2)
+
+    fun addUser(name: String, email: String, role: String) {
+        val initials = name.trim().split(" ").filter { it.isNotBlank() }
+            .take(2).map { it.first().uppercaseChar() }.joinToString("").ifEmpty { "??" }
+        users.add(AdminUserRow(initials, name.trim(), email.trim(), role, isActive = true))
+    }
+
+    fun setActive(name: String, active: Boolean) {
+        val index = users.indexOfFirst { it.name == name }
+        if (index >= 0) users[index] = users[index].copy(isActive = active)
+    }
 
     fun getRoles(): List<AdminRoleInfo> = listOf(
         AdminRoleInfo(

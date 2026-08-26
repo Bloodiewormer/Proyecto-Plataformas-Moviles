@@ -693,7 +693,7 @@ fun GlifoDrawerContent(
     val adminItems = listOf(
         GlifoDrawerItem("home", "Inicio", Icons.Outlined.Home, "home_admin", currentScreen == "home_admin"),
         GlifoDrawerItem("users", "Usuarios", Icons.Default.Group, "admin_users", currentScreen == "admin_users"),
-        GlifoDrawerItem("school", "Cursos", Icons.Default.School, "teacher_courses", currentScreen == "teacher_courses"),
+        GlifoDrawerItem("school", "Cursos", Icons.Default.School, "admin_courses", currentScreen == "admin_courses"),
         GlifoDrawerItem("roles", "Roles", null, "admin_roles", currentScreen == "admin_roles", isSubItem = true),
         GlifoDrawerItem("cost", "Consumo IA", Icons.Default.BarChart, "ai_cost", currentScreen == "ai_cost")
     )

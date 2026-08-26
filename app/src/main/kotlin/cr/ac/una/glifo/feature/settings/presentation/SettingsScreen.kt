@@ -18,6 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -25,6 +26,8 @@ import androidx.compose.ui.unit.sp
 import cr.ac.una.glifo.core.data.dummy.DummySyncProvider
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
+import cr.ac.una.glifo.core.ui.theme.ThemeManager
+import cr.ac.una.glifo.core.ui.theme.ThemeMode
 
 @Composable
 fun SettingsScreen(
@@ -33,6 +36,7 @@ fun SettingsScreen(
     onLogout: () -> Unit
 ) {
     val colors = GlifoTheme.colors
+    val context = LocalContext.current
 
     var savePhoto by remember { mutableStateOf(true) }
     var rejectLow by remember { mutableStateOf(true) }
@@ -86,6 +90,45 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(14.dp)
         ) {
+            Text(
+                text = "APARIENCIA",
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = 0.6.sp,
+                color = colors.textSecondary,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            GlifoCard(modifier = Modifier.padding(bottom = 18.dp)) {
+                Text("Tema", fontSize = 16.sp, color = colors.textPrimary)
+                Text(
+                    text = "Elegí cómo se ve Glifo, o dejá que siga el ajuste del sistema.",
+                    fontSize = 12.sp,
+                    color = colors.textSecondary,
+                    lineHeight = 16.sp,
+                    modifier = Modifier.padding(top = 4.dp, bottom = 10.dp)
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf(
+                        ThemeMode.Light to "Claro",
+                        ThemeMode.Dark to "Oscuro",
+                        ThemeMode.System to "Sistema"
+                    ).forEach { (mode, label) ->
+                        val selected = ThemeManager.mode == mode
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .background(if (selected) colors.accentSoft else colors.neutralSoft, RoundedCornerShape(999.dp))
+                                .clickable { ThemeManager.setMode(context, mode) }
+                                .padding(vertical = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(label, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = if (selected) colors.accentText else colors.textSecondary)
+                        }
+                    }
+                }
+            }
+
             Text(
                 text = "CAPTURA",
                 fontSize = 11.sp,

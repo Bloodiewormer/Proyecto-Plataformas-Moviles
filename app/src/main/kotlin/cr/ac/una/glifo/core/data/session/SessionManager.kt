@@ -1,5 +1,6 @@
 package cr.ac.una.glifo.core.data.session
 
+import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -18,11 +19,25 @@ object SessionManager {
     var currentUser by mutableStateOf<DummyUser?>(null)
         private set
 
+    /**
+     * A locally-picked profile photo, kept only for the current process (test/demo
+     * affordance — nothing is uploaded anywhere). Cleared on logout along with the rest
+     * of the session.
+     */
+    var profilePhotoUri by mutableStateOf<Uri?>(null)
+        private set
+
     fun login(user: DummyUser) {
         currentUser = user
+        profilePhotoUri = null
     }
 
     fun logout() {
         currentUser = null
+        profilePhotoUri = null
+    }
+
+    fun setProfilePhoto(uri: Uri?) {
+        profilePhotoUri = uri
     }
 }

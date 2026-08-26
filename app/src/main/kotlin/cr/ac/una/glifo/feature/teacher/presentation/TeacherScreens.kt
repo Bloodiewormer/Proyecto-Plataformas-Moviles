@@ -1,5 +1,7 @@
 package cr.ac.una.glifo.feature.teacher.presentation
 
+import android.content.Intent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -16,11 +18,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import cr.ac.una.glifo.core.data.dummy.DummyCourseProvider
 import cr.ac.una.glifo.core.data.dummy.DummyTeacherProvider
 import cr.ac.una.glifo.core.data.session.SessionManager
@@ -37,6 +41,8 @@ fun TeacherCoursesScreen(
     onNavigateToNewCourse: () -> Unit,
     onNavigateToSyllabus: () -> Unit,
     onNavigateDrawer: (String) -> Unit,
+    onNavigateToSettings: () -> Unit,
+    onNavigateToProfile: () -> Unit,
     onLogout: () -> Unit
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -67,6 +73,14 @@ fun TeacherCoursesScreen(
                     onNavigate = { route ->
                         scope.launch { drawerState.close() }
                         onNavigateDrawer(route)
+                    },
+                    onProfileClick = {
+                        scope.launch { drawerState.close() }
+                        onNavigateToProfile()
+                    },
+                    onSettingsClick = {
+                        scope.launch { drawerState.close() }
+                        onNavigateToSettings()
                     },
                     onLogoutClick = {
                         scope.launch { drawerState.close() }
@@ -283,7 +297,9 @@ fun TeacherSyllabusScreen(
     onPublishSuccess: () -> Unit
 ) {
     val colors = GlifoTheme.colors
-    val units = DummyTeacherProvider.getSyllabusUnits()
+    var version by remember { mutableStateOf(0) }
+    var showAddTopicDialog by remember { mutableStateOf(false) }
+    val units = remember(version) { DummyTeacherProvider.getSyllabusUnits() }
     val totalTopics = units.sumOf { it.topicCount }
 
     Column(
@@ -379,8 +395,36 @@ fun TeacherSyllabusScreen(
                 text = "Agregar un tema a mano",
                 variant = GlifoButtonVariant.Secondary,
                 icon = Icons.Default.Add,
-                onClick = {}
+                onClick = { showAddTopicDialog = true }
             )
+        }
+    }
+
+    if (showAddTopicDialog) {
+        AddTopicDialog(
+            onDismiss = { showAddTopicDialog = false },
+            onAdd = { label ->
+                DummyTeacherProvider.addSyllabusTopic(label)
+                version++
+                showAddTopicDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+private fun AddTopicDialog(onDismiss: () -> Unit, onAdd: (String) -> Unit) {
+    val colors = GlifoTheme.colors
+    var label by remember { mutableStateOf("") }
+    Dialog(onDismissRequest = onDismiss) {
+        GlifoCard {
+            Text("Agregar tema", fontSize = 17.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text("Se agrega a la primera unidad (3 · Series).", fontSize = 12.sp, color = colors.textSecondary)
+            Spacer(modifier = Modifier.height(12.dp))
+            GlifoField(label = "Nombre del tema", value = label, placeholder = "p. ej. 3.6 Series alternadas", onValueChange = { label = it })
+            Spacer(modifier = Modifier.height(14.dp))
+            GlifoButton(text = "Agregar", enabled = label.isNotBlank(), onClick = { onAdd(label) })
         }
     }
 }
@@ -390,13 +434,20 @@ fun TeacherSyllabusScreen(
 fun TeacherGlossaryScreen(
     onNavigateBackOrMenu: () -> Unit,
     onNavigateDrawer: (String) -> Unit,
+    onNavigateToSettings: () -> Unit,
+    onNavigateToProfile: () -> Unit,
     onLogout: () -> Unit
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val colors = GlifoTheme.colors
     val user = SessionManager.currentUser
-    val entries = DummyTeacherProvider.getGlossaryEntries()
+    var version by remember { mutableStateOf(0) }
+    var searchOpen by remember { mutableStateOf(false) }
+    var query by remember { mutableStateOf("") }
+    var showAddDialog by remember { mutableStateOf(false) }
+    val allEntries = remember(version) { DummyTeacherProvider.getGlossaryEntries() }
+    val entries = allEntries.filter { query.isBlank() || it.term.contains(query, ignoreCase = true) }
     val suggestions = DummyTeacherProvider.getGlossarySuggestions()
 
     ModalNavigationDrawer(
@@ -422,6 +473,14 @@ fun TeacherGlossaryScreen(
                         scope.launch { drawerState.close() }
                         onNavigateDrawer(route)
                     },
+                    onProfileClick = {
+                        scope.launch { drawerState.close() }
+                        onNavigateToProfile()
+                    },
+                    onSettingsClick = {
+                        scope.launch { drawerState.close() }
+                        onNavigateToSettings()
+                    },
                     onLogoutClick = {
                         scope.launch { drawerState.close() }
                         onLogout()
@@ -439,10 +498,20 @@ fun TeacherGlossaryScreen(
                 title = "Glosario",
                 onNavigationClick = { scope.launch { drawerState.open() } },
                 actions = {
-                    IconButton(onClick = {}) { Icon(Icons.Default.Search, contentDescription = "Buscar", tint = colors.textSecondary, modifier = Modifier.size(20.dp)) }
-                    IconButton(onClick = {}) { Icon(Icons.Default.Add, contentDescription = "Agregar", tint = colors.textSecondary, modifier = Modifier.size(20.dp)) }
+                    IconButton(onClick = { searchOpen = !searchOpen; if (!searchOpen) query = "" }) {
+                        Icon(Icons.Default.Search, contentDescription = "Buscar", tint = colors.textSecondary, modifier = Modifier.size(20.dp))
+                    }
+                    IconButton(onClick = { showAddDialog = true }) {
+                        Icon(Icons.Default.Add, contentDescription = "Agregar", tint = colors.textSecondary, modifier = Modifier.size(20.dp))
+                    }
                 }
             )
+
+            AnimatedVisibility(visible = searchOpen) {
+                Box(modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)) {
+                    GlifoField(label = "Buscar término", value = query, onValueChange = { query = it }, isFocused = true)
+                }
+            }
 
             Column(
                 modifier = Modifier
@@ -515,7 +584,63 @@ fun TeacherGlossaryScreen(
                         }
                     }
                 }
+
+                if (entries.isEmpty()) {
+                    GlifoBanner(text = "Ningún término coincide con esa búsqueda.", modifier = Modifier.padding(top = 12.dp))
+                }
             }
+        }
+    }
+
+    if (showAddDialog) {
+        AddGlossaryEntryDialog(
+            onDismiss = { showAddDialog = false },
+            onAdd = { term, notation, isSymbol ->
+                DummyTeacherProvider.addGlossaryEntry(term, notation, isSymbol)
+                version++
+                showAddDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+private fun AddGlossaryEntryDialog(
+    onDismiss: () -> Unit,
+    onAdd: (term: String, notation: String, isSymbol: Boolean) -> Unit
+) {
+    val colors = GlifoTheme.colors
+    var term by remember { mutableStateOf("") }
+    var notation by remember { mutableStateOf("") }
+    var isSymbol by remember { mutableStateOf(false) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        GlifoCard {
+            Text("Agregar al glosario", fontSize = 17.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+            Spacer(modifier = Modifier.height(12.dp))
+            GlifoField(label = "Término", value = term, onValueChange = { term = it })
+            Spacer(modifier = Modifier.height(8.dp))
+            GlifoField(label = "Notación", value = notation, placeholder = "p. ej. \\sum o sinónimos separados por ·", onValueChange = { notation = it })
+            Spacer(modifier = Modifier.height(10.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf(false to "Término", true to "Símbolo").forEach { (value, label) ->
+                    val selected = isSymbol == value
+                    Box(
+                        modifier = Modifier
+                            .background(if (selected) colors.accentSoft else colors.neutralSoft, RoundedCornerShape(999.dp))
+                            .clickable { isSymbol = value }
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Text(label, fontSize = 12.sp, color = if (selected) colors.accentText else colors.textSecondary)
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(14.dp))
+            GlifoButton(
+                text = "Agregar",
+                enabled = term.isNotBlank() && notation.isNotBlank(),
+                onClick = { onAdd(term, notation, isSymbol) }
+            )
         }
     }
 }
@@ -526,11 +651,14 @@ fun TeacherGapsScreen(
     onNavigateBackOrMenu: () -> Unit,
     onNavigateToTopicDetail: (String) -> Unit,
     onNavigateDrawer: (String) -> Unit,
+    onNavigateToSettings: () -> Unit,
+    onNavigateToProfile: () -> Unit,
     onLogout: () -> Unit
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val colors = GlifoTheme.colors
+    val context = LocalContext.current
     val user = SessionManager.currentUser
     val stats = DummyCourseProvider.getStats(TEACHER_ACTIVE_COURSE_ID)
     val gaps = DummyTeacherProvider.getGaps()
@@ -558,6 +686,14 @@ fun TeacherGapsScreen(
                         scope.launch { drawerState.close() }
                         onNavigateDrawer(route)
                     },
+                    onProfileClick = {
+                        scope.launch { drawerState.close() }
+                        onNavigateToProfile()
+                    },
+                    onSettingsClick = {
+                        scope.launch { drawerState.close() }
+                        onNavigateToSettings()
+                    },
                     onLogoutClick = {
                         scope.launch { drawerState.close() }
                         onLogout()
@@ -576,7 +712,22 @@ fun TeacherGapsScreen(
                 subtitle = "Brechas de",
                 onNavigationClick = { scope.launch { drawerState.open() } },
                 actions = {
-                    IconButton(onClick = {}) { Icon(Icons.Default.Upload, contentDescription = "Exportar", tint = colors.textSecondary, modifier = Modifier.size(20.dp)) }
+                    IconButton(onClick = {
+                        val summary = buildString {
+                            appendLine("Brechas del grupo · EIF411")
+                            appendLine("${stats.studentCount} estudiantes · ${stats.coveragePercent}% de cobertura promedio")
+                            appendLine()
+                            gaps.forEach { gap -> appendLine("• ${gap.label} — ${gap.fraction} sin cubrir (${gap.percent.toInt()}%)") }
+                        }
+                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_SUBJECT, "Brechas del grupo · EIF411")
+                            putExtra(Intent.EXTRA_TEXT, summary)
+                        }
+                        context.startActivity(Intent.createChooser(shareIntent, "Exportar brechas"))
+                    }) {
+                        Icon(Icons.Default.Upload, contentDescription = "Exportar", tint = colors.textSecondary, modifier = Modifier.size(20.dp))
+                    }
                 }
             )
 

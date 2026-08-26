@@ -1,5 +1,6 @@
 package cr.ac.una.glifo.feature.note.presentation
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -10,8 +11,7 @@ import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -29,6 +29,8 @@ fun NotesScreen(
     onNavigateToNoteDetail: (Long) -> Unit,
     onNavigateToCapture: () -> Unit,
     onNavigateDrawer: (String) -> Unit,
+    onNavigateToSettings: () -> Unit,
+    onNavigateToProfile: () -> Unit,
     onLogout: () -> Unit
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -36,7 +38,11 @@ fun NotesScreen(
     val colors = GlifoTheme.colors
     val user = SessionManager.currentUser
 
-    val notes = DummyNoteProvider.getNoteMetaList()
+    var searchOpen by remember { mutableStateOf(false) }
+    var query by remember { mutableStateOf("") }
+    val notes = DummyNoteProvider.getNoteMetaList().filter {
+        query.isBlank() || it.note.title.contains(query, ignoreCase = true)
+    }
     val pendingCount = DummySyncProvider.getPendingCount()
 
     ModalNavigationDrawer(
@@ -62,6 +68,14 @@ fun NotesScreen(
                         scope.launch { drawerState.close() }
                         onNavigateDrawer(route)
                     },
+                    onProfileClick = {
+                        scope.launch { drawerState.close() }
+                        onNavigateToProfile()
+                    },
+                    onSettingsClick = {
+                        scope.launch { drawerState.close() }
+                        onNavigateToSettings()
+                    },
                     onLogoutClick = {
                         scope.launch { drawerState.close() }
                         onLogout()
@@ -80,16 +94,28 @@ fun NotesScreen(
                     title = "Apuntes",
                     onNavigationClick = { scope.launch { drawerState.open() } },
                     actions = {
-                        IconButton(onClick = {}) {
+                        IconButton(onClick = { searchOpen = !searchOpen; if (!searchOpen) query = "" }) {
                             Icon(imageVector = Icons.Default.Search, contentDescription = "Buscar", tint = colors.textSecondary, modifier = Modifier.size(22.dp))
                         }
                     }
                 )
 
-                GlifoBanner(
-                    text = "$pendingCount capturas en cola",
-                    icon = Icons.Default.Sync
-                )
+                AnimatedVisibility(visible = searchOpen) {
+                    Box(modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)) {
+                        GlifoField(label = "Buscar apunte", value = query, onValueChange = { query = it }, isFocused = true)
+                    }
+                }
+
+                if (pendingCount > 0) {
+                    GlifoBanner(
+                        text = "$pendingCount capturas en cola",
+                        icon = Icons.Default.Sync
+                    )
+                }
+
+                if (notes.isEmpty()) {
+                    GlifoBanner(text = "Ningún apunte coincide con esa búsqueda.")
+                }
 
                 Column(
                     modifier = Modifier

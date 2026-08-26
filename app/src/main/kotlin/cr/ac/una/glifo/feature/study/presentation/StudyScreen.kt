@@ -8,7 +8,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.DonutLarge
-import androidx.compose.material.icons.filled.GpsFixed
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -32,6 +31,8 @@ fun StudyScreen(
     onNavigateToFlashcards: () -> Unit,
     onNavigateToQuiz: () -> Unit,
     onNavigateDrawer: (String) -> Unit,
+    onNavigateToSettings: () -> Unit,
+    onNavigateToProfile: () -> Unit,
     onLogout: () -> Unit
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -66,6 +67,14 @@ fun StudyScreen(
                         scope.launch { drawerState.close() }
                         onNavigateDrawer(route)
                     },
+                    onProfileClick = {
+                        scope.launch { drawerState.close() }
+                        onNavigateToProfile()
+                    },
+                    onSettingsClick = {
+                        scope.launch { drawerState.close() }
+                        onNavigateToSettings()
+                    },
                     onLogoutClick = {
                         scope.launch { drawerState.close() }
                         onLogout()
@@ -82,12 +91,7 @@ fun StudyScreen(
             GlifoTopAppBar(
                 title = course?.name ?: "Curso",
                 subtitle = "Estudio de",
-                onNavigationClick = { scope.launch { drawerState.open() } },
-                actions = {
-                    IconButton(onClick = {}) {
-                        Icon(imageVector = Icons.Default.GpsFixed, contentDescription = "Objetivo", tint = colors.textSecondary, modifier = Modifier.size(20.dp))
-                    }
-                }
+                onNavigationClick = { scope.launch { drawerState.open() } }
             )
 
             Column(

@@ -1,5 +1,6 @@
 package cr.ac.una.glifo.feature.course.presentation
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -9,8 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
@@ -29,6 +29,8 @@ fun CoursesScreen(
     onNavigateToCourseDetail: (Long) -> Unit,
     onNavigateToJoinCourse: () -> Unit,
     onNavigateDrawer: (String) -> Unit,
+    onNavigateToSettings: () -> Unit,
+    onNavigateToProfile: () -> Unit,
     onLogout: () -> Unit
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -36,7 +38,11 @@ fun CoursesScreen(
     val colors = GlifoTheme.colors
     val user = SessionManager.currentUser
 
-    val courses = DummyCourseProvider.getCourses
+    var searchOpen by remember { mutableStateOf(false) }
+    var query by remember { mutableStateOf("") }
+    val courses = DummyCourseProvider.getCourses.filter {
+        query.isBlank() || it.name.contains(query, ignoreCase = true) || it.code.contains(query, ignoreCase = true)
+    }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -61,6 +67,14 @@ fun CoursesScreen(
                         scope.launch { drawerState.close() }
                         onNavigateDrawer(route)
                     },
+                    onProfileClick = {
+                        scope.launch { drawerState.close() }
+                        onNavigateToProfile()
+                    },
+                    onSettingsClick = {
+                        scope.launch { drawerState.close() }
+                        onNavigateToSettings()
+                    },
                     onLogoutClick = {
                         scope.launch { drawerState.close() }
                         onLogout()
@@ -78,11 +92,17 @@ fun CoursesScreen(
                 title = "Mis cursos",
                 onNavigationClick = { scope.launch { drawerState.open() } },
                 actions = {
-                    IconButton(onClick = {}) {
+                    IconButton(onClick = { searchOpen = !searchOpen; if (!searchOpen) query = "" }) {
                         Icon(imageVector = Icons.Default.Search, contentDescription = "Buscar", tint = colors.textSecondary, modifier = Modifier.size(22.dp))
                     }
                 }
             )
+
+            AnimatedVisibility(visible = searchOpen) {
+                Box(modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)) {
+                    GlifoField(label = "Buscar por nombre o código", value = query, onValueChange = { query = it }, isFocused = true)
+                }
+            }
 
             Column(
                 modifier = Modifier
@@ -91,6 +111,9 @@ fun CoursesScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(14.dp)
             ) {
+                if (courses.isEmpty()) {
+                    GlifoBanner(text = "Ningún curso coincide con esa búsqueda.")
+                }
                 courses.forEachIndexed { i, course ->
                     val stats = DummyCourseProvider.getStats(course.id)
                     GlifoStaggeredEntry(index = i) {
@@ -104,7 +127,7 @@ fun CoursesScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(text = course.name, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                                if (i == 0) GlifoBadge(text = "ACTIVO")
+                                if (course.id == 1L) GlifoBadge(text = "ACTIVO")
                             }
                             Text(
                                 text = "${course.code} · ${stats.instructorName}",

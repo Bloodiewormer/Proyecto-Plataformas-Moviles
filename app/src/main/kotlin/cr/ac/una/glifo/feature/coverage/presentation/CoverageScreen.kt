@@ -33,6 +33,8 @@ fun CoverageScreen(
     onNavigateToTopicDetail: (String) -> Unit,
     onNavigateToDelta: () -> Unit,
     onNavigateDrawer: (String) -> Unit,
+    onNavigateToSettings: () -> Unit,
+    onNavigateToProfile: () -> Unit,
     onLogout: () -> Unit
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -66,6 +68,14 @@ fun CoverageScreen(
                     onNavigate = { route ->
                         scope.launch { drawerState.close() }
                         onNavigateDrawer(route)
+                    },
+                    onProfileClick = {
+                        scope.launch { drawerState.close() }
+                        onNavigateToProfile()
+                    },
+                    onSettingsClick = {
+                        scope.launch { drawerState.close() }
+                        onNavigateToSettings()
                     },
                     onLogoutClick = {
                         scope.launch { drawerState.close() }

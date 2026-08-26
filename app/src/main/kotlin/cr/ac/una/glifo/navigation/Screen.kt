@@ -76,6 +76,7 @@ sealed class Screen(val route: String) {
     data object TeacherGaps : Screen("teacher_gaps")
 
     // J — Administración
+    data object AdminCourses : Screen("admin_courses")
     data object AdminUsers : Screen("admin_users")
     data object AdminUserDetail : Screen("admin_user_detail/{userName}") {
         fun createRoute(userName: String) = "admin_user_detail/${java.net.URLEncoder.encode(userName, "UTF-8")}"

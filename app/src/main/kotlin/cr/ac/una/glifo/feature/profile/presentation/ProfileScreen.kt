@@ -1,7 +1,13 @@
 package cr.ac.una.glifo.feature.profile.presentation
 
+import android.graphics.BitmapFactory
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -10,13 +16,19 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -36,6 +48,7 @@ fun ProfileScreen(
     onLogout: () -> Unit
 ) {
     val colors = GlifoTheme.colors
+    val context = LocalContext.current
     val user = SessionManager.currentUser
     val role = user?.role ?: GlifoRole.Student
     val roleLabel = when (role) {
@@ -45,7 +58,25 @@ fun ProfileScreen(
     }
     val pagesCaptured = DummyNoteProvider.getNoteMetaList().sumOf { it.pageCount }
     val resolvedPercent = DummyAiCostProvider.getStats(role).headlinePercent
-    val courseCount = DummyCourseProvider.getCourses.size
+    val courseCount = when (role) {
+        GlifoRole.Teacher -> DummyCourseProvider.getTeacherCourses.size
+        GlifoRole.Admin -> (DummyCourseProvider.getCourses + DummyCourseProvider.getTeacherCourses).distinctBy { it.id }.size
+        GlifoRole.Student -> DummyCourseProvider.getCourses.size
+    }
+
+    val photoUri = SessionManager.profilePhotoUri
+    val avatarBitmap = remember(photoUri) {
+        photoUri?.let { uri ->
+            runCatching {
+                context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
+            }.getOrNull()?.asImageBitmap()
+        }
+    }
+    // Test-only photo picker: nothing is uploaded, it's just kept for this session
+    // (Android's built-in photo picker, no runtime permission needed).
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri -> if (uri != null) SessionManager.setProfilePhoto(uri) }
 
     Column(
         modifier = Modifier
@@ -75,11 +106,47 @@ fun ProfileScreen(
                 Box(
                     modifier = Modifier
                         .size(72.dp)
-                        .background(colors.surfaceHigh, CircleShape)
-                        .border(1.dp, colors.border, CircleShape),
-                    contentAlignment = Alignment.Center
+                        .clickable {
+                            photoPickerLauncher.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                            )
+                        }
                 ) {
-                    Text(user?.initials ?: "BB", fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = colors.accentText)
+                    Box(
+                        modifier = Modifier
+                            .size(72.dp)
+                            .clip(CircleShape)
+                            .background(colors.surfaceHigh)
+                            .border(1.dp, colors.border, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (avatarBitmap != null) {
+                            Image(
+                                bitmap = avatarBitmap,
+                                contentDescription = "Foto de perfil",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Text(user?.initials ?: "BB", fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = colors.accentText)
+                        }
+                    }
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .size(24.dp)
+                            .clip(CircleShape)
+                            .background(colors.accent)
+                            .border(2.dp, colors.background, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CameraAlt,
+                            contentDescription = "Cambiar foto de perfil",
+                            tint = colors.onAccent,
+                            modifier = Modifier.size(13.dp)
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(user?.fullName ?: "Brandon Brenes", fontSize = 20.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)

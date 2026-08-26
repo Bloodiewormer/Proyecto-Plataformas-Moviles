@@ -1,5 +1,6 @@
 package cr.ac.una.glifo.feature.sync.presentation
 
+import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -21,6 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -35,11 +37,14 @@ fun AiCostScreen(
     role: GlifoRole = GlifoRole.Student,
     onNavigateBackOrMenu: () -> Unit,
     onNavigateDrawer: (String) -> Unit,
+    onNavigateToSettings: () -> Unit,
+    onNavigateToProfile: () -> Unit,
     onLogout: () -> Unit
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val colors = GlifoTheme.colors
+    val context = LocalContext.current
     val stats = DummyAiCostProvider.getStats(role)
 
     val title = when (role) {
@@ -76,6 +81,14 @@ fun AiCostScreen(
                         scope.launch { drawerState.close() }
                         onNavigateDrawer(route)
                     },
+                    onProfileClick = {
+                        scope.launch { drawerState.close() }
+                        onNavigateToProfile()
+                    },
+                    onSettingsClick = {
+                        scope.launch { drawerState.close() }
+                        onNavigateToSettings()
+                    },
                     onLogoutClick = {
                         scope.launch { drawerState.close() }
                         onLogout()
@@ -93,7 +106,9 @@ fun AiCostScreen(
                 title = title,
                 onNavigationClick = { scope.launch { drawerState.open() } },
                 actions = {
-                    IconButton(onClick = {}) {
+                    IconButton(onClick = {
+                        Toast.makeText(context, "Por ahora solo hay datos de agosto.", Toast.LENGTH_SHORT).show()
+                    }) {
                         Icon(imageVector = Icons.Default.CalendarToday, contentDescription = "Calendario", tint = colors.textSecondary, modifier = Modifier.size(20.dp))
                     }
                 }

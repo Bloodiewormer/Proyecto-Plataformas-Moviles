@@ -62,6 +62,7 @@ fun HomeScreen(
     val recentNotes = DummyNoteProvider.getNoteMetaList().take(2)
     val flashcardCount = 12
     val quizCount = 1
+    val pendingSyncCount = DummySyncProvider.getPendingCount()
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -142,10 +143,12 @@ fun HomeScreen(
                 )
 
                 // Sync Banner
-                GlifoBanner(
-                    text = "2 capturas en cola · se envían al volver la red",
-                    icon = Icons.Default.Sync
-                )
+                if (pendingSyncCount > 0) {
+                    GlifoBanner(
+                        text = "$pendingSyncCount capturas en cola · se envían al volver la red",
+                        icon = Icons.Default.Sync
+                    )
+                }
 
                 // Body content
                 Column(
@@ -356,6 +359,7 @@ fun TeacherHomeScreen(
     onNavigateToGlossary: () -> Unit,
     onNavigateToGaps: () -> Unit,
     onNavigateToAiCost: () -> Unit,
+    onNavigateToProfile: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onLogout: () -> Unit
 ) {
@@ -401,6 +405,10 @@ fun TeacherHomeScreen(
                     onChangeCourseClick = {
                         scope.launch { drawerState.close() }
                         onNavigateToCourses()
+                    },
+                    onProfileClick = {
+                        scope.launch { drawerState.close() }
+                        onNavigateToProfile()
                     },
                     onSettingsClick = {
                         scope.launch { drawerState.close() }
@@ -552,6 +560,7 @@ fun AdminHomeScreen(
     val user = SessionManager.currentUser
     val roles = DummyAdminProvider.getRoles()
     val recentSignups = DummyAdminProvider.getRecentSignups()
+    val courseCount = (DummyCourseProvider.getCourses + DummyCourseProvider.getTeacherCourses).distinctBy { it.id }.size
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -576,7 +585,7 @@ fun AdminHomeScreen(
                         scope.launch { drawerState.close() }
                         when (route) {
                             "admin_users" -> onNavigateToUsers()
-                            "teacher_courses" -> onNavigateToCourses()
+                            "admin_courses" -> onNavigateToCourses()
                             "admin_roles" -> onNavigateToRoles()
                             "ai_cost" -> onNavigateToAiCost()
                         }
@@ -630,12 +639,12 @@ fun AdminHomeScreen(
                     }
                     GlifoStaggeredEntry(index = 1, modifier = Modifier.weight(1f)) {
                         GlifoCard(
-                            onClick = onNavigateToAiCost,
+                            onClick = onNavigateToCourses,
                             modifier = Modifier.height(84.dp)
                         ) {
-                            Text("64%", fontSize = 18.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                            Text("$courseCount", fontSize = 18.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
                             Spacer(modifier = Modifier.weight(1f))
-                            Text("Sin llamadas de pago", fontSize = 12.sp, color = colors.textSecondary)
+                            Text("Cursos publicados", fontSize = 12.sp, color = colors.textSecondary)
                         }
                     }
                 }
