@@ -1,20 +1,19 @@
 package cr.ac.una.glifo.feature.auth.presentation
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.ui.component.GlifoButton
 import cr.ac.una.glifo.core.ui.component.GlifoTextField
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
@@ -46,33 +45,12 @@ fun LoginScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.Start
         ) {
-            val accentText = GlifoTheme.colors.accentText
-            Canvas(modifier = Modifier.size(44.dp)) {
-                val scale = size.width / 88f
-                val path = Path().apply {
-                    moveTo(30f * scale, 58f * scale)
-                    cubicTo(
-                        30f * scale, 34f * scale,
-                        58f * scale, 34f * scale,
-                        58f * scale, 48f * scale
-                    )
-                    cubicTo(
-                        58f * scale, 58f * scale,
-                        42f * scale, 60f * scale,
-                        38f * scale, 50f * scale
-                    )
-                    cubicTo(
-                        35f * scale, 43f * scale,
-                        46f * scale, 38f * scale,
-                        52f * scale, 44f * scale
-                    )
-                }
-                drawPath(
-                    path = path,
-                    color = accentText,
-                    style = Stroke(width = 4.2f * scale, cap = StrokeCap.Round)
-                )
-            }
+            Icon(
+                painter = painterResource(R.drawable.ic_glifo_mark),
+                contentDescription = null,
+                tint = GlifoTheme.colors.textPrimary,
+                modifier = Modifier.size(44.dp)
+            )
 
             Spacer(modifier = Modifier.height(18.dp))
 
