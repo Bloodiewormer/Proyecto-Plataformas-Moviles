@@ -1,0 +1,134 @@
+package cr.ac.una.glifo.feature.profile.presentation
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import cr.ac.una.glifo.core.ui.component.*
+import cr.ac.una.glifo.core.ui.theme.GlifoTheme
+
+@Composable
+fun ProfileScreen(
+    onNavigateBack: () -> Unit,
+    onNavigateToChangePassword: () -> Unit,
+    onNavigateToCourses: () -> Unit,
+    onNavigateToAiCost: () -> Unit,
+    onLogout: () -> Unit
+) {
+    val colors = GlifoTheme.colors
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(colors.background)
+    ) {
+        GlifoTopAppBar(
+            title = "Perfil",
+            isBack = true,
+            onNavigationClick = onNavigateBack
+        )
+
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .navigationBarsPadding()
+                .verticalScroll(rememberScrollState())
+                .padding(14.dp)
+        ) {
+            // Profile Header
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(72.dp)
+                        .background(colors.surfaceHigh, CircleShape)
+                        .border(1.dp, colors.border, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("BB", fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = colors.accentText)
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                Text("Brandon Brenes", fontSize = 20.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                Text("bbrenes@est.una.ac.cr", fontSize = 13.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp, bottom = 8.dp))
+                GlifoBadge(text = "ESTUDIANTE")
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Two stat cards
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                GlifoCard(modifier = Modifier.weight(1f).height(80.dp)) {
+                    Text("47", fontSize = 20.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                    Spacer(modifier = Modifier.weight(1f))
+                    Text("Páginas capturadas", fontSize = 11.sp, color = colors.textSecondary)
+                }
+                GlifoCard(modifier = Modifier.weight(1f).height(80.dp)) {
+                    Text("81%", fontSize = 20.sp, fontWeight = FontWeight.Medium, color = colors.verified)
+                    Spacer(modifier = Modifier.weight(1f))
+                    Text("Resueltas sin llamadas de pago", fontSize = 11.sp, color = colors.textSecondary, lineHeight = 14.sp)
+                }
+            }
+
+            Text(
+                text = "CUENTA",
+                fontSize = 10.sp,
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = 0.6.sp,
+                color = colors.textSecondary,
+                modifier = Modifier.padding(top = 18.dp, bottom = 8.dp)
+            )
+
+            GlifoCard(tight = true) {
+                GlifoItem(compact = true, onClick = onNavigateToChangePassword) {
+                    Icon(Icons.Default.Shield, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
+                    Text("Cambiar contraseña", fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(15.dp))
+                }
+                GlifoItem(compact = true, onClick = onNavigateToCourses) {
+                    Icon(Icons.Default.School, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
+                    Text("Mis cursos", fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                    Text("3", fontSize = 12.sp, color = colors.textSecondary)
+                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(15.dp))
+                }
+                GlifoItem(compact = true, showBottomBorder = false, onClick = onNavigateToAiCost) {
+                    Icon(Icons.Default.BarChart, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
+                    Text("Mi consumo de IA", fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(15.dp))
+                }
+            }
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            GlifoButton(
+                text = "Cerrar sesión",
+                variant = GlifoButtonVariant.Danger,
+                icon = Icons.AutoMirrored.Filled.ExitToApp,
+                onClick = onLogout
+            )
+        }
+    }
+}
