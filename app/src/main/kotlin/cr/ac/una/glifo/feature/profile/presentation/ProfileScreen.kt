@@ -2,7 +2,6 @@ package cr.ac.una.glifo.feature.profile.presentation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -21,6 +20,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cr.ac.una.glifo.core.data.dummy.DummyAiCostProvider
+import cr.ac.una.glifo.core.data.dummy.DummyCourseProvider
+import cr.ac.una.glifo.core.data.dummy.DummyNoteProvider
+import cr.ac.una.glifo.core.data.session.SessionManager
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
 
@@ -33,6 +36,16 @@ fun ProfileScreen(
     onLogout: () -> Unit
 ) {
     val colors = GlifoTheme.colors
+    val user = SessionManager.currentUser
+    val role = user?.role ?: GlifoRole.Student
+    val roleLabel = when (role) {
+        GlifoRole.Teacher -> "DOCENTE"
+        GlifoRole.Admin -> "ADMIN"
+        GlifoRole.Student -> "ESTUDIANTE"
+    }
+    val pagesCaptured = DummyNoteProvider.getNoteMetaList().sumOf { it.pageCount }
+    val resolvedPercent = DummyAiCostProvider.getStats(role).headlinePercent
+    val courseCount = DummyCourseProvider.getCourses.size
 
     Column(
         modifier = Modifier
@@ -66,12 +79,12 @@ fun ProfileScreen(
                         .border(1.dp, colors.border, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("BB", fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = colors.accentText)
+                    Text(user?.initials ?: "BB", fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = colors.accentText)
                 }
                 Spacer(modifier = Modifier.height(12.dp))
-                Text("Brandon Brenes", fontSize = 20.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                Text("bbrenes@est.una.ac.cr", fontSize = 13.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp, bottom = 8.dp))
-                GlifoBadge(text = "ESTUDIANTE")
+                Text(user?.fullName ?: "Brandon Brenes", fontSize = 20.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                Text(user?.email ?: "estudiante@est.una.ac.cr", fontSize = 13.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp, bottom = 8.dp))
+                GlifoBadge(text = roleLabel)
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -82,12 +95,12 @@ fun ProfileScreen(
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 GlifoCard(modifier = Modifier.weight(1f).height(80.dp)) {
-                    Text("47", fontSize = 20.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                    Text("$pagesCaptured", fontSize = 20.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
                     Spacer(modifier = Modifier.weight(1f))
                     Text("Páginas capturadas", fontSize = 11.sp, color = colors.textSecondary)
                 }
                 GlifoCard(modifier = Modifier.weight(1f).height(80.dp)) {
-                    Text("81%", fontSize = 20.sp, fontWeight = FontWeight.Medium, color = colors.verified)
+                    Text("$resolvedPercent%", fontSize = 20.sp, fontWeight = FontWeight.Medium, color = colors.verified)
                     Spacer(modifier = Modifier.weight(1f))
                     Text("Resueltas sin llamadas de pago", fontSize = 11.sp, color = colors.textSecondary, lineHeight = 14.sp)
                 }
@@ -111,7 +124,7 @@ fun ProfileScreen(
                 GlifoItem(compact = true, onClick = onNavigateToCourses) {
                     Icon(Icons.Default.School, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
                     Text("Mis cursos", fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                    Text("3", fontSize = 12.sp, color = colors.textSecondary)
+                    Text("$courseCount", fontSize = 12.sp, color = colors.textSecondary)
                     Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(15.dp))
                 }
                 GlifoItem(compact = true, showBottomBorder = false, onClick = onNavigateToAiCost) {

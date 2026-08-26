@@ -1,5 +1,8 @@
 package cr.ac.una.glifo.feature.study.presentation
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -10,11 +13,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cr.ac.una.glifo.core.data.dummy.DummyStudyProvider
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
 
@@ -23,31 +30,21 @@ fun FlashcardScreen(
     onNavigateBack: () -> Unit
 ) {
     val colors = GlifoTheme.colors
+    val density = LocalDensity.current
 
     var flipped by remember { mutableStateOf(false) }
     var cardIdx by remember { mutableIntStateOf(0) }
 
-    val cards = listOf(
-        Triple(
-            "¿Qué condición deben cumplir las series para aplicar el criterio de comparación directa?",
-            "Ambas series deben ser de términos positivos y debe cumplirse aₙ ≤ bₙ para todo n a partir de un índice.",
-            "De tu apunte del 7 ago"
-        ),
-        Triple(
-            "¿Cuándo converge una serie geométrica ∑ arⁿ?",
-            "Cuando |r| < 1. La suma es a/(1−r).",
-            "De tu apunte del 3 ago"
-        ),
-        Triple(
-            "Enunciá el criterio de la integral para series de términos positivos.",
-            "La serie ∑f(n) converge si y solo si la integral ∫f(x)dx de 1 a ∞ converge.",
-            "De tu apunte del 5 ago"
-        )
-    )
-
+    val cards = DummyStudyProvider.getFlashcards(courseId = 1L)
     val currentCard = cards[cardIdx % cards.size]
-    val total = 12
-    val current = cardIdx + 1
+    val total = cards.size
+    val current = (cardIdx % cards.size) + 1
+
+    val rotation by animateFloatAsState(
+        targetValue = if (flipped) 180f else 0f,
+        animationSpec = tween(420),
+        label = "flashcard-rotation"
+    )
 
     fun advance() {
         flipped = false
@@ -106,42 +103,50 @@ fun FlashcardScreen(
                 modifier = Modifier.padding(bottom = 12.dp)
             )
 
-            // Flashcard Box
+            // Flashcard Box — real 3D flip via rotationY, swapping content past the
+            // 90° mark so the back face isn't shown mirrored.
             Box(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
+                    .graphicsLayer {
+                        rotationY = rotation
+                        cameraDistance = 12f * density.density
+                    }
                     .background(colors.surface, RoundedCornerShape(12.dp))
                     .border(1.dp, if (flipped) colors.accentLine else colors.border, RoundedCornerShape(12.dp))
                     .clickable { flipped = !flipped }
                     .padding(24.dp),
                 contentAlignment = Alignment.Center
             ) {
+                val showingBack = rotation > 90f
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .graphicsLayer { rotationY = if (showingBack) 180f else 0f }
                 ) {
                     GlifoBadge(
-                        text = if (flipped) "RESPUESTA" else "PREGUNTA",
-                        backgroundColor = if (flipped) colors.accentSoft else colors.neutralSoft,
-                        textColor = if (flipped) colors.accentText else colors.textSecondary
+                        text = if (showingBack) "RESPUESTA" else "PREGUNTA",
+                        backgroundColor = if (showingBack) colors.accentSoft else colors.neutralSoft,
+                        textColor = if (showingBack) colors.accentText else colors.textSecondary
                     )
 
                     Spacer(modifier = Modifier.height(20.dp))
 
                     Text(
-                        text = if (flipped) currentCard.second else currentCard.first,
-                        fontSize = if (flipped) 16.sp else 19.sp,
+                        text = if (showingBack) currentCard.answer else currentCard.question,
+                        fontSize = if (showingBack) 16.sp else 19.sp,
                         lineHeight = 26.sp,
                         textAlign = TextAlign.Center,
-                        color = if (flipped) colors.textSecondary else colors.textPrimary
+                        color = if (showingBack) colors.textSecondary else colors.textPrimary
                     )
 
-                    if (flipped) {
+                    if (showingBack) {
                         Spacer(modifier = Modifier.height(20.dp))
                         GlifoBadge(
-                            text = currentCard.third.uppercase(),
+                            text = currentCard.source.uppercase(),
                             backgroundColor = colors.neutralSoft,
                             textColor = colors.textSecondary
                         )
@@ -176,8 +181,8 @@ fun FlashcardScreen(
                                 .weight(1f)
                                 .height(44.dp),
                             shape = RoundedCornerShape(8.dp),
-                            color = androidx.compose.ui.graphics.Color.Transparent,
-                            border = androidx.compose.foundation.BorderStroke(1.dp, col)
+                            color = Color.Transparent,
+                            border = BorderStroke(1.dp, col)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Text(text = label, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = col)

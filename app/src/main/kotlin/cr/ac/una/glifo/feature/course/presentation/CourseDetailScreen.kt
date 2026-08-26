@@ -16,6 +16,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cr.ac.una.glifo.core.data.dummy.DummyCourseProvider
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
 
@@ -32,6 +33,8 @@ fun CourseDetailScreen(
     onNavigateToNoteDetail: (Long) -> Unit
 ) {
     val colors = GlifoTheme.colors
+    val course = DummyCourseProvider.findCourse(courseId)
+    val stats = DummyCourseProvider.getStats(courseId)
 
     Column(
         modifier = Modifier
@@ -39,7 +42,7 @@ fun CourseDetailScreen(
             .background(colors.background)
     ) {
         GlifoTopAppBar(
-            title = "Cálculo II",
+            title = course?.name ?: "Curso",
             subtitle = "Centro de",
             isBack = true,
             onNavigationClick = onNavigateBack,
@@ -57,21 +60,23 @@ fun CourseDetailScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(14.dp)
         ) {
-            // Main Course Summary Card
-            GlifoCard {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Top
-                ) {
-                    Column {
-                        Text(text = "Cálculo II", fontSize = 18.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                        Text(text = "EIF411", fontSize = 13.sp, fontFamily = FontFamily.Monospace, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
+            GlifoStaggeredEntry(index = 0) {
+                // Main Course Summary Card
+                GlifoCard {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Column {
+                            Text(text = course?.name ?: "Curso", fontSize = 18.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                            Text(text = course?.code ?: "—", fontSize = 13.sp, fontFamily = FontFamily.Monospace, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
+                        }
+                        Text(text = "${stats.coveragePercent}%", fontSize = 26.sp, fontWeight = FontWeight.SemiBold, color = colors.accentText)
                     }
-                    Text(text = "68%", fontSize = 26.sp, fontWeight = FontWeight.SemiBold, color = colors.accentText)
+                    CovBar(v = stats.verified, r = stats.repaired, e = stats.escalated, u = stats.uncertain, modifier = Modifier.padding(vertical = 10.dp))
+                    Text(text = "${stats.instructorName} · ${stats.studentCount} estudiantes", fontSize = 12.sp, color = colors.textSecondary)
                 }
-                CovBar(v = 54f, r = 20f, e = 14f, u = 12f, modifier = Modifier.padding(vertical = 10.dp))
-                Text(text = "Prof. Maikol Guzmán · 27 estudiantes", fontSize = 12.sp, color = colors.textSecondary)
             }
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -81,23 +86,27 @@ fun CourseDetailScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                GlifoCard(
-                    onClick = onNavigateToNotes,
-                    modifier = Modifier.weight(1f).height(100.dp)
-                ) {
-                    Icon(imageVector = Icons.AutoMirrored.Filled.Notes, contentDescription = null, tint = colors.accentText, modifier = Modifier.size(20.dp))
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(text = "Mis apuntes", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                    Text(text = "14 apuntes", fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
+                GlifoStaggeredEntry(index = 1, modifier = Modifier.weight(1f)) {
+                    GlifoCard(
+                        onClick = onNavigateToNotes,
+                        modifier = Modifier.height(100.dp)
+                    ) {
+                        Icon(imageVector = Icons.AutoMirrored.Filled.Notes, contentDescription = null, tint = colors.accentText, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(text = "Mis apuntes", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                        Text(text = "${stats.noteCount} apuntes", fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
+                    }
                 }
-                GlifoCard(
-                    onClick = onNavigateToCoverage,
-                    modifier = Modifier.weight(1f).height(100.dp)
-                ) {
-                    Icon(imageVector = Icons.Default.DonutLarge, contentDescription = null, tint = colors.accentText, modifier = Modifier.size(20.dp))
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(text = "Cobertura", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                    Text(text = "33 temas", fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
+                GlifoStaggeredEntry(index = 2, modifier = Modifier.weight(1f)) {
+                    GlifoCard(
+                        onClick = onNavigateToCoverage,
+                        modifier = Modifier.height(100.dp)
+                    ) {
+                        Icon(imageVector = Icons.Default.DonutLarge, contentDescription = null, tint = colors.accentText, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(text = "Cobertura", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                        Text(text = "${stats.topicCount} temas", fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
+                    }
                 }
             }
 
@@ -107,23 +116,27 @@ fun CourseDetailScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                GlifoCard(
-                    onClick = onNavigateToStudy,
-                    modifier = Modifier.weight(1f).height(100.dp)
-                ) {
-                    Icon(imageVector = Icons.Default.Psychology, contentDescription = null, tint = colors.accentText, modifier = Modifier.size(20.dp))
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(text = "Estudio", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                    Text(text = "13 pendientes", fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
+                GlifoStaggeredEntry(index = 3, modifier = Modifier.weight(1f)) {
+                    GlifoCard(
+                        onClick = onNavigateToStudy,
+                        modifier = Modifier.height(100.dp)
+                    ) {
+                        Icon(imageVector = Icons.Default.Psychology, contentDescription = null, tint = colors.accentText, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(text = "Estudio", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                        Text(text = "${stats.pendingCount} pendientes", fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
+                    }
                 }
-                GlifoCard(
-                    onClick = onNavigateToDelta,
-                    modifier = Modifier.weight(1f).height(100.dp)
-                ) {
-                    Icon(imageVector = Icons.Default.ShowChart, contentDescription = null, tint = colors.accentText, modifier = Modifier.size(20.dp))
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(text = "Qué cambió", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                    Text(text = "+6 pts esta semana", fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
+                GlifoStaggeredEntry(index = 4, modifier = Modifier.weight(1f)) {
+                    GlifoCard(
+                        onClick = onNavigateToDelta,
+                        modifier = Modifier.height(100.dp)
+                    ) {
+                        Icon(imageVector = Icons.Default.ShowChart, contentDescription = null, tint = colors.accentText, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(text = "Qué cambió", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                        Text(text = "+${stats.weeklyDeltaPoints} pts esta semana", fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
+                    }
                 }
             }
 

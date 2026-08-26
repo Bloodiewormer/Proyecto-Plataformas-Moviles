@@ -2,6 +2,7 @@ package cr.ac.una.glifo.feature.note.presentation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,22 +14,33 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.GpsFixed
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cr.ac.una.glifo.core.data.dummy.DummyNoteContentProvider
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
 
 @Composable
 fun FormulaViewerScreen(
+    noteId: Long,
     onNavigateBack: () -> Unit,
     onNavigateToCorrect: () -> Unit
 ) {
     val colors = GlifoTheme.colors
+    val formula = DummyNoteContentProvider.get(noteId).formula
+    val clipboard = LocalClipboardManager.current
+    var copied by remember(noteId) { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -36,12 +48,12 @@ fun FormulaViewerScreen(
             .background(colors.background)
     ) {
         GlifoTopAppBar(
-            title = "Fórmula · región 7",
+            title = "Fórmula · ${formula.regionLabel}",
             isBack = true,
             onNavigationClick = onNavigateBack,
             actions = {
                 GlifoBadge(
-                    text = "N1.5",
+                    text = formula.tier,
                     backgroundColor = colors.repairedSoft,
                     textColor = colors.repaired
                 )
@@ -93,7 +105,7 @@ fun FormulaViewerScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "∫_a^∞ f(x) dx = lim_{b→∞} ∫_a^b f(x) dx",
+                    text = formula.display,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Medium,
                     color = colors.textPrimary,
@@ -110,12 +122,22 @@ fun FormulaViewerScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("LaTeX generado", fontSize = 12.sp, color = colors.textSecondary)
-                    Icon(imageVector = Icons.Default.ContentCopy, contentDescription = "Copiar", tint = colors.accentText, modifier = Modifier.size(18.dp))
+                    Text(if (copied) "Copiado" else "LaTeX generado", fontSize = 12.sp, color = colors.textSecondary)
+                    Icon(
+                        imageVector = if (copied) Icons.Default.Check else Icons.Default.ContentCopy,
+                        contentDescription = "Copiar",
+                        tint = colors.accentText,
+                        modifier = Modifier
+                            .size(18.dp)
+                            .clickable {
+                                clipboard.setText(AnnotatedString(formula.latex))
+                                copied = true
+                            }
+                    )
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "\\int_a^{\\infty} f(x)\\,dx = \\lim_{b \\to \\infty} \\int_a^b f(x)\\,dx",
+                    text = formula.latex,
                     fontFamily = FontFamily.Monospace,
                     fontSize = 13.sp,
                     lineHeight = 20.sp,
@@ -133,12 +155,12 @@ fun FormulaViewerScreen(
                 GlifoItem(compact = true) {
                     Icon(Icons.Default.GpsFixed, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
                     Text("Confianza del motor", fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                    Text("0.86", fontFamily = FontFamily.Monospace, fontSize = 14.sp, color = colors.textSecondary)
+                    Text("${formula.confidence}", fontFamily = FontFamily.Monospace, fontSize = 14.sp, color = colors.textSecondary)
                 }
                 GlifoItem(compact = true, showBottomBorder = false) {
                     Icon(Icons.Default.BarChart, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
                     Text("Resuelto por", fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                    Text("SimpleTex · gratuito", fontSize = 14.sp, color = colors.textSecondary)
+                    Text(formula.engine, fontSize = 14.sp, color = colors.textSecondary)
                 }
             }
 

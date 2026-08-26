@@ -1,5 +1,10 @@
 package cr.ac.una.glifo.feature.study.presentation
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -21,6 +26,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cr.ac.una.glifo.core.data.dummy.DummyStudyProvider
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
 
@@ -30,24 +36,22 @@ fun QuizScreen(
     onNavigateToResult: () -> Unit
 ) {
     val colors = GlifoTheme.colors
+    val question = DummyStudyProvider.getQuizQuestion(courseId = 1L)
 
     var selectedOption by remember { mutableStateOf<Int?>(null) }
     var isAnswered by remember { mutableStateOf(false) }
 
-    val correctOption = 1
-    val options = listOf("R = 1", "R = ∞", "R = 0", "R = e")
-
     fun borderFor(i: Int): androidx.compose.ui.graphics.Color {
         if (!isAnswered) return if (selectedOption == i) colors.accentText else colors.border
-        if (i == correctOption) return colors.verified
-        if (i == selectedOption && selectedOption != correctOption) return colors.alert
+        if (i == question.correctIndex) return colors.verified
+        if (i == selectedOption && selectedOption != question.correctIndex) return colors.alert
         return colors.border
     }
 
     fun bgFor(i: Int): androidx.compose.ui.graphics.Color {
         if (!isAnswered) return if (selectedOption == i) colors.accentFaint else colors.surface
-        if (i == correctOption) return colors.verifiedSoft
-        if (i == selectedOption && selectedOption != correctOption) return colors.alertFaint
+        if (i == question.correctIndex) return colors.verifiedSoft
+        if (i == selectedOption && selectedOption != question.correctIndex) return colors.alertFaint
         return colors.surface
     }
 
@@ -102,15 +106,15 @@ fun QuizScreen(
                 modifier = Modifier.padding(bottom = 14.dp)
             ) {
                 GlifoBadge(
-                    text = "TEMA AUSENTE",
+                    text = question.topicTag,
                     backgroundColor = colors.escalatedSoft,
                     textColor = colors.escalated
                 )
-                Text("3.4 Series de potencias", fontSize = 12.sp, color = colors.textSecondary)
+                Text(question.topicLabel, fontSize = 12.sp, color = colors.textSecondary)
             }
 
             Text(
-                text = "¿Cuál es el radio de convergencia de la serie ∑ xⁿ / n!?",
+                text = question.prompt,
                 fontSize = 19.sp,
                 fontWeight = FontWeight.Normal,
                 lineHeight = 28.sp,
@@ -118,14 +122,16 @@ fun QuizScreen(
                 modifier = Modifier.padding(bottom = 22.dp)
             )
 
-            options.forEachIndexed { i, label ->
-                val optionLetter = listOf("A", "B", "C", "D")[i]
+            question.options.forEachIndexed { i, label ->
+                val optionLetter = listOf("A", "B", "C", "D").getOrElse(i) { "${i + 1}" }
+                val animatedBorder by animateColorAsState(borderFor(i), tween(220), label = "quiz-border")
+                val animatedBg by animateColorAsState(bgFor(i), tween(220), label = "quiz-bg")
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 10.dp)
-                        .background(bgFor(i), RoundedCornerShape(12.dp))
-                        .border(1.5.dp, borderFor(i), RoundedCornerShape(12.dp))
+                        .background(animatedBg, RoundedCornerShape(12.dp))
+                        .border(1.5.dp, animatedBorder, RoundedCornerShape(12.dp))
                         .clickable(enabled = !isAnswered) { selectedOption = i }
                         .padding(14.dp)
                 ) {
@@ -136,12 +142,12 @@ fun QuizScreen(
                         Box(
                             modifier = Modifier
                                 .size(22.dp)
-                                .border(2.dp, borderFor(i), CircleShape),
+                                .border(2.dp, animatedBorder, CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
-                            if (isAnswered && i == correctOption) {
+                            if (isAnswered && i == question.correctIndex) {
                                 Icon(imageVector = Icons.Default.Check, contentDescription = null, tint = colors.verified, modifier = Modifier.size(14.dp))
-                            } else if (isAnswered && i == selectedOption && selectedOption != correctOption) {
+                            } else if (isAnswered && i == selectedOption && selectedOption != question.correctIndex) {
                                 Icon(imageVector = Icons.Default.Close, contentDescription = null, tint = colors.alert, modifier = Modifier.size(14.dp))
                             } else if (!isAnswered && selectedOption == i) {
                                 Box(modifier = Modifier.size(10.dp).background(colors.accentText, CircleShape))
@@ -175,22 +181,33 @@ fun QuizScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(colors.verifiedSoft, RoundedCornerShape(10.dp))
-                        .border(1.dp, colors.verifiedLine, RoundedCornerShape(10.dp))
-                        .padding(14.dp)
+                val correct = selectedOption == question.correctIndex
+                AnimatedVisibility(
+                    visible = true,
+                    enter = fadeIn(tween(300)) + expandVertically(tween(300))
                 ) {
-                    Column {
-                        Text("¡Correcto!", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = colors.verified)
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "La serie exponencial ∑ xⁿ/n! converge para todo x ∈ ℝ, por lo que su radio de convergencia es infinito.",
-                            fontSize = 13.sp,
-                            color = colors.textSecondary,
-                            lineHeight = 18.sp
-                        )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(if (correct) colors.verifiedSoft else colors.alertFaint, RoundedCornerShape(10.dp))
+                            .border(1.dp, if (correct) colors.verifiedLine else colors.alertLine, RoundedCornerShape(10.dp))
+                            .padding(14.dp)
+                    ) {
+                        Column {
+                            Text(
+                                if (correct) "¡Correcto!" else "No era esa",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = if (correct) colors.verified else colors.alert
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = question.explanation,
+                                fontSize = 13.sp,
+                                color = colors.textSecondary,
+                                lineHeight = 18.sp
+                            )
+                        }
                     }
                 }
             }

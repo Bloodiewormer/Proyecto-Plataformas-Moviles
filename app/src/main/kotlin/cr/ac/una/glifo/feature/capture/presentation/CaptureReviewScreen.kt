@@ -1,5 +1,7 @@
 package cr.ac.una.glifo.feature.capture.presentation
 
+import android.graphics.BitmapFactory
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -12,24 +14,36 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cr.ac.una.glifo.core.data.dummy.DummyCaptureProvider
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
 
 @Composable
 fun CaptureReviewScreen(
+    photoPath: String? = null,
     onNavigateBack: () -> Unit,
     onRetakePhoto: () -> Unit,
     onProcessAnyway: () -> Unit
 ) {
     val colors = GlifoTheme.colors
+    val checks = DummyCaptureProvider.getQualityChecks()
+    val hasWarning = DummyCaptureProvider.hasQualityWarning()
+
+    val bitmap = remember(photoPath) {
+        photoPath?.let { path ->
+            runCatching { BitmapFactory.decodeFile(path)?.asImageBitmap() }.getOrNull()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -49,43 +63,55 @@ fun CaptureReviewScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(14.dp)
         ) {
-            // Blurred preview box
+            // Real captured photo when available, otherwise a placeholder.
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(170.dp)
                     .background(colors.surfaceHigh, RoundedCornerShape(7.dp))
-                    .border(1.dp, colors.border, RoundedCornerShape(7.dp)),
+                    .border(1.dp, colors.border, RoundedCornerShape(7.dp))
+                    .clip(RoundedCornerShape(7.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "Vista previa de la captura",
-                    fontSize = 11.sp,
-                    color = colors.textSecondary
-                )
+                if (bitmap != null) {
+                    Image(
+                        bitmap = bitmap,
+                        contentDescription = "Foto capturada",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Text(
+                        text = "Vista previa de la captura",
+                        fontSize = 11.sp,
+                        color = colors.textSecondary
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Warning Card
-            GlifoCard(
-                backgroundColor = colors.alertFaint,
-                borderColor = colors.alertLine
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+            if (hasWarning) {
+                // Warning Card
+                GlifoCard(
+                    backgroundColor = colors.alertFaint,
+                    borderColor = colors.alertLine
                 ) {
-                    Icon(imageVector = Icons.Default.Warning, contentDescription = null, tint = colors.alert, modifier = Modifier.size(18.dp))
-                    Text("La foto está movida", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(imageVector = Icons.Default.Warning, contentDescription = null, tint = colors.alert, modifier = Modifier.size(18.dp))
+                        Text("La foto está movida", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                    }
+                    Text(
+                        text = "Con este nivel de desenfoque el reconocimiento inventaría texto. Apoyá el codo en la mesa y repetí la toma.",
+                        fontSize = 12.sp,
+                        color = colors.textSecondary,
+                        lineHeight = 18.sp,
+                        modifier = Modifier.padding(top = 6.dp)
+                    )
                 }
-                Text(
-                    text = "Con este nivel de desenfoque el reconocimiento inventaría texto. Apoyá el codo en la mesa y repetí la toma.",
-                    fontSize = 12.sp,
-                    color = colors.textSecondary,
-                    lineHeight = 18.sp,
-                    modifier = Modifier.padding(top = 6.dp)
-                )
             }
 
             // Quality Diagnostics
@@ -99,12 +125,8 @@ fun CaptureReviewScreen(
             )
 
             GlifoCard {
-                listOf(
-                    Triple("Nitidez", "12 / 35", Pair(24f, colors.alert)),
-                    Triple("Iluminación", "78", Pair(78f, colors.verified)),
-                    Triple("Sin reflejos", "91", Pair(91f, colors.verified)),
-                    Triple("Perspectiva", "corregida −4.2°", Pair(100f, colors.verified))
-                ).forEachIndexed { i, (label, score, bar) ->
+                checks.forEach { check ->
+                    val barColor = if (check.isWarning) colors.alert else colors.verified
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -113,12 +135,12 @@ fun CaptureReviewScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Icon(
-                            imageVector = if (bar.second == colors.alert) Icons.Default.Warning else Icons.Default.Check,
+                            imageVector = if (check.isWarning) Icons.Default.Warning else Icons.Default.Check,
                             contentDescription = null,
-                            tint = bar.second,
+                            tint = barColor,
                             modifier = Modifier.size(16.dp)
                         )
-                        Text(text = label, fontSize = 13.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                        Text(text = check.label, fontSize = 13.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
                         Box(
                             modifier = Modifier
                                 .width(64.dp)
@@ -129,12 +151,12 @@ fun CaptureReviewScreen(
                             Box(
                                 modifier = Modifier
                                     .fillMaxHeight()
-                                    .fillMaxWidth(bar.first / 100f)
-                                    .background(bar.second)
+                                    .fillMaxWidth(check.percent / 100f)
+                                    .background(barColor)
                             )
                         }
                         Text(
-                            text = score,
+                            text = check.scoreLabel,
                             fontSize = 11.sp,
                             fontFamily = FontFamily.Monospace,
                             color = colors.textSecondary
@@ -154,7 +176,7 @@ fun CaptureReviewScreen(
             Spacer(modifier = Modifier.height(6.dp))
 
             GlifoButton(
-                text = "Procesarla igual, sé que va a fallar",
+                text = if (hasWarning) "Procesarla igual, sé que va a fallar" else "Procesar",
                 variant = GlifoButtonVariant.Text,
                 onClick = onProcessAnyway
             )

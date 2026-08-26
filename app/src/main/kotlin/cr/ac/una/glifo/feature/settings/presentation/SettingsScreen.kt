@@ -1,5 +1,7 @@
 package cr.ac.una.glifo.feature.settings.presentation
 
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -11,8 +13,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cr.ac.una.glifo.core.data.dummy.DummySyncProvider
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
 
@@ -39,9 +40,16 @@ fun SettingsScreen(
     var confirmN3 by remember { mutableStateOf(true) }
     var wifiOnly by remember { mutableStateOf(false) }
     var notifyDone by remember { mutableStateOf(true) }
+    var confidenceThreshold by remember { mutableStateOf(0.70f) }
+    val pendingCount = DummySyncProvider.getPendingCount()
 
     @Composable
     fun GlifoSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+        val thumbOffset by animateDpAsState(
+            targetValue = if (checked) 20.dp else 0.dp,
+            animationSpec = tween(180),
+            label = "switch-thumb"
+        )
         Box(
             modifier = Modifier
                 .width(44.dp)
@@ -49,10 +57,11 @@ fun SettingsScreen(
                 .background(if (checked) colors.accent else colors.border, RoundedCornerShape(999.dp))
                 .clickable { onCheckedChange(!checked) }
                 .padding(3.dp),
-            contentAlignment = if (checked) Alignment.CenterEnd else Alignment.CenterStart
+            contentAlignment = Alignment.CenterStart
         ) {
             Box(
                 modifier = Modifier
+                    .offset(x = thumbOffset)
                     .size(18.dp)
                     .background(if (checked) colors.onAccent else colors.textSecondary, CircleShape)
             )
@@ -113,7 +122,7 @@ fun SettingsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text("Umbral de confianza", fontSize = 16.sp, color = colors.textPrimary)
-                    Text("0.70", fontFamily = FontFamily.Monospace, fontSize = 15.sp, color = colors.accentText)
+                    Text(String.format("%.2f", confidenceThreshold), fontFamily = FontFamily.Monospace, fontSize = 15.sp, color = colors.accentText)
                 }
                 Box(
                     modifier = Modifier
@@ -123,7 +132,7 @@ fun SettingsScreen(
                         .clip(RoundedCornerShape(999.dp))
                         .background(colors.surfaceHigh)
                 ) {
-                    Box(modifier = Modifier.fillMaxHeight().fillMaxWidth(0.70f).background(colors.accent))
+                    Box(modifier = Modifier.fillMaxHeight().fillMaxWidth(confidenceThreshold).background(colors.accent))
                 }
                 Text(
                     text = "Por debajo de este valor la región escala al siguiente motor. Más alto significa más precisión y más llamadas.",
@@ -177,7 +186,7 @@ fun SettingsScreen(
             GlifoCard(tight = true) {
                 GlifoItem(compact = true, onClick = onNavigateToSync) {
                     Text("Cola de sincronización", fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                    Text("2 pendientes", fontSize = 13.sp, color = colors.textSecondary)
+                    Text("$pendingCount pendientes", fontSize = 13.sp, color = colors.textSecondary)
                     Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(16.dp))
                 }
                 GlifoItem(compact = true, showBottomBorder = false) {

@@ -1,5 +1,7 @@
 package cr.ac.una.glifo.feature.sync.presentation
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -10,7 +12,12 @@ import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.GpsFixed
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -18,6 +25,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cr.ac.una.glifo.core.data.dummy.DummyAiCostProvider
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
 import kotlinx.coroutines.launch
@@ -32,12 +40,21 @@ fun AiCostScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val colors = GlifoTheme.colors
+    val stats = DummyAiCostProvider.getStats(role)
 
     val title = when (role) {
         GlifoRole.Admin -> "Consumo del sistema"
         GlifoRole.Teacher -> "Consumo del curso"
         GlifoRole.Student -> "Consumo de IA"
     }
+
+    var animateIn by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { animateIn = true }
+    val quotaAnim by animateFloatAsState(
+        targetValue = if (animateIn) (stats.quotaPercent ?: 0) / 100f else 0f,
+        animationSpec = tween(700),
+        label = "quota"
+    )
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -94,7 +111,7 @@ fun AiCostScreen(
                     borderColor = colors.verifiedLine
                 ) {
                     Text(
-                        text = if (role == GlifoRole.Admin) "Agosto · Sistema completo · 142 usuarios" else if (role == GlifoRole.Teacher) "Agosto · EIF411 · 27 estudiantes" else "Agosto · Cálculo II",
+                        text = stats.periodLabel,
                         fontSize = 12.sp,
                         color = colors.textSecondary
                     )
@@ -106,10 +123,10 @@ fun AiCostScreen(
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Text(
-                            text = if (role == GlifoRole.Admin) "64%" else "81%",
+                            text = "${stats.headlinePercent}%",
                             fontSize = 34.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = if (role == GlifoRole.Admin) colors.accentText else colors.verified
+                            color = if (stats.isSystemWide) colors.accentText else colors.verified
                         )
                         Text(
                             text = "de las regiones se resolvieron\nsin llamadas de pago",
@@ -119,7 +136,7 @@ fun AiCostScreen(
                         )
                     }
 
-                    if (role == GlifoRole.Admin) {
+                    if (stats.quotaUsed != null && stats.quotaTotal != null) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -131,12 +148,12 @@ fun AiCostScreen(
                             Box(
                                 modifier = Modifier
                                     .fillMaxHeight()
-                                    .fillMaxWidth(0.64f)
+                                    .fillMaxWidth(quotaAnim)
                                     .background(colors.accent)
                             )
                         }
                         Text(
-                            text = "1 842 de 2 900 llamadas de nivel 2 · cuota al 78%",
+                            text = "${stats.quotaUsed} de ${stats.quotaTotal} llamadas de nivel 2 · cuota al ${stats.quotaPercent}%",
                             fontSize = 12.sp,
                             color = colors.textSecondary,
                             modifier = Modifier.padding(top = 8.dp)
@@ -154,12 +171,7 @@ fun AiCostScreen(
                 )
 
                 GlifoCard {
-                    listOf(
-                        Triple(ConfidenceState.Verified, "N1 · ML Kit local", Pair(68f, "612")),
-                        Triple(ConfidenceState.Repaired, "N1.5 · SimpleTex gratis", Pair(13f, "117")),
-                        Triple(ConfidenceState.Escalated, "N2 · visión, en lote", Pair(16f, "144")),
-                        Triple(ConfidenceState.Uncertain, "Sin resolver", Pair(3f, "27"))
-                    ).forEach { (state, label, meta) ->
+                    stats.breakdown.forEach { row ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -167,8 +179,8 @@ fun AiCostScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            GlifoConfidenceChip(state = state)
-                            Text(text = label, fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                            GlifoConfidenceChip(state = row.state)
+                            Text(text = row.label, fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
                             Box(
                                 modifier = Modifier
                                     .width(64.dp)
@@ -179,9 +191,9 @@ fun AiCostScreen(
                                 Box(
                                     modifier = Modifier
                                         .fillMaxHeight()
-                                        .fillMaxWidth(meta.first / 100f)
+                                        .fillMaxWidth(row.percent / 100f)
                                         .background(
-                                            when (state) {
+                                            when (row.state) {
                                                 ConfidenceState.Verified -> colors.verified
                                                 ConfidenceState.Repaired -> colors.repaired
                                                 ConfidenceState.Escalated -> colors.escalated
@@ -191,7 +203,7 @@ fun AiCostScreen(
                                 )
                             }
                             Text(
-                                text = meta.second,
+                                text = row.count,
                                 fontFamily = FontFamily.Monospace,
                                 fontSize = 12.sp,
                                 color = colors.textSecondary,
@@ -212,20 +224,15 @@ fun AiCostScreen(
                 )
 
                 GlifoCard(tight = true) {
-                    listOf(
-                        Pair("IA-00 · reparación por visión", "31"),
-                        Pair("IA-01 · reconstrucción", "47"),
-                        Pair("IA-02 · flashcards y quizzes", "9"),
-                        Pair("IA-05 · adjudicación semántica", "6")
-                    ).forEach { (label, count) ->
+                    stats.paidCalls.forEach { call ->
                         GlifoItem(compact = true) {
-                            Text(text = label, fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                            Text(text = count, fontFamily = FontFamily.Monospace, fontSize = 14.sp, color = colors.textSecondary)
+                            Text(text = call.label, fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                            Text(text = call.count, fontFamily = FontFamily.Monospace, fontSize = 14.sp, color = colors.textSecondary)
                         }
                     }
                     GlifoItem(compact = true, showBottomBorder = false, backgroundColor = colors.surfaceHigh) {
                         Text(text = "Total", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                        Text(text = "93", fontFamily = FontFamily.Monospace, fontSize = 16.sp, color = colors.accentText)
+                        Text(text = "${stats.totalPaidCalls}", fontFamily = FontFamily.Monospace, fontSize = 16.sp, color = colors.accentText)
                     }
                 }
 
@@ -238,7 +245,7 @@ fun AiCostScreen(
                 ) {
                     Icon(imageVector = Icons.Default.GpsFixed, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp).padding(top = 1.dp))
                     Text(
-                        text = "Sin la escalera, 47 páginas habrían requerido 47 llamadas de visión de página completa.",
+                        text = stats.footerNote,
                         fontSize = 12.sp,
                         color = colors.textSecondary,
                         lineHeight = 18.sp

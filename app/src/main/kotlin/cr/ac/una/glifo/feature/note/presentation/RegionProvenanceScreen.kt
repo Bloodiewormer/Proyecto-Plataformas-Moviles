@@ -1,5 +1,7 @@
 package cr.ac.una.glifo.feature.note.presentation
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -12,6 +14,11 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -19,14 +26,17 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cr.ac.una.glifo.core.data.dummy.DummyNoteContentProvider
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
 
 @Composable
 fun RegionProvenanceScreen(
+    noteId: Long,
     onNavigateBack: () -> Unit
 ) {
     val colors = GlifoTheme.colors
+    val provenance = DummyNoteContentProvider.get(noteId).provenance
 
     Column(
         modifier = Modifier
@@ -34,7 +44,7 @@ fun RegionProvenanceScreen(
             .background(colors.background)
     ) {
         GlifoTopAppBar(
-            title = "Región 12",
+            title = "Región",
             isBack = true,
             onNavigationClick = onNavigateBack
         )
@@ -70,9 +80,9 @@ fun RegionProvenanceScreen(
                         backgroundColor = colors.uncertainSoft,
                         textColor = colors.uncertain
                     )
-                    Text("0.41", fontFamily = FontFamily.Monospace, fontSize = 20.sp, color = colors.uncertain)
+                    Text("${provenance.confidence}", fontFamily = FontFamily.Monospace, fontSize = 20.sp, color = colors.uncertain)
                 }
-                Text("Umbral configurado: 0.70", fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 8.dp))
+                Text("Umbral configurado: ${provenance.threshold}", fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 8.dp))
             }
 
             Text(
@@ -85,12 +95,13 @@ fun RegionProvenanceScreen(
             )
 
             GlifoCard {
-                listOf(
-                    Triple("Confianza del OCR", "0.38", Pair(38f, colors.uncertain)),
-                    Triple("Coincide con el glosario", "0.00", Pair(0f, colors.accent)),
-                    Triple("Palabra del diccionario", "0.00", Pair(0f, colors.accent)),
-                    Triple("Coherencia con región vecina", "0.72", Pair(72f, colors.verified))
-                ).forEach { (label, value, bar) ->
+                provenance.factors.forEach { factor ->
+                    val barColor = if (factor.isStrong) colors.verified else colors.uncertain
+                    val animatedFraction by animateFloatAsState(
+                        targetValue = factor.value,
+                        animationSpec = tween(500),
+                        label = "provenance-factor"
+                    )
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -98,7 +109,7 @@ fun RegionProvenanceScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Text(text = label, fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                        Text(text = factor.label, fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
                         Box(
                             modifier = Modifier
                                 .width(70.dp)
@@ -109,12 +120,12 @@ fun RegionProvenanceScreen(
                             Box(
                                 modifier = Modifier
                                     .fillMaxHeight()
-                                    .fillMaxWidth(bar.first / 100f)
-                                    .background(bar.second)
+                                    .fillMaxWidth(animatedFraction)
+                                    .background(barColor)
                             )
                         }
                         Text(
-                            text = value,
+                            text = String.format("%.2f", factor.value),
                             fontFamily = FontFamily.Monospace,
                             fontSize = 12.sp,
                             color = colors.textSecondary,
@@ -135,25 +146,19 @@ fun RegionProvenanceScreen(
             )
 
             GlifoCard(tight = true) {
-                GlifoItem(compact = true) {
-                    Icon(Icons.Default.Check, contentDescription = null, tint = colors.verified, modifier = Modifier.size(18.dp))
-                    Text("N0 · preprocesada", fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                    Text("0.02 s", fontSize = 12.sp, color = colors.textSecondary)
-                }
-                GlifoItem(compact = true) {
-                    Icon(Icons.Default.Check, contentDescription = null, tint = colors.verified, modifier = Modifier.size(18.dp))
-                    Text("N1 · ML Kit", fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                    Text("0.06 s", fontSize = 12.sp, color = colors.textSecondary)
-                }
-                GlifoItem(compact = true) {
-                    Icon(Icons.Default.Close, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
-                    Text("N1.5 · no es fórmula", fontSize = 15.sp, color = colors.textSecondary, modifier = Modifier.weight(1f))
-                    Text("omitido", fontSize = 12.sp, color = colors.textSecondary)
-                }
-                GlifoItem(compact = true, showBottomBorder = false) {
-                    Icon(Icons.Default.Check, contentDescription = null, tint = colors.escalated, modifier = Modifier.size(18.dp))
-                    Text("N2 · visión, en lote", fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                    Text("1.4 s", fontSize = 12.sp, color = colors.textSecondary)
+                provenance.pipeline.forEachIndexed { i, step ->
+                    GlifoItem(compact = true, showBottomBorder = i < provenance.pipeline.size - 1) {
+                        val icon = if (step.state == "skipped") Icons.Default.Close else Icons.Default.Check
+                        val tint = when (step.state) {
+                            "escalated" -> colors.escalated
+                            "skipped" -> colors.textSecondary
+                            else -> colors.verified
+                        }
+                        val textColor = if (step.state == "skipped") colors.textSecondary else colors.textPrimary
+                        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp))
+                        Text(step.label, fontSize = 15.sp, color = textColor, modifier = Modifier.weight(1f))
+                        Text(step.duration, fontSize = 12.sp, color = colors.textSecondary)
+                    }
                 }
             }
 

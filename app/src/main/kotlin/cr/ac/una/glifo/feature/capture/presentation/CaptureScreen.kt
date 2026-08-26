@@ -1,6 +1,17 @@
 package cr.ac.una.glifo.feature.capture.presentation
 
-import androidx.compose.foundation.Canvas
+import android.Manifest
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -8,33 +19,54 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
+import cr.ac.una.glifo.core.data.dummy.DummyCourseProvider
+import cr.ac.una.glifo.core.ui.component.GlifoButton
+import cr.ac.una.glifo.core.ui.component.GlifoButtonVariant
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @Composable
 fun CaptureScreen(
     courseId: Long,
     onNavigateBack: () -> Unit,
-    onCapturePhoto: () -> Unit
+    onCapturePhoto: (String) -> Unit
 ) {
     val colors = GlifoTheme.colors
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val course = DummyCourseProvider.findCourse(courseId)
+
+    var hasCameraPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+    var permissionWasRequested by remember { mutableStateOf(false) }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        hasCameraPermission = granted
+        permissionWasRequested = true
+    }
 
     Column(
         modifier = Modifier
@@ -46,125 +78,236 @@ fun CaptureScreen(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .background(
-                    Brush.radialGradient(
-                        colors = listOf(colors.surfaceHigh, colors.surface, colors.background),
-                        radius = 800f
-                    )
-                ),
+                .background(colors.background),
             contentAlignment = Alignment.Center
         ) {
-            // Top Camera Bar
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.TopCenter)
-                    .statusBarsPadding()
-                    .padding(horizontal = 10.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                IconButton(onClick = onNavigateBack) {
-                    Icon(imageVector = Icons.Default.Close, contentDescription = "Cerrar", tint = colors.textPrimary, modifier = Modifier.size(22.dp))
-                }
-                Text(
-                    text = "Cálculo II · página 1",
-                    fontSize = 12.sp,
-                    color = colors.textPrimary
+            if (hasCameraPermission) {
+                var imageCapture by remember { mutableStateOf<ImageCapture?>(null) }
+
+                AndroidView(
+                    modifier = Modifier.fillMaxSize(),
+                    factory = { ctx ->
+                        val previewView = PreviewView(ctx)
+                        val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
+                        cameraProviderFuture.addListener({
+                            val cameraProvider = cameraProviderFuture.get()
+                            val preview = Preview.Builder().build().also {
+                                it.setSurfaceProvider(previewView.surfaceProvider)
+                            }
+                            val capture = ImageCapture.Builder().build()
+                            imageCapture = capture
+                            try {
+                                cameraProvider.unbindAll()
+                                cameraProvider.bindToLifecycle(
+                                    lifecycleOwner,
+                                    CameraSelector.DEFAULT_BACK_CAMERA,
+                                    preview,
+                                    capture
+                                )
+                            } catch (_: Exception) {
+                                // Nothing sensible to do with a bind failure in the dummy phase —
+                                // the permission-denied state already covers "no camera available".
+                            }
+                        }, ContextCompat.getMainExecutor(ctx))
+                        previewView
+                    }
                 )
-                IconButton(onClick = {}) {
-                    Icon(imageVector = Icons.Default.FlashOn, contentDescription = "Flash", tint = colors.textPrimary, modifier = Modifier.size(22.dp))
+
+                // Top Camera Bar
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.TopCenter)
+                        .statusBarsPadding()
+                        .padding(horizontal = 10.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(imageVector = Icons.Default.Close, contentDescription = "Cerrar", tint = colors.textPrimary, modifier = Modifier.size(22.dp))
+                    }
+                    Text(
+                        text = "${course?.name ?: "Curso"} · página 1",
+                        fontSize = 12.sp,
+                        color = colors.textPrimary
+                    )
+                    Spacer(modifier = Modifier.size(22.dp))
                 }
-            }
 
-            // Document Detection Overlay
-            Canvas(modifier = Modifier.size(220.dp, 290.dp)) {
-                val w = size.width
-                val h = size.height
-
-                // Bounding quadrilateral
-                val docPath = Path().apply {
-                    moveTo(16f, 24f)
-                    lineTo(w - 16f, 12f)
-                    lineTo(w - 6f, h - 24f)
-                    lineTo(24f, h - 12f)
-                    close()
-                }
-                drawPath(path = docPath, color = colors.accentFaint)
-                drawPath(path = docPath, color = colors.accentText, style = Stroke(width = 2f))
-
-                // Corner indicators
-                val cornerStroke = Stroke(width = 4f, cap = StrokeCap.Round)
-                // Top-left
-                drawLine(colors.accentText, Offset(16f, 50f), Offset(16f, 24f), strokeWidth = 4f, cap = StrokeCap.Round)
-                drawLine(colors.accentText, Offset(16f, 24f), Offset(42f, 22f), strokeWidth = 4f, cap = StrokeCap.Round)
-                // Top-right
-                drawLine(colors.accentText, Offset(w - 42f, 14f), Offset(w - 16f, 12f), strokeWidth = 4f, cap = StrokeCap.Round)
-                drawLine(colors.accentText, Offset(w - 16f, 12f), Offset(w - 15f, 38f), strokeWidth = 4f, cap = StrokeCap.Round)
-            }
-
-            // Detection pill
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 24.dp)
-                    .background(colors.surface, RoundedCornerShape(999.dp))
-                    .border(1.dp, colors.border, RoundedCornerShape(999.dp))
-                    .padding(horizontal = 12.dp, vertical = 5.dp)
-            ) {
-                Text(
-                    text = "Página detectada · mantené el pulso",
-                    fontSize = 11.sp,
-                    color = colors.accentText
-                )
-            }
-        }
-
-        // Camera Bottom Bar
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .height(100.dp)
-                .background(colors.background)
-                .padding(horizontal = 24.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceAround
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .background(colors.surfaceHigh, RoundedCornerShape(7.dp))
-                    .border(1.dp, colors.border, RoundedCornerShape(7.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(imageVector = Icons.Default.Image, contentDescription = "Galería", tint = colors.textSecondary, modifier = Modifier.size(18.dp))
-            }
-
-            // Shutter Button
-            Box(
-                modifier = Modifier
-                    .size(60.dp)
-                    .border(3.dp, colors.textPrimary, CircleShape)
-                    .clickable(onClick = onCapturePhoto),
-                contentAlignment = Alignment.Center
-            ) {
+                // Framing guide (purely a visual aid — not a real detection result)
                 Box(
                     modifier = Modifier
-                        .size(48.dp)
-                        .background(colors.textPrimary, CircleShape)
+                        .align(Alignment.Center)
+                        .size(240.dp, 310.dp)
+                        .border(1.dp, colors.accentText.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
+                )
+
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 24.dp)
+                        .background(colors.surface, RoundedCornerShape(999.dp))
+                        .border(1.dp, colors.border, RoundedCornerShape(999.dp))
+                        .padding(horizontal = 12.dp, vertical = 5.dp)
+                ) {
+                    Text(
+                        text = "Encuadrá la página dentro del marco",
+                        fontSize = 11.sp,
+                        color = colors.accentText
+                    )
+                }
+
+                // Camera Bottom Bar
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.BottomCenter)
+                        .navigationBarsPadding()
+                        .height(100.dp)
+                        .padding(horizontal = 24.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceAround
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(colors.surfaceHigh, RoundedCornerShape(7.dp))
+                            .border(1.dp, colors.border, RoundedCornerShape(7.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(imageVector = Icons.Default.Image, contentDescription = "Galería", tint = colors.textSecondary, modifier = Modifier.size(18.dp))
+                    }
+
+                    // Shutter Button
+                    Box(
+                        modifier = Modifier
+                            .size(60.dp)
+                            .border(3.dp, colors.textPrimary, CircleShape)
+                            .clickable {
+                                val capture = imageCapture ?: return@clickable
+                                val fileName = "glifo_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(java.util.Date())}.jpg"
+                                val outputFile = File(context.cacheDir, fileName)
+                                val outputOptions = ImageCapture.OutputFileOptions.Builder(outputFile).build()
+                                capture.takePicture(
+                                    outputOptions,
+                                    ContextCompat.getMainExecutor(context),
+                                    object : ImageCapture.OnImageSavedCallback {
+                                        override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+                                            onCapturePhoto(outputFile.absolutePath)
+                                        }
+
+                                        override fun onError(exception: ImageCaptureException) {
+                                            // Dummy phase: no photo, no navigation — the user can just try again.
+                                        }
+                                    }
+                                )
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .background(colors.textPrimary, CircleShape)
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(colors.surfaceHigh, RoundedCornerShape(7.dp))
+                            .border(1.dp, colors.border, RoundedCornerShape(7.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("1/8", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = colors.textSecondary)
+                    }
+                }
+            } else {
+                CameraPermissionRationale(
+                    permissionWasRequested = permissionWasRequested,
+                    onNavigateBack = onNavigateBack,
+                    onRequestPermission = { permissionLauncher.launch(Manifest.permission.CAMERA) },
+                    onOpenSettings = {
+                        val intent = android.content.Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                            data = Uri.fromParts("package", context.packageName, null)
+                        }
+                        context.startActivity(intent)
+                    }
                 )
             }
+        }
+    }
+}
 
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .background(colors.surfaceHigh, RoundedCornerShape(7.dp))
-                    .border(1.dp, colors.border, RoundedCornerShape(7.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("1/8", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = colors.textSecondary)
+@Composable
+private fun CameraPermissionRationale(
+    permissionWasRequested: Boolean,
+    onNavigateBack: () -> Unit,
+    onRequestPermission: () -> Unit,
+    onOpenSettings: () -> Unit
+) {
+    val colors = GlifoTheme.colors
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
+        ) {
+            IconButton(onClick = onNavigateBack) {
+                Icon(imageVector = Icons.Default.Close, contentDescription = "Cerrar", tint = colors.textSecondary, modifier = Modifier.size(22.dp))
             }
         }
+
+        Icon(
+            imageVector = Icons.Default.CameraAlt,
+            contentDescription = null,
+            tint = colors.textSecondary,
+            modifier = Modifier.size(48.dp)
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "Glifo necesita la cámara",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Medium,
+            color = colors.textPrimary
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = "Para capturar tus apuntes necesitamos acceso a la cámara del dispositivo. Nunca se sube nada sin que vos lo pidas.",
+            fontSize = 13.sp,
+            color = colors.textSecondary,
+            lineHeight = 20.sp,
+            modifier = Modifier.padding(horizontal = 8.dp)
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        if (permissionWasRequested) {
+            GlifoButton(
+                text = "Abrir ajustes de la app",
+                onClick = onOpenSettings
+            )
+        } else {
+            GlifoButton(
+                text = "Permitir acceso a la cámara",
+                onClick = onRequestPermission
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        GlifoButton(
+            text = "Ahora no",
+            variant = GlifoButtonVariant.Text,
+            onClick = onNavigateBack
+        )
     }
 }

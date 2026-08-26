@@ -1,13 +1,11 @@
 package cr.ac.una.glifo.feature.home.presentation
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.Schedule
@@ -22,9 +20,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cr.ac.una.glifo.core.data.dummy.DummyAdminProvider
+import cr.ac.una.glifo.core.data.dummy.DummyCourseProvider
+import cr.ac.una.glifo.core.data.dummy.DummyNoteProvider
+import cr.ac.una.glifo.core.data.dummy.DummySyncProvider
+import cr.ac.una.glifo.core.data.dummy.DummyTeacherProvider
+import cr.ac.una.glifo.core.data.session.SessionManager
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
 import kotlinx.coroutines.launch
+
+private const val STUDENT_ACTIVE_COURSE_ID = 1L
+private const val TEACHER_ACTIVE_COURSE_ID = 3L
 
 // ── Screen B2: Inicio Estudiante ──────────────────────────────────────────────
 @Composable
@@ -48,6 +55,13 @@ fun HomeScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val colors = GlifoTheme.colors
+    val user = SessionManager.currentUser
+
+    val course = DummyCourseProvider.findCourse(STUDENT_ACTIVE_COURSE_ID)
+    val stats = DummyCourseProvider.getStats(STUDENT_ACTIVE_COURSE_ID)
+    val recentNotes = DummyNoteProvider.getNoteMetaList().take(2)
+    val flashcardCount = 12
+    val quizCount = 1
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -65,6 +79,10 @@ fun HomeScreen(
                 GlifoDrawerContent(
                     role = GlifoRole.Student,
                     currentScreen = "home",
+                    activeCourseName = course?.name ?: "Cálculo II",
+                    userName = user?.fullName ?: "Brandon Brenes",
+                    userEmail = user?.email ?: "estudiante@est.una.ac.cr",
+                    userInitials = user?.initials ?: "BB",
                     onNavigate = { route ->
                         scope.launch { drawerState.close() }
                         when (route) {
@@ -105,7 +123,7 @@ fun HomeScreen(
             Column(modifier = Modifier.fillMaxSize()) {
                 // Top AppBar
                 GlifoTopAppBar(
-                    title = "Cálculo II",
+                    title = course?.name ?: "Cálculo II",
                     subtitle = "Curso activo",
                     hasDropdown = true,
                     onNavigationClick = {
@@ -137,51 +155,51 @@ fun HomeScreen(
                         .padding(14.dp)
                 ) {
                     // Cobertura del curso Card
-                    GlifoCard(
-                        onClick = onNavigateToCoverage
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "Cobertura del curso",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = colors.textPrimary
-                            )
-                            Text(
-                                text = "68%",
-                                fontSize = 22.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = colors.accentText
-                            )
-                        }
+                    GlifoStaggeredEntry(index = 0) {
+                        GlifoCard(onClick = onNavigateToCoverage) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Cobertura del curso",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = colors.textPrimary
+                                )
+                                Text(
+                                    text = "${stats.coveragePercent}%",
+                                    fontSize = 22.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = colors.accentText
+                                )
+                            }
 
-                        CovBar(
-                            v = 54f,
-                            r = 20f,
-                            e = 14f,
-                            u = 12f,
-                            modifier = Modifier.padding(top = 12.dp, bottom = 6.dp)
-                        )
+                            CovBar(
+                                v = stats.verified,
+                                r = stats.repaired,
+                                e = stats.escalated,
+                                u = stats.uncertain,
+                                modifier = Modifier.padding(top = 12.dp, bottom = 6.dp)
+                            )
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = "18 sólidos · 7 parciales · 5 ausentes",
-                                fontSize = 12.sp,
-                                color = colors.textSecondary
-                            )
-                            Text(
-                                text = "+2 desde el 8 ago",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = colors.verified
-                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "18 sólidos · 7 parciales · 5 ausentes",
+                                    fontSize = 12.sp,
+                                    color = colors.textSecondary
+                                )
+                                Text(
+                                    text = "+${stats.weeklyDeltaPoints} desde el 8 ago",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = colors.verified
+                                )
+                            }
                         }
                     }
 
@@ -200,69 +218,69 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         // Flashcards Box
-                        GlifoCard(
-                            onClick = onNavigateToFlashcards,
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(90.dp)
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        GlifoStaggeredEntry(index = 1, modifier = Modifier.weight(1f)) {
+                            GlifoCard(
+                                onClick = onNavigateToFlashcards,
+                                modifier = Modifier.height(90.dp)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Layers,
-                                    contentDescription = null,
-                                    tint = colors.accentText,
-                                    modifier = Modifier.size(18.dp)
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Layers,
+                                        contentDescription = null,
+                                        tint = colors.accentText,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Text(
+                                        text = "$flashcardCount flashcards",
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = colors.textPrimary
+                                    )
+                                }
+                                Spacer(modifier = Modifier.weight(1f))
                                 Text(
-                                    text = "12 flashcards",
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = colors.textPrimary
+                                    text = "Series · Integrales impropias",
+                                    fontSize = 11.sp,
+                                    color = colors.textSecondary,
+                                    lineHeight = 14.sp
                                 )
                             }
-                            Spacer(modifier = Modifier.weight(1f))
-                            Text(
-                                text = "Series · Integrales impropias",
-                                fontSize = 11.sp,
-                                color = colors.textSecondary,
-                                lineHeight = 14.sp
-                            )
                         }
 
                         // Quiz Box
-                        GlifoCard(
-                            onClick = onNavigateToQuiz,
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(90.dp)
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        GlifoStaggeredEntry(index = 2, modifier = Modifier.weight(1f)) {
+                            GlifoCard(
+                                onClick = onNavigateToQuiz,
+                                modifier = Modifier.height(90.dp)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Outlined.Schedule,
-                                    contentDescription = null,
-                                    tint = colors.accentText,
-                                    modifier = Modifier.size(18.dp)
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Schedule,
+                                        contentDescription = null,
+                                        tint = colors.accentText,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Text(
+                                        text = "$quizCount quiz",
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = colors.textPrimary
+                                    )
+                                }
+                                Spacer(modifier = Modifier.weight(1f))
                                 Text(
-                                    text = "1 quiz",
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = colors.textPrimary
+                                    text = "De los vacíos detectados",
+                                    fontSize = 11.sp,
+                                    color = colors.textSecondary,
+                                    lineHeight = 14.sp
                                 )
                             }
-                            Spacer(modifier = Modifier.weight(1f))
-                            Text(
-                                text = "De los vacíos detectados",
-                                fontSize = 11.sp,
-                                color = colors.textSecondary,
-                                lineHeight = 14.sp
-                            )
                         }
                     }
 
@@ -276,68 +294,40 @@ fun HomeScreen(
                         modifier = Modifier.padding(top = 18.dp, bottom = 8.dp)
                     )
 
-                    GlifoCard(tight = true) {
-                        // Note 1
-                        GlifoItem(
-                            onClick = { onNavigateToNoteDetail(1L) }
-                        ) {
-                            GlifoThumb {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.Notes,
-                                    contentDescription = null,
-                                    tint = colors.textSecondary,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "Integrales impropias",
-                                    fontSize = 14.sp,
-                                    color = colors.textPrimary,
-                                    fontWeight = FontWeight.Normal
-                                )
-                                Text(
-                                    text = "12 ago · 3 páginas",
-                                    fontSize = 12.sp,
-                                    color = colors.textSecondary
-                                )
-                            }
-                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                GlifoConfidenceChip(state = ConfidenceState.Verified)
-                                GlifoConfidenceChip(state = ConfidenceState.Repaired)
-                                GlifoConfidenceChip(state = ConfidenceState.Escalated)
-                            }
-                        }
-
-                        // Note 2
-                        GlifoItem(
-                            showBottomBorder = false,
-                            onClick = { onNavigateToNoteDetail(2L) }
-                        ) {
-                            GlifoThumb {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.Notes,
-                                    contentDescription = null,
-                                    tint = colors.textSecondary,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "Criterio de comparación",
-                                    fontSize = 14.sp,
-                                    color = colors.textPrimary,
-                                    fontWeight = FontWeight.Normal
-                                )
-                                Text(
-                                    text = "7 ago · 2 páginas",
-                                    fontSize = 12.sp,
-                                    color = colors.textSecondary
-                                )
-                            }
-                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                GlifoConfidenceChip(state = ConfidenceState.Verified)
-                                GlifoConfidenceChip(state = ConfidenceState.Uncertain)
+                    GlifoStaggeredEntry(index = 3) {
+                        GlifoCard(tight = true) {
+                            recentNotes.forEachIndexed { i, meta ->
+                                GlifoItem(
+                                    showBottomBorder = i < recentNotes.size - 1,
+                                    onClick = { onNavigateToNoteDetail(meta.note.id) }
+                                ) {
+                                    GlifoThumb {
+                                        Icon(
+                                            imageVector = Icons.AutoMirrored.Filled.Notes,
+                                            contentDescription = null,
+                                            tint = colors.textSecondary,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = meta.note.title,
+                                            fontSize = 14.sp,
+                                            color = colors.textPrimary,
+                                            fontWeight = FontWeight.Normal
+                                        )
+                                        Text(
+                                            text = "${meta.displayDate} · ${meta.pageCount} páginas",
+                                            fontSize = 12.sp,
+                                            color = colors.textSecondary
+                                        )
+                                    }
+                                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        meta.chips.forEach { chip ->
+                                            GlifoConfidenceChip(state = chip)
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -372,6 +362,11 @@ fun TeacherHomeScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val colors = GlifoTheme.colors
+    val user = SessionManager.currentUser
+
+    val course = DummyCourseProvider.findCourse(TEACHER_ACTIVE_COURSE_ID)
+    val stats = DummyCourseProvider.getStats(TEACHER_ACTIVE_COURSE_ID)
+    val gaps = DummyTeacherProvider.getGaps()
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -389,7 +384,10 @@ fun TeacherHomeScreen(
                 GlifoDrawerContent(
                     role = GlifoRole.Teacher,
                     currentScreen = "home_teacher",
-                    activeCourseName = "EIF411",
+                    activeCourseName = course?.code ?: "EIF411",
+                    userName = user?.fullName ?: "Maikol Guzmán",
+                    userEmail = user?.email ?: "docente@una.ac.cr",
+                    userInitials = user?.initials ?: "MG",
                     onNavigate = { route ->
                         scope.launch { drawerState.close() }
                         when (route) {
@@ -422,7 +420,7 @@ fun TeacherHomeScreen(
                 .background(colors.background)
         ) {
             GlifoTopAppBar(
-                title = "EIF411",
+                title = course?.code ?: "EIF411",
                 subtitle = "Curso activo",
                 hasDropdown = true,
                 onNavigationClick = { scope.launch { drawerState.open() } }
@@ -435,39 +433,41 @@ fun TeacherHomeScreen(
                     .padding(14.dp)
             ) {
                 // Group coverage card
-                GlifoCard {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Cobertura del grupo",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = colors.textPrimary
+                GlifoStaggeredEntry(index = 0) {
+                    GlifoCard {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Cobertura del grupo",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = colors.textPrimary
+                            )
+                            Text(
+                                text = "${stats.coveragePercent}%",
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colors.accentText
+                            )
+                        }
+
+                        CovBar(
+                            v = stats.verified,
+                            r = stats.repaired,
+                            e = stats.escalated,
+                            u = stats.uncertain,
+                            modifier = Modifier.padding(top = 12.dp, bottom = 6.dp)
                         )
+
                         Text(
-                            text = "54%",
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = colors.accentText
+                            text = "${stats.studentCount} estudiantes inscritos · promedio del curso",
+                            fontSize = 12.sp,
+                            color = colors.textSecondary
                         )
                     }
-
-                    CovBar(
-                        v = 40f,
-                        r = 24f,
-                        e = 26f,
-                        u = 10f,
-                        modifier = Modifier.padding(top = 12.dp, bottom = 6.dp)
-                    )
-
-                    Text(
-                        text = "27 estudiantes inscritos · promedio del curso",
-                        fontSize = 12.sp,
-                        color = colors.textSecondary
-                    )
                 }
 
                 // Temas con más vacíos
@@ -480,33 +480,19 @@ fun TeacherHomeScreen(
                     modifier = Modifier.padding(top = 18.dp, bottom = 8.dp)
                 )
 
-                GlifoCard(tight = true) {
-                    GlifoItem(compact = true, onClick = onNavigateToGaps) {
-                        GlifoConfidenceChip(state = ConfidenceState.Escalated)
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(text = "4.3 Sockets e hilos", fontSize = 13.sp, color = colors.textPrimary)
-                            Text(text = "19 de 27 sin cubrir", fontSize = 11.sp, color = colors.textSecondary)
+                GlifoStaggeredEntry(index = 1) {
+                    GlifoCard(tight = true) {
+                        gaps.forEachIndexed { i, gap ->
+                            GlifoItem(compact = true, showBottomBorder = i < gaps.size - 1, onClick = onNavigateToGaps) {
+                                GlifoConfidenceChip(state = gap.state)
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(text = gap.label, fontSize = 13.sp, color = colors.textPrimary)
+                                    Text(text = "${gap.fraction} sin cubrir", fontSize = 11.sp, color = colors.textSecondary)
+                                }
+                                Text(text = "${gap.percent.toInt()}%", fontSize = 12.sp, color = colors.textSecondary)
+                                Icon(imageVector = Icons.Default.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(16.dp))
+                            }
                         }
-                        Text(text = "70%", fontSize = 12.sp, color = colors.textSecondary)
-                        Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(16.dp))
-                    }
-                    GlifoItem(compact = true, onClick = onNavigateToGaps) {
-                        GlifoConfidenceChip(state = ConfidenceState.Uncertain)
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(text = "6.1 Seguridad y permisos", fontSize = 13.sp, color = colors.textPrimary)
-                            Text(text = "14 de 27 sin cubrir", fontSize = 11.sp, color = colors.textSecondary)
-                        }
-                        Text(text = "52%", fontSize = 12.sp, color = colors.textSecondary)
-                        Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(16.dp))
-                    }
-                    GlifoItem(compact = true, showBottomBorder = false, onClick = onNavigateToGaps) {
-                        GlifoConfidenceChip(state = ConfidenceState.Repaired)
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(text = "3.2 Jetpack Compose", fontSize = 13.sp, color = colors.textPrimary)
-                            Text(text = "8 de 27 sin cubrir", fontSize = 11.sp, color = colors.textSecondary)
-                        }
-                        Text(text = "30%", fontSize = 12.sp, color = colors.textSecondary)
-                        Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(16.dp))
                     }
                 }
 
@@ -520,28 +506,30 @@ fun TeacherHomeScreen(
                     modifier = Modifier.padding(top = 18.dp, bottom = 8.dp)
                 )
 
-                GlifoCard(
-                    backgroundColor = colors.alertFaint,
-                    borderColor = colors.alertLine
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                GlifoStaggeredEntry(index = 2) {
+                    GlifoCard(
+                        backgroundColor = colors.alertFaint,
+                        borderColor = colors.alertLine
                     ) {
-                        Icon(imageVector = Icons.Default.Warning, contentDescription = null, tint = colors.alert, modifier = Modifier.size(18.dp))
-                        Text(text = "Álgebra Lineal no tiene temario", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(imageVector = Icons.Default.Warning, contentDescription = null, tint = colors.alert, modifier = Modifier.size(18.dp))
+                            Text(text = "Álgebra Lineal no tiene temario", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                        }
+                        Text(
+                            text = "Sin temario no se puede calcular la cobertura.",
+                            fontSize = 12.sp,
+                            color = colors.textSecondary,
+                            modifier = Modifier.padding(top = 6.dp, bottom = 12.dp)
+                        )
+                        GlifoButton(
+                            text = "Publicar temario",
+                            variant = GlifoButtonVariant.Secondary,
+                            onClick = onNavigateToSyllabus
+                        )
                     }
-                    Text(
-                        text = "Sin temario no se puede calcular la cobertura.",
-                        fontSize = 12.sp,
-                        color = colors.textSecondary,
-                        modifier = Modifier.padding(top = 6.dp, bottom = 12.dp)
-                    )
-                    GlifoButton(
-                        text = "Publicar temario",
-                        variant = GlifoButtonVariant.Secondary,
-                        onClick = onNavigateToSyllabus
-                    )
                 }
             }
         }
@@ -561,6 +549,9 @@ fun AdminHomeScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val colors = GlifoTheme.colors
+    val user = SessionManager.currentUser
+    val roles = DummyAdminProvider.getRoles()
+    val recentSignups = DummyAdminProvider.getRecentSignups()
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -578,6 +569,9 @@ fun AdminHomeScreen(
                 GlifoDrawerContent(
                     role = GlifoRole.Admin,
                     currentScreen = "home_admin",
+                    userName = user?.fullName ?: "Admin Glifo",
+                    userEmail = user?.email ?: "admin@una.ac.cr",
+                    userInitials = user?.initials ?: "AD",
                     onNavigate = { route ->
                         scope.launch { drawerState.close() }
                         when (route) {
@@ -624,21 +618,25 @@ fun AdminHomeScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    GlifoCard(
-                        onClick = onNavigateToUsers,
-                        modifier = Modifier.weight(1f).height(84.dp)
-                    ) {
-                        Text("142", fontSize = 18.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                        Spacer(modifier = Modifier.weight(1f))
-                        Text("Usuarios activos", fontSize = 12.sp, color = colors.textSecondary)
+                    GlifoStaggeredEntry(index = 0, modifier = Modifier.weight(1f)) {
+                        GlifoCard(
+                            onClick = onNavigateToUsers,
+                            modifier = Modifier.height(84.dp)
+                        ) {
+                            Text(roles.sumOf { it.userCount }.toString(), fontSize = 18.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                            Spacer(modifier = Modifier.weight(1f))
+                            Text("Usuarios activos", fontSize = 12.sp, color = colors.textSecondary)
+                        }
                     }
-                    GlifoCard(
-                        onClick = onNavigateToAiCost,
-                        modifier = Modifier.weight(1f).height(84.dp)
-                    ) {
-                        Text("64%", fontSize = 18.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                        Spacer(modifier = Modifier.weight(1f))
-                        Text("Sin llamadas de pago", fontSize = 12.sp, color = colors.textSecondary)
+                    GlifoStaggeredEntry(index = 1, modifier = Modifier.weight(1f)) {
+                        GlifoCard(
+                            onClick = onNavigateToAiCost,
+                            modifier = Modifier.height(84.dp)
+                        ) {
+                            Text("64%", fontSize = 18.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                            Spacer(modifier = Modifier.weight(1f))
+                            Text("Sin llamadas de pago", fontSize = 12.sp, color = colors.textSecondary)
+                        }
                     }
                 }
 
@@ -651,26 +649,28 @@ fun AdminHomeScreen(
                     modifier = Modifier.padding(top = 18.dp, bottom = 8.dp)
                 )
 
-                GlifoCard(tight = true) {
-                    GlifoItem(compact = true) {
-                        Icon(Icons.Default.Check, contentDescription = null, tint = colors.verified, modifier = Modifier.size(18.dp))
-                        Text("API", fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                        Text("142 ms", fontSize = 12.sp, color = colors.textSecondary)
-                    }
-                    GlifoItem(compact = true) {
-                        Icon(Icons.Default.Check, contentDescription = null, tint = colors.verified, modifier = Modifier.size(18.dp))
-                        Text("PostgreSQL", fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                        Text("operativa", fontSize = 12.sp, color = colors.textSecondary)
-                    }
-                    GlifoItem(compact = true) {
-                        Icon(Icons.Default.Warning, contentDescription = null, tint = colors.alert, modifier = Modifier.size(18.dp))
-                        Text("SimpleTex", fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                        Text("cuota al 78%", fontSize = 12.sp, color = colors.textSecondary)
-                    }
-                    GlifoItem(compact = true, showBottomBorder = false) {
-                        Icon(Icons.Default.Check, contentDescription = null, tint = colors.verified, modifier = Modifier.size(18.dp))
-                        Text("Cola de sincronización", fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                        Text("4 pendientes", fontSize = 12.sp, color = colors.textSecondary)
+                GlifoStaggeredEntry(index = 2) {
+                    GlifoCard(tight = true) {
+                        GlifoItem(compact = true) {
+                            Icon(Icons.Default.Check, contentDescription = null, tint = colors.verified, modifier = Modifier.size(18.dp))
+                            Text("API", fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                            Text("142 ms", fontSize = 12.sp, color = colors.textSecondary)
+                        }
+                        GlifoItem(compact = true) {
+                            Icon(Icons.Default.Check, contentDescription = null, tint = colors.verified, modifier = Modifier.size(18.dp))
+                            Text("PostgreSQL", fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                            Text("operativa", fontSize = 12.sp, color = colors.textSecondary)
+                        }
+                        GlifoItem(compact = true) {
+                            Icon(Icons.Default.Warning, contentDescription = null, tint = colors.alert, modifier = Modifier.size(18.dp))
+                            Text("SimpleTex", fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                            Text("cuota al 78%", fontSize = 12.sp, color = colors.textSecondary)
+                        }
+                        GlifoItem(compact = true, showBottomBorder = false) {
+                            Icon(Icons.Default.Check, contentDescription = null, tint = colors.verified, modifier = Modifier.size(18.dp))
+                            Text("Cola de sincronización", fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                            Text("${DummySyncProvider.getPendingCount()} pendientes", fontSize = 12.sp, color = colors.textSecondary)
+                        }
                     }
                 }
 
@@ -683,38 +683,37 @@ fun AdminHomeScreen(
                     modifier = Modifier.padding(top = 18.dp, bottom = 8.dp)
                 )
 
-                GlifoCard(tight = true) {
-                    val rolesData = listOf(
-                        Triple("Estudiante", "131", colors.accent to 0.88f),
-                        Triple("Docente", "9", colors.accent to 0.08f),
-                        Triple("Administrador", "2", colors.alert to 0.03f)
-                    )
-                    rolesData.forEachIndexed { i, (label, count, barInfo) ->
-                        val (barColor, fraction) = barInfo
-                        GlifoItem(showBottomBorder = i < rolesData.size - 1) {
-                            Text(label, fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                            Box(
-                                modifier = Modifier
-                                    .width(80.dp)
-                                    .height(6.dp)
-                                    .clip(RoundedCornerShape(999.dp))
-                                    .background(colors.surfaceHigh)
-                            ) {
+                GlifoStaggeredEntry(index = 3) {
+                    val total = roles.sumOf { it.userCount }.coerceAtLeast(1)
+                    GlifoCard(tight = true) {
+                        roles.forEachIndexed { i, role ->
+                            val barColor = if (role.isSensitive) colors.alert else colors.accent
+                            val fraction = role.userCount.toFloat() / total
+                            GlifoItem(showBottomBorder = i < roles.size - 1) {
+                                Text(role.name, fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
                                 Box(
                                     modifier = Modifier
-                                        .fillMaxHeight()
-                                        .fillMaxWidth(fraction)
-                                        .background(barColor)
+                                        .width(80.dp)
+                                        .height(6.dp)
+                                        .clip(RoundedCornerShape(999.dp))
+                                        .background(colors.surfaceHigh)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxHeight()
+                                            .fillMaxWidth(fraction)
+                                            .background(barColor)
+                                    )
+                                }
+                                Text(
+                                    role.userCount.toString(),
+                                    fontSize = 12.sp,
+                                    fontFamily = FontFamily.Monospace,
+                                    color = colors.textSecondary,
+                                    modifier = Modifier.width(28.dp),
+                                    textAlign = TextAlign.End
                                 )
                             }
-                            Text(
-                                count,
-                                fontSize = 12.sp,
-                                fontFamily = FontFamily.Monospace,
-                                color = colors.textSecondary,
-                                modifier = Modifier.width(28.dp),
-                                textAlign = TextAlign.End
-                            )
                         }
                     }
                 }
@@ -728,44 +727,29 @@ fun AdminHomeScreen(
                     modifier = Modifier.padding(top = 18.dp, bottom = 8.dp)
                 )
 
-                GlifoCard(tight = true) {
-                    GlifoItem(compact = true) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = null,
-                            tint = colors.textSecondary,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Text(
-                            text = "dgonzalez@est.una.ac.cr",
-                            fontSize = 14.sp,
-                            color = colors.textPrimary,
-                            modifier = Modifier.weight(1f)
-                        )
-                        Text(
-                            text = "hace 2 h",
-                            fontSize = 12.sp,
-                            color = colors.textSecondary
-                        )
-                    }
-                    GlifoItem(compact = true, showBottomBorder = false) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = null,
-                            tint = colors.textSecondary,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Text(
-                            text = "fugalde@est.una.ac.cr",
-                            fontSize = 14.sp,
-                            color = colors.textPrimary,
-                            modifier = Modifier.weight(1f)
-                        )
-                        Text(
-                            text = "hace 5 h",
-                            fontSize = 12.sp,
-                            color = colors.textSecondary
-                        )
+                GlifoStaggeredEntry(index = 4) {
+                    GlifoCard(tight = true) {
+                        recentSignups.forEachIndexed { i, signup ->
+                            GlifoItem(compact = true, showBottomBorder = i < recentSignups.size - 1) {
+                                Icon(
+                                    imageVector = Icons.Default.Person,
+                                    contentDescription = null,
+                                    tint = colors.textSecondary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Text(
+                                    text = signup.email,
+                                    fontSize = 14.sp,
+                                    color = colors.textPrimary,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Text(
+                                    text = if (i == 0) "hace 2 h" else "hace 5 h",
+                                    fontSize = 12.sp,
+                                    color = colors.textSecondary
+                                )
+                            }
+                        }
                     }
                 }
 

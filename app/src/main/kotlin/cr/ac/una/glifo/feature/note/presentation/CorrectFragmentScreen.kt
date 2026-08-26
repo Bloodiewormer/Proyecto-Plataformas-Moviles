@@ -1,5 +1,7 @@
 package cr.ac.una.glifo.feature.note.presentation
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -9,25 +11,28 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cr.ac.una.glifo.core.data.dummy.DummyNoteContentProvider
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
 
 @Composable
 fun CorrectFragmentScreen(
+    noteId: Long,
     onNavigateBack: () -> Unit,
     onSaveCorrection: () -> Unit
 ) {
     val colors = GlifoTheme.colors
+    val content = DummyNoteContentProvider.get(noteId)
+    val correction = content.correction
     var contributeToGlossary by remember { mutableStateOf(true) }
+    var selectedSuggestion by remember(noteId) { mutableStateOf(0) }
 
     Column(
         modifier = Modifier
@@ -62,7 +67,7 @@ fun CorrectFragmentScreen(
                     backgroundColor = colors.uncertainSoft,
                     textColor = colors.uncertain
                 )
-                Text("confianza 0.41 · umbral 0.70", fontSize = 12.sp, color = colors.textSecondary)
+                Text("confianza ${correction.confidence} · umbral ${correction.threshold}", fontSize = 12.sp, color = colors.textSecondary)
             }
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -80,7 +85,7 @@ fun CorrectFragmentScreen(
             }
 
             Text(
-                text = "Región 12 de 18",
+                text = "Región ${correction.regionIndex} de ${correction.regionTotal}",
                 fontSize = 12.sp,
                 color = colors.textSecondary,
                 modifier = Modifier
@@ -110,8 +115,13 @@ fun CorrectFragmentScreen(
                 Column {
                     Text("TEXTO RECONOCIDO", fontSize = 11.sp, color = colors.accentText, modifier = Modifier.padding(bottom = 4.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("converge; en caso contrario ", fontSize = 14.sp, color = colors.textPrimary)
-                        Text("dvierge", fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.background(colors.uncertainSoft, RoundedCornerShape(3.dp)).padding(horizontal = 2.dp))
+                        Text(correction.recognizedPrefix, fontSize = 14.sp, color = colors.textPrimary)
+                        Text(
+                            correction.recognizedWord,
+                            fontSize = 14.sp,
+                            color = colors.textPrimary,
+                            modifier = Modifier.background(colors.uncertainSoft, RoundedCornerShape(3.dp)).padding(horizontal = 2.dp)
+                        )
                     }
                 }
             }
@@ -129,14 +139,25 @@ fun CorrectFragmentScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                listOf("diverge", "divergente", "deriva").forEachIndexed { i, s ->
+                correction.suggestions.forEachIndexed { i, s ->
+                    val selected = i == selectedSuggestion
+                    val bg by animateColorAsState(
+                        targetValue = if (selected) colors.accentSoft else colors.neutralSoft,
+                        animationSpec = tween(200),
+                        label = "suggestion-bg"
+                    )
+                    val fg by animateColorAsState(
+                        targetValue = if (selected) colors.accentText else colors.textSecondary,
+                        animationSpec = tween(200),
+                        label = "suggestion-fg"
+                    )
                     Box(
                         modifier = Modifier
-                            .background(if (i == 0) colors.accentSoft else colors.neutralSoft, RoundedCornerShape(999.dp))
-                            .clickable {}
+                            .background(bg, RoundedCornerShape(999.dp))
+                            .clickable { selectedSuggestion = i }
                             .padding(horizontal = 14.dp, vertical = 6.dp)
                     ) {
-                        Text(text = s, fontSize = 14.sp, color = if (i == 0) colors.accentText else colors.textSecondary)
+                        Text(text = s, fontSize = 14.sp, color = fg)
                     }
                 }
             }

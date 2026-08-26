@@ -1,5 +1,9 @@
 package cr.ac.una.glifo.core.ui.component
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -20,7 +24,11 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,6 +47,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
+import kotlinx.coroutines.delay
 
 // ── Glifo Logo Drawing ────────────────────────────────────────────────────────
 @Composable
@@ -985,6 +994,30 @@ fun GlifoTextField(
                 modifier = Modifier.padding(start = 12.dp, top = 4.dp)
             )
         }
+    }
+}
+
+// ── Staggered list entrance ─────────────────────────────────────────────────
+// Small shared motion used across list/card-heavy screens (courses, notes, coverage,
+// admin/teacher lists, sync queue…) so content fades and slides in instead of just
+// appearing, without every screen needing its own bespoke animation code.
+@Composable
+fun GlifoStaggeredEntry(
+    index: Int,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    var visible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        delay(30L * index.coerceIn(0, 10))
+        visible = true
+    }
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(tween(260)) + slideInVertically(tween(260)) { it / 6 },
+        modifier = modifier
+    ) {
+        content()
     }
 }
 

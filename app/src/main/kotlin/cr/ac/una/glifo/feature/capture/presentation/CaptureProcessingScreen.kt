@@ -1,5 +1,7 @@
 package cr.ac.una.glifo.feature.capture.presentation
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -11,15 +13,18 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cr.ac.una.glifo.core.data.dummy.DummyCaptureProvider
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
+import kotlinx.coroutines.delay
 
 @Composable
 fun CaptureProcessingScreen(
@@ -27,14 +32,30 @@ fun CaptureProcessingScreen(
     onViewResults: () -> Unit
 ) {
     val colors = GlifoTheme.colors
+    val steps = DummyCaptureProvider.getProcessingSteps()
+    val revealTarget = steps.count { it.state != "pending" }
 
-    val steps = listOf(
-        Triple("done", "N0 · Preprocesamiento", "Perspectiva −4.2° · contraste normalizado · 18 regiones segmentadas"),
-        Triple("done", "N1 · OCR de texto", "18 de 18 regiones leídas · ML Kit, en el dispositivo · 1.1 s"),
-        Triple("done", "Clasificador de región", "14 texto · 3 fórmulas · 1 dibujo"),
-        Triple("now", "N1.5 · OCR matemático", "2 de 3 fórmulas convertidas a LaTeX · SimpleTex · capa gratuita"),
-        Triple("pending", "N2 · Reparación por visión", "Se activa solo si algo no supera las compuertas.")
+    // Steps reveal themselves over time instead of appearing pre-finished, so the
+    // "processing" screen actually reads as processing.
+    var revealedCount by remember { mutableStateOf(0) }
+    LaunchedEffect(Unit) {
+        while (revealedCount < revealTarget) {
+            delay(450)
+            revealedCount++
+        }
+    }
+
+    val progress by animateFloatAsState(
+        targetValue = revealedCount.toFloat() / steps.size,
+        animationSpec = tween(400),
+        label = "capture-progress"
     )
+
+    fun stateFor(index: Int): String = when {
+        index < revealedCount - 1 -> "done"
+        index == revealedCount - 1 -> steps[index].state
+        else -> "pending"
+    }
 
     Column(
         modifier = Modifier
@@ -89,15 +110,18 @@ fun CaptureProcessingScreen(
                         Box(
                             modifier = Modifier
                                 .fillMaxHeight()
-                                .fillMaxWidth(0.72f)
+                                .fillMaxWidth(progress)
                                 .background(colors.accent)
                         )
                     }
                 }
             }
 
-            // Steps Timeline
-            steps.forEachIndexed { i, (state, name, desc) ->
+            // Steps Timeline — the full path is always visible; each dot lights up in
+            // turn as `revealedCount` advances, so upcoming steps read as "pending"
+            // rather than popping in out of nowhere.
+            steps.forEachIndexed { i, step ->
+                val state = stateFor(i)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -110,7 +134,7 @@ fun CaptureProcessingScreen(
                             modifier = Modifier
                                 .size(22.dp)
                                 .clip(CircleShape)
-                                .background(if (state == "done") colors.verified else androidx.compose.ui.graphics.Color.Transparent)
+                                .background(if (state == "done") colors.verified else Color.Transparent)
                                 .border(
                                     2.dp,
                                     if (state == "done") colors.verified else if (state == "now") colors.accent else colors.border,
@@ -145,13 +169,13 @@ fun CaptureProcessingScreen(
                             .padding(bottom = 14.dp)
                     ) {
                         Text(
-                            text = name,
+                            text = step.name,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium,
                             color = if (state == "now") colors.accentText else if (state == "pending") colors.textSecondary else colors.textPrimary
                         )
                         Text(
-                            text = desc,
+                            text = step.description,
                             fontSize = 11.sp,
                             color = colors.textSecondary,
                             lineHeight = 15.sp,
@@ -165,6 +189,7 @@ fun CaptureProcessingScreen(
 
             GlifoButton(
                 text = "Ver resultados",
+                enabled = revealedCount >= revealTarget,
                 onClick = onViewResults
             )
         }

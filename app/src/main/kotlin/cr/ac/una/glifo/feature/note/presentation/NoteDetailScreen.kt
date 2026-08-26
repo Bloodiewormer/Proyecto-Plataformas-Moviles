@@ -18,13 +18,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cr.ac.una.glifo.core.data.dummy.DummyNoteContentProvider
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
 
@@ -37,6 +37,7 @@ fun NoteDetailScreen(
     onNavigateToProvenance: () -> Unit
 ) {
     val colors = GlifoTheme.colors
+    val content = DummyNoteContentProvider.get(noteId)
 
     Column(
         modifier = Modifier
@@ -44,7 +45,7 @@ fun NoteDetailScreen(
             .background(colors.background)
     ) {
         GlifoTopAppBar(
-            title = "Integrales impropias",
+            title = content.note.title,
             isBack = true,
             onNavigationClick = onNavigateBack,
             actions = {
@@ -71,7 +72,8 @@ fun NoteDetailScreen(
                 }
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = "14 verificados · 2 reparados · 1 escalado · 1 incierto",
+                    text = "${content.verifiedCount} verificados · ${content.repairedCount} reparados · " +
+                        "${content.escalatedCount} escalados · ${content.uncertainCount} inciertos",
                     fontSize = 12.sp,
                     color = colors.textPrimary
                 )
@@ -86,7 +88,7 @@ fun NoteDetailScreen(
                 .padding(14.dp)
         ) {
             Text(
-                text = "Clase del 12 de agosto · página 1 de 3",
+                text = content.pageLabel,
                 fontSize = 11.sp,
                 color = colors.textSecondary,
                 modifier = Modifier.padding(bottom = 10.dp)
@@ -94,7 +96,7 @@ fun NoteDetailScreen(
 
             // Section Title with Verified Underline
             Text(
-                text = "Integrales impropias de primera especie",
+                text = content.heading,
                 fontSize = 17.sp,
                 fontWeight = FontWeight.Medium,
                 color = colors.textPrimary,
@@ -112,11 +114,11 @@ fun NoteDetailScreen(
             // Paragraph with Confidence Underlines
             Text(
                 text = buildAnnotatedString {
-                    append("Una integral es impropia cuando el intervalo de integración no está acotado, o cuando la función presenta una ")
+                    append(content.bodyBeforeHighlight)
                     withStyle(SpanStyle(color = colors.escalated, background = colors.escalatedFaint)) {
-                        append("discontinuidad infinita")
+                        append(content.highlighted)
                     }
-                    append(" dentro del intervalo.")
+                    append(content.bodyAfterHighlight)
                 },
                 fontSize = 14.sp,
                 lineHeight = 24.sp,
@@ -146,17 +148,17 @@ fun NoteDetailScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         GlifoBadge(
-                            text = "REPARADO · N1.5",
+                            text = "REPARADO · ${content.formula.tier}",
                             backgroundColor = colors.repairedSoft,
                             textColor = colors.repaired
                         )
-                        Text(text = "confianza 0.86", fontSize = 11.sp, color = colors.textSecondary)
+                        Text(text = "confianza ${content.formula.confidence}", fontSize = 11.sp, color = colors.textSecondary)
                     }
 
                     Spacer(modifier = Modifier.height(10.dp))
 
                     Text(
-                        text = "∫_a^∞ f(x) dx = lim_{b→∞} ∫_a^b f(x) dx",
+                        text = content.formula.display,
                         fontSize = 17.sp,
                         fontWeight = FontWeight.Medium,
                         color = colors.textPrimary,
@@ -183,9 +185,9 @@ fun NoteDetailScreen(
             // Paragraph 2
             Text(
                 text = buildAnnotatedString {
-                    append("Si el límite existe y es finito, la integral ")
+                    append(content.secondParagraphBefore)
                     withStyle(SpanStyle(background = colors.uncertainSoft)) {
-                        append("converge; en caso contrario diverge")
+                        append(content.secondParagraphHighlighted)
                     }
                     append(".")
                 },
@@ -207,7 +209,7 @@ fun NoteDetailScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     GlifoConfidenceChip(state = ConfidenceState.Uncertain)
-                    Text("1 fragmento sin leer con certeza", fontSize = 13.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                    Text(content.uncertainFragmentLabel, fontSize = 13.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
                     Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(16.dp))
                 }
             }

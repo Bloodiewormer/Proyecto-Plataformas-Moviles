@@ -18,16 +18,19 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cr.ac.una.glifo.core.data.dummy.DummyCoverageProvider
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
 
 @Composable
 fun TopicDetailScreen(
+    topicName: String,
     onNavigateBack: () -> Unit,
     onNavigateToStudy: () -> Unit,
     onNavigateToNoteDetail: (Long) -> Unit
 ) {
     val colors = GlifoTheme.colors
+    val detail = DummyCoverageProvider.getTopicDetail(topicName)
 
     Column(
         modifier = Modifier
@@ -35,7 +38,7 @@ fun TopicDetailScreen(
             .background(colors.background)
     ) {
         GlifoTopAppBar(
-            title = "3.3 Comparación",
+            title = detail.name,
             isBack = true,
             onNavigationClick = onNavigateBack
         )
@@ -53,14 +56,14 @@ fun TopicDetailScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    GlifoConfidenceChip(state = ConfidenceState.Repaired)
-                    GlifoBadge(text = "PARCIAL", backgroundColor = colors.repairedSoft, textColor = colors.repaired)
+                    GlifoConfidenceChip(state = detail.state)
+                    GlifoBadge(text = detail.stateLabel, backgroundColor = colors.repairedSoft, textColor = colors.repaired)
                     Spacer(modifier = Modifier.weight(1f))
-                    Text("0.54", fontFamily = FontFamily.Monospace, fontSize = 14.sp, color = colors.textSecondary)
+                    Text(detail.confidence, fontFamily = FontFamily.Monospace, fontSize = 14.sp, color = colors.textSecondary)
                 }
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
-                    text = "Criterio de comparación para series de términos positivos",
+                    text = detail.name,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Medium,
                     lineHeight = 24.sp,
@@ -78,12 +81,7 @@ fun TopicDetailScreen(
             )
 
             GlifoCard {
-                listOf(
-                    Triple(true, "Enunciado del criterio", "2 apuntes"),
-                    Triple(true, "Ejemplo resuelto", "1 apunte"),
-                    Triple(false, "Criterio de comparación en el límite", "sin evidencia"),
-                    Triple(false, "Condición de convergencia", "sin evidencia")
-                ).forEachIndexed { i, (ok, label, meta) ->
+                detail.checklist.forEach { item ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -92,13 +90,13 @@ fun TopicDetailScreen(
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Icon(
-                            imageVector = if (ok) Icons.Default.Check else Icons.Default.Close,
+                            imageVector = if (item.ok) Icons.Default.Check else Icons.Default.Close,
                             contentDescription = null,
-                            tint = if (ok) colors.verified else colors.escalated,
+                            tint = if (item.ok) colors.verified else colors.escalated,
                             modifier = Modifier.size(18.dp)
                         )
-                        Text(text = label, fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                        Text(text = meta, fontSize = 12.sp, color = colors.textSecondary)
+                        Text(text = item.label, fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                        Text(text = item.meta, fontSize = 12.sp, color = colors.textSecondary)
                     }
                 }
             }
@@ -112,26 +110,26 @@ fun TopicDetailScreen(
                 modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
             )
 
-            GlifoCard(tight = true) {
-                GlifoItem(compact = true, onClick = { onNavigateToNoteDetail(1L) }) {
-                    GlifoThumb(size = 36.dp) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.Notes, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
+            if (detail.noteRefs.isEmpty()) {
+                GlifoBanner(text = "Todavía no hay apuntes que mencionen este tema.")
+            } else {
+                GlifoCard(tight = true) {
+                    detail.noteRefs.forEachIndexed { i, ref ->
+                        GlifoItem(
+                            compact = true,
+                            showBottomBorder = i < detail.noteRefs.size - 1,
+                            onClick = { onNavigateToNoteDetail(ref.noteId) }
+                        ) {
+                            GlifoThumb(size = 36.dp) {
+                                Icon(imageVector = Icons.AutoMirrored.Filled.Notes, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
+                            }
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(ref.title, fontSize = 14.sp, color = colors.textPrimary)
+                                Text(ref.meta, fontSize = 12.sp, color = colors.textSecondary)
+                            }
+                            Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
+                        }
                     }
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("Criterio de comparación", fontSize = 14.sp, color = colors.textPrimary)
-                        Text("7 ago · página 2", fontSize = 12.sp, color = colors.textSecondary)
-                    }
-                    Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
-                }
-                GlifoItem(compact = true, showBottomBorder = false, onClick = { onNavigateToNoteDetail(2L) }) {
-                    GlifoThumb(size = 36.dp) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.Notes, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
-                    }
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("Series de potencias", fontSize = 14.sp, color = colors.textPrimary)
-                        Text("5 ago · página 1", fontSize = 12.sp, color = colors.textSecondary)
-                    }
-                    Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
                 }
             }
 

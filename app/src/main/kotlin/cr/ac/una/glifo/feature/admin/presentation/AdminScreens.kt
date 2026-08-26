@@ -19,10 +19,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cr.ac.una.glifo.core.data.dummy.DummyAdminProvider
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
 import kotlinx.coroutines.launch
@@ -39,12 +39,19 @@ fun AdminUsersScreen(
     val scope = rememberCoroutineScope()
     val colors = GlifoTheme.colors
 
-    val users = listOf(
-        Triple("MG", "Maikol Guzmán", Pair("maikol.guzman@una.cr", Pair("DOCENTE", true))),
-        Triple("BB", "Brandon Brenes", Pair("bbrenes@est.una.ac.cr", Pair("ESTUDIANTE", true))),
-        Triple("DG", "David González", Pair("dgonzalez@est.una.ac.cr", Pair("ESTUDIANTE", true))),
-        Triple("FU", "Felipe Ugalde", Pair("fugalde@est.una.ac.cr", Pair("ESTUDIANTE", true))),
-        Triple("KJ", "Keneth Jara", Pair("kjara@est.una.ac.cr", Pair("INACTIVO", false)))
+    val users = DummyAdminProvider.getUsers()
+    var filter by remember { mutableStateOf("Todos") }
+    val filtered = when (filter) {
+        "Docentes" -> users.filter { it.roleLabel == "DOCENTE" }
+        "Estudiantes" -> users.filter { it.roleLabel == "ESTUDIANTE" }
+        "Admins" -> users.filter { it.roleLabel == "ADMIN" }
+        else -> users
+    }
+    val counts = mapOf(
+        "Todos" to users.size,
+        "Docentes" to users.count { it.roleLabel == "DOCENTE" },
+        "Estudiantes" to users.count { it.roleLabel == "ESTUDIANTE" },
+        "Admins" to users.count { it.roleLabel == "ADMIN" }
     )
 
     ModalNavigationDrawer(
@@ -96,18 +103,15 @@ fun AdminUsersScreen(
                     .padding(horizontal = 16.dp, vertical = 10.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                listOf(
-                    Pair("Todos · 142", true),
-                    Pair("Docentes · 8", false),
-                    Pair("Estudiantes · 131", false),
-                    Pair("Admins · 3", false)
-                ).forEach { (label, active) ->
+                listOf("Todos", "Docentes", "Estudiantes", "Admins").forEach { label ->
+                    val active = filter == label
                     Box(
                         modifier = Modifier
                             .background(if (active) colors.accentSoft else colors.neutralSoft, RoundedCornerShape(999.dp))
+                            .clickable { filter = label }
                             .padding(horizontal = 12.dp, vertical = 5.dp)
                     ) {
-                        Text(text = label, fontSize = 12.sp, color = if (active) colors.accentText else colors.textSecondary)
+                        Text(text = "$label · ${counts[label]}", fontSize = 12.sp, color = if (active) colors.accentText else colors.textSecondary)
                     }
                 }
             }
@@ -118,32 +122,31 @@ fun AdminUsersScreen(
                     .navigationBarsPadding()
                     .verticalScroll(rememberScrollState())
             ) {
-                users.forEachIndexed { i, (initials, name, data) ->
-                    val (email, roleInfo) = data
-                    val (roleName, isActive) = roleInfo
-
-                    GlifoItem(
-                        modifier = Modifier.alpha(if (isActive) 1f else 0.55f),
-                        onClick = { onNavigateToUserDetail(name) }
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .background(if (isActive) colors.accentSoft else colors.surfaceHigh, CircleShape)
-                                .border(1.dp, colors.border, CircleShape),
-                            contentAlignment = Alignment.Center
+                filtered.forEachIndexed { i, u ->
+                    GlifoStaggeredEntry(index = i) {
+                        GlifoItem(
+                            modifier = Modifier.alpha(if (u.isActive) 1f else 0.55f),
+                            onClick = { onNavigateToUserDetail(u.name) }
                         ) {
-                            Text(text = initials, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = if (isActive) colors.accentText else colors.textSecondary)
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .background(if (u.isActive) colors.accentSoft else colors.surfaceHigh, CircleShape)
+                                    .border(1.dp, colors.border, CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(text = u.initials, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = if (u.isActive) colors.accentText else colors.textSecondary)
+                            }
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(text = u.name, fontSize = 16.sp, color = colors.textPrimary)
+                                Text(text = u.email, fontSize = 14.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
+                            }
+                            GlifoBadge(
+                                text = u.roleLabel,
+                                backgroundColor = if (u.roleLabel == "INACTIVO") colors.alertSoft else colors.accentSoft,
+                                textColor = if (u.roleLabel == "INACTIVO") colors.alert else colors.accentText
+                            )
                         }
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(text = name, fontSize = 16.sp, color = colors.textPrimary)
-                            Text(text = email, fontSize = 14.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
-                        }
-                        GlifoBadge(
-                            text = roleName,
-                            backgroundColor = if (roleName == "INACTIVO") colors.alertSoft else colors.accentSoft,
-                            textColor = if (roleName == "INACTIVO") colors.alert else colors.accentText
-                        )
                     }
                 }
             }
@@ -159,7 +162,14 @@ fun AdminUserDetailScreen(
     onSaveSuccess: () -> Unit
 ) {
     val colors = GlifoTheme.colors
-    val privs = listOf("note:create", "note:read:own", "coverage:read:own", "study:attempt", "course:join", "glossary:suggest")
+    val user = DummyAdminProvider.findUser(userName)
+    val roleKey = when (user.roleLabel) {
+        "DOCENTE" -> "Docente"
+        "ADMIN" -> "Administrador"
+        else -> "Estudiante"
+    }
+    val privs = DummyAdminProvider.getPrivilegesFor(roleKey)
+    var checkedRole by remember(userName) { mutableStateOf(roleKey) }
 
     Column(
         modifier = Modifier
@@ -197,11 +207,11 @@ fun AdminUserDetailScreen(
                         .border(1.dp, colors.border, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = "DG", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = colors.accentText)
+                    Text(text = user.initials, fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = colors.accentText)
                 }
                 Column {
                     Text(text = userName, fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = colors.textPrimary)
-                    Text(text = "dgonzalez@est.una.ac.cr", fontSize = 13.sp, color = colors.textSecondary)
+                    Text(text = user.email, fontSize = 13.sp, color = colors.textSecondary)
                 }
             }
 
@@ -209,7 +219,7 @@ fun AdminUserDetailScreen(
 
             GlifoField(label = "Nombre completo", value = userName)
             Spacer(modifier = Modifier.height(10.dp))
-            GlifoField(label = "Correo institucional", value = "dgonzalez@est.una.ac.cr")
+            GlifoField(label = "Correo institucional", value = user.email)
 
             Text(
                 text = "ROLES ASIGNADOS",
@@ -226,15 +236,14 @@ fun AdminUserDetailScreen(
                     Pair("Docente", "Acceso a temarios y métricas de grupo"),
                     Pair("Administrador", "Acceso total al sistema")
                 ).forEachIndexed { i, (roleName, desc) ->
-                    val isChecked = i == 0
                     GlifoItem(showBottomBorder = i < 2) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(text = roleName, fontSize = 15.sp, color = colors.textPrimary)
                             Text(text = desc, fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
                         }
                         Checkbox(
-                            checked = isChecked,
-                            onCheckedChange = {},
+                            checked = checkedRole == roleName,
+                            onCheckedChange = { checked -> if (checked) checkedRole = roleName },
                             colors = CheckboxDefaults.colors(checkedColor = colors.accent, checkmarkColor = colors.onAccent)
                         )
                     }
@@ -280,9 +289,9 @@ fun AdminUserDetailScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             GlifoButton(
-                text = "Desactivar la cuenta",
+                text = if (user.isActive) "Desactivar la cuenta" else "Reactivar la cuenta",
                 variant = GlifoButtonVariant.Danger,
-                onClick = {}
+                onClick = onSaveSuccess
             )
         }
     }
@@ -298,6 +307,7 @@ fun AdminRolesScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val colors = GlifoTheme.colors
+    val roles = DummyAdminProvider.getRoles()
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -347,56 +357,30 @@ fun AdminRolesScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(14.dp)
             ) {
-                // Role 1: Estudiante
-                GlifoCard(modifier = Modifier.padding(bottom = 10.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Estudiante", fontSize = 18.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                        GlifoBadge(text = "131 USUARIOS", backgroundColor = colors.accentSoft, textColor = colors.accentText)
-                    }
-                    Text("Captura, revisa y estudia sobre sus propios apuntes.", fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 8.dp))
-                    Row(modifier = Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        listOf("note:create", "note:read:own", "coverage:read:own", "+3").forEach {
-                            GlifoBadge(text = it, backgroundColor = colors.neutralSoft, textColor = colors.textSecondary)
-                        }
-                    }
-                }
-
-                // Role 2: Docente
-                GlifoCard(modifier = Modifier.padding(bottom = 10.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Docente", fontSize = 18.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                        GlifoBadge(text = "9 USUARIOS", backgroundColor = colors.accentSoft, textColor = colors.accentText)
-                    }
-                    Text("Publica temario y glosario; ve brechas agregadas del grupo.", fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 8.dp))
-                    Row(modifier = Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        listOf("course:create", "syllabus:publish", "glossary:write", "+6").forEach {
-                            GlifoBadge(text = it, backgroundColor = colors.neutralSoft, textColor = colors.textSecondary)
-                        }
-                    }
-                }
-
-                // Role 3: Administrador
-                GlifoCard(modifier = Modifier.padding(bottom = 14.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Administrador", fontSize = 18.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                        GlifoBadge(text = "2 USUARIOS", backgroundColor = colors.alertSoft, textColor = colors.alert)
-                    }
-                    Text("Usuarios, roles y estado del sistema.", fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 8.dp))
-                    Row(modifier = Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        listOf("user:manage", "role:assign", "system:read", "+11").forEach {
-                            GlifoBadge(text = it, backgroundColor = colors.neutralSoft, textColor = colors.textSecondary)
+                roles.forEachIndexed { i, role ->
+                    GlifoStaggeredEntry(index = i) {
+                        GlifoCard(modifier = Modifier.padding(bottom = 10.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(role.name, fontSize = 18.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                                GlifoBadge(
+                                    text = "${role.userCount} USUARIOS",
+                                    backgroundColor = if (role.isSensitive) colors.alertSoft else colors.accentSoft,
+                                    textColor = if (role.isSensitive) colors.alert else colors.accentText
+                                )
+                            }
+                            Text(role.description, fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 8.dp))
+                            Row(modifier = Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                role.privileges.forEach {
+                                    GlifoBadge(text = it, backgroundColor = colors.neutralSoft, textColor = colors.textSecondary)
+                                }
+                                if (role.extraPrivilegeCount > 0) {
+                                    GlifoBadge(text = "+${role.extraPrivilegeCount}", backgroundColor = colors.neutralSoft, textColor = colors.textSecondary)
+                                }
+                            }
                         }
                     }
                 }

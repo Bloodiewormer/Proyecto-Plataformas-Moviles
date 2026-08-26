@@ -23,7 +23,11 @@ sealed class Screen(val route: String) {
     data object Capture : Screen("capture/{courseId}") {
         fun createRoute(courseId: Long = 1L) = "capture/$courseId"
     }
-    data object CaptureReview : Screen("capture_review")
+    data object CaptureReview : Screen("capture_review?photoPath={photoPath}") {
+        fun createRoute(photoPath: String? = null) =
+            if (photoPath != null) "capture_review?photoPath=${java.net.URLEncoder.encode(photoPath, "UTF-8")}"
+            else "capture_review"
+    }
     data object CaptureProcessing : Screen("capture_processing")
 
     // E — Apuntes
@@ -33,15 +37,23 @@ sealed class Screen(val route: String) {
     data object NoteDetail : Screen("note/{noteId}") {
         fun createRoute(noteId: Long = 1L) = "note/$noteId"
     }
-    data object CorrectFragment : Screen("correct_fragment")
-    data object FormulaViewer : Screen("formula_viewer")
-    data object RegionProvenance : Screen("region_provenance")
+    data object CorrectFragment : Screen("correct_fragment/{noteId}") {
+        fun createRoute(noteId: Long = 1L) = "correct_fragment/$noteId"
+    }
+    data object FormulaViewer : Screen("formula_viewer/{noteId}") {
+        fun createRoute(noteId: Long = 1L) = "formula_viewer/$noteId"
+    }
+    data object RegionProvenance : Screen("region_provenance/{noteId}") {
+        fun createRoute(noteId: Long = 1L) = "region_provenance/$noteId"
+    }
 
     // F — Cobertura
     data object Coverage : Screen("coverage/{courseId}") {
         fun createRoute(courseId: Long = 1L) = "coverage/$courseId"
     }
-    data object TopicDetail : Screen("topic_detail")
+    data object TopicDetail : Screen("topic_detail/{topicName}") {
+        fun createRoute(topicName: String) = "topic_detail/${java.net.URLEncoder.encode(topicName, "UTF-8")}"
+    }
     data object CoverageDelta : Screen("coverage_delta")
 
     // G — Estudio
@@ -65,7 +77,9 @@ sealed class Screen(val route: String) {
 
     // J — Administración
     data object AdminUsers : Screen("admin_users")
-    data object AdminUserDetail : Screen("admin_user_detail")
+    data object AdminUserDetail : Screen("admin_user_detail/{userName}") {
+        fun createRoute(userName: String) = "admin_user_detail/${java.net.URLEncoder.encode(userName, "UTF-8")}"
+    }
     data object AdminRoles : Screen("admin_roles")
 
     // K — Perfil y Ajustes

@@ -1,5 +1,7 @@
 package cr.ac.una.glifo.feature.sync.presentation
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -11,12 +13,20 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cr.ac.una.glifo.core.data.dummy.DummySyncProvider
+import cr.ac.una.glifo.core.data.dummy.SyncStatus
+import cr.ac.una.glifo.core.data.session.SessionManager
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
 import kotlinx.coroutines.launch
@@ -31,6 +41,10 @@ fun SyncQueueScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val colors = GlifoTheme.colors
+    val user = SessionManager.currentUser
+
+    val items = DummySyncProvider.getQueueItems()
+    val syncingCount = items.count { it.status == SyncStatus.Syncing }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -48,6 +62,9 @@ fun SyncQueueScreen(
                 GlifoDrawerContent(
                     role = GlifoRole.Student,
                     currentScreen = "sync",
+                    userName = user?.fullName ?: "Brandon Brenes",
+                    userEmail = user?.email ?: "estudiante@est.una.ac.cr",
+                    userInitials = user?.initials ?: "BB",
                     onNavigate = { route ->
                         scope.launch { drawerState.close() }
                         onNavigateDrawer(route)
@@ -70,10 +87,12 @@ fun SyncQueueScreen(
                 onNavigationClick = { scope.launch { drawerState.open() } }
             )
 
-            GlifoBanner(
-                text = "Sincronizando 2 apuntes…",
-                icon = Icons.Default.Sync
-            )
+            if (syncingCount > 0) {
+                GlifoBanner(
+                    text = "Sincronizando $syncingCount ${if (syncingCount == 1) "apunte" else "apuntes"}…",
+                    icon = Icons.Default.Sync
+                )
+            }
 
             Column(
                 modifier = Modifier
@@ -81,66 +100,50 @@ fun SyncQueueScreen(
                     .navigationBarsPadding()
                     .verticalScroll(rememberScrollState())
             ) {
-                // Item 1: Syncing
-                GlifoItem(onClick = { onNavigateToNoteDetail(1L) }) {
-                    GlifoThumb {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.Notes, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
-                    }
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(text = "Integrales impropias · p.1", fontSize = 13.sp, color = colors.textPrimary)
-                        Text(text = "12 ago · 9:41 AM", fontSize = 11.sp, color = colors.textSecondary)
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(3.dp)
-                                .padding(top = 6.dp)
-                                .clip(RoundedCornerShape(999.dp))
-                                .background(colors.surfaceHigh)
+                items.forEachIndexed { i, item ->
+                    GlifoStaggeredEntry(index = i) {
+                        GlifoItem(
+                            showBottomBorder = i < items.size - 1,
+                            onClick = { onNavigateToNoteDetail(item.noteId) }
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxHeight()
-                                    .fillMaxWidth(0.72f)
-                                    .background(colors.accent)
-                            )
+                            GlifoThumb {
+                                Icon(imageVector = Icons.AutoMirrored.Filled.Notes, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
+                            }
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(text = item.title, fontSize = 13.sp, color = colors.textPrimary)
+                                Text(text = item.timestamp, fontSize = 11.sp, color = colors.textSecondary)
+                                if (item.status == SyncStatus.Syncing) {
+                                    var animate by remember { mutableStateOf(false) }
+                                    LaunchedEffect(Unit) { animate = true }
+                                    val progress by animateFloatAsState(
+                                        targetValue = if (animate) item.progress else 0f,
+                                        animationSpec = tween(900),
+                                        label = "sync-progress"
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(3.dp)
+                                            .padding(top = 6.dp)
+                                            .clip(RoundedCornerShape(999.dp))
+                                            .background(colors.surfaceHigh)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxHeight()
+                                                .fillMaxWidth(progress)
+                                                .background(colors.accent)
+                                        )
+                                    }
+                                }
+                            }
+                            when (item.status) {
+                                SyncStatus.Queued -> GlifoBadge(text = "EN COLA")
+                                SyncStatus.Done -> Icon(imageVector = Icons.Default.Check, contentDescription = null, tint = colors.verified, modifier = Modifier.size(16.dp))
+                                SyncStatus.Syncing -> {}
+                            }
                         }
                     }
-                }
-
-                // Item 2: Queued
-                GlifoItem(onClick = { onNavigateToNoteDetail(2L) }) {
-                    GlifoThumb {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.Notes, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
-                    }
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(text = "Criterio de comparación · p.1", fontSize = 13.sp, color = colors.textPrimary)
-                        Text(text = "7 ago · 8:20 AM", fontSize = 11.sp, color = colors.textSecondary)
-                    }
-                    GlifoBadge(text = "EN COLA")
-                }
-
-                // Item 3: Done
-                GlifoItem(onClick = { onNavigateToNoteDetail(3L) }) {
-                    GlifoThumb {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.Notes, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
-                    }
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(text = "Series de potencias · p.2", fontSize = 13.sp, color = colors.textPrimary)
-                        Text(text = "2 ago · 7:55 AM", fontSize = 11.sp, color = colors.textSecondary)
-                    }
-                    Icon(imageVector = Icons.Default.Check, contentDescription = null, tint = colors.verified, modifier = Modifier.size(16.dp))
-                }
-
-                // Item 4: Done
-                GlifoItem(showBottomBorder = false, onClick = { onNavigateToNoteDetail(4L) }) {
-                    GlifoThumb {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.Notes, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
-                    }
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(text = "Prueba de la integral · p.1", fontSize = 13.sp, color = colors.textPrimary)
-                        Text(text = "28 jul · 10:12 AM", fontSize = 11.sp, color = colors.textSecondary)
-                    }
-                    Icon(imageVector = Icons.Default.Check, contentDescription = null, tint = colors.verified, modifier = Modifier.size(16.dp))
                 }
             }
         }

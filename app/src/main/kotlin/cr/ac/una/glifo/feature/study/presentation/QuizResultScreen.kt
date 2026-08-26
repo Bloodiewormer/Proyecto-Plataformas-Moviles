@@ -1,5 +1,7 @@
 package cr.ac.una.glifo.feature.study.presentation
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -15,15 +17,21 @@ import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cr.ac.una.glifo.core.data.dummy.DummyStudyProvider
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
 
@@ -34,6 +42,16 @@ fun QuizResultScreen(
     onNavigateToGlossary: () -> Unit
 ) {
     val colors = GlifoTheme.colors
+    val result = DummyStudyProvider.getQuizResult(courseId = 1L)
+    val targetFraction = result.score.toFloat() / result.total.toFloat()
+
+    var animateIn by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { animateIn = true }
+    val sweep by animateFloatAsState(
+        targetValue = if (animateIn) targetFraction else 0f,
+        animationSpec = tween(900),
+        label = "score-ring"
+    )
 
     Column(
         modifier = Modifier
@@ -77,11 +95,11 @@ fun QuizResultScreen(
                             style = Stroke(width = strokeW)
                         )
 
-                        // Progress ring (70%)
+                        // Progress ring, animated in on entry
                         drawArc(
                             color = colors.accentText,
                             startAngle = -90f,
-                            sweepAngle = 0.70f * 360f,
+                            sweepAngle = sweep * 360f,
                             useCenter = false,
                             topLeft = Offset(center.x - radius, center.y - radius),
                             size = androidx.compose.ui.geometry.Size(radius * 2f, radius * 2f),
@@ -91,13 +109,13 @@ fun QuizResultScreen(
 
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = "7",
+                            text = "${result.score}",
                             fontSize = 34.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = colors.textPrimary
                         )
                         Text(
-                            text = "de 10",
+                            text = "de ${result.total}",
                             fontSize = 15.sp,
                             color = colors.textSecondary
                         )
@@ -107,13 +125,13 @@ fun QuizResultScreen(
                 Spacer(modifier = Modifier.height(14.dp))
 
                 Text(
-                    text = "Series de potencias sigue floja",
+                    text = result.headline,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Medium,
                     color = colors.textPrimary
                 )
                 Text(
-                    text = "Los 3 fallos son del mismo tema.",
+                    text = result.subtext,
                     fontSize = 14.sp,
                     color = colors.textSecondary,
                     modifier = Modifier.padding(top = 4.dp)
@@ -130,24 +148,19 @@ fun QuizResultScreen(
             )
 
             GlifoCard(tight = true) {
-                listOf(
-                    Pair(true, "1 · Definición de sucesión"),
-                    Pair(true, "2 · Serie geométrica"),
-                    Pair(false, "3 · Radio de convergencia"),
-                    Pair(false, "4 · Serie exponencial")
-                ).forEachIndexed { i, (ok, label) ->
+                result.review.forEachIndexed { i, row ->
                     GlifoItem(
                         compact = true,
-                        showBottomBorder = i < 3,
-                        backgroundColor = if (ok) androidx.compose.ui.graphics.Color.Transparent else colors.alertFaint
+                        showBottomBorder = i < result.review.size - 1,
+                        backgroundColor = if (row.correct) Color.Transparent else colors.alertFaint
                     ) {
                         Icon(
-                            imageVector = if (ok) Icons.Default.Check else Icons.Default.Close,
+                            imageVector = if (row.correct) Icons.Default.Check else Icons.Default.Close,
                             contentDescription = null,
-                            tint = if (ok) colors.verified else colors.alert,
+                            tint = if (row.correct) colors.verified else colors.alert,
                             modifier = Modifier.size(18.dp)
                         )
-                        Text(text = label, fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                        Text(text = row.label, fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
                         Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(16.dp))
                     }
                 }
@@ -165,8 +178,8 @@ fun QuizResultScreen(
                 ) {
                     Icon(imageVector = Icons.Default.CalendarToday, contentDescription = null, tint = colors.accentText, modifier = Modifier.size(20.dp))
                     Column {
-                        Text("3 ítems reprogramados para mañana", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                        Text("Los aciertos vuelven en 6 días.", fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 4.dp))
+                        Text("${result.rescheduledCount} ítems reprogramados para mañana", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                        Text("Los aciertos vuelven en ${result.daysUntilReturn} días.", fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 4.dp))
                     }
                 }
             }
