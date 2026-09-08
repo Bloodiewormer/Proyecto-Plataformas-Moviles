@@ -1,28 +1,14 @@
 package cr.ac.una.glifo.data.dto
 
-import com.google.gson.annotations.SerializedName
+data class LoginRequest(val email: String, val password: String)
+data class RegisterRequest(val email: String, val password: String, val firstName: String, val lastName: String)
+data class AuthResponse(val token: String, val user: UserDto)
 
-data class LoginRequest(
-    @SerializedName("email") val email: String,
-    @SerializedName("password") val password: String
-)
-
-data class RegisterRequest(
-    @SerializedName("email") val email: String,
-    @SerializedName("password") val password: String,
-    @SerializedName("first_name") val firstName: String,
-    @SerializedName("last_name") val lastName: String
-)
-
-data class AuthResponse(
-    @SerializedName("token") val token: String,
-    @SerializedName("user") val user: UserDto
-)
-
-data class UserDto(
-    @SerializedName("id") val id: Long,
-    @SerializedName("email") val email: String,
-    @SerializedName("first_name") val firstName: String?,
-    @SerializedName("last_name") val lastName: String?,
-    @SerializedName("role") val role: String? = null
-)
+/**
+ * [role] mirrors [cr.ac.una.glifo.domain.model.GlifoRole]'s names ("Student", "Teacher",
+ * "Admin") as a plain string — Gson deserializes it straight off the mock's JSON body, and
+ * [cr.ac.una.glifo.data.repository.AuthRepositoryImpl] parses it into the enum. No document
+ * fixes this field's exact name yet (there's no real backend team contract), so it's the
+ * mock (Mockoon route) that defines it, not the other way around.
+ */
+data class UserDto(val id: Long, val email: String, val firstName: String?, val lastName: String?, val role: String)

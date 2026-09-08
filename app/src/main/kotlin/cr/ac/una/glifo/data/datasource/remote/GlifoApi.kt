@@ -21,12 +21,20 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 /**
- * Remote data source (Retrofit). Not yet wired into any repository impl — every
- * `*RepositoryImpl` in `data/repository/` currently talks to the dummy providers in
- * `data/datasource/dummy/` instead (see D-24 / Glifo_Bitacora_Decisiones.md and the
- * "temporary until there's a real backend" note on those providers). This interface and
- * [cr.ac.una.glifo.data.di.NetworkModule] stay ready so swapping a repository impl from
- * dummy to remote is a constructor change, not a redesign.
+ * Remote data source (Retrofit). Consumed today only by
+ * [cr.ac.una.glifo.data.repository.AuthRepositoryImpl] (`login`/`register`) — the Lab 3
+ * requirement (Hilt + Retrofit + Gson + error handling + mock API consumption). It's called
+ * against a **Mockoon** mock (see Glifo_Bitacora_Decisiones.md for the tool choice; the
+ * professor's own "API de Prueba (Mock API)" lesson lists Mockoon/Beeceptor/Mocky/JSON
+ * Server/Postman Mock Server — Mockoon was picked because it runs locally, matching Glifo's
+ * offline-first principle, and it can simulate arbitrary status codes/delays for the
+ * error-handling requirement without a network dependency during the defense).
+ *
+ * Every other `*RepositoryImpl` in `data/repository/` still talks to the dummy providers in
+ * `data/datasource/dummy/` (see D-24 / Glifo_Bitacora_Decisiones.md and the "temporary until
+ * there's a real backend" note on those providers) — this interface and
+ * [cr.ac.una.glifo.data.di.NetworkModule] stay ready so swapping another repository impl
+ * from dummy to remote is a constructor change, not a redesign.
  */
 interface GlifoApi {
     // Auth
