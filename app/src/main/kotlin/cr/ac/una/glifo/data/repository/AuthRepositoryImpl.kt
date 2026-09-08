@@ -1,8 +1,8 @@
 package cr.ac.una.glifo.data.repository
 
 import cr.ac.una.glifo.core.common.AppError
-import cr.ac.una.glifo.data.datasource.dummy.DummyAccount
 import cr.ac.una.glifo.data.datasource.dummy.DummyAuthProvider
+import cr.ac.una.glifo.data.mapper.toDomain
 import cr.ac.una.glifo.domain.error.Result
 import cr.ac.una.glifo.domain.model.DemoAccountHint
 import cr.ac.una.glifo.domain.model.User
@@ -31,6 +31,3 @@ class AuthRepositoryImpl @Inject constructor() : AuthRepository {
     override suspend fun getDemoAccountHints(): Result<List<DemoAccountHint>> =
         Result.Success(DummyAuthProvider.demoAccounts.map { DemoAccountHint(it.email, it.password, it.role) })
 }
-
-private fun DummyAccount.toDomain(): User =
-    User(id = id, fullName = fullName, email = email, role = role)
