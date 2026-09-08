@@ -1,6 +1,5 @@
 package cr.ac.una.glifo.core.data.dummy
-
-import cr.ac.una.glifo.core.ui.component.GlifoRole
+import cr.ac.una.glifo.domain.model.GlifoRole
 
 /**
  * Dummy (local-only) account model. Mirrors the shape a real `UserDto`/`AuthResponse`

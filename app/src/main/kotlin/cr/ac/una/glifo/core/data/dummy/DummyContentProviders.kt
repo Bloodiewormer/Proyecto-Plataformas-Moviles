@@ -1,8 +1,8 @@
 package cr.ac.una.glifo.core.data.dummy
 
 import cr.ac.una.glifo.core.network.dto.NoteResponse
-import cr.ac.una.glifo.core.ui.component.ConfidenceState
-import cr.ac.una.glifo.core.ui.component.GlifoRole
+import cr.ac.una.glifo.domain.model.ConfidenceState
+import cr.ac.una.glifo.domain.model.GlifoRole
 
 // ───────────────────────── Note content (keyed by noteId) ─────────────────────────
 // Backs NoteDetail / CorrectFragment / FormulaViewer / RegionProvenance — the "reading

@@ -18,8 +18,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Notes
+import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -683,9 +685,9 @@ fun GlifoDrawerContent(
     val teacherItems = listOf(
         GlifoDrawerItem("home", "Inicio", Icons.Outlined.Home, "home_teacher", currentScreen == "home_teacher"),
         GlifoDrawerItem("school", "Mis cursos", Icons.Default.School, "teacher_courses", currentScreen == "teacher_courses"),
-        GlifoDrawerItem("syllabus", "Temario", Icons.Default.FormatListBulleted, "syllabus", currentScreen == "syllabus"),
+        GlifoDrawerItem("syllabus", "Temario", Icons.AutoMirrored.Filled.FormatListBulleted, "syllabus", currentScreen == "syllabus"),
         GlifoDrawerItem("glossary", "Glosario de notación", Icons.Default.Functions, "glossary", currentScreen == "glossary"),
-        GlifoDrawerItem("gaps", "Brechas del grupo", Icons.Default.ShowChart, "gaps", currentScreen == "gaps"),
+        GlifoDrawerItem("gaps", "Brechas del grupo", Icons.AutoMirrored.Filled.ShowChart, "gaps", currentScreen == "gaps"),
         GlifoDrawerItem("cost", "Consumo del curso", Icons.Default.BarChart, "ai_cost", currentScreen == "ai_cost")
     )
 

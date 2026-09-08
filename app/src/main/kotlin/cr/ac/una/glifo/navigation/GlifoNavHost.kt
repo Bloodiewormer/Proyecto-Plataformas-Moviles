@@ -13,7 +13,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import cr.ac.una.glifo.core.data.session.SessionManager
-import cr.ac.una.glifo.core.ui.component.GlifoRole
+import cr.ac.una.glifo.domain.model.GlifoRole
 import cr.ac.una.glifo.presentation.ui.screen.AdminCoursesScreen
 import cr.ac.una.glifo.presentation.ui.screen.AdminRolesScreen
 import cr.ac.una.glifo.presentation.ui.screen.AdminUserDetailScreen

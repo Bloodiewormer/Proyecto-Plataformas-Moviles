@@ -3,7 +3,7 @@ package cr.ac.una.glifo.core.data.dummy
 import cr.ac.una.glifo.core.network.dto.CourseDetailResponse
 import cr.ac.una.glifo.core.network.dto.CourseResponse
 import cr.ac.una.glifo.core.network.dto.NoteResponse
-import cr.ac.una.glifo.core.ui.component.ConfidenceState
+import cr.ac.una.glifo.domain.model.ConfidenceState
 
 /**
  * Extra, UI-only stats for a course (coverage breakdown, roster size, etc.). Kept
