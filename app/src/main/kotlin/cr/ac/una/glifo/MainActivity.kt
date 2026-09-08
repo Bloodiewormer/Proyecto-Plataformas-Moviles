@@ -8,7 +8,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
 import cr.ac.una.glifo.core.ui.theme.ThemeManager
 import cr.ac.una.glifo.core.ui.theme.ThemeMode
-import cr.ac.una.glifo.navigation.GlifoNavHost
+import cr.ac.una.glifo.presentation.navigation.GlifoNavHost
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint

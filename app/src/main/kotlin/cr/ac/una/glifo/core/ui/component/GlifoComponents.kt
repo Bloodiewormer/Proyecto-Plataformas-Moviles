@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
+import cr.ac.una.glifo.domain.model.GlifoRole
 import kotlinx.coroutines.delay
 
 // ── Glifo Logo Drawing ────────────────────────────────────────────────────────
@@ -630,9 +631,7 @@ fun GlifoCameraFab(
 }
 
 // ── Drawer Content ────────────────────────────────────────────────────────────
-enum class GlifoRole {
-    Student, Teacher, Admin
-}
+// GlifoRole moved to domain.model.GlifoRole (pure domain concept, not UI-only).
 
 data class GlifoDrawerItem(
     val id: String,

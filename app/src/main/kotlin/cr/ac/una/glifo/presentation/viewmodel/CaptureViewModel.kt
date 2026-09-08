@@ -1,0 +1,34 @@
+package cr.ac.una.glifo.presentation.viewmodel
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import cr.ac.una.glifo.core.common.UiState
+import cr.ac.una.glifo.domain.model.CourseDetail
+import cr.ac.una.glifo.domain.repository.CourseRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+/** CaptureScreen only needs the course name/code for its top bar label. */
+@HiltViewModel
+class CaptureViewModel @Inject constructor(
+    private val courseRepository: CourseRepository
+) : ViewModel() {
+
+    private val _state = MutableStateFlow<UiState<CourseDetail>>(UiState.Loading)
+    val state: StateFlow<UiState<CourseDetail>> = _state.asStateFlow()
+
+    private var loadedFor: Long? = null
+
+    fun load(courseId: Long) {
+        if (loadedFor == courseId) return
+        loadedFor = courseId
+        viewModelScope.launch {
+            _state.value = UiState.Loading
+            _state.value = courseRepository.getCourseDetail(courseId).toUiState()
+        }
+    }
+}

@@ -12,13 +12,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
-
-sealed class ConfidenceState {
-    data object Verified : ConfidenceState()
-    data object Repaired : ConfidenceState()
-    data object Escalated : ConfidenceState()
-    data object Uncertain : ConfidenceState()
-}
+import cr.ac.una.glifo.domain.model.ConfidenceState
 
 @Composable
 fun GlifoConfidenceChip(
