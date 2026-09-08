@@ -7,15 +7,12 @@ import cr.ac.una.glifo.domain.model.DemoAccountHint
 import cr.ac.una.glifo.domain.model.User
 import cr.ac.una.glifo.domain.repository.AuthRepository
 import cr.ac.una.glifo.domain.repository.SessionRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class LoginViewModel @Inject constructor(
+class LoginViewModel(
     private val authRepository: AuthRepository,
     private val sessionRepository: SessionRepository
 ) : ViewModel() {

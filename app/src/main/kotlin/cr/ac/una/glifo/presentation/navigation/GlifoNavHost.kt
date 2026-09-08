@@ -5,6 +5,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -110,6 +111,17 @@ fun GlifoNavHost(
         }
 
         composable(Screen.Login.route) {
+            val context = LocalContext.current
+            val entryPoint = dagger.hilt.android.EntryPointAccessors.fromActivity(
+                context as android.app.Activity,
+                cr.ac.una.glifo.presentation.viewmodel.ViewModelFactoryEntryPoint::class.java
+            )
+            val factory = cr.ac.una.glifo.presentation.viewmodel.LoginViewModelFactory(
+                entryPoint.authRepository(),
+                entryPoint.sessionRepository()
+            )
+            val viewModel: cr.ac.una.glifo.presentation.viewmodel.LoginViewModel = androidx.lifecycle.viewmodel.compose.viewModel(factory = factory)
+
             LoginScreen(
                 onNavigateToRegister = {
                     navController.navigate(Screen.Register.route)
@@ -126,7 +138,8 @@ fun GlifoNavHost(
                     navController.navigate(homeRoute) {
                         popUpTo(Screen.Splash.route) { inclusive = true }
                     }
-                }
+                },
+                viewModel = viewModel
             )
         }
 
