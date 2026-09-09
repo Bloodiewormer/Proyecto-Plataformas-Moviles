@@ -17,6 +17,11 @@ import dagger.hilt.android.components.ActivityComponent
 interface ViewModelFactoryEntryPoint {
     fun authRepository(): AuthRepository
     fun sessionRepository(): SessionRepository
+    fun courseRepository(): cr.ac.una.glifo.domain.repository.CourseRepository
+    fun noteRepository(): cr.ac.una.glifo.domain.repository.NoteRepository
+    fun syncRepository(): cr.ac.una.glifo.domain.repository.SyncRepository
+    fun teacherRepository(): cr.ac.una.glifo.domain.repository.TeacherRepository
+    fun adminRepository(): cr.ac.una.glifo.domain.repository.AdminRepository
 }
 
 /**
@@ -34,5 +39,59 @@ class LoginViewModelFactory(
             return LoginViewModel(authRepository, sessionRepository) as T
         }
         throw IllegalArgumentException("Clase ViewModel desconocida: \${modelClass.name}")
+    }
+}
+
+class RegisterViewModelFactory(
+    private val authRepository: AuthRepository,
+    private val sessionRepository: SessionRepository
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(RegisterViewModel::class.java)) {
+            return RegisterViewModel(authRepository, sessionRepository) as T
+        }
+        throw IllegalArgumentException("Clase ViewModel desconocida: ${modelClass.name}")
+    }
+}
+
+class HomeViewModelFactory(
+    private val courseRepository: cr.ac.una.glifo.domain.repository.CourseRepository,
+    private val noteRepository: cr.ac.una.glifo.domain.repository.NoteRepository,
+    private val syncRepository: cr.ac.una.glifo.domain.repository.SyncRepository
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(HomeViewModel::class.java)) {
+            return HomeViewModel(courseRepository, noteRepository, syncRepository) as T
+        }
+        throw IllegalArgumentException("Clase ViewModel desconocida: ${modelClass.name}")
+    }
+}
+
+class TeacherHomeViewModelFactory(
+    private val courseRepository: cr.ac.una.glifo.domain.repository.CourseRepository,
+    private val teacherRepository: cr.ac.una.glifo.domain.repository.TeacherRepository
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(TeacherHomeViewModel::class.java)) {
+            return TeacherHomeViewModel(courseRepository, teacherRepository) as T
+        }
+        throw IllegalArgumentException("Clase ViewModel desconocida: ${modelClass.name}")
+    }
+}
+
+class AdminHomeViewModelFactory(
+    private val adminRepository: cr.ac.una.glifo.domain.repository.AdminRepository,
+    private val courseRepository: cr.ac.una.glifo.domain.repository.CourseRepository,
+    private val syncRepository: cr.ac.una.glifo.domain.repository.SyncRepository
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(AdminHomeViewModel::class.java)) {
+            return AdminHomeViewModel(adminRepository, courseRepository, syncRepository) as T
+        }
+        throw IllegalArgumentException("Clase ViewModel desconocida: ${modelClass.name}")
     }
 }

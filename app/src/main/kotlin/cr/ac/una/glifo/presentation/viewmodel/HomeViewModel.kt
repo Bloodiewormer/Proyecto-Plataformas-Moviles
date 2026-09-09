@@ -10,12 +10,10 @@ import cr.ac.una.glifo.domain.model.NoteMeta
 import cr.ac.una.glifo.domain.repository.CourseRepository
 import cr.ac.una.glifo.domain.repository.NoteRepository
 import cr.ac.una.glifo.domain.repository.SyncRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 data class HomeUiData(
     val course: CourseDetail?,
@@ -25,8 +23,7 @@ data class HomeUiData(
 )
 
 /** Screen B2: Inicio Estudiante. Hardcodes the same "active course" the dummy data assumed. */
-@HiltViewModel
-class HomeViewModel @Inject constructor(
+class HomeViewModel(
     private val courseRepository: CourseRepository,
     private val noteRepository: NoteRepository,
     private val syncRepository: SyncRepository

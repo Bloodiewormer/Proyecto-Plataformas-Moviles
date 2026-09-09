@@ -9,12 +9,10 @@ import cr.ac.una.glifo.domain.model.AdminUserRow
 import cr.ac.una.glifo.domain.repository.AdminRepository
 import cr.ac.una.glifo.domain.repository.CourseRepository
 import cr.ac.una.glifo.domain.repository.SyncRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 data class AdminHomeUiData(
     val roles: List<AdminRoleInfo>,
@@ -24,8 +22,7 @@ data class AdminHomeUiData(
 )
 
 /** Screen B4: Inicio Administrador. */
-@HiltViewModel
-class AdminHomeViewModel @Inject constructor(
+class AdminHomeViewModel(
     private val adminRepository: AdminRepository,
     private val courseRepository: CourseRepository,
     private val syncRepository: SyncRepository

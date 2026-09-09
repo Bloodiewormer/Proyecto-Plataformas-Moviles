@@ -9,12 +9,10 @@ import cr.ac.una.glifo.domain.model.CourseStats
 import cr.ac.una.glifo.domain.model.TeacherGapTopic
 import cr.ac.una.glifo.domain.repository.CourseRepository
 import cr.ac.una.glifo.domain.repository.TeacherRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 data class TeacherHomeUiData(
     val course: CourseDetail?,
@@ -23,8 +21,7 @@ data class TeacherHomeUiData(
 )
 
 /** Screen B3: Inicio Docente. */
-@HiltViewModel
-class TeacherHomeViewModel @Inject constructor(
+class TeacherHomeViewModel(
     private val courseRepository: CourseRepository,
     private val teacherRepository: TeacherRepository
 ) : ViewModel() {

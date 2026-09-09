@@ -5,11 +5,12 @@ import cr.ac.una.glifo.domain.error.Result
 import cr.ac.una.glifo.domain.model.User
 import cr.ac.una.glifo.domain.repository.AuthRepository
 import cr.ac.una.glifo.domain.repository.SessionRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
-@HiltViewModel
-class RegisterViewModel @Inject constructor(
+class RegisterViewModel(
     private val authRepository: AuthRepository,
     private val sessionRepository: SessionRepository
 ) : ViewModel() {
