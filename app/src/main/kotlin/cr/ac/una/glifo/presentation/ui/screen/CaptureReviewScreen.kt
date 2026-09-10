@@ -42,6 +42,10 @@ fun CaptureReviewScreen(
     val colors = GlifoTheme.colors
     val uiState by viewModel.state.collectAsState()
 
+    androidx.compose.runtime.LaunchedEffect(photoPath) {
+        viewModel.load(photoPath)
+    }
+
     val bitmap = remember(photoPath) {
         photoPath?.let { path ->
             runCatching { BitmapFactory.decodeFile(path)?.asImageBitmap() }.getOrNull()

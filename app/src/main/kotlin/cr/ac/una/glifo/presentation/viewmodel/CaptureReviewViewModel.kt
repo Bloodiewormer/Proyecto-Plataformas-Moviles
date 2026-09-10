@@ -25,12 +25,12 @@ class CaptureReviewViewModel @Inject constructor(
 
     init { load() }
 
-    fun load() {
+    fun load(photoPath: String? = null) {
         viewModelScope.launch {
             _state.value = UiState.Loading
-            when (val checksResult = captureRepository.getQualityChecks()) {
+            when (val checksResult = captureRepository.getQualityChecks(photoPath)) {
                 is Result.Success -> {
-                    val warning = (captureRepository.hasQualityWarning() as? Result.Success)?.value ?: false
+                    val warning = (captureRepository.hasQualityWarning(photoPath) as? Result.Success)?.value ?: false
                     _state.value = UiState.Success(CaptureReviewUiData(checksResult.value, warning))
                 }
                 is Result.Failure -> _state.value = UiState.Error(checksResult.error)
