@@ -1,0 +1,688 @@
+{
+  "uuid": "c1c75cab-b853-4d37-a807-c94814a20297",
+  "lastMigration": 33,
+  "name": "Glifo",
+  "endpointPrefix": "api/v1",
+  "latency": 0,
+  "port": 3000,
+  "hostname": "0.0.0.0",
+  "folders": [],
+  "routes": [
+    {
+      "uuid": "6550b10e-d226-481a-a75e-188a0b3567e7",
+      "type": "http",
+      "documentation": "",
+      "method": "get",
+      "endpoint": "",
+      "responses": [
+        {
+          "uuid": "cce7ecdf-c056-442f-97bb-f2d65291c0f0",
+          "body": "{}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "500e77bc-a3df-4115-980d-f3404e333fec",
+      "type": "http",
+      "documentation": "",
+      "method": "post",
+      "endpoint": "auth/login",
+      "responses": [
+        {
+          "uuid": "a5e61b99-35d0-4867-868a-7cd45e62055b",
+          "body": "{ \"message\": \"Credenciales inválidas\" }",
+          "latency": 0,
+          "statusCode": 401,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "password",
+              "value": "wrong-password",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "fb2b77a9-f2cb-48f4-989e-524f83e8b4db",
+          "body": "{\r\n  \"token\": \"jwt_token_de_prueba_123456\",\r\n  \"user\": {\r\n    \"id\": 1,\r\n    \"email\": \"{{ body 'email' }}\",\r\n    \"firstName\": \"Usuario\",\r\n    \"lastName\": \"Glifo\",\r\n    \"role\": \"{{#if (includes (body 'email') 'docente')}}Teacher{{else}}{{#if (includes (body 'email') 'admin')}}Admin{{else}}Student{{/if}}{{/if}}\"\r\n  }\r\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "30132e79-6493-454f-b906-ddd84851e356",
+      "type": "http",
+      "documentation": "",
+      "method": "post",
+      "endpoint": "auth/register",
+      "responses": [
+        {
+          "uuid": "105afdee-663f-4cf8-a103-7226c816de46",
+          "body": "{\r\n  \"token\": \"mock-jwt-token\",\r\n  \"user\": {\r\n    \"id\": 1,\r\n    \"email\": \"estudiante@est.una.ac.cr\",\r\n    \"firstName\": \"Brandon\",\r\n    \"lastName\": \"Brenes\",\r\n    \"role\": \"Student\"\r\n  }\r\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "e848ac49-a3ef-40f2-97c3-42f799bf554a",
+      "type": "http",
+      "documentation": "",
+      "method": "get",
+      "endpoint": "courses",
+      "responses": [
+        {
+          "uuid": "31ee36e7-6918-4e80-9f7b-ba4fe86d1780",
+          "body": "{\n  \"data\": [\n    { \"id\": 1, \"name\": \"Cálculo I\", \"code\": \"MAT-135\", \"join_code\": \"GLF-CALC1\" },\n    { \"id\": 2, \"name\": \"Física General\", \"code\": \"FIS-100\", \"join_code\": \"GLF-FIS100\" }\n  ],\n  \"meta\": { \"page\": 0, \"size\": 20, \"total\": 2 }\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "23c4cf99-f90a-432c-92c9-4b4d95fccb15",
+      "type": "http",
+      "documentation": "",
+      "method": "post",
+      "endpoint": "courses",
+      "responses": [
+        {
+          "uuid": "5248add9-2f9e-4132-a1ae-b26bbde04625",
+          "body": "{ \"message\": \"Nombre y código son obligatorios\" }",
+          "latency": 0,
+          "statusCode": 400,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "name",
+              "value": "^$",
+              "invert": false,
+              "operator": "regex"
+            },
+            {
+              "target": "body",
+              "modifier": "name",
+              "value": "",
+              "invert": false,
+              "operator": "null"
+            },
+            {
+              "target": "body",
+              "modifier": "code",
+              "value": "^$",
+              "invert": false,
+              "operator": "regex"
+            },
+            {
+              "target": "body",
+              "modifier": "code",
+              "value": "",
+              "invert": false,
+              "operator": "null"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "f252d4fd-1eb1-4041-b71e-9e146fccf429",
+          "body": "{\n  \"data\": {\n    \"id\": 3,\n    \"name\": \"{{body 'name'}}\",\n    \"code\": \"{{body 'code'}}\",\n    \"join_code\": \"GLF-{{body 'code'}}\"\n  }\n}",
+          "latency": 0,
+          "statusCode": 201,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "3c8054df-5dba-40aa-aa43-18c318cdebb4",
+      "type": "http",
+      "documentation": "",
+      "method": "get",
+      "endpoint": "courses/:id",
+      "responses": [
+        {
+          "uuid": "bbc45712-9bc2-41ae-9b7b-6829b24ebd3a",
+          "body": "{ \"message\": \"Curso no encontrado\" }",
+          "latency": 0,
+          "statusCode": 404,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "params",
+              "modifier": "id",
+              "value": "999",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "27818ff4-3840-4f18-88e7-edcd2cc2a1f2",
+          "body": "{\n  \"data\": {\n    \"id\": {{urlParam 'id'}},\n    \"name\": \"Cálculo I\",\n    \"code\": \"MAT-135\",\n    \"join_code\": \"GLF-CALC1\",\n    \"syllabus_status\": \"PUBLISHED\"\n  }\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "b92d34c5-54e4-4255-8abe-5a2d7cb058f3",
+      "type": "http",
+      "documentation": "",
+      "method": "post",
+      "endpoint": "enrollments",
+      "responses": [
+        {
+          "uuid": "76241104-7315-4345-85b8-54072cf57326",
+          "body": "{ \"message\": \"Código de curso inválido\" }",
+          "latency": 0,
+          "statusCode": 404,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "join_code",
+              "value": "INVALID",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "d3136cda-a16a-4edd-bd80-a454d4615e4d",
+          "body": "{ \"message\": \"Ya estás matriculado en este curso\" }",
+          "latency": 0,
+          "statusCode": 409,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "join_code",
+              "value": "ALREADY",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "896da2e0-757c-42aa-95e9-cf7696712d3f",
+          "body": "{\n  \"data\": {\n    \"id\": 10,\n    \"course_id\": 1,\n    \"status\": \"ACTIVE\"\n  }\n}",
+          "latency": 0,
+          "statusCode": 201,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "ab9429ee-a0ef-4722-8216-3deb3258fbeb",
+      "type": "http",
+      "documentation": "",
+      "method": "get",
+      "endpoint": "notes",
+      "responses": [
+        {
+          "uuid": "47a1d235-29c5-4706-9f6d-4d29358bbae0",
+          "body": "{\n  \"data\": [\n    { \"id\": 1, \"course_id\": {{queryParam 'courseId'}}, \"title\": \"Derivadas\", \"class_date\": \"2026-08-20\" },\n    { \"id\": 2, \"course_id\": {{queryParam 'courseId'}}, \"title\": \"Integrales\", \"class_date\": \"2026-08-27\" }\n  ],\n  \"meta\": { \"page\": 0, \"size\": 20, \"total\": 2 }\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "875c47ad-2fcb-4b57-82f3-14dc1ecc136e",
+      "type": "http",
+      "documentation": "",
+      "method": "post",
+      "endpoint": "notes",
+      "responses": [
+        {
+          "uuid": "bf360428-c304-4fe7-9078-a7723cb23fb8",
+          "body": "{ \"message\": \"El título es obligatorio\" }",
+          "latency": 0,
+          "statusCode": 400,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "title",
+              "value": "^$",
+              "invert": false,
+              "operator": "regex"
+            },
+            {
+              "target": "body",
+              "modifier": "title",
+              "value": "",
+              "invert": false,
+              "operator": "null"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "11574dfe-b676-4e69-8c42-b996148e808d",
+          "body": "{\n  \"data\": {\n    \"id\": 3,\n    \"course_id\": {{body 'course_id'}},\n    \"title\": \"{{body 'title'}}\",\n    \"class_date\": \"{{body 'class_date'}}\"\n  }\n}",
+          "latency": 0,
+          "statusCode": 201,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "e58d0e22-d62b-49d9-a62e-003eb8a6c1e3",
+      "type": "http",
+      "documentation": "",
+      "method": "get",
+      "endpoint": "notes/:id",
+      "responses": [
+        {
+          "uuid": "57e35589-375d-4268-886f-a6e30b2071d2",
+          "body": "{ \"message\": \"Apunte no encontrado\" }",
+          "latency": 0,
+          "statusCode": 404,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "params",
+              "modifier": "id",
+              "value": "999",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "16b32891-3111-4b83-803f-f3f1a95e87e4",
+          "body": "{\n  \"data\": {\n    \"id\": {{urlParam 'id'}},\n    \"course_id\": 1,\n    \"title\": \"Derivadas\",\n    \"class_date\": \"2026-08-20\",\n    \"content\": null\n  }\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "7b253172-3cad-48af-b36a-3164d50bcf8b",
+      "type": "http",
+      "documentation": "",
+      "method": "delete",
+      "endpoint": "notes/:id",
+      "responses": [
+        {
+          "uuid": "0b7f84bb-5ca1-482f-928b-9596d31dafe6",
+          "body": "{ \"message\": \"Apunte no encontrado\" }",
+          "latency": 0,
+          "statusCode": 404,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "params",
+              "modifier": "id",
+              "value": "999",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "60b2c2c6-9c6e-43f1-b9a3-f5d030ce53ed",
+          "body": "",
+          "latency": 0,
+          "statusCode": 204,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    }
+  ],
+  "rootChildren": [
+    {
+      "type": "route",
+      "uuid": "6550b10e-d226-481a-a75e-188a0b3567e7"
+    },
+    {
+      "type": "route",
+      "uuid": "500e77bc-a3df-4115-980d-f3404e333fec"
+    },
+    {
+      "type": "route",
+      "uuid": "30132e79-6493-454f-b906-ddd84851e356"
+    },
+    {
+      "type": "route",
+      "uuid": "e848ac49-a3ef-40f2-97c3-42f799bf554a"
+    },
+    {
+      "type": "route",
+      "uuid": "23c4cf99-f90a-432c-92c9-4b4d95fccb15"
+    },
+    {
+      "type": "route",
+      "uuid": "3c8054df-5dba-40aa-aa43-18c318cdebb4"
+    },
+    {
+      "type": "route",
+      "uuid": "b92d34c5-54e4-4255-8abe-5a2d7cb058f3"
+    },
+    {
+      "type": "route",
+      "uuid": "ab9429ee-a0ef-4722-8216-3deb3258fbeb"
+    },
+    {
+      "type": "route",
+      "uuid": "875c47ad-2fcb-4b57-82f3-14dc1ecc136e"
+    },
+    {
+      "type": "route",
+      "uuid": "e58d0e22-d62b-49d9-a62e-003eb8a6c1e3"
+    },
+    {
+      "type": "route",
+      "uuid": "7b253172-3cad-48af-b36a-3164d50bcf8b"
+    }
+  ],
+  "proxyMode": false,
+  "proxyHost": "",
+  "proxyRemovePrefix": false,
+  "tlsOptions": {
+    "enabled": false,
+    "type": "CERT",
+    "pfxPath": "",
+    "certPath": "",
+    "keyPath": "",
+    "caPath": "",
+    "passphrase": ""
+  },
+  "cors": true,
+  "headers": [
+    {
+      "key": "Content-Type",
+      "value": "application/json"
+    },
+    {
+      "key": "Access-Control-Allow-Origin",
+      "value": "*"
+    },
+    {
+      "key": "Access-Control-Allow-Methods",
+      "value": "GET,POST,PUT,PATCH,DELETE,HEAD,OPTIONS"
+    },
+    {
+      "key": "Access-Control-Allow-Headers",
+      "value": "Content-Type, Origin, Accept, Authorization, Content-Length, X-Requested-With"
+    }
+  ],
+  "proxyReqHeaders": [
+    {
+      "key": "",
+      "value": ""
+    }
+  ],
+  "proxyResHeaders": [
+    {
+      "key": "",
+      "value": ""
+    }
+  ],
+  "data": [],
+  "callbacks": []
+}
