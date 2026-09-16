@@ -13,6 +13,9 @@ captures/
 # Local configuration
 local.properties
 
+# Documentation & Lab Mappings
+MAPA_LABS.md
+
 # Build outputs
 *.apk
 *.aab
