@@ -10,15 +10,20 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.suspendCancellableCoroutine
 
-/** Lo que N1 devuelve por region: el texto leido, cuantas lineas y que tan seguro esta. */
+/**
+ * Lo que N1 devuelve por region: el texto leido, cuantas lineas, y la confianza que ML Kit
+ * reporto para ellas — `null` cuando el modelo local no publico una (ver [ConfidenceScorer][
+ * cr.ac.una.glifo.core.confidence.ConfidenceScorer] para el calculo de respaldo, que combina
+ * este resultado con las metricas de tinta de la segmentacion y el glosario del curso).
+ */
 data class OcrResult(
     val text: String,
     val lineCount: Int,
     val wordCount: Int,
-    val confidence: Float
+    val confidence: Float?
 ) {
     companion object {
-        val Empty = OcrResult(text = "", lineCount = 0, wordCount = 0, confidence = 0f)
+        val Empty = OcrResult(text = "", lineCount = 0, wordCount = 0, confidence = null)
     }
 }
 
@@ -83,13 +88,11 @@ object TextRecognizerN1 {
     }
 
     /**
-     * Aplana el arbol de ML Kit (bloques a lineas a elementos) en el texto de la region y
-     * una confianza unica.
-     *
-     * ML Kit no siempre publica la confianza por linea del modelo local, asi que cuando no
-     * viene se deriva una: texto con mas palabras y lineas consistentes es texto que el
-     * modelo leyo con soltura, mientras que una region que devolvio dos caracteres sueltos
-     * casi siempre es una region que el OCR no supo leer.
+     * Aplana el arbol de ML Kit (bloques a lineas a elementos) en el texto de la region y,
+     * si el modelo local la publico, su confianza. Cuando no la publica se deja en `null` —
+     * calcular una de respaldo no es trabajo de este engine, es lo que hace
+     * [cr.ac.una.glifo.core.confidence.ConfidenceScorer] con datos que este engine no tiene
+     * (las metricas de tinta de la region, el glosario del curso).
      */
     private fun summarize(text: com.google.mlkit.vision.text.Text): OcrResult {
         val lines = text.textBlocks.flatMap { it.lines }
@@ -106,45 +109,11 @@ object TextRecognizerN1 {
             if (value == null || value.isNaN() || value <= 0f) null else value
         }
 
-        val confidence = if (reported.isNotEmpty()) {
-            reported.average().toFloat()
-        } else {
-            derivedConfidence(recognized, lines.size, wordCount)
-        }
-
         return OcrResult(
             text = recognized,
             lineCount = lines.size,
             wordCount = wordCount,
-            confidence = confidence.coerceIn(0f, 1f)
+            confidence = if (reported.isEmpty()) null else reported.average().toFloat().coerceIn(0f, 1f)
         )
-    }
-
-    private fun derivedConfidence(text: String, lineCount: Int, wordCount: Int): Float {
-        val chars = text.count { !it.isWhitespace() }
-        if (chars == 0) return 0f
-
-        // Palabras de longitud razonable son la senal mas fuerte de una lectura sana.
-        val averageWordLength = if (wordCount == 0) 0f else chars.toFloat() / wordCount
-        val lengthScore = when {
-            averageWordLength >= 3f -> 1f
-            averageWordLength >= 2f -> 0.75f
-            else -> 0.45f
-        }
-
-        // Una region con una sola linea y dos caracteres es sospechosa; varias lineas leidas
-        // completas, no.
-        val volumeScore = when {
-            chars >= 40 || lineCount >= 3 -> 1f
-            chars >= 15 -> 0.85f
-            chars >= 5 -> 0.7f
-            else -> 0.5f
-        }
-
-        // Los simbolos raros sueltos (|, ~, caracteres de control) delatan basura del OCR.
-        val garbageRatio = text.count { !it.isLetterOrDigit() && !it.isWhitespace() }.toFloat() / chars
-        val cleanScore = (1f - garbageRatio).coerceIn(0.4f, 1f)
-
-        return (lengthScore * 0.4f + volumeScore * 0.35f + cleanScore * 0.25f).coerceIn(0f, 1f)
     }
 }

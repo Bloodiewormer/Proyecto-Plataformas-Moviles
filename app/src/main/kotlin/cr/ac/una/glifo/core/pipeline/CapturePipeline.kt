@@ -32,7 +32,7 @@ object CapturePipeline {
      */
     private const val MAX_WORKING_DIMENSION = 1600
 
-    suspend fun analyze(source: Bitmap): PageAnalysis = withContext(Dispatchers.Default) {
+    suspend fun analyze(source: Bitmap, glossary: List<String> = emptyList()): PageAnalysis = withContext(Dispatchers.Default) {
         val startedAt = System.currentTimeMillis()
 
         val working = PageSegmenter.scaleToMaxDimension(source, MAX_WORKING_DIMENSION)
@@ -73,7 +73,8 @@ object CapturePipeline {
                 index = index,
                 bounds = region.bounds,
                 metrics = region.metrics,
-                ocr = ocrResults[index]
+                ocr = ocrResults[index],
+                glossary = glossary
             )
         }
 

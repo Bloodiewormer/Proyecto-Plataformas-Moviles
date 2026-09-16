@@ -1,5 +1,6 @@
 package cr.ac.una.glifo.core.pipeline
 
+import cr.ac.una.glifo.core.confidence.ConfidenceScorer
 import cr.ac.una.glifo.core.mlkit.OcrResult
 import cr.ac.una.glifo.domain.model.ConfidenceState
 import cr.ac.una.glifo.domain.model.RecognizedRegion
@@ -23,7 +24,7 @@ import cr.ac.una.glifo.domain.model.RegionKind
 object RegionClassifier {
 
     /** Compuerta de N1: debajo de esto el texto no se da por bueno y escala a N2. */
-    const val TEXT_CONFIDENCE_GATE = 0.75f
+    const val TEXT_CONFIDENCE_GATE = ConfidenceScorer.DEFAULT_THRESHOLD
 
     /** Umbral del puntaje matematico a partir del cual la region se manda a N1.5. */
     private const val MATH_SCORE_GATE = 0.5f
@@ -39,10 +40,16 @@ object RegionClassifier {
         index: Int,
         bounds: RegionBounds,
         metrics: RegionInkMetrics,
-        ocr: OcrResult
+        ocr: OcrResult,
+        glossary: List<String> = emptyList()
     ): RecognizedRegion {
         val text = ocr.text
         val chars = text.count { !it.isWhitespace() }
+
+        // Trust ML Kit's own reported confidence when it published one; ConfidenceScorer only
+        // fills the gap when it did not (see its KDoc for why it lives in a separate class).
+        val ocrConfidence = ocr.confidence
+            ?: ConfidenceScorer.score(ocr, metrics, glossary).value
 
         val drawingScore = drawingScore(chars, metrics)
         val mathScore = if (chars == 0) 0f else mathScore(text, chars, ocr)
@@ -59,14 +66,14 @@ object RegionClassifier {
             RegionKind.Text -> (1f - maxOf(drawingScore, mathScore)).coerceIn(0f, 1f)
         }.coerceIn(0f, 1f)
 
-        val belowGate = kind == RegionKind.Text && ocr.confidence < TEXT_CONFIDENCE_GATE
+        val belowGate = kind == RegionKind.Text && ocrConfidence < TEXT_CONFIDENCE_GATE
 
         return RecognizedRegion(
             index = index,
             bounds = bounds,
             text = text,
             lineCount = ocr.lineCount,
-            ocrConfidence = ocr.confidence,
+            ocrConfidence = ocrConfidence,
             kind = kind,
             kindConfidence = kindConfidence,
             route = routeFor(kind, belowGate),
