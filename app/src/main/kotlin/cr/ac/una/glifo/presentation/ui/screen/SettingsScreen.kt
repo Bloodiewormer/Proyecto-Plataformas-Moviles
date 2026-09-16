@@ -242,6 +242,46 @@ fun SettingsScreen(
                 }
             }
 
+            Text(
+                text = "DIAGNÓSTICO Y TELEMETRÍA",
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = 0.6.sp,
+                color = colors.textSecondary,
+                modifier = Modifier.padding(top = 18.dp, bottom = 8.dp)
+            )
+
+            GlifoCard(tight = true) {
+                GlifoItem(
+                    compact = true,
+                    onClick = {
+                        cr.ac.una.glifo.core.telemetry.GlifoCrashReporter.setCustomKey("triggered_by", "settings_screen")
+                        cr.ac.una.glifo.core.telemetry.GlifoCrashReporter.log("Probando caída de diagnóstico en Firebase Crashlytics")
+                        cr.ac.una.glifo.core.telemetry.GlifoCrashReporter.testCrash()
+                    }
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Probar Crashlytics (Simular caída)", fontSize = 15.sp, color = colors.alert)
+                        Text("Provoca una excepción de prueba para verificar en Firebase Console.", fontSize = 12.sp, color = colors.textSecondary)
+                    }
+                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(16.dp))
+                }
+                GlifoItem(
+                    compact = true,
+                    showBottomBorder = false,
+                    onClick = {
+                        cr.ac.una.glifo.core.telemetry.GlifoCrashReporter.log("Reporte no fatal manual generado desde Ajustes")
+                        cr.ac.una.glifo.core.telemetry.GlifoCrashReporter.recordException(Exception("Diagnóstico manual no fatal - Telemetría OK"), "manual_diagnostics")
+                    }
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Enviar evento no fatal a Crashlytics", fontSize = 15.sp, color = colors.textPrimary)
+                        Text("Registra una advertencia en segundo plano sin cerrar la app.", fontSize = 12.sp, color = colors.textSecondary)
+                    }
+                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(16.dp))
+                }
+            }
+
             Spacer(modifier = Modifier.height(18.dp))
 
             GlifoButton(

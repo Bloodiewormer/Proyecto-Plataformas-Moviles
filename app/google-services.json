@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "654447082347",
+    "project_id": "glifoapp",
+    "storage_bucket": "glifoapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:654447082347:android:7facba19b63ed9526baa2e",
+        "android_client_info": {
+          "package_name": "cr.ac.una.glifo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBQ-y_MrhSxDlqvpBFAnFQmhliyjGmhkfo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
