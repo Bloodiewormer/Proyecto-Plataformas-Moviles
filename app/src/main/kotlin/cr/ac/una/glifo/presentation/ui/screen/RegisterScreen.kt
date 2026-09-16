@@ -12,9 +12,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.domain.error.Result
 import cr.ac.una.glifo.core.ui.component.GlifoButton
 import cr.ac.una.glifo.core.ui.component.GlifoField
@@ -33,6 +36,7 @@ fun RegisterScreen(
     viewModel: RegisterViewModel = hiltViewModel()
 ) {
     val colors = GlifoTheme.colors
+    val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
     var fullName by remember { mutableStateOf("") }
@@ -46,25 +50,35 @@ fun RegisterScreen(
     var passwordError by remember { mutableStateOf<String?>(null) }
     var confirmError by remember { mutableStateOf<String?>(null) }
 
+    val errorNameEmpty = stringResource(R.string.register_error_name_empty)
+    val errorNameInvalid = stringResource(R.string.register_error_name_invalid)
+    val errorEmailEmpty = stringResource(R.string.register_error_email_empty)
+    val errorEmailInvalid = stringResource(R.string.register_error_email_invalid)
+    val errorPasswordEmpty = stringResource(R.string.register_error_password_empty)
+    val errorPasswordShort = stringResource(R.string.register_error_password_short)
+    val errorConfirmEmpty = stringResource(R.string.register_error_confirm_empty)
+    val errorConfirmMismatch = stringResource(R.string.register_error_confirm_mismatch)
+    val errorEmailExists = stringResource(R.string.register_error_email_exists)
+
     fun validateFieldsSync(): Boolean {
         nameError = when {
-            fullName.trim().isEmpty() -> "Ingresá tu nombre completo"
-            fullName.trim().length < 3 || !fullName.trim().contains(" ") -> "Ingresá nombre y apellido"
+            fullName.trim().isEmpty() -> errorNameEmpty
+            fullName.trim().length < 3 || !fullName.trim().contains(" ") -> errorNameInvalid
             else -> null
         }
         emailError = when {
-            email.trim().isEmpty() -> "Ingresá tu correo"
-            !EMAIL_REGEX.matches(email.trim()) -> "El correo no es válido"
+            email.trim().isEmpty() -> errorEmailEmpty
+            !EMAIL_REGEX.matches(email.trim()) -> errorEmailInvalid
             else -> null
         }
         passwordError = when {
-            password.isEmpty() -> "Ingresá una contraseña"
-            password.length < 8 -> "Mínimo 8 caracteres"
+            password.isEmpty() -> errorPasswordEmpty
+            password.length < 8 -> errorPasswordShort
             else -> null
         }
         confirmError = when {
-            confirmPassword.isEmpty() -> "Confirmá tu contraseña"
-            confirmPassword != password -> "Las dos contraseñas deben coincidir"
+            confirmPassword.isEmpty() -> errorConfirmEmpty
+            confirmPassword != password -> errorConfirmMismatch
             else -> null
         }
         return listOf(nameError, emailError, passwordError, confirmError).all { it == null }
@@ -76,7 +90,7 @@ fun RegisterScreen(
         coroutineScope.launch {
             if (viewModel.emailExists(email)) {
                 isSubmitting = false
-                emailError = "Ya existe una cuenta con ese correo"
+                emailError = errorEmailExists
                 return@launch
             }
             when (val result = viewModel.register(fullName, email, password)) {
@@ -86,7 +100,7 @@ fun RegisterScreen(
                 }
                 is Result.Failure -> {
                     isSubmitting = false
-                    emailError = result.error.toMessage()
+                    emailError = result.error.toMessage(context)
                 }
             }
         }
@@ -98,7 +112,7 @@ fun RegisterScreen(
             .background(colors.background)
     ) {
         GlifoTopAppBar(
-            title = "Crear cuenta",
+            title = stringResource(R.string.register_title),
             isBack = true,
             onNavigationClick = onNavigateToLogin
         )
@@ -111,7 +125,7 @@ fun RegisterScreen(
                 .padding(14.dp)
         ) {
             GlifoField(
-                label = "Nombre completo",
+                label = stringResource(R.string.register_field_full_name),
                 value = fullName,
                 onValueChange = { fullName = it; nameError = null }
             )
@@ -120,9 +134,9 @@ fun RegisterScreen(
             Spacer(modifier = Modifier.height(10.dp))
 
             GlifoField(
-                label = "Correo",
+                label = stringResource(R.string.register_field_email),
                 value = email,
-                placeholder = "usuario@est.una.ac.cr",
+                placeholder = stringResource(R.string.register_field_email_placeholder),
                 onValueChange = { email = it; emailError = null },
                 isError = emailError != null
             )
@@ -131,9 +145,9 @@ fun RegisterScreen(
             Spacer(modifier = Modifier.height(10.dp))
 
             GlifoField(
-                label = "Contraseña",
+                label = stringResource(R.string.register_field_password),
                 value = password,
-                placeholder = "Mínimo 8 caracteres",
+                placeholder = stringResource(R.string.register_field_password_placeholder),
                 onValueChange = { password = it; passwordError = null; confirmError = null },
                 isError = passwordError != null
             )
@@ -142,9 +156,9 @@ fun RegisterScreen(
             Spacer(modifier = Modifier.height(10.dp))
 
             GlifoField(
-                label = "Confirmar contraseña",
+                label = stringResource(R.string.register_field_confirm_password),
                 value = confirmPassword,
-                placeholder = "••••••",
+                placeholder = stringResource(R.string.register_field_confirm_placeholder),
                 onValueChange = { confirmPassword = it; confirmError = null },
                 isError = confirmError != null
             )
@@ -153,7 +167,11 @@ fun RegisterScreen(
             Spacer(modifier = Modifier.height(10.dp))
 
             GlifoButton(
-                text = if (isSubmitting) "Creando cuenta…" else "Crear cuenta",
+                text = if (isSubmitting) {
+                    stringResource(R.string.register_button_submitting)
+                } else {
+                    stringResource(R.string.register_button_submit)
+                },
                 enabled = !isSubmitting,
                 onClick = { submit() }
             )
@@ -161,7 +179,7 @@ fun RegisterScreen(
             Spacer(modifier = Modifier.height(14.dp))
 
             Text(
-                text = "Vas a entrar como estudiante. Si sos docente, pedile el cambio de rol al administrador.",
+                text = stringResource(R.string.register_role_note),
                 fontSize = 13.sp,
                 color = colors.textSecondary,
                 lineHeight = 20.sp

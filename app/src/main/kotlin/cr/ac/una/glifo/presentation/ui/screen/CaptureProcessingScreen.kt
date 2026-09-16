@@ -18,12 +18,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.core.pipeline.RegionClassifier
 import cr.ac.una.glifo.core.ui.component.*
@@ -44,6 +47,7 @@ fun CaptureProcessingScreen(
     viewModel: CaptureProcessingViewModel = hiltViewModel()
 ) {
     val colors = GlifoTheme.colors
+    val context = LocalContext.current
     val uiState by viewModel.state.collectAsState()
 
     LaunchedEffect(photoPath) { viewModel.load(photoPath) }
@@ -54,12 +58,12 @@ fun CaptureProcessingScreen(
             .background(colors.background)
     ) {
         GlifoTopAppBar(
-            title = "Procesando",
+            title = stringResource(R.string.capture_processing_title),
             isBack = true,
             onNavigationClick = onNavigateBack,
             actions = {
                 GlifoBadge(
-                    text = "0 LLAMADAS DE PAGO",
+                    text = stringResource(R.string.capture_processing_zero_paid_calls),
                     backgroundColor = colors.verifiedSoft,
                     textColor = colors.verified
                 )
@@ -69,7 +73,7 @@ fun CaptureProcessingScreen(
         when (val state = uiState) {
             is UiState.Loading -> GlifoLoadingBox()
             is UiState.Empty -> GlifoLoadingBox()
-            is UiState.Error -> GlifoErrorBox(state.error.toMessage(), onRetry = viewModel::retry)
+            is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::retry)
             is UiState.Success -> {
                 val steps = state.data.steps
                 val analysis = state.data.analysis
@@ -119,12 +123,16 @@ fun CaptureProcessingScreen(
                                 .border(1.dp, colors.border, RoundedCornerShape(6.dp))
                         )
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("Página 1 de 1", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                            Text(stringResource(R.string.capture_processing_page_label), fontSize = 14.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
                             Text(
                                 text = if (analysis != null) {
-                                    "${analysis.regionCount} regiones detectadas · ${analysis.totalMillis} ms en el dispositivo"
+                                    stringResource(
+                                        R.string.capture_processing_summary,
+                                        analysis.regionCount,
+                                        analysis.totalMillis
+                                    )
                                 } else {
-                                    "Sin foto: mostrando el recorrido del pipeline"
+                                    stringResource(R.string.capture_processing_no_photo)
                                 },
                                 fontSize = 11.sp,
                                 color = colors.textSecondary,
@@ -225,7 +233,7 @@ fun CaptureProcessingScreen(
                     Spacer(modifier = Modifier.height(10.dp))
 
                     GlifoButton(
-                        text = "Ver resultados",
+                        text = stringResource(R.string.capture_processing_view_results),
                         enabled = revealedCount >= revealTarget,
                         onClick = onViewResults
                     )
@@ -241,7 +249,7 @@ private fun RegionRoutingSection(analysis: PageAnalysis) {
     val colors = GlifoTheme.colors
 
     Text(
-        text = "REGIONES Y ENRUTAMIENTO",
+        text = stringResource(R.string.capture_processing_regions_section),
         fontSize = 10.sp,
         fontWeight = FontWeight.SemiBold,
         letterSpacing = 0.6.sp,
@@ -256,17 +264,17 @@ private fun RegionRoutingSection(analysis: PageAnalysis) {
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         GlifoBadge(
-            text = "${analysis.textCount} TEXTO",
+            text = stringResource(R.string.capture_processing_text_count, analysis.textCount),
             backgroundColor = colors.verifiedSoft,
             textColor = colors.verified
         )
         GlifoBadge(
-            text = "${analysis.mathCount} MATEMÁTICA",
+            text = stringResource(R.string.capture_processing_math_count, analysis.mathCount),
             backgroundColor = colors.repairedSoft,
             textColor = colors.repaired
         )
         GlifoBadge(
-            text = "${analysis.drawingCount} DIBUJO",
+            text = stringResource(R.string.capture_processing_drawing_count, analysis.drawingCount),
             backgroundColor = colors.escalatedSoft,
             textColor = colors.escalated
         )
@@ -280,7 +288,7 @@ private fun RegionRoutingSection(analysis: PageAnalysis) {
             ) {
                 GlifoConfidenceChip(state = region.confidenceState)
                 Text(
-                    text = "Región ${region.index + 1} · ${region.kind.label}",
+                    text = stringResource(R.string.capture_processing_region_label, region.index + 1, region.kind.label),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
                     color = colors.textPrimary,
@@ -313,8 +321,11 @@ private fun RegionRoutingSection(analysis: PageAnalysis) {
                 )
             } else {
                 Text(
-                    text = "Sin texto legible: ${region.metrics.componentCount} trazos, " +
-                        "${(region.metrics.inkDensity * 100).roundToInt()}% de tinta",
+                    text = stringResource(
+                        R.string.capture_processing_no_legible_text,
+                        region.metrics.componentCount,
+                        (region.metrics.inkDensity * 100).roundToInt()
+                    ),
                     fontSize = 11.sp,
                     color = colors.textSecondary,
                     modifier = Modifier.padding(top = 6.dp)

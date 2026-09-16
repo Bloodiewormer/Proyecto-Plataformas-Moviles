@@ -9,8 +9,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
 
 /**
@@ -55,7 +57,7 @@ fun GlifoErrorBox(
             )
             if (onRetry != null) {
                 Spacer(modifier = Modifier.height(14.dp))
-                GlifoButton(text = "Reintentar", onClick = onRetry, small = true)
+                GlifoButton(text = stringResource(R.string.common_retry), onClick = onRetry, small = true)
             }
         }
     }

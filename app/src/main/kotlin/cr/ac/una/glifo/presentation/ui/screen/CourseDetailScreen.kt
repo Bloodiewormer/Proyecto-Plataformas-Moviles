@@ -15,11 +15,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
@@ -40,6 +43,7 @@ fun CourseDetailScreen(
     viewModel: CourseDetailViewModel = hiltViewModel()
 ) {
     val colors = GlifoTheme.colors
+    val context = LocalContext.current
     val uiState by viewModel.state.collectAsState()
 
     LaunchedEffect(courseId) { viewModel.load(courseId) }
@@ -50,13 +54,13 @@ fun CourseDetailScreen(
             .background(colors.background)
     ) {
         GlifoTopAppBar(
-            title = (uiState as? UiState.Success)?.data?.course?.name ?: "Curso",
-            subtitle = "Centro de",
+            title = (uiState as? UiState.Success)?.data?.course?.name ?: stringResource(R.string.capture_default_course_name),
+            subtitle = stringResource(R.string.course_detail_subtitle),
             isBack = true,
             onNavigationClick = onNavigateBack,
             actions = {
                 IconButton(onClick = onNavigateToCapture) {
-                    Icon(imageVector = Icons.Default.CameraAlt, contentDescription = "Captura", tint = colors.textSecondary, modifier = Modifier.size(22.dp))
+                    Icon(imageVector = Icons.Default.CameraAlt, contentDescription = stringResource(R.string.course_detail_capture_description), tint = colors.textSecondary, modifier = Modifier.size(22.dp))
                 }
             }
         )
@@ -64,7 +68,7 @@ fun CourseDetailScreen(
         when (val state = uiState) {
             is UiState.Loading -> GlifoLoadingBox()
             is UiState.Empty -> GlifoLoadingBox()
-            is UiState.Error -> GlifoErrorBox(state.error.toMessage(), onRetry = { viewModel.load(courseId) })
+            is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = { viewModel.load(courseId) })
             is UiState.Success -> {
                 val course = state.data.course
                 val stats = state.data.stats
@@ -85,13 +89,13 @@ fun CourseDetailScreen(
                                 verticalAlignment = Alignment.Top
                             ) {
                                 Column {
-                                    Text(text = course?.name ?: "Curso", fontSize = 18.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                                    Text(text = course?.name ?: stringResource(R.string.capture_default_course_name), fontSize = 18.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
                                     Text(text = course?.code ?: "—", fontSize = 13.sp, fontFamily = FontFamily.Monospace, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
                                 }
                                 Text(text = "${stats.coveragePercent}%", fontSize = 26.sp, fontWeight = FontWeight.SemiBold, color = colors.accentText)
                             }
                             CovBar(v = stats.verified, r = stats.repaired, e = stats.escalated, u = stats.uncertain, modifier = Modifier.padding(vertical = 10.dp))
-                            Text(text = "${stats.instructorName} · ${stats.studentCount} estudiantes", fontSize = 12.sp, color = colors.textSecondary)
+                            Text(text = stringResource(R.string.course_detail_instructor_students, stats.instructorName, stats.studentCount), fontSize = 12.sp, color = colors.textSecondary)
                         }
                     }
 
@@ -109,8 +113,8 @@ fun CourseDetailScreen(
                             ) {
                                 Icon(imageVector = Icons.AutoMirrored.Filled.Notes, contentDescription = null, tint = colors.accentText, modifier = Modifier.size(20.dp))
                                 Spacer(modifier = Modifier.height(6.dp))
-                                Text(text = "Mis apuntes", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                                Text(text = "${stats.noteCount} apuntes", fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
+                                Text(text = stringResource(R.string.course_detail_my_notes), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                                Text(text = stringResource(R.string.course_detail_note_count, stats.noteCount), fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
                             }
                         }
                         GlifoStaggeredEntry(index = 2, modifier = Modifier.weight(1f)) {
@@ -120,8 +124,8 @@ fun CourseDetailScreen(
                             ) {
                                 Icon(imageVector = Icons.Default.DonutLarge, contentDescription = null, tint = colors.accentText, modifier = Modifier.size(20.dp))
                                 Spacer(modifier = Modifier.height(6.dp))
-                                Text(text = "Cobertura", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                                Text(text = "${stats.topicCount} temas", fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
+                                Text(text = stringResource(R.string.course_detail_coverage), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                                Text(text = stringResource(R.string.course_detail_topic_count, stats.topicCount), fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
                             }
                         }
                     }
@@ -139,8 +143,8 @@ fun CourseDetailScreen(
                             ) {
                                 Icon(imageVector = Icons.Default.Psychology, contentDescription = null, tint = colors.accentText, modifier = Modifier.size(20.dp))
                                 Spacer(modifier = Modifier.height(6.dp))
-                                Text(text = "Estudio", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                                Text(text = "${stats.pendingCount} pendientes", fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
+                                Text(text = stringResource(R.string.course_detail_study), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                                Text(text = stringResource(R.string.course_detail_pending_count, stats.pendingCount), fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
                             }
                         }
                         GlifoStaggeredEntry(index = 4, modifier = Modifier.weight(1f)) {
@@ -150,15 +154,15 @@ fun CourseDetailScreen(
                             ) {
                                 Icon(imageVector = Icons.Default.ShowChart, contentDescription = null, tint = colors.accentText, modifier = Modifier.size(20.dp))
                                 Spacer(modifier = Modifier.height(6.dp))
-                                Text(text = "Qué cambió", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                                Text(text = "+${stats.weeklyDeltaPoints} pts esta semana", fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
+                                Text(text = stringResource(R.string.course_detail_whats_changed), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                                Text(text = stringResource(R.string.course_detail_weekly_delta, stats.weeklyDeltaPoints), fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
                             }
                         }
                     }
 
                     // Acceso Rápido
                     Text(
-                        text = "ACCESO RÁPIDO",
+                        text = stringResource(R.string.course_detail_quick_access_section),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
                         letterSpacing = 0.6.sp,
@@ -169,17 +173,17 @@ fun CourseDetailScreen(
                     GlifoCard(tight = true) {
                         GlifoItem(compact = true, onClick = { onNavigateToNoteDetail(1L) }) {
                             Icon(Icons.AutoMirrored.Filled.Notes, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
-                            Text("Mapa de confianza", fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                            Text(stringResource(R.string.course_detail_confidence_map), fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
                             Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(16.dp))
                         }
                         GlifoItem(compact = true, onClick = onNavigateToCapture) {
                             Icon(Icons.Default.CameraAlt, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
-                            Text("Nueva captura", fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                            Text(stringResource(R.string.course_detail_new_capture), fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
                             Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(16.dp))
                         }
                         GlifoItem(compact = true, showBottomBorder = false, onClick = onNavigateToSync) {
                             Icon(Icons.Default.Sync, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
-                            Text("Cola de sincronización", fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                            Text(stringResource(R.string.settings_sync_queue), fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
                             Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(16.dp))
                         }
                     }

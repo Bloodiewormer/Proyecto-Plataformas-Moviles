@@ -13,11 +13,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.domain.model.GlifoRole
 import cr.ac.una.glifo.core.ui.component.*
@@ -42,6 +45,7 @@ fun CoursesScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val colors = GlifoTheme.colors
+    val context = LocalContext.current
     val user by sessionViewModel.currentUser.collectAsState()
     val uiState by viewModel.state.collectAsState()
 
@@ -94,25 +98,25 @@ fun CoursesScreen(
                 .background(colors.background)
         ) {
             GlifoTopAppBar(
-                title = "Mis cursos",
+                title = stringResource(R.string.courses_title),
                 onNavigationClick = { scope.launch { drawerState.open() } },
                 actions = {
                     IconButton(onClick = { searchOpen = !searchOpen; if (!searchOpen) query = "" }) {
-                        Icon(imageVector = Icons.Default.Search, contentDescription = "Buscar", tint = colors.textSecondary, modifier = Modifier.size(22.dp))
+                        Icon(imageVector = Icons.Default.Search, contentDescription = stringResource(R.string.common_search), tint = colors.textSecondary, modifier = Modifier.size(22.dp))
                     }
                 }
             )
 
             AnimatedVisibility(visible = searchOpen) {
                 Box(modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)) {
-                    GlifoField(label = "Buscar por nombre o código", value = query, onValueChange = { query = it }, isFocused = true)
+                    GlifoField(label = stringResource(R.string.courses_search_placeholder), value = query, onValueChange = { query = it }, isFocused = true)
                 }
             }
 
             when (val state = uiState) {
                 is UiState.Loading -> GlifoLoadingBox()
-                is UiState.Error -> GlifoErrorBox(state.error.toMessage(), onRetry = viewModel::load)
-                is UiState.Empty -> GlifoBanner(text = "Todavía no estás inscrito en ningún curso.", modifier = Modifier.padding(14.dp))
+                is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
+                is UiState.Empty -> GlifoBanner(text = stringResource(R.string.courses_empty_no_courses), modifier = Modifier.padding(14.dp))
                 is UiState.Success -> {
                     val courses = state.data.filter {
                         query.isBlank() || it.course.name.contains(query, ignoreCase = true) || it.course.code.contains(query, ignoreCase = true)
@@ -126,7 +130,7 @@ fun CoursesScreen(
                             .padding(14.dp)
                     ) {
                         if (courses.isEmpty()) {
-                            GlifoBanner(text = "Ningún curso coincide con esa búsqueda.")
+                            GlifoBanner(text = stringResource(R.string.courses_empty_no_match))
                         }
                         courses.forEachIndexed { i, entry ->
                             val course = entry.course
@@ -142,10 +146,10 @@ fun CoursesScreen(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(text = course.name, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                                        if (course.id == 1L) GlifoBadge(text = "ACTIVO")
+                                        if (course.id == 1L) GlifoBadge(text = stringResource(R.string.courses_active_badge))
                                     }
                                     Text(
-                                        text = "${course.code} · ${stats.instructorName}",
+                                        text = stringResource(R.string.courses_code_instructor, course.code, stats.instructorName),
                                         fontFamily = FontFamily.Monospace,
                                         fontSize = 11.sp,
                                         color = colors.textSecondary,
@@ -156,9 +160,13 @@ fun CoursesScreen(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
-                                        Text(text = "${stats.coveragePercent}% de cobertura", fontSize = 12.sp, color = colors.textSecondary)
+                                        Text(text = stringResource(R.string.courses_coverage_percent, stats.coveragePercent), fontSize = 12.sp, color = colors.textSecondary)
                                         Text(
-                                            text = if (stats.weeklyDeltaPoints > 0) "+${stats.weeklyDeltaPoints}" else "sin cambios",
+                                            text = if (stats.weeklyDeltaPoints > 0) {
+                                                stringResource(R.string.courses_delta_positive, stats.weeklyDeltaPoints)
+                                            } else {
+                                                stringResource(R.string.courses_delta_none)
+                                            },
                                             fontSize = 12.sp,
                                             fontWeight = FontWeight.Medium,
                                             color = if (stats.weeklyDeltaPoints > 0) colors.verified else colors.textSecondary
@@ -169,7 +177,7 @@ fun CoursesScreen(
                         }
 
                         GlifoButton(
-                            text = "Unirme con un código",
+                            text = stringResource(R.string.courses_join_with_code),
                             variant = GlifoButtonVariant.Secondary,
                             icon = Icons.Default.Add,
                             onClick = onNavigateToJoinCourse

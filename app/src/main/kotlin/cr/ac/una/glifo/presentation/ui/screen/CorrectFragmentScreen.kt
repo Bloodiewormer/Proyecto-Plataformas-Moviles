@@ -15,10 +15,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
@@ -33,6 +36,7 @@ fun CorrectFragmentScreen(
     viewModel: NoteContentViewModel = hiltViewModel()
 ) {
     val colors = GlifoTheme.colors
+    val context = LocalContext.current
     val uiState by viewModel.state.collectAsState()
     var contributeToGlossary by remember { mutableStateOf(true) }
     var selectedSuggestion by remember(noteId) { mutableStateOf(0) }
@@ -45,7 +49,7 @@ fun CorrectFragmentScreen(
             .background(colors.background)
     ) {
         GlifoTopAppBar(
-            title = "Corregir fragmento",
+            title = stringResource(R.string.correct_fragment_title),
             isBack = true,
             onNavigationClick = onNavigateBack,
             actions = {
@@ -57,7 +61,7 @@ fun CorrectFragmentScreen(
                     }
                     onSaveCorrection()
                 }) {
-                    Text("Guardar", color = colors.accentText, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                    Text(stringResource(R.string.correct_fragment_save), color = colors.accentText, fontSize = 16.sp, fontWeight = FontWeight.Medium)
                 }
             }
         )
@@ -65,7 +69,7 @@ fun CorrectFragmentScreen(
         when (val state = uiState) {
             is UiState.Loading -> GlifoLoadingBox()
             is UiState.Empty -> GlifoLoadingBox()
-            is UiState.Error -> GlifoErrorBox(state.error.toMessage(), onRetry = { viewModel.load(noteId) })
+            is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = { viewModel.load(noteId) })
             is UiState.Success -> {
                 val correction = state.data.correction
 
@@ -82,11 +86,15 @@ fun CorrectFragmentScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         GlifoBadge(
-                            text = "INCIERTO",
+                            text = stringResource(R.string.correct_fragment_uncertain_badge),
                             backgroundColor = colors.uncertainSoft,
                             textColor = colors.uncertain
                         )
-                        Text("confianza ${correction.confidence} · umbral ${correction.threshold}", fontSize = 12.sp, color = colors.textSecondary)
+                        Text(
+                            stringResource(R.string.correct_fragment_confidence_threshold, correction.confidence, correction.threshold),
+                            fontSize = 12.sp,
+                            color = colors.textSecondary
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(10.dp))
@@ -100,11 +108,11 @@ fun CorrectFragmentScreen(
                             .border(1.dp, colors.border, RoundedCornerShape(8.dp)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("Recorte original de la región", fontSize = 12.sp, color = colors.textSecondary)
+                        Text(stringResource(R.string.correct_fragment_original_crop_placeholder), fontSize = 12.sp, color = colors.textSecondary)
                     }
 
                     Text(
-                        text = "Región ${correction.regionIndex} de ${correction.regionTotal}",
+                        text = stringResource(R.string.correct_fragment_region_counter, correction.regionIndex, correction.regionTotal),
                         fontSize = 12.sp,
                         color = colors.textSecondary,
                         modifier = Modifier
@@ -114,7 +122,7 @@ fun CorrectFragmentScreen(
                     )
 
                     Text(
-                        text = "LO QUE LEYÓ EL MOTOR",
+                        text = stringResource(R.string.correct_fragment_engine_read_section),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
                         letterSpacing = 0.6.sp,
@@ -132,7 +140,7 @@ fun CorrectFragmentScreen(
                             .padding(horizontal = 14.dp, vertical = 10.dp)
                     ) {
                         Column {
-                            Text("TEXTO RECONOCIDO", fontSize = 11.sp, color = colors.accentText, modifier = Modifier.padding(bottom = 4.dp))
+                            Text(stringResource(R.string.correct_fragment_recognized_text_label), fontSize = 11.sp, color = colors.accentText, modifier = Modifier.padding(bottom = 4.dp))
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(correction.recognizedPrefix, fontSize = 14.sp, color = colors.textPrimary)
                                 Text(
@@ -146,7 +154,7 @@ fun CorrectFragmentScreen(
                     }
 
                     Text(
-                        text = "SUGERENCIAS DEL GLOSARIO",
+                        text = stringResource(R.string.correct_fragment_glossary_suggestions_section),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
                         letterSpacing = 0.6.sp,
@@ -204,8 +212,8 @@ fun CorrectFragmentScreen(
                                 }
                             }
                             Column {
-                                Text("Aportar al glosario del curso", fontSize = 15.sp, color = colors.textPrimary)
-                                Text("Tu corrección sube la confianza de esta palabra para todo el grupo.", fontSize = 12.sp, color = colors.textSecondary, lineHeight = 16.sp, modifier = Modifier.padding(top = 4.dp))
+                                Text(stringResource(R.string.correct_fragment_contribute_glossary_title), fontSize = 15.sp, color = colors.textPrimary)
+                                Text(stringResource(R.string.correct_fragment_contribute_glossary_description), fontSize = 12.sp, color = colors.textSecondary, lineHeight = 16.sp, modifier = Modifier.padding(top = 4.dp))
                             }
                         }
                     }

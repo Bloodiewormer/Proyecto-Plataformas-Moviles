@@ -22,11 +22,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
@@ -40,12 +43,13 @@ fun QuizScreen(
     viewModel: QuizViewModel = hiltViewModel()
 ) {
     val colors = GlifoTheme.colors
+    val context = LocalContext.current
     val uiState by viewModel.state.collectAsState()
 
     when (val state = uiState) {
         is UiState.Loading -> GlifoLoadingBox()
         is UiState.Empty -> GlifoLoadingBox()
-        is UiState.Error -> GlifoErrorBox(state.error.toMessage(), onRetry = viewModel::load)
+        is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
         is UiState.Success -> QuizContent(state.data, colors, onNavigateBack, onNavigateToResult)
     }
 }
@@ -103,7 +107,7 @@ private fun QuizContent(
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "2 / 5",
+                        text = stringResource(R.string.quiz_progress_counter),
                         fontFamily = FontFamily.Monospace,
                         fontSize = 12.sp,
                         color = colors.textSecondary
@@ -188,13 +192,13 @@ private fun QuizContent(
 
             if (!isAnswered) {
                 GlifoButton(
-                    text = "Responder",
+                    text = stringResource(R.string.quiz_answer_button),
                     enabled = selectedOption != null,
                     onClick = { isAnswered = true }
                 )
             } else {
                 GlifoButton(
-                    text = "Ver el resultado",
+                    text = stringResource(R.string.quiz_view_result_button),
                     onClick = onNavigateToResult
                 )
 
@@ -214,7 +218,7 @@ private fun QuizContent(
                     ) {
                         Column {
                             Text(
-                                if (correct) "¡Correcto!" else "No era esa",
+                                if (correct) stringResource(R.string.quiz_correct_feedback) else stringResource(R.string.quiz_incorrect_feedback),
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Medium,
                                 color = if (correct) colors.verified else colors.alert
@@ -240,7 +244,7 @@ private fun QuizContent(
             ) {
                 Icon(imageVector = Icons.Default.Shield, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp).padding(top = 1.dp))
                 Text(
-                    text = "La corrección es local. Las 5 preguntas se generaron en una sola llamada.",
+                    text = stringResource(R.string.quiz_local_grading_note),
                     fontSize = 12.sp,
                     color = colors.textSecondary,
                     lineHeight = 18.sp

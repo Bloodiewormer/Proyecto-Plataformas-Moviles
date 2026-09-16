@@ -19,10 +19,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
@@ -36,6 +39,7 @@ fun CoverageDeltaScreen(
     viewModel: CoverageDeltaViewModel = hiltViewModel()
 ) {
     val colors = GlifoTheme.colors
+    val context = LocalContext.current
     val uiState by viewModel.state.collectAsState()
 
     Column(
@@ -44,7 +48,7 @@ fun CoverageDeltaScreen(
             .background(colors.background)
     ) {
         GlifoTopAppBar(
-            title = "Qué cambió",
+            title = stringResource(R.string.course_detail_whats_changed),
             isBack = true,
             onNavigationClick = onNavigateBack
         )
@@ -52,7 +56,7 @@ fun CoverageDeltaScreen(
         when (val state = uiState) {
             is UiState.Loading -> GlifoLoadingBox()
             is UiState.Empty -> GlifoLoadingBox()
-            is UiState.Error -> GlifoErrorBox(state.error.toMessage(), onRetry = viewModel::load)
+            is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
             is UiState.Success -> {
                 val delta = state.data
 
@@ -85,14 +89,14 @@ fun CoverageDeltaScreen(
                     Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(20.dp))
                     Text("${delta.toPercent}%", fontSize = 32.sp, fontWeight = FontWeight.SemiBold, color = colors.accentText)
                     Spacer(modifier = Modifier.weight(1f))
-                    GlifoBadge(text = "+${delta.deltaPoints} PUNTOS", backgroundColor = colors.verifiedSoft, textColor = colors.verified)
+                    GlifoBadge(text = stringResource(R.string.coverage_delta_points_badge, delta.deltaPoints), backgroundColor = colors.verifiedSoft, textColor = colors.verified)
                 }
 
                 // Bar animates from the previous state to the current one on entry.
                 CovBar(v = vAnim, r = rAnim, e = eAnim, u = uAnim, height = 8.dp)
 
                 Text(
-                    "${delta.newNotesCount} apuntes nuevos · ${delta.newPagesCount} páginas procesadas",
+                    stringResource(R.string.coverage_delta_new_notes_pages, delta.newNotesCount, delta.newPagesCount),
                     fontSize = 12.sp,
                     color = colors.textSecondary,
                     modifier = Modifier.padding(top = 8.dp)
@@ -100,7 +104,7 @@ fun CoverageDeltaScreen(
             }
 
             Text(
-                text = "TEMAS QUE MEJORARON",
+                text = stringResource(R.string.coverage_delta_improved_section),
                 fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold,
                 letterSpacing = 0.6.sp,
@@ -122,7 +126,7 @@ fun CoverageDeltaScreen(
             }
 
             Text(
-                text = "SIGUE SIN EVIDENCIA",
+                text = stringResource(R.string.coverage_delta_still_missing_section),
                 fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold,
                 letterSpacing = 0.6.sp,
@@ -139,7 +143,7 @@ fun CoverageDeltaScreen(
                             Text(item.meta, fontSize = 12.sp, color = colors.textSecondary)
                         }
                         if (item.needsReview) {
-                            GlifoBadge(text = "REVISAR", backgroundColor = colors.uncertainSoft, textColor = colors.uncertain)
+                            GlifoBadge(text = stringResource(R.string.coverage_delta_needs_review_badge), backgroundColor = colors.uncertainSoft, textColor = colors.uncertain)
                         }
                     }
                 }
@@ -148,7 +152,7 @@ fun CoverageDeltaScreen(
             Spacer(modifier = Modifier.height(14.dp))
 
             GlifoButton(
-                text = "Ver el apunte ilegible",
+                text = stringResource(R.string.coverage_delta_view_illegible_note),
                 variant = GlifoButtonVariant.Secondary,
                 onClick = { onNavigateToNoteDetail(3L) }
             )

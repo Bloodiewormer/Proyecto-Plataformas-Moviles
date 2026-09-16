@@ -20,11 +20,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
@@ -38,6 +41,7 @@ fun RegionProvenanceScreen(
     viewModel: NoteContentViewModel = hiltViewModel()
 ) {
     val colors = GlifoTheme.colors
+    val context = LocalContext.current
     val uiState by viewModel.state.collectAsState()
 
     LaunchedEffect(noteId) { viewModel.load(noteId) }
@@ -48,7 +52,7 @@ fun RegionProvenanceScreen(
             .background(colors.background)
     ) {
         GlifoTopAppBar(
-            title = "Región",
+            title = stringResource(R.string.region_provenance_title),
             isBack = true,
             onNavigationClick = onNavigateBack
         )
@@ -56,7 +60,7 @@ fun RegionProvenanceScreen(
         when (val state = uiState) {
             is UiState.Loading -> GlifoLoadingBox()
             is UiState.Empty -> GlifoLoadingBox()
-            is UiState.Error -> GlifoErrorBox(state.error.toMessage(), onRetry = { viewModel.load(noteId) })
+            is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = { viewModel.load(noteId) })
             is UiState.Success -> {
                 val provenance = state.data.provenance
 
@@ -75,7 +79,7 @@ fun RegionProvenanceScreen(
                             .border(1.dp, colors.border, RoundedCornerShape(8.dp)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("Recorte de la región", fontSize = 12.sp, color = colors.textSecondary)
+                        Text(stringResource(R.string.region_provenance_crop_placeholder), fontSize = 12.sp, color = colors.textSecondary)
                     }
 
                     Spacer(modifier = Modifier.height(14.dp))
@@ -87,17 +91,22 @@ fun RegionProvenanceScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             GlifoBadge(
-                                text = "INCIERTO",
+                                text = stringResource(R.string.correct_fragment_uncertain_badge),
                                 backgroundColor = colors.uncertainSoft,
                                 textColor = colors.uncertain
                             )
                             Text("${provenance.confidence}", fontFamily = FontFamily.Monospace, fontSize = 20.sp, color = colors.uncertain)
                         }
-                        Text("Umbral configurado: ${provenance.threshold}", fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 8.dp))
+                        Text(
+                            stringResource(R.string.region_provenance_threshold_configured, provenance.threshold),
+                            fontSize = 12.sp,
+                            color = colors.textSecondary,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
                     }
 
                     Text(
-                        text = "CÓMO SE CALCULÓ",
+                        text = stringResource(R.string.region_provenance_how_calculated_section),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
                         letterSpacing = 0.6.sp,
@@ -148,7 +157,7 @@ fun RegionProvenanceScreen(
                     }
 
                     Text(
-                        text = "RECORRIDO EN LA ESCALERA",
+                        text = stringResource(R.string.region_provenance_pipeline_section),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
                         letterSpacing = 0.6.sp,
@@ -186,8 +195,8 @@ fun RegionProvenanceScreen(
                         ) {
                             Icon(imageVector = Icons.Default.Warning, contentDescription = null, tint = colors.escalated, modifier = Modifier.size(20.dp))
                             Column {
-                                Text("Enviar la página completa (N3)", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                                Text("Una llamada adicional al modelo de pago. Último recurso.", fontSize = 12.sp, color = colors.textSecondary, lineHeight = 16.sp, modifier = Modifier.padding(top = 4.dp))
+                                Text(stringResource(R.string.region_provenance_send_full_page_title), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                                Text(stringResource(R.string.region_provenance_send_full_page_description), fontSize = 12.sp, color = colors.textSecondary, lineHeight = 16.sp, modifier = Modifier.padding(top = 4.dp))
                             }
                         }
                     }

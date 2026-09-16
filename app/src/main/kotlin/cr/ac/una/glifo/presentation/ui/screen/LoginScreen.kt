@@ -16,7 +16,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -47,12 +49,15 @@ fun LoginScreen(
 
     val demoAccountHints by viewModel.demoAccountHints.collectAsState()
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    val emptyFieldsError = stringResource(R.string.login_error_empty_fields)
 
     LaunchedEffect(Unit) { visible = true }
 
     fun attemptLogin() {
         when {
-            email.isBlank() || password.isBlank() -> error = "Llená todos los campos"
+            email.isBlank() || password.isBlank() -> error = emptyFieldsError
             else -> {
                 isLoading = true
                 error = null
@@ -64,7 +69,7 @@ fun LoginScreen(
                         }
                         is Result.Failure -> {
                             isLoading = false
-                            error = result.error.toMessage()
+                            error = result.error.toMessage(context)
                         }
                     }
                 }
@@ -98,7 +103,7 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(18.dp))
 
                 Text(
-                    text = "Entrar a Glifo",
+                    text = stringResource(R.string.login_title),
                     color = GlifoTheme.colors.textPrimary,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Medium
@@ -107,7 +112,7 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(5.dp))
 
                 Text(
-                    text = "Usá tu correo institucional.",
+                    text = stringResource(R.string.login_subtitle),
                     color = GlifoTheme.colors.textSecondary,
                     fontSize = 13.sp
                 )
@@ -117,7 +122,7 @@ fun LoginScreen(
                 GlifoTextField(
                     value = email,
                     onValueChange = { email = it; error = null },
-                    label = "Correo",
+                    label = stringResource(R.string.login_email_label),
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -126,7 +131,7 @@ fun LoginScreen(
                 GlifoTextField(
                     value = password,
                     onValueChange = { password = it; error = null },
-                    label = "Contraseña",
+                    label = stringResource(R.string.login_password_label),
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -149,7 +154,7 @@ fun LoginScreen(
                     } else {
                         Column {
                             GlifoButton(
-                                text = "Iniciar sesión",
+                                text = stringResource(R.string.login_button_submit),
                                 onClick = { attemptLogin() }
                             )
 
@@ -163,7 +168,7 @@ fun LoginScreen(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = "Olvidé mi contraseña",
+                                    text = stringResource(R.string.login_forgot_password),
                                     color = GlifoTheme.colors.accentText,
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.Medium
@@ -192,12 +197,12 @@ fun LoginScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "¿Todavía no tenés cuenta?",
+                text = stringResource(R.string.login_no_account),
                 color = GlifoTheme.colors.textSecondary,
                 fontSize = 13.sp
             )
             Text(
-                text = "Crear cuenta",
+                text = stringResource(R.string.login_create_account),
                 color = GlifoTheme.colors.accentText,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
@@ -213,7 +218,7 @@ private fun DemoAccountHints(hints: List<DemoAccountHint>, onPick: (DemoAccountH
     val colors = GlifoTheme.colors
     Column(modifier = Modifier.padding(top = 12.dp)) {
         Text(
-            text = "PROBAR CON UN ROL DE PRUEBA",
+            text = stringResource(R.string.login_demo_hint_title),
             fontSize = 10.sp,
             fontWeight = FontWeight.SemiBold,
             letterSpacing = 0.4.sp,
@@ -223,9 +228,9 @@ private fun DemoAccountHints(hints: List<DemoAccountHint>, onPick: (DemoAccountH
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             hints.forEach { hint ->
                 val label = when (hint.role) {
-                    GlifoRole.Student -> "Estudiante"
-                    GlifoRole.Teacher -> "Docente"
-                    GlifoRole.Admin -> "Admin"
+                    GlifoRole.Student -> stringResource(R.string.login_role_student)
+                    GlifoRole.Teacher -> stringResource(R.string.login_role_teacher)
+                    GlifoRole.Admin -> stringResource(R.string.login_role_admin)
                 }
                 Box(
                     modifier = Modifier

@@ -19,6 +19,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -26,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.domain.model.ConfidenceState
 import cr.ac.una.glifo.domain.model.GlifoRole
@@ -56,6 +58,7 @@ fun TeacherCoursesScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val colors = GlifoTheme.colors
+    val context = LocalContext.current
     val user by sessionViewModel.currentUser.collectAsState()
     val uiState by viewModel.state.collectAsState()
 
@@ -105,11 +108,11 @@ fun TeacherCoursesScreen(
                 .background(colors.background)
         ) {
             GlifoTopAppBar(
-                title = "Mis cursos",
+                title = stringResource(R.string.courses_title),
                 onNavigationClick = { scope.launch { drawerState.open() } },
                 actions = {
                     IconButton(onClick = onNavigateToNewCourse) {
-                        Icon(imageVector = Icons.Default.Add, contentDescription = "Crear", tint = colors.textSecondary, modifier = Modifier.size(22.dp))
+                        Icon(imageVector = Icons.Default.Add, contentDescription = stringResource(R.string.teacher_courses_create_description), tint = colors.textSecondary, modifier = Modifier.size(22.dp))
                     }
                 }
             )
@@ -117,7 +120,7 @@ fun TeacherCoursesScreen(
             when (val state = uiState) {
                 is UiState.Loading -> GlifoLoadingBox()
                 is UiState.Empty -> GlifoLoadingBox()
-                is UiState.Error -> GlifoErrorBox(state.error.toMessage(), onRetry = viewModel::load)
+                is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
                 is UiState.Success -> {
                     val coursesWithStats = state.data
                     Column(
@@ -142,11 +145,11 @@ fun TeacherCoursesScreen(
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
                                             Text(text = course.name, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                                            GlifoBadge(text = "ACTIVO")
+                                            GlifoBadge(text = stringResource(R.string.courses_active_badge))
                                         }
-                                        Text("${course.code} · II Ciclo 2026", fontFamily = FontFamily.Monospace, fontSize = 11.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
+                                        Text(stringResource(R.string.teacher_courses_code_term, course.code), fontFamily = FontFamily.Monospace, fontSize = 11.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
                                         CovBar(v = stats.verified, r = stats.repaired, e = stats.escalated, u = stats.uncertain, modifier = Modifier.padding(vertical = 8.dp))
-                                        Text("${stats.coveragePercent}% de cobertura · ${stats.studentCount} estudiantes", fontSize = 12.sp, color = colors.textSecondary)
+                                        Text(stringResource(R.string.teacher_courses_coverage_students, stats.coveragePercent, stats.studentCount), fontSize = 12.sp, color = colors.textSecondary)
                                     }
                                 } else {
                                     GlifoCard(
@@ -155,7 +158,7 @@ fun TeacherCoursesScreen(
                                         modifier = Modifier.padding(bottom = 14.dp)
                                     ) {
                                         Text(text = course.name, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                                        Text("${course.code} · II Ciclo 2026", fontFamily = FontFamily.Monospace, fontSize = 11.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
+                                        Text(stringResource(R.string.teacher_courses_code_term, course.code), fontFamily = FontFamily.Monospace, fontSize = 11.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
                                         Box(
                                             modifier = Modifier
                                                 .fillMaxWidth()
@@ -165,7 +168,7 @@ fun TeacherCoursesScreen(
                                         ) {
                                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                                 Icon(Icons.Default.Warning, contentDescription = null, tint = colors.alert, modifier = Modifier.size(14.dp))
-                                                Text("Sin temario · sin cobertura", fontSize = 12.sp, color = colors.alert)
+                                                Text(stringResource(R.string.teacher_courses_no_syllabus_warning), fontSize = 12.sp, color = colors.alert)
                                             }
                                         }
                                     }
@@ -174,7 +177,7 @@ fun TeacherCoursesScreen(
                         }
 
                         GlifoButton(
-                            text = "Crear nuevo curso",
+                            text = stringResource(R.string.teacher_courses_create_new),
                             variant = GlifoButtonVariant.Secondary,
                             icon = Icons.Default.Add,
                             onClick = onNavigateToNewCourse
@@ -194,12 +197,14 @@ fun TeacherNewCourseScreen(
     viewModel: TeacherNewCourseViewModel = hiltViewModel()
 ) {
     val colors = GlifoTheme.colors
+    val context = LocalContext.current
     val clipboard = LocalClipboardManager.current
     val scope = rememberCoroutineScope()
+    val defaultCycle = stringResource(R.string.teacher_new_course_default_cycle)
 
     var name by remember { mutableStateOf("") }
     var code by remember { mutableStateOf("") }
-    var cycle by remember { mutableStateOf("II Ciclo 2026") }
+    var cycle by remember { mutableStateOf(defaultCycle) }
     var joinCode by remember { mutableStateOf(generateJoinCode()) }
     var copied by remember { mutableStateOf(false) }
     var creating by remember { mutableStateOf(false) }
@@ -211,7 +216,7 @@ fun TeacherNewCourseScreen(
             .background(colors.background)
     ) {
         GlifoTopAppBar(
-            title = "Nuevo curso",
+            title = stringResource(R.string.teacher_new_course_title),
             isBack = true,
             onNavigationClick = onNavigateBack
         )
@@ -222,14 +227,14 @@ fun TeacherNewCourseScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(14.dp)
         ) {
-            GlifoField(label = "Nombre del curso", value = name, placeholder = "p. ej. Plataformas Móviles", onValueChange = { name = it })
+            GlifoField(label = stringResource(R.string.teacher_new_course_field_name), value = name, placeholder = stringResource(R.string.teacher_new_course_field_name_placeholder), onValueChange = { name = it })
             Spacer(modifier = Modifier.height(10.dp))
-            GlifoField(label = "Código institucional", value = code, placeholder = "p. ej. EIF411", onValueChange = { code = it })
+            GlifoField(label = stringResource(R.string.teacher_new_course_field_code), value = code, placeholder = stringResource(R.string.teacher_new_course_field_code_placeholder), onValueChange = { code = it })
             Spacer(modifier = Modifier.height(10.dp))
-            GlifoField(label = "Ciclo", value = cycle, onValueChange = { cycle = it })
+            GlifoField(label = stringResource(R.string.teacher_new_course_field_cycle), value = cycle, onValueChange = { cycle = it })
 
             Text(
-                text = "CÓDIGO DE INSCRIPCIÓN",
+                text = stringResource(R.string.teacher_new_course_join_code_section),
                 fontSize = 10.sp,
                 fontWeight = FontWeight.SemiBold,
                 letterSpacing = 0.6.sp,
@@ -253,7 +258,7 @@ fun TeacherNewCourseScreen(
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
-                            contentDescription = "Generar otro código",
+                            contentDescription = stringResource(R.string.teacher_new_course_regenerate_code_description),
                             tint = colors.textSecondary,
                             modifier = Modifier
                                 .size(18.dp)
@@ -264,7 +269,7 @@ fun TeacherNewCourseScreen(
                         )
                         Icon(
                             imageVector = if (copied) Icons.Default.Check else Icons.Default.ContentCopy,
-                            contentDescription = "Copiar código",
+                            contentDescription = stringResource(R.string.teacher_new_course_copy_code_description),
                             tint = if (copied) colors.verified else colors.accentText,
                             modifier = Modifier
                                 .size(18.dp)
@@ -275,7 +280,7 @@ fun TeacherNewCourseScreen(
                         )
                     }
                 }
-                Text("Los estudiantes lo escriben a mano, por eso no lleva letras ambiguas.", fontSize = 11.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 8.dp))
+                Text(stringResource(R.string.teacher_new_course_join_code_note), fontSize = 11.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 8.dp))
             }
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -290,8 +295,8 @@ fun TeacherNewCourseScreen(
                 ) {
                     Icon(imageVector = Icons.Default.FormatListBulleted, contentDescription = null, tint = colors.accentText, modifier = Modifier.size(18.dp))
                     Column {
-                        Text("El temario va después", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                        Text("Sin temario el curso funciona, pero no calcula cobertura.", fontSize = 11.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 3.dp))
+                        Text(stringResource(R.string.teacher_new_course_syllabus_later_title), fontSize = 13.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                        Text(stringResource(R.string.teacher_new_course_syllabus_later_description), fontSize = 11.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 3.dp))
                     }
                 }
             }
@@ -304,7 +309,7 @@ fun TeacherNewCourseScreen(
             Spacer(modifier = Modifier.height(14.dp))
 
             GlifoButton(
-                text = if (creating) "Creando..." else "Crear curso",
+                text = if (creating) stringResource(R.string.teacher_new_course_button_creating) else stringResource(R.string.teacher_new_course_button_create),
                 enabled = name.isNotBlank() && code.isNotBlank() && !creating,
                 onClick = {
                     creating = true
@@ -314,7 +319,7 @@ fun TeacherNewCourseScreen(
                             is cr.ac.una.glifo.domain.error.Result.Success -> onCreateSuccess()
                             is cr.ac.una.glifo.domain.error.Result.Failure -> {
                                 creating = false
-                                errorMessage = result.error.toMessage()
+                                errorMessage = result.error.toMessage(context)
                             }
                         }
                     }
@@ -337,6 +342,7 @@ fun TeacherSyllabusScreen(
     viewModel: TeacherSyllabusViewModel = hiltViewModel()
 ) {
     val colors = GlifoTheme.colors
+    val context = LocalContext.current
     var showAddTopicDialog by remember { mutableStateOf(false) }
     val uiState by viewModel.state.collectAsState()
 
@@ -346,12 +352,12 @@ fun TeacherSyllabusScreen(
             .background(colors.background)
     ) {
         GlifoTopAppBar(
-            title = "Temario · EIF411",
+            title = stringResource(R.string.teacher_syllabus_title),
             isBack = true,
             onNavigationClick = onNavigateBack,
             actions = {
                 TextButton(onClick = onPublishSuccess) {
-                    Text("Publicar", color = colors.accentText, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                    Text(stringResource(R.string.teacher_syllabus_publish_button), color = colors.accentText, fontSize = 16.sp, fontWeight = FontWeight.Medium)
                 }
             }
         )
@@ -359,7 +365,7 @@ fun TeacherSyllabusScreen(
         when (val state = uiState) {
             is UiState.Loading -> GlifoLoadingBox()
             is UiState.Empty -> GlifoLoadingBox()
-            is UiState.Error -> GlifoErrorBox(state.error.toMessage(), onRetry = viewModel::load)
+            is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
             is UiState.Success -> {
                 val units = state.data.units
                 val fileName = state.data.fileName
@@ -379,7 +385,7 @@ fun TeacherSyllabusScreen(
                             Icon(Icons.Default.PictureAsPdf, contentDescription = null, tint = colors.accentText, modifier = Modifier.size(32.dp))
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(fileName, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                                Text("1.2 MB · procesado hace 2 minutos", fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
+                                Text(stringResource(R.string.teacher_syllabus_file_meta), fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
                             }
                         }
                     }
@@ -393,7 +399,7 @@ fun TeacherSyllabusScreen(
                     ) {
                         Icon(Icons.Default.Check, contentDescription = null, tint = colors.verified, modifier = Modifier.size(18.dp).padding(top = 1.dp))
                         Text(
-                            text = "Se extrajeron ${units.size} unidades y $totalTopics temas. Revisalos antes de publicar: el temario se procesa una sola vez.",
+                            text = stringResource(R.string.teacher_syllabus_extraction_note, units.size, totalTopics),
                             fontSize = 12.sp,
                             color = colors.textSecondary,
                             lineHeight = 18.sp
@@ -401,7 +407,7 @@ fun TeacherSyllabusScreen(
                     }
 
                     Text(
-                        text = "ESTRUCTURA DETECTADA",
+                        text = stringResource(R.string.teacher_syllabus_structure_section),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
                         letterSpacing = 0.6.sp,
@@ -419,7 +425,7 @@ fun TeacherSyllabusScreen(
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Text(unit.label, fontWeight = FontWeight.Medium, fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                                Text("${unit.topicCount} temas", fontSize = 12.sp, color = colors.textSecondary)
+                                Text(stringResource(R.string.course_detail_topic_count, unit.topicCount), fontSize = 12.sp, color = colors.textSecondary)
                                 Icon(Icons.Default.Edit, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
                             }
                             unit.topics.forEachIndexed { i, topic ->
@@ -439,7 +445,7 @@ fun TeacherSyllabusScreen(
                     Spacer(modifier = Modifier.height(14.dp))
 
                     GlifoButton(
-                        text = "Agregar un tema a mano",
+                        text = stringResource(R.string.teacher_syllabus_add_topic_manually),
                         variant = GlifoButtonVariant.Secondary,
                         icon = Icons.Default.Add,
                         onClick = { showAddTopicDialog = true }
@@ -466,13 +472,13 @@ private fun AddTopicDialog(onDismiss: () -> Unit, onAdd: (String) -> Unit) {
     var label by remember { mutableStateOf("") }
     Dialog(onDismissRequest = onDismiss) {
         GlifoCard {
-            Text("Agregar tema", fontSize = 17.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+            Text(stringResource(R.string.teacher_add_topic_dialog_title), fontSize = 17.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
             Spacer(modifier = Modifier.height(4.dp))
-            Text("Se agrega a la primera unidad (3 · Series).", fontSize = 12.sp, color = colors.textSecondary)
+            Text(stringResource(R.string.teacher_add_topic_dialog_description), fontSize = 12.sp, color = colors.textSecondary)
             Spacer(modifier = Modifier.height(12.dp))
-            GlifoField(label = "Nombre del tema", value = label, placeholder = "p. ej. 3.6 Series alternadas", onValueChange = { label = it })
+            GlifoField(label = stringResource(R.string.teacher_add_topic_field_label), value = label, placeholder = stringResource(R.string.teacher_add_topic_field_placeholder), onValueChange = { label = it })
             Spacer(modifier = Modifier.height(14.dp))
-            GlifoButton(text = "Agregar", enabled = label.isNotBlank(), onClick = { onAdd(label) })
+            GlifoButton(text = stringResource(R.string.teacher_add_button), enabled = label.isNotBlank(), onClick = { onAdd(label) })
         }
     }
 }
@@ -491,6 +497,7 @@ fun TeacherGlossaryScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val colors = GlifoTheme.colors
+    val context = LocalContext.current
     val user by sessionViewModel.currentUser.collectAsState()
     var searchOpen by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf("") }
@@ -543,28 +550,28 @@ fun TeacherGlossaryScreen(
                 .background(colors.background)
         ) {
             GlifoTopAppBar(
-                title = "Glosario",
+                title = stringResource(R.string.teacher_glossary_title),
                 onNavigationClick = { scope.launch { drawerState.open() } },
                 actions = {
                     IconButton(onClick = { searchOpen = !searchOpen; if (!searchOpen) query = "" }) {
-                        Icon(Icons.Default.Search, contentDescription = "Buscar", tint = colors.textSecondary, modifier = Modifier.size(20.dp))
+                        Icon(Icons.Default.Search, contentDescription = stringResource(R.string.common_search), tint = colors.textSecondary, modifier = Modifier.size(20.dp))
                     }
                     IconButton(onClick = { showAddDialog = true }) {
-                        Icon(Icons.Default.Add, contentDescription = "Agregar", tint = colors.textSecondary, modifier = Modifier.size(20.dp))
+                        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.teacher_glossary_add_description), tint = colors.textSecondary, modifier = Modifier.size(20.dp))
                     }
                 }
             )
 
             AnimatedVisibility(visible = searchOpen) {
                 Box(modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)) {
-                    GlifoField(label = "Buscar término", value = query, onValueChange = { query = it }, isFocused = true)
+                    GlifoField(label = stringResource(R.string.teacher_glossary_search_placeholder), value = query, onValueChange = { query = it }, isFocused = true)
                 }
             }
 
             when (val state = uiState) {
                 is UiState.Loading -> GlifoLoadingBox()
                 is UiState.Empty -> GlifoLoadingBox()
-                is UiState.Error -> GlifoErrorBox(state.error.toMessage(), onRetry = viewModel::load)
+                is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
                 is UiState.Success -> {
                     val allEntries = state.data.entries
                     val entries = allEntries.filter { query.isBlank() || it.term.contains(query, ignoreCase = true) }
@@ -587,14 +594,14 @@ fun TeacherGlossaryScreen(
                             ) {
                                 Icon(Icons.Default.GpsFixed, contentDescription = null, tint = colors.accentText, modifier = Modifier.size(20.dp))
                                 Column {
-                                    Text("Esto no es un diccionario", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                                    Text("Cada entrada sube la confianza del reconocimiento sobre ese símbolo para todo el curso.", fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 4.dp))
+                                    Text(stringResource(R.string.teacher_glossary_not_dictionary_title), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                                    Text(stringResource(R.string.teacher_glossary_not_dictionary_description), fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 4.dp))
                                 }
                             }
                         }
 
                         Text(
-                            text = "${entries.size} ENTRADAS",
+                            text = stringResource(R.string.teacher_glossary_entries_count, entries.size),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.SemiBold,
                             letterSpacing = 0.6.sp,
@@ -618,7 +625,7 @@ fun TeacherGlossaryScreen(
 
                         if (suggestions.isNotEmpty()) {
                             Text(
-                                text = "SUGERIDAS POR CORRECCIONES",
+                                text = stringResource(R.string.teacher_glossary_suggestions_section),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 letterSpacing = 0.6.sp,
@@ -634,8 +641,8 @@ fun TeacherGlossaryScreen(
                                             Text(s.meta, fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
                                         }
                                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                            Icon(Icons.Default.Close, contentDescription = "Descartar", tint = colors.textSecondary, modifier = Modifier.size(20.dp))
-                                            Icon(Icons.Default.Check, contentDescription = "Aceptar", tint = colors.verified, modifier = Modifier.size(20.dp))
+                                            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.teacher_glossary_discard_description), tint = colors.textSecondary, modifier = Modifier.size(20.dp))
+                                            Icon(Icons.Default.Check, contentDescription = stringResource(R.string.teacher_glossary_accept_description), tint = colors.verified, modifier = Modifier.size(20.dp))
                                         }
                                     }
                                 }
@@ -643,7 +650,7 @@ fun TeacherGlossaryScreen(
                         }
 
                         if (entries.isEmpty()) {
-                            GlifoBanner(text = "Ningún término coincide con esa búsqueda.", modifier = Modifier.padding(top = 12.dp))
+                            GlifoBanner(text = stringResource(R.string.teacher_glossary_no_match), modifier = Modifier.padding(top = 12.dp))
                         }
                     }
                 }
@@ -674,14 +681,16 @@ private fun AddGlossaryEntryDialog(
 
     Dialog(onDismissRequest = onDismiss) {
         GlifoCard {
-            Text("Agregar al glosario", fontSize = 17.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+            Text(stringResource(R.string.teacher_glossary_add_dialog_title), fontSize = 17.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
             Spacer(modifier = Modifier.height(12.dp))
-            GlifoField(label = "Término", value = term, onValueChange = { term = it })
+            GlifoField(label = stringResource(R.string.teacher_glossary_field_term), value = term, onValueChange = { term = it })
             Spacer(modifier = Modifier.height(8.dp))
-            GlifoField(label = "Notación", value = notation, placeholder = "p. ej. \\sum o sinónimos separados por ·", onValueChange = { notation = it })
+            GlifoField(label = stringResource(R.string.teacher_glossary_field_notation), value = notation, placeholder = stringResource(R.string.teacher_glossary_field_notation_placeholder), onValueChange = { notation = it })
             Spacer(modifier = Modifier.height(10.dp))
+            val termLabel = stringResource(R.string.teacher_glossary_field_term)
+            val symbolLabel = stringResource(R.string.teacher_glossary_type_symbol)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf(false to "Término", true to "Símbolo").forEach { (value, label) ->
+                listOf(false to termLabel, true to symbolLabel).forEach { (value, label) ->
                     val selected = isSymbol == value
                     Box(
                         modifier = Modifier
@@ -695,7 +704,7 @@ private fun AddGlossaryEntryDialog(
             }
             Spacer(modifier = Modifier.height(14.dp))
             GlifoButton(
-                text = "Agregar",
+                text = stringResource(R.string.teacher_add_button),
                 enabled = term.isNotBlank() && notation.isNotBlank(),
                 onClick = { onAdd(term, notation, isSymbol) }
             )
@@ -721,6 +730,10 @@ fun TeacherGapsScreen(
     val context = LocalContext.current
     val user by sessionViewModel.currentUser.collectAsState()
     val uiState by viewModel.state.collectAsState()
+    val shareTitle = stringResource(R.string.teacher_gaps_share_title)
+    val shareSummaryLineFormat = stringResource(R.string.teacher_gaps_share_summary_line)
+    val shareGapLineFormat = stringResource(R.string.teacher_gaps_share_gap_line)
+    val shareChooserTitle = stringResource(R.string.teacher_gaps_share_chooser_title)
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -768,8 +781,8 @@ fun TeacherGapsScreen(
                 .background(colors.background)
         ) {
             GlifoTopAppBar(
-                title = "EIF411",
-                subtitle = "Brechas de",
+                title = stringResource(R.string.teacher_home_default_course_code),
+                subtitle = stringResource(R.string.teacher_gaps_subtitle),
                 onNavigationClick = { scope.launch { drawerState.open() } },
                 actions = {
                     val currentState = uiState
@@ -778,20 +791,20 @@ fun TeacherGapsScreen(
                             val stats = currentState.data.stats
                             val gaps = currentState.data.gaps
                             val summary = buildString {
-                                appendLine("Brechas del grupo · EIF411")
-                                appendLine("${stats.studentCount} estudiantes · ${stats.coveragePercent}% de cobertura promedio")
+                                appendLine(shareTitle)
+                                appendLine(String.format(shareSummaryLineFormat, stats.studentCount, stats.coveragePercent))
                                 appendLine()
-                                gaps.forEach { gap -> appendLine("• ${gap.label} — ${gap.fraction} sin cubrir (${gap.percent.toInt()}%)") }
+                                gaps.forEach { gap -> appendLine(String.format(shareGapLineFormat, gap.label, gap.fraction, gap.percent.toInt())) }
                             }
                             val shareIntent = Intent(Intent.ACTION_SEND).apply {
                                 type = "text/plain"
-                                putExtra(Intent.EXTRA_SUBJECT, "Brechas del grupo · EIF411")
+                                putExtra(Intent.EXTRA_SUBJECT, shareTitle)
                                 putExtra(Intent.EXTRA_TEXT, summary)
                             }
-                            context.startActivity(Intent.createChooser(shareIntent, "Exportar brechas"))
+                            context.startActivity(Intent.createChooser(shareIntent, shareChooserTitle))
                         }
                     }) {
-                        Icon(Icons.Default.Upload, contentDescription = "Exportar", tint = colors.textSecondary, modifier = Modifier.size(20.dp))
+                        Icon(Icons.Default.Upload, contentDescription = stringResource(R.string.teacher_gaps_export_description), tint = colors.textSecondary, modifier = Modifier.size(20.dp))
                     }
                 }
             )
@@ -799,7 +812,7 @@ fun TeacherGapsScreen(
             when (val state = uiState) {
                 is UiState.Loading -> GlifoLoadingBox()
                 is UiState.Empty -> GlifoLoadingBox()
-                is UiState.Error -> GlifoErrorBox(state.error.toMessage(), onRetry = viewModel::load)
+                is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
                 is UiState.Success -> {
                     val stats = state.data.stats
                     val gaps = state.data.gaps
@@ -817,15 +830,15 @@ fun TeacherGapsScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.Top
                             ) {
-                                Text("${stats.studentCount} estudiantes", fontSize = 18.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                                Text(stringResource(R.string.teacher_gaps_student_count, stats.studentCount), fontSize = 18.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
                                 Text("${stats.coveragePercent}%", fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = colors.accentText)
                             }
                             CovBar(v = stats.verified, r = stats.repaired, e = stats.escalated, u = stats.uncertain, modifier = Modifier.padding(vertical = 10.dp))
-                            Text("Cobertura promedio del grupo · actualizada hoy", fontSize = 12.sp, color = colors.textSecondary)
+                            Text(stringResource(R.string.teacher_gaps_coverage_updated_today), fontSize = 12.sp, color = colors.textSecondary)
                         }
 
                         Text(
-                            text = "TEMAS CON MÁS VACÍOS",
+                            text = stringResource(R.string.teacher_home_gaps_section),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.SemiBold,
                             letterSpacing = 0.6.sp,
@@ -878,8 +891,8 @@ fun TeacherGapsScreen(
                             ) {
                                 GlifoConfidenceChip(state = ConfidenceState.Uncertain, modifier = Modifier.padding(top = 2.dp))
                                 Column {
-                                    Text("6.1 es un caso distinto", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                                    Text("11 de los 14 tienen apuntes del tema, pero ilegibles. No es que no lo estudiaran.", fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 4.dp))
+                                    Text(stringResource(R.string.teacher_gaps_special_case_title), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                                    Text(stringResource(R.string.teacher_gaps_special_case_description), fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 4.dp))
                                 }
                             }
                         }
@@ -892,7 +905,7 @@ fun TeacherGapsScreen(
                             verticalAlignment = Alignment.Top
                         ) {
                             Icon(Icons.Default.Shield, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp).padding(top = 1.dp))
-                            Text("Datos agregados. El docente nunca ve apuntes individuales.", fontSize = 12.sp, color = colors.textSecondary)
+                            Text(stringResource(R.string.teacher_gaps_privacy_note), fontSize = 12.sp, color = colors.textSecondary)
                         }
                     }
                 }

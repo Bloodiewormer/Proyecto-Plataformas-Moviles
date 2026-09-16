@@ -17,12 +17,15 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.domain.model.GlifoRole
 import cr.ac.una.glifo.core.ui.component.*
@@ -58,6 +61,7 @@ fun HomeScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val colors = GlifoTheme.colors
+    val context = LocalContext.current
     val user by sessionViewModel.currentUser.collectAsState()
     val uiState by viewModel.state.collectAsState()
 
@@ -77,7 +81,7 @@ fun HomeScreen(
                 GlifoDrawerContent(
                     role = GlifoRole.Student,
                     currentScreen = "home",
-                    activeCourseName = (uiState as? UiState.Success)?.data?.course?.name ?: "Cálculo II",
+                    activeCourseName = (uiState as? UiState.Success)?.data?.course?.name ?: stringResource(R.string.home_default_active_course),
                     userName = user?.fullName ?: "Brandon Brenes",
                     userEmail = user?.email ?: "estudiante@est.una.ac.cr",
                     userInitials = user?.initials ?: "BB",
@@ -122,7 +126,7 @@ fun HomeScreen(
             when (val state = uiState) {
                 is UiState.Loading -> GlifoLoadingBox()
                 is UiState.Empty -> GlifoLoadingBox()
-                is UiState.Error -> GlifoErrorBox(state.error.toMessage(), onRetry = viewModel::load)
+                is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
                 is UiState.Success -> {
                     val data = state.data
                     val course = data.course
@@ -135,8 +139,8 @@ fun HomeScreen(
                     Column(modifier = Modifier.fillMaxSize()) {
                         // Top AppBar
                         GlifoTopAppBar(
-                            title = course?.name ?: "Cálculo II",
-                            subtitle = "Curso activo",
+                            title = course?.name ?: stringResource(R.string.home_default_active_course),
+                            subtitle = stringResource(R.string.home_subtitle_active_course),
                             hasDropdown = true,
                             onNavigationClick = {
                                 scope.launch { drawerState.open() }
@@ -145,7 +149,7 @@ fun HomeScreen(
                                 IconButton(onClick = onNavigateToDelta) {
                                     Icon(
                                         imageVector = Icons.Outlined.Schedule,
-                                        contentDescription = "Qué cambió",
+                                        contentDescription = stringResource(R.string.course_detail_whats_changed),
                                         tint = colors.textSecondary,
                                         modifier = Modifier.size(22.dp)
                                     )
@@ -156,7 +160,7 @@ fun HomeScreen(
                         // Sync Banner
                         if (pendingSyncCount > 0) {
                             GlifoBanner(
-                                text = "$pendingSyncCount capturas en cola · se envían al volver la red",
+                                text = stringResource(R.string.home_pending_captures_banner, pendingSyncCount),
                                 icon = Icons.Default.Sync
                             )
                         }
@@ -177,7 +181,7 @@ fun HomeScreen(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(
-                                            text = "Cobertura del curso",
+                                            text = stringResource(R.string.home_coverage_card_title),
                                             fontSize = 16.sp,
                                             fontWeight = FontWeight.Medium,
                                             color = colors.textPrimary
@@ -203,12 +207,12 @@ fun HomeScreen(
                                         horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
                                         Text(
-                                            text = "18 sólidos · 7 parciales · 5 ausentes",
+                                            text = stringResource(R.string.home_coverage_breakdown),
                                             fontSize = 12.sp,
                                             color = colors.textSecondary
                                         )
                                         Text(
-                                            text = "+${stats.weeklyDeltaPoints} desde el 8 ago",
+                                            text = stringResource(R.string.home_coverage_delta_since, stats.weeklyDeltaPoints),
                                             fontSize = 12.sp,
                                             fontWeight = FontWeight.Medium,
                                             color = colors.verified
@@ -219,7 +223,7 @@ fun HomeScreen(
 
                             // Section: Pendientes de hoy
                             Text(
-                                text = "PENDIENTES DE HOY",
+                                text = stringResource(R.string.home_pending_today_section),
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 letterSpacing = 0.6.sp,
@@ -248,7 +252,7 @@ fun HomeScreen(
                                                 modifier = Modifier.size(18.dp)
                                             )
                                             Text(
-                                                text = "$flashcardCount flashcards",
+                                                text = stringResource(R.string.home_flashcard_count, flashcardCount),
                                                 fontSize = 14.sp,
                                                 fontWeight = FontWeight.Medium,
                                                 color = colors.textPrimary
@@ -256,7 +260,7 @@ fun HomeScreen(
                                         }
                                         Spacer(modifier = Modifier.weight(1f))
                                         Text(
-                                            text = "Series · Integrales impropias",
+                                            text = stringResource(R.string.home_flashcard_topic),
                                             fontSize = 11.sp,
                                             color = colors.textSecondary,
                                             lineHeight = 14.sp
@@ -281,7 +285,7 @@ fun HomeScreen(
                                                 modifier = Modifier.size(18.dp)
                                             )
                                             Text(
-                                                text = "$quizCount quiz",
+                                                text = stringResource(R.string.home_quiz_count, quizCount),
                                                 fontSize = 14.sp,
                                                 fontWeight = FontWeight.Medium,
                                                 color = colors.textPrimary
@@ -289,7 +293,7 @@ fun HomeScreen(
                                         }
                                         Spacer(modifier = Modifier.weight(1f))
                                         Text(
-                                            text = "De los vacíos detectados",
+                                            text = stringResource(R.string.home_quiz_description),
                                             fontSize = 11.sp,
                                             color = colors.textSecondary,
                                             lineHeight = 14.sp
@@ -300,7 +304,7 @@ fun HomeScreen(
 
                             // Section: Últimos apuntes
                             Text(
-                                text = "ÚLTIMOS APUNTES",
+                                text = stringResource(R.string.home_recent_notes_section),
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 letterSpacing = 0.6.sp,
@@ -331,7 +335,7 @@ fun HomeScreen(
                                                     fontWeight = FontWeight.Normal
                                                 )
                                                 Text(
-                                                    text = "${meta.displayDate} · ${meta.pageCount} páginas",
+                                                    text = stringResource(R.string.notes_date_page_count, meta.displayDate, meta.pageCount),
                                                     fontSize = 12.sp,
                                                     color = colors.textSecondary
                                                 )
@@ -381,6 +385,7 @@ fun TeacherHomeScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val colors = GlifoTheme.colors
+    val context = LocalContext.current
     val user by sessionViewModel.currentUser.collectAsState()
     val uiState by viewModel.state.collectAsState()
 
@@ -400,7 +405,7 @@ fun TeacherHomeScreen(
                 GlifoDrawerContent(
                     role = GlifoRole.Teacher,
                     currentScreen = "home_teacher",
-                    activeCourseName = (uiState as? UiState.Success)?.data?.course?.code ?: "EIF411",
+                    activeCourseName = (uiState as? UiState.Success)?.data?.course?.code ?: stringResource(R.string.teacher_home_default_course_code),
                     userName = user?.fullName ?: "Maikol Guzmán",
                     userEmail = user?.email ?: "docente@una.ac.cr",
                     userInitials = user?.initials ?: "MG",
@@ -441,8 +446,8 @@ fun TeacherHomeScreen(
                 .background(colors.background)
         ) {
             GlifoTopAppBar(
-                title = (uiState as? UiState.Success)?.data?.course?.code ?: "EIF411",
-                subtitle = "Curso activo",
+                title = (uiState as? UiState.Success)?.data?.course?.code ?: stringResource(R.string.teacher_home_default_course_code),
+                subtitle = stringResource(R.string.home_subtitle_active_course),
                 hasDropdown = true,
                 onNavigationClick = { scope.launch { drawerState.open() } }
             )
@@ -450,7 +455,7 @@ fun TeacherHomeScreen(
             when (val state = uiState) {
                 is UiState.Loading -> GlifoLoadingBox()
                 is UiState.Empty -> GlifoLoadingBox()
-                is UiState.Error -> GlifoErrorBox(state.error.toMessage(), onRetry = viewModel::load)
+                is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
                 is UiState.Success -> {
                     val data = state.data
                     val stats = data.stats
@@ -471,7 +476,7 @@ fun TeacherHomeScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "Cobertura del grupo",
+                                        text = stringResource(R.string.teacher_home_group_coverage_title),
                                         fontSize = 16.sp,
                                         fontWeight = FontWeight.Medium,
                                         color = colors.textPrimary
@@ -493,7 +498,7 @@ fun TeacherHomeScreen(
                                 )
 
                                 Text(
-                                    text = "${stats.studentCount} estudiantes inscritos · promedio del curso",
+                                    text = stringResource(R.string.teacher_home_enrolled_students, stats.studentCount),
                                     fontSize = 12.sp,
                                     color = colors.textSecondary
                                 )
@@ -502,7 +507,7 @@ fun TeacherHomeScreen(
 
                         // Temas con más vacíos
                         Text(
-                            text = "TEMAS CON MÁS VACÍOS",
+                            text = stringResource(R.string.teacher_home_gaps_section),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.SemiBold,
                             letterSpacing = 0.6.sp,
@@ -517,7 +522,7 @@ fun TeacherHomeScreen(
                                         GlifoConfidenceChip(state = gap.state)
                                         Column(modifier = Modifier.weight(1f)) {
                                             Text(text = gap.label, fontSize = 13.sp, color = colors.textPrimary)
-                                            Text(text = "${gap.fraction} sin cubrir", fontSize = 11.sp, color = colors.textSecondary)
+                                            Text(text = stringResource(R.string.teacher_home_uncovered_fraction, gap.fraction), fontSize = 11.sp, color = colors.textSecondary)
                                         }
                                         Text(text = "${gap.percent.toInt()}%", fontSize = 12.sp, color = colors.textSecondary)
                                         Icon(imageVector = Icons.Default.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(16.dp))
@@ -528,7 +533,7 @@ fun TeacherHomeScreen(
 
                         // Requiere atención
                         Text(
-                            text = "REQUIERE ATENCIÓN",
+                            text = stringResource(R.string.teacher_home_attention_section),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.SemiBold,
                             letterSpacing = 0.6.sp,
@@ -546,16 +551,16 @@ fun TeacherHomeScreen(
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     Icon(imageVector = Icons.Default.Warning, contentDescription = null, tint = colors.alert, modifier = Modifier.size(18.dp))
-                                    Text(text = "Álgebra Lineal no tiene temario", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                                    Text(text = stringResource(R.string.teacher_home_no_syllabus_title), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
                                 }
                                 Text(
-                                    text = "Sin temario no se puede calcular la cobertura.",
+                                    text = stringResource(R.string.teacher_home_no_syllabus_description),
                                     fontSize = 12.sp,
                                     color = colors.textSecondary,
                                     modifier = Modifier.padding(top = 6.dp, bottom = 12.dp)
                                 )
                                 GlifoButton(
-                                    text = "Publicar temario",
+                                    text = stringResource(R.string.teacher_home_publish_syllabus),
                                     variant = GlifoButtonVariant.Secondary,
                                     onClick = onNavigateToSyllabus
                                 )
@@ -583,6 +588,7 @@ fun AdminHomeScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val colors = GlifoTheme.colors
+    val context = LocalContext.current
     val user by sessionViewModel.currentUser.collectAsState()
     val uiState by viewModel.state.collectAsState()
 
@@ -633,11 +639,11 @@ fun AdminHomeScreen(
                 .background(colors.background)
         ) {
             GlifoTopAppBar(
-                title = "Administración",
+                title = stringResource(R.string.admin_home_title),
                 onNavigationClick = { scope.launch { drawerState.open() } },
                 actions = {
                     IconButton(onClick = onNavigateToUsers) {
-                        Icon(imageVector = Icons.Default.Group, contentDescription = "Usuarios", tint = colors.textSecondary, modifier = Modifier.size(22.dp))
+                        Icon(imageVector = Icons.Default.Group, contentDescription = stringResource(R.string.admin_home_users_description), tint = colors.textSecondary, modifier = Modifier.size(22.dp))
                     }
                 }
             )
@@ -645,7 +651,7 @@ fun AdminHomeScreen(
             when (val state = uiState) {
                 is UiState.Loading -> GlifoLoadingBox()
                 is UiState.Empty -> GlifoLoadingBox()
-                is UiState.Error -> GlifoErrorBox(state.error.toMessage(), onRetry = viewModel::load)
+                is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
                 is UiState.Success -> {
                     val data = state.data
                     val roles = data.roles
@@ -669,7 +675,7 @@ fun AdminHomeScreen(
                                 ) {
                                     Text(roles.sumOf { it.userCount }.toString(), fontSize = 18.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
                                     Spacer(modifier = Modifier.weight(1f))
-                                    Text("Usuarios activos", fontSize = 12.sp, color = colors.textSecondary)
+                                    Text(stringResource(R.string.admin_home_active_users), fontSize = 12.sp, color = colors.textSecondary)
                                 }
                             }
                             GlifoStaggeredEntry(index = 1, modifier = Modifier.weight(1f)) {
@@ -679,13 +685,13 @@ fun AdminHomeScreen(
                                 ) {
                                     Text("$courseCount", fontSize = 18.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
                                     Spacer(modifier = Modifier.weight(1f))
-                                    Text("Cursos publicados", fontSize = 12.sp, color = colors.textSecondary)
+                                    Text(stringResource(R.string.admin_home_published_courses), fontSize = 12.sp, color = colors.textSecondary)
                                 }
                             }
                         }
 
                         Text(
-                            text = "ESTADO DEL SISTEMA",
+                            text = stringResource(R.string.admin_home_system_status_section),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.SemiBold,
                             letterSpacing = 0.6.sp,
@@ -697,29 +703,29 @@ fun AdminHomeScreen(
                             GlifoCard(tight = true) {
                                 GlifoItem(compact = true) {
                                     Icon(Icons.Default.Check, contentDescription = null, tint = colors.verified, modifier = Modifier.size(18.dp))
-                                    Text("API", fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                                    Text("142 ms", fontSize = 12.sp, color = colors.textSecondary)
+                                    Text(stringResource(R.string.admin_home_api_label), fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                                    Text(stringResource(R.string.admin_home_api_latency), fontSize = 12.sp, color = colors.textSecondary)
                                 }
                                 GlifoItem(compact = true) {
                                     Icon(Icons.Default.Check, contentDescription = null, tint = colors.verified, modifier = Modifier.size(18.dp))
-                                    Text("PostgreSQL", fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                                    Text("operativa", fontSize = 12.sp, color = colors.textSecondary)
+                                    Text(stringResource(R.string.admin_home_postgres_label), fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                                    Text(stringResource(R.string.admin_home_postgres_status), fontSize = 12.sp, color = colors.textSecondary)
                                 }
                                 GlifoItem(compact = true) {
                                     Icon(Icons.Default.Warning, contentDescription = null, tint = colors.alert, modifier = Modifier.size(18.dp))
-                                    Text("SimpleTex", fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                                    Text("cuota al 78%", fontSize = 12.sp, color = colors.textSecondary)
+                                    Text(stringResource(R.string.admin_home_simpletex_label), fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                                    Text(stringResource(R.string.admin_home_simpletex_quota), fontSize = 12.sp, color = colors.textSecondary)
                                 }
                                 GlifoItem(compact = true, showBottomBorder = false) {
                                     Icon(Icons.Default.Check, contentDescription = null, tint = colors.verified, modifier = Modifier.size(18.dp))
-                                    Text("Cola de sincronización", fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                                    Text("${data.pendingSyncCount} pendientes", fontSize = 12.sp, color = colors.textSecondary)
+                                    Text(stringResource(R.string.settings_sync_queue), fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                                    Text(stringResource(R.string.course_detail_pending_count, data.pendingSyncCount), fontSize = 12.sp, color = colors.textSecondary)
                                 }
                             }
                         }
 
                         Text(
-                            text = "REPARTO DE ROLES",
+                            text = stringResource(R.string.admin_home_role_distribution_section),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.SemiBold,
                             letterSpacing = 0.6.sp,
@@ -763,7 +769,7 @@ fun AdminHomeScreen(
                         }
 
                         Text(
-                            text = "ÚLTIMOS REGISTROS",
+                            text = stringResource(R.string.admin_home_recent_signups_section),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.SemiBold,
                             letterSpacing = 0.6.sp,
@@ -788,7 +794,7 @@ fun AdminHomeScreen(
                                             modifier = Modifier.weight(1f)
                                         )
                                         Text(
-                                            text = if (i == 0) "hace 2 h" else "hace 5 h",
+                                            text = if (i == 0) stringResource(R.string.admin_home_hours_ago_2) else stringResource(R.string.admin_home_hours_ago_5),
                                             fontSize = 12.sp,
                                             color = colors.textSecondary
                                         )

@@ -17,14 +17,17 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
@@ -40,6 +43,7 @@ fun CaptureReviewScreen(
     viewModel: CaptureReviewViewModel = hiltViewModel()
 ) {
     val colors = GlifoTheme.colors
+    val context = LocalContext.current
     val uiState by viewModel.state.collectAsState()
 
     androidx.compose.runtime.LaunchedEffect(photoPath) {
@@ -58,7 +62,7 @@ fun CaptureReviewScreen(
             .background(colors.background)
     ) {
         GlifoTopAppBar(
-            title = "Revisá la foto",
+            title = stringResource(R.string.capture_review_title),
             isBack = true,
             onNavigationClick = onNavigateBack
         )
@@ -83,13 +87,13 @@ fun CaptureReviewScreen(
                 if (bitmap != null) {
                     Image(
                         bitmap = bitmap,
-                        contentDescription = "Foto capturada",
+                        contentDescription = stringResource(R.string.capture_review_photo_description),
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
                 } else {
                     Text(
-                        text = "Vista previa de la captura",
+                        text = stringResource(R.string.capture_review_preview_placeholder),
                         fontSize = 11.sp,
                         color = colors.textSecondary
                     )
@@ -101,7 +105,7 @@ fun CaptureReviewScreen(
             when (val state = uiState) {
                 is UiState.Loading -> GlifoLoadingBox()
                 is UiState.Empty -> GlifoLoadingBox()
-                is UiState.Error -> GlifoErrorBox(state.error.toMessage(), onRetry = viewModel::load)
+                is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
                 is UiState.Success -> {
                     val checks = state.data.checks
                     val hasWarning = state.data.hasWarning
@@ -117,10 +121,10 @@ fun CaptureReviewScreen(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 Icon(imageVector = Icons.Default.Warning, contentDescription = null, tint = colors.alert, modifier = Modifier.size(18.dp))
-                                Text("La foto está movida", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                                Text(stringResource(R.string.capture_review_blur_warning_title), fontSize = 16.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
                             }
                             Text(
-                                text = "Con este nivel de desenfoque el reconocimiento inventaría texto. Apoyá el codo en la mesa y repetí la toma.",
+                                text = stringResource(R.string.capture_review_blur_warning_description),
                                 fontSize = 12.sp,
                                 color = colors.textSecondary,
                                 lineHeight = 18.sp,
@@ -131,7 +135,7 @@ fun CaptureReviewScreen(
 
                     // Quality Diagnostics
                     Text(
-                        text = "DIAGNÓSTICO DE CALIDAD",
+                        text = stringResource(R.string.capture_review_quality_section),
                         fontSize = 10.sp,
                         fontWeight = FontWeight.SemiBold,
                         letterSpacing = 0.6.sp,
@@ -183,7 +187,7 @@ fun CaptureReviewScreen(
                     Spacer(modifier = Modifier.height(14.dp))
 
                     GlifoButton(
-                        text = "Repetir la foto",
+                        text = stringResource(R.string.capture_review_retake),
                         icon = Icons.Default.CameraAlt,
                         onClick = onRetakePhoto
                     )
@@ -191,7 +195,11 @@ fun CaptureReviewScreen(
                     Spacer(modifier = Modifier.height(6.dp))
 
                     GlifoButton(
-                        text = if (hasWarning) "Procesarla igual, sé que va a fallar" else "Procesar",
+                        text = if (hasWarning) {
+                            stringResource(R.string.capture_review_process_anyway)
+                        } else {
+                            stringResource(R.string.capture_review_process)
+                        },
                         variant = GlifoButtonVariant.Text,
                         onClick = onProcessAnyway
                     )

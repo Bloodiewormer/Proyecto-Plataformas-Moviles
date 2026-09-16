@@ -16,9 +16,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.domain.model.GlifoRole
 import cr.ac.una.glifo.domain.model.SyncStatus
@@ -43,6 +46,7 @@ fun SyncQueueScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val colors = GlifoTheme.colors
+    val context = LocalContext.current
     val user by sessionViewModel.currentUser.collectAsState()
     val uiState by viewModel.state.collectAsState()
 
@@ -92,21 +96,26 @@ fun SyncQueueScreen(
                 .background(colors.background)
         ) {
             GlifoTopAppBar(
-                title = "Sincronización",
+                title = stringResource(R.string.sync_queue_title),
                 onNavigationClick = { scope.launch { drawerState.open() } }
             )
 
             when (val state = uiState) {
                 is UiState.Loading -> GlifoLoadingBox()
-                is UiState.Empty -> GlifoBanner(text = "No hay nada en la cola de sincronización.")
-                is UiState.Error -> GlifoErrorBox(state.error.toMessage(), onRetry = viewModel::load)
+                is UiState.Empty -> GlifoBanner(text = stringResource(R.string.sync_queue_empty))
+                is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
                 is UiState.Success -> {
                     val items = state.data.items
                     val syncingCount = state.data.syncingCount
 
                     if (syncingCount > 0) {
+                        val noteWord = if (syncingCount == 1) {
+                            stringResource(R.string.sync_queue_note_singular)
+                        } else {
+                            stringResource(R.string.sync_queue_note_plural)
+                        }
                         GlifoBanner(
-                            text = "Sincronizando $syncingCount ${if (syncingCount == 1) "apunte" else "apuntes"}…",
+                            text = stringResource(R.string.sync_queue_syncing_note, syncingCount, noteWord),
                             icon = Icons.Default.Sync
                         )
                     }
@@ -155,7 +164,7 @@ fun SyncQueueScreen(
                                         }
                                     }
                                     when (item.status) {
-                                        SyncStatus.Queued -> GlifoBadge(text = "EN COLA")
+                                        SyncStatus.Queued -> GlifoBadge(text = stringResource(R.string.sync_queue_queued_badge))
                                         SyncStatus.Done -> Icon(imageVector = Icons.Default.Check, contentDescription = null, tint = colors.verified, modifier = Modifier.size(16.dp))
                                         SyncStatus.Syncing -> {}
                                     }

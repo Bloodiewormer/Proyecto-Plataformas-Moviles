@@ -14,9 +14,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.domain.model.GlifoRole
 import cr.ac.una.glifo.core.ui.component.*
@@ -41,6 +44,7 @@ fun NotesScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val colors = GlifoTheme.colors
+    val context = LocalContext.current
     val user by sessionViewModel.currentUser.collectAsState()
     val uiState by viewModel.state.collectAsState()
 
@@ -94,25 +98,25 @@ fun NotesScreen(
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 GlifoTopAppBar(
-                    title = "Apuntes",
+                    title = stringResource(R.string.notes_title),
                     onNavigationClick = { scope.launch { drawerState.open() } },
                     actions = {
                         IconButton(onClick = { searchOpen = !searchOpen; if (!searchOpen) query = "" }) {
-                            Icon(imageVector = Icons.Default.Search, contentDescription = "Buscar", tint = colors.textSecondary, modifier = Modifier.size(22.dp))
+                            Icon(imageVector = Icons.Default.Search, contentDescription = stringResource(R.string.common_search), tint = colors.textSecondary, modifier = Modifier.size(22.dp))
                         }
                     }
                 )
 
                 AnimatedVisibility(visible = searchOpen) {
                     Box(modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)) {
-                        GlifoField(label = "Buscar apunte", value = query, onValueChange = { query = it }, isFocused = true)
+                        GlifoField(label = stringResource(R.string.notes_search_placeholder), value = query, onValueChange = { query = it }, isFocused = true)
                     }
                 }
 
                 when (val state = uiState) {
                     is UiState.Loading -> GlifoLoadingBox()
-                    is UiState.Error -> GlifoErrorBox(state.error.toMessage(), onRetry = viewModel::load)
-                    is UiState.Empty -> GlifoBanner(text = "Todavía no tenés apuntes.")
+                    is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
+                    is UiState.Empty -> GlifoBanner(text = stringResource(R.string.notes_empty_no_notes))
                     is UiState.Success -> {
                         val pendingCount = state.data.pendingSyncCount
                         val notes = state.data.notes.filter {
@@ -121,13 +125,13 @@ fun NotesScreen(
 
                         if (pendingCount > 0) {
                             GlifoBanner(
-                                text = "$pendingCount capturas en cola",
+                                text = stringResource(R.string.notes_pending_captures, pendingCount),
                                 icon = Icons.Default.Sync
                             )
                         }
 
                         if (notes.isEmpty()) {
-                            GlifoBanner(text = "Ningún apunte coincide con esa búsqueda.")
+                            GlifoBanner(text = stringResource(R.string.notes_empty_no_match))
                         }
 
                         Column(
@@ -146,7 +150,7 @@ fun NotesScreen(
                                         }
                                         Column(modifier = Modifier.weight(1f)) {
                                             Text(text = meta.note.title, fontSize = 14.sp, color = colors.textPrimary)
-                                            Text(text = "${meta.displayDate} · ${meta.pageCount} páginas", fontSize = 12.sp, color = colors.textSecondary)
+                                            Text(text = stringResource(R.string.notes_date_page_count, meta.displayDate, meta.pageCount), fontSize = 12.sp, color = colors.textSecondary)
                                         }
                                         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                             meta.chips.forEach { chipState ->

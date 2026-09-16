@@ -42,12 +42,14 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
 import cr.ac.una.glifo.domain.model.GlifoRole
 import kotlinx.coroutines.delay
@@ -337,7 +339,7 @@ fun GlifoTopAppBar(
                 ) {
                     Icon(
                         imageVector = if (isBack) Icons.AutoMirrored.Filled.ArrowBack else Icons.Default.Menu,
-                        contentDescription = if (isBack) "Volver" else "Menú",
+                        contentDescription = if (isBack) stringResource(R.string.common_nav_back) else stringResource(R.string.common_nav_menu),
                         tint = colors.textPrimary,
                         modifier = Modifier.size(24.dp)
                     )
@@ -625,7 +627,7 @@ fun GlifoCameraFab(
     ) {
         Icon(
             imageVector = Icons.Default.CameraAlt,
-            contentDescription = "Cámara",
+            contentDescription = stringResource(R.string.common_camera_description),
             tint = colors.onAccent,
             modifier = Modifier.size(22.dp)
         )
@@ -672,31 +674,46 @@ fun GlifoDrawerContent(
 ) {
     val colors = GlifoTheme.colors
 
+    val drawerHome = stringResource(R.string.drawer_item_home)
+    val drawerMyCourses = stringResource(R.string.courses_title)
+    val drawerNotes = stringResource(R.string.notes_title)
+    val drawerCoverage = stringResource(R.string.course_detail_coverage)
+    val drawerStudy = stringResource(R.string.course_detail_study)
+    val drawerSync = stringResource(R.string.sync_queue_title)
+    val drawerAiCostStudent = stringResource(R.string.drawer_item_ai_cost)
+    val drawerSyllabus = stringResource(R.string.drawer_item_syllabus)
+    val drawerGlossary = stringResource(R.string.drawer_item_notation_glossary)
+    val drawerGroupGaps = stringResource(R.string.drawer_item_group_gaps)
+    val drawerCourseConsumption = stringResource(R.string.drawer_item_course_consumption)
+    val drawerUsers = stringResource(R.string.admin_users_title)
+    val drawerCourses = stringResource(R.string.admin_courses_title)
+    val drawerRoles = stringResource(R.string.admin_roles_title)
+
     val studentItems = listOf(
-        GlifoDrawerItem("home", "Inicio", Icons.Outlined.Home, "home", currentScreen == "home"),
-        GlifoDrawerItem("school", "Mis cursos", Icons.Default.School, "courses", currentScreen == "courses"),
-        GlifoDrawerItem("notes", "Apuntes", Icons.AutoMirrored.Filled.Notes, "notes", currentScreen == "notes"),
-        GlifoDrawerItem("coverage", "Cobertura", Icons.Outlined.Schedule, "coverage", currentScreen == "coverage"),
-        GlifoDrawerItem("study", "Estudio", Icons.Default.Layers, "study", currentScreen == "study"),
-        GlifoDrawerItem("sync", "Sincronización", Icons.Default.Sync, "sync", currentScreen == "sync"),
-        GlifoDrawerItem("cost", "Consumo IA", Icons.Default.BarChart, "ai_cost", currentScreen == "ai_cost")
+        GlifoDrawerItem("home", drawerHome, Icons.Outlined.Home, "home", currentScreen == "home"),
+        GlifoDrawerItem("school", drawerMyCourses, Icons.Default.School, "courses", currentScreen == "courses"),
+        GlifoDrawerItem("notes", drawerNotes, Icons.AutoMirrored.Filled.Notes, "notes", currentScreen == "notes"),
+        GlifoDrawerItem("coverage", drawerCoverage, Icons.Outlined.Schedule, "coverage", currentScreen == "coverage"),
+        GlifoDrawerItem("study", drawerStudy, Icons.Default.Layers, "study", currentScreen == "study"),
+        GlifoDrawerItem("sync", drawerSync, Icons.Default.Sync, "sync", currentScreen == "sync"),
+        GlifoDrawerItem("cost", drawerAiCostStudent, Icons.Default.BarChart, "ai_cost", currentScreen == "ai_cost")
     )
 
     val teacherItems = listOf(
-        GlifoDrawerItem("home", "Inicio", Icons.Outlined.Home, "home_teacher", currentScreen == "home_teacher"),
-        GlifoDrawerItem("school", "Mis cursos", Icons.Default.School, "teacher_courses", currentScreen == "teacher_courses"),
-        GlifoDrawerItem("syllabus", "Temario", Icons.AutoMirrored.Filled.FormatListBulleted, "syllabus", currentScreen == "syllabus"),
-        GlifoDrawerItem("glossary", "Glosario de notación", Icons.Default.Functions, "glossary", currentScreen == "glossary"),
-        GlifoDrawerItem("gaps", "Brechas del grupo", Icons.AutoMirrored.Filled.ShowChart, "gaps", currentScreen == "gaps"),
-        GlifoDrawerItem("cost", "Consumo del curso", Icons.Default.BarChart, "ai_cost", currentScreen == "ai_cost")
+        GlifoDrawerItem("home", drawerHome, Icons.Outlined.Home, "home_teacher", currentScreen == "home_teacher"),
+        GlifoDrawerItem("school", drawerMyCourses, Icons.Default.School, "teacher_courses", currentScreen == "teacher_courses"),
+        GlifoDrawerItem("syllabus", drawerSyllabus, Icons.AutoMirrored.Filled.FormatListBulleted, "syllabus", currentScreen == "syllabus"),
+        GlifoDrawerItem("glossary", drawerGlossary, Icons.Default.Functions, "glossary", currentScreen == "glossary"),
+        GlifoDrawerItem("gaps", drawerGroupGaps, Icons.AutoMirrored.Filled.ShowChart, "gaps", currentScreen == "gaps"),
+        GlifoDrawerItem("cost", drawerCourseConsumption, Icons.Default.BarChart, "ai_cost", currentScreen == "ai_cost")
     )
 
     val adminItems = listOf(
-        GlifoDrawerItem("home", "Inicio", Icons.Outlined.Home, "home_admin", currentScreen == "home_admin"),
-        GlifoDrawerItem("users", "Usuarios", Icons.Default.Group, "admin_users", currentScreen == "admin_users"),
-        GlifoDrawerItem("school", "Cursos", Icons.Default.School, "admin_courses", currentScreen == "admin_courses"),
-        GlifoDrawerItem("roles", "Roles", null, "admin_roles", currentScreen == "admin_roles", isSubItem = true),
-        GlifoDrawerItem("cost", "Consumo IA", Icons.Default.BarChart, "ai_cost", currentScreen == "ai_cost")
+        GlifoDrawerItem("home", drawerHome, Icons.Outlined.Home, "home_admin", currentScreen == "home_admin"),
+        GlifoDrawerItem("users", drawerUsers, Icons.Default.Group, "admin_users", currentScreen == "admin_users"),
+        GlifoDrawerItem("school", drawerCourses, Icons.Default.School, "admin_courses", currentScreen == "admin_courses"),
+        GlifoDrawerItem("roles", drawerRoles, null, "admin_roles", currentScreen == "admin_roles", isSubItem = true),
+        GlifoDrawerItem("cost", drawerAiCostStudent, Icons.Default.BarChart, "ai_cost", currentScreen == "ai_cost")
     )
 
     val items = when (role) {
@@ -706,9 +723,9 @@ fun GlifoDrawerContent(
     }
 
     val roleLabel = when (role) {
-        GlifoRole.Student -> "ESTUDIANTE"
-        GlifoRole.Teacher -> "DOCENTE"
-        GlifoRole.Admin -> "ADMIN"
+        GlifoRole.Student -> stringResource(R.string.profile_role_student)
+        GlifoRole.Teacher -> stringResource(R.string.profile_role_teacher)
+        GlifoRole.Admin -> stringResource(R.string.profile_role_admin)
     }
 
     val roleBadgeBg = if (role == GlifoRole.Admin) colors.alertSoft else colors.accentSoft
@@ -787,7 +804,7 @@ fun GlifoDrawerContent(
                     .padding(horizontal = 16.dp, vertical = 10.dp)
             ) {
                 Text(
-                    text = "CURSO ACTIVO",
+                    text = stringResource(R.string.drawer_active_course_section),
                     fontSize = 10.sp,
                     color = colors.textSecondary,
                     letterSpacing = 0.5.sp,
@@ -806,7 +823,7 @@ fun GlifoDrawerContent(
                         fontWeight = FontWeight.Medium
                     )
                     Text(
-                        text = "Cambiar",
+                        text = stringResource(R.string.drawer_change_course),
                         fontSize = 13.sp,
                         color = colors.accentText,
                         modifier = Modifier
@@ -896,12 +913,12 @@ fun GlifoDrawerContent(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Person,
-                        contentDescription = "Perfil",
+                        contentDescription = stringResource(R.string.profile_title),
                         tint = colors.textSecondary,
                         modifier = Modifier.size(20.dp)
                     )
                     Text(
-                        text = "Perfil",
+                        text = stringResource(R.string.profile_title),
                         fontSize = 14.sp,
                         color = colors.textPrimary
                     )
@@ -920,12 +937,12 @@ fun GlifoDrawerContent(
             ) {
                 Icon(
                     imageVector = Icons.Outlined.WbSunny,
-                    contentDescription = "Ajustes",
+                    contentDescription = stringResource(R.string.settings_title),
                     tint = colors.textSecondary,
                     modifier = Modifier.size(20.dp)
                 )
                 Text(
-                    text = "Ajustes",
+                    text = stringResource(R.string.settings_title),
                     fontSize = 14.sp,
                     color = colors.textPrimary
                 )
@@ -943,12 +960,12 @@ fun GlifoDrawerContent(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                    contentDescription = "Cerrar sesión",
+                    contentDescription = stringResource(R.string.profile_button_logout),
                     tint = colors.alert,
                     modifier = Modifier.size(20.dp)
                 )
                 Text(
-                    text = "Cerrar sesión",
+                    text = stringResource(R.string.profile_button_logout),
                     fontSize = 14.sp,
                     color = colors.alert,
                     fontWeight = FontWeight.Medium

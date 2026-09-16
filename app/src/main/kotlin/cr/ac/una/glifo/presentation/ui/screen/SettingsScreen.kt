@@ -19,11 +19,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
@@ -82,7 +84,7 @@ fun SettingsScreen(
             .background(colors.background)
     ) {
         GlifoTopAppBar(
-            title = "Ajustes",
+            title = stringResource(R.string.settings_title),
             isBack = true,
             onNavigationClick = onNavigateBack
         )
@@ -95,7 +97,7 @@ fun SettingsScreen(
                 .padding(14.dp)
         ) {
             Text(
-                text = "APARIENCIA",
+                text = stringResource(R.string.settings_section_appearance),
                 fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold,
                 letterSpacing = 0.6.sp,
@@ -104,9 +106,9 @@ fun SettingsScreen(
             )
 
             GlifoCard(modifier = Modifier.padding(bottom = 18.dp)) {
-                Text("Tema", fontSize = 16.sp, color = colors.textPrimary)
+                Text(stringResource(R.string.settings_theme_title), fontSize = 16.sp, color = colors.textPrimary)
                 Text(
-                    text = "Elegí cómo se ve Glifo, o dejá que siga el ajuste del sistema.",
+                    text = stringResource(R.string.settings_theme_description),
                     fontSize = 12.sp,
                     color = colors.textSecondary,
                     lineHeight = 16.sp,
@@ -114,9 +116,9 @@ fun SettingsScreen(
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf(
-                        ThemeMode.Light to "Claro",
-                        ThemeMode.Dark to "Oscuro",
-                        ThemeMode.System to "Sistema"
+                        ThemeMode.Light to stringResource(R.string.settings_theme_light),
+                        ThemeMode.Dark to stringResource(R.string.settings_theme_dark),
+                        ThemeMode.System to stringResource(R.string.settings_theme_system)
                     ).forEach { (mode, label) ->
                         val selected = ThemeManager.mode == mode
                         Box(
@@ -134,7 +136,7 @@ fun SettingsScreen(
             }
 
             Text(
-                text = "CAPTURA",
+                text = stringResource(R.string.settings_section_capture),
                 fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold,
                 letterSpacing = 0.6.sp,
@@ -144,17 +146,17 @@ fun SettingsScreen(
 
             GlifoCard(tight = true) {
                 GlifoItem(compact = true) {
-                    Text("Guardar la foto original", fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                    Text(stringResource(R.string.settings_save_original_photo), fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
                     GlifoSwitch(savePhoto) { savePhoto = it }
                 }
                 GlifoItem(compact = true, showBottomBorder = false) {
-                    Text("Rechazar fotos de baja calidad", fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                    Text(stringResource(R.string.settings_reject_low_quality), fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
                     GlifoSwitch(rejectLow) { rejectLow = it }
                 }
             }
 
             Text(
-                text = "PROCESAMIENTO",
+                text = stringResource(R.string.settings_section_processing),
                 fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold,
                 letterSpacing = 0.6.sp,
@@ -168,7 +170,7 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Umbral de confianza", fontSize = 16.sp, color = colors.textPrimary)
+                    Text(stringResource(R.string.settings_confidence_threshold), fontSize = 16.sp, color = colors.textPrimary)
                     Text(String.format("%.2f", confidenceThreshold), fontFamily = FontFamily.Monospace, fontSize = 15.sp, color = colors.accentText)
                 }
                 Box(
@@ -182,7 +184,7 @@ fun SettingsScreen(
                     Box(modifier = Modifier.fillMaxHeight().fillMaxWidth(confidenceThreshold).background(colors.accent))
                 }
                 Text(
-                    text = "Por debajo de este valor la región escala al siguiente motor. Más alto significa más precisión y más llamadas.",
+                    text = stringResource(R.string.settings_confidence_threshold_description),
                     fontSize = 12.sp,
                     color = colors.textSecondary,
                     lineHeight = 16.sp,
@@ -192,17 +194,17 @@ fun SettingsScreen(
 
             GlifoCard(tight = true) {
                 GlifoItem(compact = true) {
-                    Text("Permitir escalar a visión (N2)", fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                    Text(stringResource(R.string.settings_allow_vision_escalation), fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
                     GlifoSwitch(allowN2) { allowN2 = it }
                 }
                 GlifoItem(compact = true, showBottomBorder = false) {
-                    Text("Pedir confirmación antes de N3", fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                    Text(stringResource(R.string.settings_confirm_before_n3), fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
                     GlifoSwitch(confirmN3) { confirmN3 = it }
                 }
             }
 
             Text(
-                text = "SINCRONIZACIÓN",
+                text = stringResource(R.string.settings_section_sync),
                 fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold,
                 letterSpacing = 0.6.sp,
@@ -212,17 +214,17 @@ fun SettingsScreen(
 
             GlifoCard(tight = true) {
                 GlifoItem(compact = true) {
-                    Text("Sincronizar solo con wifi", fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                    Text(stringResource(R.string.settings_sync_wifi_only), fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
                     GlifoSwitch(wifiOnly) { wifiOnly = it }
                 }
                 GlifoItem(compact = true, showBottomBorder = false) {
-                    Text("Avisar cuando termine la cola", fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                    Text(stringResource(R.string.settings_notify_queue_done), fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
                     GlifoSwitch(notifyDone) { notifyDone = it }
                 }
             }
 
             Text(
-                text = "ACERCA DE",
+                text = stringResource(R.string.settings_section_about),
                 fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold,
                 letterSpacing = 0.6.sp,
@@ -232,18 +234,18 @@ fun SettingsScreen(
 
             GlifoCard(tight = true) {
                 GlifoItem(compact = true, onClick = onNavigateToSync) {
-                    Text("Cola de sincronización", fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                    Text("$pendingCount pendientes", fontSize = 13.sp, color = colors.textSecondary)
+                    Text(stringResource(R.string.settings_sync_queue), fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                    Text(stringResource(R.string.settings_pending_count, pendingCount), fontSize = 13.sp, color = colors.textSecondary)
                     Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(16.dp))
                 }
                 GlifoItem(compact = true, showBottomBorder = false) {
-                    Text("Versión", fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                    Text(stringResource(R.string.settings_version_label), fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
                     Text("1.0.0 · X-Ray", fontFamily = FontFamily.Monospace, fontSize = 13.sp, color = colors.textSecondary)
                 }
             }
 
             Text(
-                text = "DIAGNÓSTICO Y TELEMETRÍA",
+                text = stringResource(R.string.settings_section_diagnostics),
                 fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold,
                 letterSpacing = 0.6.sp,
@@ -261,8 +263,8 @@ fun SettingsScreen(
                     }
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Probar Crashlytics (Simular caída)", fontSize = 15.sp, color = colors.alert)
-                        Text("Provoca una excepción de prueba para verificar en Firebase Console.", fontSize = 12.sp, color = colors.textSecondary)
+                        Text(stringResource(R.string.settings_test_crashlytics_title), fontSize = 15.sp, color = colors.alert)
+                        Text(stringResource(R.string.settings_test_crashlytics_description), fontSize = 12.sp, color = colors.textSecondary)
                     }
                     Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(16.dp))
                 }
@@ -275,8 +277,8 @@ fun SettingsScreen(
                     }
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Enviar evento no fatal a Crashlytics", fontSize = 15.sp, color = colors.textPrimary)
-                        Text("Registra una advertencia en segundo plano sin cerrar la app.", fontSize = 12.sp, color = colors.textSecondary)
+                        Text(stringResource(R.string.settings_send_nonfatal_title), fontSize = 15.sp, color = colors.textPrimary)
+                        Text(stringResource(R.string.settings_send_nonfatal_description), fontSize = 12.sp, color = colors.textSecondary)
                     }
                     Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(16.dp))
                 }
@@ -285,7 +287,7 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(18.dp))
 
             GlifoButton(
-                text = "Cerrar sesión",
+                text = stringResource(R.string.profile_button_logout),
                 variant = GlifoButtonVariant.Danger,
                 icon = Icons.AutoMirrored.Filled.ExitToApp,
                 onClick = onLogout

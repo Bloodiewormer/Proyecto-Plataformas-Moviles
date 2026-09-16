@@ -30,12 +30,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.core.ui.component.GlifoButton
 import cr.ac.una.glifo.core.ui.component.GlifoButtonVariant
@@ -130,10 +132,13 @@ fun CaptureScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(imageVector = Icons.Default.Close, contentDescription = "Cerrar", tint = colors.textPrimary, modifier = Modifier.size(22.dp))
+                        Icon(imageVector = Icons.Default.Close, contentDescription = stringResource(R.string.common_close), tint = colors.textPrimary, modifier = Modifier.size(22.dp))
                     }
                     Text(
-                        text = "${course?.name ?: "Curso"} · página 1",
+                        text = stringResource(
+                            R.string.capture_page_header,
+                            course?.name ?: stringResource(R.string.capture_default_course_name)
+                        ),
                         fontSize = 12.sp,
                         color = colors.textPrimary
                     )
@@ -157,7 +162,7 @@ fun CaptureScreen(
                         .padding(horizontal = 12.dp, vertical = 5.dp)
                 ) {
                     Text(
-                        text = "Encuadrá la página dentro del marco",
+                        text = stringResource(R.string.capture_framing_hint),
                         fontSize = 11.sp,
                         color = colors.accentText
                     )
@@ -181,7 +186,7 @@ fun CaptureScreen(
                             .border(1.dp, colors.border, RoundedCornerShape(7.dp)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(imageVector = Icons.Default.Image, contentDescription = "Galería", tint = colors.textSecondary, modifier = Modifier.size(18.dp))
+                        Icon(imageVector = Icons.Default.Image, contentDescription = stringResource(R.string.capture_gallery_description), tint = colors.textSecondary, modifier = Modifier.size(18.dp))
                     }
 
                     // Shutter Button
@@ -264,7 +269,7 @@ private fun CameraPermissionRationale(
             horizontalArrangement = Arrangement.End
         ) {
             IconButton(onClick = onNavigateBack) {
-                Icon(imageVector = Icons.Default.Close, contentDescription = "Cerrar", tint = colors.textSecondary, modifier = Modifier.size(22.dp))
+                Icon(imageVector = Icons.Default.Close, contentDescription = stringResource(R.string.common_close), tint = colors.textSecondary, modifier = Modifier.size(22.dp))
             }
         }
 
@@ -278,7 +283,7 @@ private fun CameraPermissionRationale(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Glifo necesita la cámara",
+            text = stringResource(R.string.capture_permission_title),
             fontSize = 18.sp,
             fontWeight = FontWeight.Medium,
             color = colors.textPrimary
@@ -287,7 +292,7 @@ private fun CameraPermissionRationale(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Para capturar tus apuntes necesitamos acceso a la cámara del dispositivo. Nunca se sube nada sin que vos lo pidas.",
+            text = stringResource(R.string.capture_permission_description),
             fontSize = 13.sp,
             color = colors.textSecondary,
             lineHeight = 20.sp,
@@ -298,12 +303,12 @@ private fun CameraPermissionRationale(
 
         if (permissionWasRequested) {
             GlifoButton(
-                text = "Abrir ajustes de la app",
+                text = stringResource(R.string.capture_open_app_settings),
                 onClick = onOpenSettings
             )
         } else {
             GlifoButton(
-                text = "Permitir acceso a la cámara",
+                text = stringResource(R.string.capture_grant_permission),
                 onClick = onRequestPermission
             )
         }
@@ -311,7 +316,7 @@ private fun CameraPermissionRationale(
         Spacer(modifier = Modifier.height(8.dp))
 
         GlifoButton(
-            text = "Ahora no",
+            text = stringResource(R.string.common_not_now),
             variant = GlifoButtonVariant.Text,
             onClick = onNavigateBack
         )

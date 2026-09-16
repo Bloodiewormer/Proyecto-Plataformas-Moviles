@@ -10,8 +10,10 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.ui.component.GlifoBanner
 import cr.ac.una.glifo.core.ui.component.GlifoButton
 import cr.ac.una.glifo.core.ui.component.GlifoTextField
@@ -33,34 +35,34 @@ fun ForgotPasswordScreen(
             .background(GlifoTheme.colors.background)
     ) {
         GlifoTopBar(
-            title = "Recuperar contraseña",
+            title = stringResource(R.string.forgot_password_title),
             onNavigateBack = onNavigateBack
         )
-        
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 16.dp, vertical = 16.dp)
         ) {
             Text(
-                text = "Ingresá tu correo institucional y te enviaremos un enlace para restablecer tu contraseña.",
+                text = stringResource(R.string.forgot_password_description),
                 color = GlifoTheme.colors.textSecondary,
                 fontSize = 14.sp,
                 lineHeight = 22.sp,
                 modifier = Modifier.padding(bottom = 24.dp)
             )
-            
+
             GlifoTextField(
                 value = email,
                 onValueChange = { email = it },
-                label = "Correo institucional",
+                label = stringResource(R.string.forgot_password_field_email),
                 modifier = Modifier.fillMaxWidth()
             )
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             GlifoButton(
-                text = "Enviar enlace",
+                text = stringResource(R.string.forgot_password_button_send),
                 enabled = email.isNotBlank(),
                 onClick = onSendLink
             )
@@ -69,7 +71,7 @@ fun ForgotPasswordScreen(
 
             AnimatedVisibility(visible = bannerVisible, enter = fadeIn(tween(400))) {
                 GlifoBanner(
-                    text = "Si la dirección está registrada, recibirás el correo en menos de 5 minutos. Revisá también la carpeta de spam.",
+                    text = stringResource(R.string.forgot_password_banner),
                     icon = Icons.Outlined.Info
                 )
             }

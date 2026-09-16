@@ -18,9 +18,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -28,6 +30,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.domain.model.ConfidenceState
 import cr.ac.una.glifo.core.ui.component.*
@@ -45,6 +48,7 @@ fun NoteDetailScreen(
     viewModel: NoteContentViewModel = hiltViewModel()
 ) {
     val colors = GlifoTheme.colors
+    val context = LocalContext.current
     val uiState by viewModel.state.collectAsState()
 
     LaunchedEffect(noteId) { viewModel.load(noteId) }
@@ -55,15 +59,15 @@ fun NoteDetailScreen(
             .background(colors.background)
     ) {
         GlifoTopAppBar(
-            title = (uiState as? UiState.Success)?.data?.note?.title ?: "Apunte",
+            title = (uiState as? UiState.Success)?.data?.note?.title ?: stringResource(R.string.note_detail_default_title),
             isBack = true,
             onNavigationClick = onNavigateBack,
             actions = {
                 IconButton(onClick = onNavigateToProvenance) {
-                    Icon(imageVector = Icons.Default.Image, contentDescription = "Procedencia", tint = colors.textSecondary, modifier = Modifier.size(22.dp))
+                    Icon(imageVector = Icons.Default.Image, contentDescription = stringResource(R.string.note_detail_provenance_description), tint = colors.textSecondary, modifier = Modifier.size(22.dp))
                 }
                 IconButton(onClick = onNavigateToCorrect) {
-                    Icon(imageVector = Icons.Default.Edit, contentDescription = "Editar", tint = colors.textSecondary, modifier = Modifier.size(22.dp))
+                    Icon(imageVector = Icons.Default.Edit, contentDescription = stringResource(R.string.note_detail_edit_description), tint = colors.textSecondary, modifier = Modifier.size(22.dp))
                 }
             }
         )
@@ -71,7 +75,7 @@ fun NoteDetailScreen(
         when (val state = uiState) {
             is UiState.Loading -> GlifoLoadingBox()
             is UiState.Empty -> GlifoLoadingBox()
-            is UiState.Error -> GlifoErrorBox(state.error.toMessage(), onRetry = { viewModel.load(noteId) })
+            is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = { viewModel.load(noteId) })
             is UiState.Success -> {
                 val content = state.data
 
@@ -89,8 +93,13 @@ fun NoteDetailScreen(
                         }
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "${content.verifiedCount} verificados · ${content.repairedCount} reparados · " +
-                                "${content.escalatedCount} escalados · ${content.uncertainCount} inciertos",
+                            text = stringResource(
+                                R.string.note_detail_summary_counts,
+                                content.verifiedCount,
+                                content.repairedCount,
+                                content.escalatedCount,
+                                content.uncertainCount
+                            ),
                             fontSize = 12.sp,
                             color = colors.textPrimary
                         )
@@ -165,11 +174,11 @@ fun NoteDetailScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 GlifoBadge(
-                                    text = "REPARADO · ${content.formula.tier}",
+                                    text = stringResource(R.string.note_detail_repaired_badge, content.formula.tier),
                                     backgroundColor = colors.repairedSoft,
                                     textColor = colors.repaired
                                 )
-                                Text(text = "confianza ${content.formula.confidence}", fontSize = 11.sp, color = colors.textSecondary)
+                                Text(text = stringResource(R.string.note_detail_confidence_label, content.formula.confidence), fontSize = 11.sp, color = colors.textSecondary)
                             }
 
                             Spacer(modifier = Modifier.height(10.dp))
@@ -192,7 +201,7 @@ fun NoteDetailScreen(
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 Icon(imageVector = Icons.Default.Image, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(15.dp))
-                                Text("Ver el recorte original", fontSize = 11.sp, color = colors.textSecondary)
+                                Text(stringResource(R.string.note_detail_view_original_crop), fontSize = 11.sp, color = colors.textSecondary)
                             }
                         }
                     }

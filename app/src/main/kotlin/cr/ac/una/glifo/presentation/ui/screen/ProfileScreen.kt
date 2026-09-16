@@ -33,10 +33,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.domain.model.GlifoRole
 import cr.ac.una.glifo.core.ui.component.*
@@ -59,9 +61,9 @@ fun ProfileScreen(
     val user by sessionViewModel.currentUser.collectAsState()
     val role = user?.role ?: GlifoRole.Student
     val roleLabel = when (role) {
-        GlifoRole.Teacher -> "DOCENTE"
-        GlifoRole.Admin -> "ADMIN"
-        GlifoRole.Student -> "ESTUDIANTE"
+        GlifoRole.Teacher -> stringResource(R.string.profile_role_teacher)
+        GlifoRole.Admin -> stringResource(R.string.profile_role_admin)
+        GlifoRole.Student -> stringResource(R.string.profile_role_student)
     }
     val statsState by viewModel.state.collectAsState()
     val pagesCaptured = (statsState as? UiState.Success)?.data?.pagesCaptured ?: 0
@@ -90,7 +92,7 @@ fun ProfileScreen(
             .background(colors.background)
     ) {
         GlifoTopAppBar(
-            title = "Perfil",
+            title = stringResource(R.string.profile_title),
             isBack = true,
             onNavigationClick = onNavigateBack
         )
@@ -129,7 +131,7 @@ fun ProfileScreen(
                         if (avatarBitmap != null) {
                             Image(
                                 bitmap = avatarBitmap,
-                                contentDescription = "Foto de perfil",
+                                contentDescription = stringResource(R.string.profile_photo_description),
                                 modifier = Modifier.fillMaxSize(),
                                 contentScale = ContentScale.Crop
                             )
@@ -148,7 +150,7 @@ fun ProfileScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.CameraAlt,
-                            contentDescription = "Cambiar foto de perfil",
+                            contentDescription = stringResource(R.string.profile_change_photo_description),
                             tint = colors.onAccent,
                             modifier = Modifier.size(13.dp)
                         )
@@ -170,17 +172,17 @@ fun ProfileScreen(
                 GlifoCard(modifier = Modifier.weight(1f).height(80.dp)) {
                     Text("$pagesCaptured", fontSize = 20.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
                     Spacer(modifier = Modifier.weight(1f))
-                    Text("Páginas capturadas", fontSize = 11.sp, color = colors.textSecondary)
+                    Text(stringResource(R.string.profile_stat_pages_captured), fontSize = 11.sp, color = colors.textSecondary)
                 }
                 GlifoCard(modifier = Modifier.weight(1f).height(80.dp)) {
                     Text("$resolvedPercent%", fontSize = 20.sp, fontWeight = FontWeight.Medium, color = colors.verified)
                     Spacer(modifier = Modifier.weight(1f))
-                    Text("Resueltas sin llamadas de pago", fontSize = 11.sp, color = colors.textSecondary, lineHeight = 14.sp)
+                    Text(stringResource(R.string.profile_stat_resolved_no_paid_calls), fontSize = 11.sp, color = colors.textSecondary, lineHeight = 14.sp)
                 }
             }
 
             Text(
-                text = "CUENTA",
+                text = stringResource(R.string.profile_section_account),
                 fontSize = 10.sp,
                 fontWeight = FontWeight.SemiBold,
                 letterSpacing = 0.6.sp,
@@ -191,18 +193,18 @@ fun ProfileScreen(
             GlifoCard(tight = true) {
                 GlifoItem(compact = true, onClick = onNavigateToChangePassword) {
                     Icon(Icons.Default.Shield, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
-                    Text("Cambiar contraseña", fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                    Text(stringResource(R.string.profile_item_change_password), fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
                     Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(15.dp))
                 }
                 GlifoItem(compact = true, onClick = onNavigateToCourses) {
                     Icon(Icons.Default.School, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
-                    Text("Mis cursos", fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                    Text(stringResource(R.string.profile_item_my_courses), fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
                     Text("$courseCount", fontSize = 12.sp, color = colors.textSecondary)
                     Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(15.dp))
                 }
                 GlifoItem(compact = true, showBottomBorder = false, onClick = onNavigateToAiCost) {
                     Icon(Icons.Default.BarChart, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
-                    Text("Mi consumo de IA", fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                    Text(stringResource(R.string.profile_item_ai_usage), fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
                     Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(15.dp))
                 }
             }
@@ -210,7 +212,7 @@ fun ProfileScreen(
             Spacer(modifier = Modifier.height(18.dp))
 
             GlifoButton(
-                text = "Cerrar sesión",
+                text = stringResource(R.string.profile_button_logout),
                 variant = GlifoButtonVariant.Danger,
                 icon = Icons.AutoMirrored.Filled.ExitToApp,
                 onClick = onLogout

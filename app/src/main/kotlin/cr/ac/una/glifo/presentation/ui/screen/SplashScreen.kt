@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -68,7 +69,7 @@ fun SplashScreen(
         Spacer(modifier = Modifier.height(18.dp))
 
         Text(
-            text = "Glifo",
+            text = stringResource(R.string.app_name),
             color = GlifoTheme.colors.textPrimary,
             fontSize = 28.sp,
             fontWeight = FontWeight.SemiBold,
@@ -79,7 +80,7 @@ fun SplashScreen(
         Spacer(modifier = Modifier.height(4.dp))
 
         Text(
-            text = "El glifo es la unidad de la escritura.",
+            text = stringResource(R.string.splash_tagline),
             color = GlifoTheme.colors.textSecondary,
             fontSize = 13.sp,
             modifier = Modifier.alpha(alpha)

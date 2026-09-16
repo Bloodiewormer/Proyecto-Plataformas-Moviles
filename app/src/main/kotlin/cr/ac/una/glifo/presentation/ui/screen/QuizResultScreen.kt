@@ -25,14 +25,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
@@ -47,12 +50,13 @@ fun QuizResultScreen(
     viewModel: QuizResultViewModel = hiltViewModel()
 ) {
     val colors = GlifoTheme.colors
+    val context = LocalContext.current
     val uiState by viewModel.state.collectAsState()
 
     when (val state = uiState) {
         is UiState.Loading -> GlifoLoadingBox()
         is UiState.Empty -> GlifoLoadingBox()
-        is UiState.Error -> GlifoErrorBox(state.error.toMessage(), onRetry = viewModel::load)
+        is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
         is UiState.Success -> QuizResultContent(state.data, colors, onNavigateBack, onNavigateToCoverage, onNavigateToGlossary)
     }
 }
@@ -81,7 +85,7 @@ private fun QuizResultContent(
             .background(colors.background)
     ) {
         GlifoTopAppBar(
-            title = "Resultado",
+            title = stringResource(R.string.quiz_result_title),
             isBack = true,
             onNavigationClick = onNavigateBack
         )
@@ -137,7 +141,7 @@ private fun QuizResultContent(
                             color = colors.textPrimary
                         )
                         Text(
-                            text = "de ${result.total}",
+                            text = stringResource(R.string.quiz_result_of_total, result.total),
                             fontSize = 15.sp,
                             color = colors.textSecondary
                         )
@@ -161,7 +165,7 @@ private fun QuizResultContent(
             }
 
             Text(
-                text = "REVISIÓN",
+                text = stringResource(R.string.quiz_result_review_section),
                 fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold,
                 letterSpacing = 0.6.sp,
@@ -200,8 +204,8 @@ private fun QuizResultContent(
                 ) {
                     Icon(imageVector = Icons.Default.CalendarToday, contentDescription = null, tint = colors.accentText, modifier = Modifier.size(20.dp))
                     Column {
-                        Text("${result.rescheduledCount} ítems reprogramados para mañana", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                        Text("Los aciertos vuelven en ${result.daysUntilReturn} días.", fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 4.dp))
+                        Text(stringResource(R.string.quiz_result_rescheduled_count, result.rescheduledCount), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                        Text(stringResource(R.string.quiz_result_return_in_days, result.daysUntilReturn), fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 4.dp))
                     }
                 }
             }
@@ -209,7 +213,7 @@ private fun QuizResultContent(
             Spacer(modifier = Modifier.height(16.dp))
 
             GlifoButton(
-                text = "Ver la cobertura actualizada",
+                text = stringResource(R.string.quiz_result_view_coverage),
                 icon = Icons.Default.DonutLarge,
                 onClick = onNavigateToCoverage
             )
@@ -217,7 +221,7 @@ private fun QuizResultContent(
             Spacer(modifier = Modifier.height(6.dp))
 
             GlifoButton(
-                text = "Explicame el radio de convergencia",
+                text = stringResource(R.string.quiz_result_explain_convergence),
                 variant = GlifoButtonVariant.Secondary,
                 icon = Icons.Default.MenuBook,
                 onClick = onNavigateToGlossary

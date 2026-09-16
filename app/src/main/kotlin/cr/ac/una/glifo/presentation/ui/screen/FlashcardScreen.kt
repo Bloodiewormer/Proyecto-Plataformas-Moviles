@@ -15,13 +15,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
@@ -35,12 +38,13 @@ fun FlashcardScreen(
 ) {
     val colors = GlifoTheme.colors
     val density = LocalDensity.current
+    val context = LocalContext.current
     val uiState by viewModel.state.collectAsState()
 
     when (val state = uiState) {
         is UiState.Loading -> GlifoLoadingBox()
         is UiState.Empty -> GlifoLoadingBox()
-        is UiState.Error -> GlifoErrorBox(state.error.toMessage(), onRetry = viewModel::load)
+        is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
         is UiState.Success -> {
             val cards = state.data
             FlashcardContent(cards, onNavigateBack, colors, density)
@@ -102,7 +106,7 @@ private fun FlashcardContent(
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "$current / $total",
+                        text = stringResource(R.string.flashcard_progress_counter, current, total),
                         fontFamily = FontFamily.Monospace,
                         fontSize = 12.sp,
                         color = colors.textSecondary
@@ -119,7 +123,10 @@ private fun FlashcardContent(
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "Unidad 3 · ${if (flipped) "Respuesta" else "Pregunta"} — tocá la tarjeta para voltear",
+                text = stringResource(
+                    R.string.flashcard_unit_label,
+                    if (flipped) stringResource(R.string.flashcard_answer_label) else stringResource(R.string.flashcard_question_label)
+                ),
                 fontSize = 12.sp,
                 color = colors.textSecondary,
                 modifier = Modifier.padding(bottom = 12.dp)
@@ -150,7 +157,7 @@ private fun FlashcardContent(
                         .graphicsLayer { rotationY = if (showingBack) 180f else 0f }
                 ) {
                     GlifoBadge(
-                        text = if (showingBack) "RESPUESTA" else "PREGUNTA",
+                        text = if (showingBack) stringResource(R.string.flashcard_badge_answer) else stringResource(R.string.flashcard_badge_question),
                         backgroundColor = if (showingBack) colors.accentSoft else colors.neutralSoft,
                         textColor = if (showingBack) colors.accentText else colors.textSecondary
                     )
@@ -178,7 +185,7 @@ private fun FlashcardContent(
 
             if (flipped) {
                 Text(
-                    text = "¿Qué tan bien la recordaste?",
+                    text = stringResource(R.string.flashcard_how_well_remembered),
                     fontSize = 12.sp,
                     color = colors.textSecondary,
                     textAlign = TextAlign.Center,
@@ -192,10 +199,10 @@ private fun FlashcardContent(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     listOf(
-                        Pair("Otra vez", colors.alert),
-                        Pair("Difícil", colors.escalated),
-                        Pair("Bien", colors.repaired),
-                        Pair("Fácil", colors.verified)
+                        Pair(stringResource(R.string.flashcard_rating_again), colors.alert),
+                        Pair(stringResource(R.string.flashcard_rating_hard), colors.escalated),
+                        Pair(stringResource(R.string.flashcard_rating_good), colors.repaired),
+                        Pair(stringResource(R.string.flashcard_rating_easy), colors.verified)
                     ).forEach { (label, col) ->
                         Surface(
                             onClick = { advance() },

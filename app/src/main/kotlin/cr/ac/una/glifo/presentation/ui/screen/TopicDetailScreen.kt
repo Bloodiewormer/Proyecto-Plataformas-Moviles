@@ -17,11 +17,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
@@ -37,6 +40,7 @@ fun TopicDetailScreen(
     viewModel: TopicDetailViewModel = hiltViewModel()
 ) {
     val colors = GlifoTheme.colors
+    val context = LocalContext.current
     val uiState by viewModel.state.collectAsState()
 
     LaunchedEffect(topicName) { viewModel.load(topicName) }
@@ -55,7 +59,7 @@ fun TopicDetailScreen(
         when (val state = uiState) {
             is UiState.Loading -> GlifoLoadingBox()
             is UiState.Empty -> GlifoLoadingBox()
-            is UiState.Error -> GlifoErrorBox(state.error.toMessage(), onRetry = { viewModel.load(topicName) })
+            is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = { viewModel.load(topicName) })
             is UiState.Success -> {
                 val detail = state.data
 
@@ -88,7 +92,7 @@ fun TopicDetailScreen(
                     }
 
                     Text(
-                        text = "POR QUÉ ESTÁ EN ESTE ESTADO",
+                        text = stringResource(R.string.topic_detail_why_section),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
                         letterSpacing = 0.6.sp,
@@ -118,7 +122,7 @@ fun TopicDetailScreen(
                     }
 
                     Text(
-                        text = "DÓNDE APARECE EN TUS APUNTES",
+                        text = stringResource(R.string.topic_detail_appears_in_section),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
                         letterSpacing = 0.6.sp,
@@ -127,7 +131,7 @@ fun TopicDetailScreen(
                     )
 
                     if (detail.noteRefs.isEmpty()) {
-                        GlifoBanner(text = "Todavía no hay apuntes que mencionen este tema.")
+                        GlifoBanner(text = stringResource(R.string.topic_detail_no_notes))
                     } else {
                         GlifoCard(tight = true) {
                             detail.noteRefs.forEachIndexed { i, ref ->
@@ -152,7 +156,7 @@ fun TopicDetailScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     GlifoButton(
-                        text = "Generar refuerzo de este tema",
+                        text = stringResource(R.string.topic_detail_generate_reinforcement),
                         icon = Icons.Default.Psychology,
                         onClick = onNavigateToStudy
                     )
@@ -160,7 +164,7 @@ fun TopicDetailScreen(
                     Spacer(modifier = Modifier.height(6.dp))
 
                     GlifoButton(
-                        text = "Marcar como ya dominado",
+                        text = stringResource(R.string.topic_detail_mark_mastered),
                         variant = GlifoButtonVariant.Text,
                         onClick = onNavigateBack
                     )

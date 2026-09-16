@@ -24,11 +24,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.domain.model.ConfidenceState
 import cr.ac.una.glifo.domain.model.GlifoRole
@@ -57,10 +59,11 @@ fun AiCostScreen(
     LaunchedEffect(role) { viewModel.load(role) }
 
     val title = when (role) {
-        GlifoRole.Admin -> "Consumo del sistema"
-        GlifoRole.Teacher -> "Consumo del curso"
-        GlifoRole.Student -> "Consumo de IA"
+        GlifoRole.Admin -> stringResource(R.string.ai_cost_title_admin)
+        GlifoRole.Teacher -> stringResource(R.string.ai_cost_title_teacher)
+        GlifoRole.Student -> stringResource(R.string.ai_cost_title_student)
     }
+    val augustOnlyToast = stringResource(R.string.ai_cost_toast_august_only)
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -108,9 +111,9 @@ fun AiCostScreen(
                 onNavigationClick = { scope.launch { drawerState.open() } },
                 actions = {
                     IconButton(onClick = {
-                        Toast.makeText(context, "Por ahora solo hay datos de agosto.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, augustOnlyToast, Toast.LENGTH_SHORT).show()
                     }) {
-                        Icon(imageVector = Icons.Default.CalendarToday, contentDescription = "Calendario", tint = colors.textSecondary, modifier = Modifier.size(20.dp))
+                        Icon(imageVector = Icons.Default.CalendarToday, contentDescription = stringResource(R.string.coverage_calendar_description), tint = colors.textSecondary, modifier = Modifier.size(20.dp))
                     }
                 }
             )
@@ -118,7 +121,7 @@ fun AiCostScreen(
             when (val state = uiState) {
                 is UiState.Loading -> GlifoLoadingBox()
                 is UiState.Empty -> GlifoLoadingBox()
-                is UiState.Error -> GlifoErrorBox(state.error.toMessage(), onRetry = { viewModel.load(role) })
+                is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = { viewModel.load(role) })
                 is UiState.Success -> {
                     val stats = state.data
                     var animateIn by remember { mutableStateOf(false) }
@@ -159,7 +162,7 @@ fun AiCostScreen(
                             color = if (stats.isSystemWide) colors.accentText else colors.verified
                         )
                         Text(
-                            text = "de las regiones se resolvieron\nsin llamadas de pago",
+                            text = stringResource(R.string.ai_cost_headline_description),
                             fontSize = 14.sp,
                             lineHeight = 18.sp,
                             color = colors.textPrimary
@@ -183,7 +186,7 @@ fun AiCostScreen(
                             )
                         }
                         Text(
-                            text = "${stats.quotaUsed} de ${stats.quotaTotal} llamadas de nivel 2 · cuota al ${stats.quotaPercent}%",
+                            text = stringResource(R.string.ai_cost_quota_label, stats.quotaUsed, stats.quotaTotal, stats.quotaPercent ?: 0),
                             fontSize = 12.sp,
                             color = colors.textSecondary,
                             modifier = Modifier.padding(top = 8.dp)
@@ -192,7 +195,7 @@ fun AiCostScreen(
                 }
 
                 Text(
-                    text = "DÓNDE SE RESOLVIÓ CADA REGIÓN",
+                    text = stringResource(R.string.ai_cost_breakdown_section),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
                     letterSpacing = 0.6.sp,
@@ -245,7 +248,7 @@ fun AiCostScreen(
                 }
 
                 Text(
-                    text = "LLAMADAS AL MODELO DE PAGO",
+                    text = stringResource(R.string.ai_cost_paid_calls_section),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
                     letterSpacing = 0.6.sp,
@@ -261,7 +264,7 @@ fun AiCostScreen(
                         }
                     }
                     GlifoItem(compact = true, showBottomBorder = false, backgroundColor = colors.surfaceHigh) {
-                        Text(text = "Total", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                        Text(text = stringResource(R.string.ai_cost_total_label), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary, modifier = Modifier.weight(1f))
                         Text(text = "${stats.totalPaidCalls}", fontFamily = FontFamily.Monospace, fontSize = 16.sp, color = colors.accentText)
                     }
                 }

@@ -21,12 +21,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.domain.model.GlifoRole
 import cr.ac.una.glifo.core.ui.component.*
@@ -53,9 +56,15 @@ fun AdminUsersScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val colors = GlifoTheme.colors
+    val context = LocalContext.current
     val uiState by viewModel.state.collectAsState()
 
-    var filter by remember { mutableStateOf("Todos") }
+    val filterAll = stringResource(R.string.admin_users_filter_all)
+    val filterTeachers = stringResource(R.string.admin_users_filter_teachers)
+    val filterStudents = stringResource(R.string.admin_users_filter_students)
+    val filterAdmins = stringResource(R.string.admin_users_filter_admins)
+
+    var filter by remember { mutableStateOf(filterAll) }
     var searchOpen by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf("") }
     var showAddDialog by remember { mutableStateOf(false) }
@@ -99,14 +108,14 @@ fun AdminUsersScreen(
                 .background(colors.background)
         ) {
             GlifoTopAppBar(
-                title = "Usuarios",
+                title = stringResource(R.string.admin_users_title),
                 onNavigationClick = { scope.launch { drawerState.open() } },
                 actions = {
                     IconButton(onClick = { searchOpen = !searchOpen; if (!searchOpen) query = "" }) {
-                        Icon(Icons.Default.Search, contentDescription = "Buscar", tint = colors.textSecondary, modifier = Modifier.size(20.dp))
+                        Icon(Icons.Default.Search, contentDescription = stringResource(R.string.common_search), tint = colors.textSecondary, modifier = Modifier.size(20.dp))
                     }
                     IconButton(onClick = { showAddDialog = true }) {
-                        Icon(Icons.Default.Add, contentDescription = "Agregar", tint = colors.textSecondary, modifier = Modifier.size(20.dp))
+                        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.teacher_glossary_add_description), tint = colors.textSecondary, modifier = Modifier.size(20.dp))
                     }
                 }
             )
@@ -114,7 +123,7 @@ fun AdminUsersScreen(
             AnimatedVisibility(visible = searchOpen) {
                 Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                     GlifoField(
-                        label = "Buscar por nombre o correo",
+                        label = stringResource(R.string.admin_users_search_placeholder),
                         value = query,
                         onValueChange = { query = it },
                         isFocused = true
@@ -125,23 +134,23 @@ fun AdminUsersScreen(
             when (val state = uiState) {
                 is UiState.Loading -> GlifoLoadingBox()
                 is UiState.Empty -> GlifoLoadingBox()
-                is UiState.Error -> GlifoErrorBox(state.error.toMessage(), onRetry = viewModel::load)
+                is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
                 is UiState.Success -> {
                     val users = state.data
                     val roleFiltered = when (filter) {
-                        "Docentes" -> users.filter { it.role == "DOCENTE" }
-                        "Estudiantes" -> users.filter { it.role == "ESTUDIANTE" }
-                        "Admins" -> users.filter { it.role == "ADMIN" }
+                        filterTeachers -> users.filter { it.role == "DOCENTE" }
+                        filterStudents -> users.filter { it.role == "ESTUDIANTE" }
+                        filterAdmins -> users.filter { it.role == "ADMIN" }
                         else -> users
                     }
                     val filtered = if (query.isBlank()) roleFiltered else roleFiltered.filter {
                         it.name.contains(query, ignoreCase = true) || it.email.contains(query, ignoreCase = true)
                     }
                     val counts = mapOf(
-                        "Todos" to users.size,
-                        "Docentes" to users.count { it.role == "DOCENTE" },
-                        "Estudiantes" to users.count { it.role == "ESTUDIANTE" },
-                        "Admins" to users.count { it.role == "ADMIN" }
+                        filterAll to users.size,
+                        filterTeachers to users.count { it.role == "DOCENTE" },
+                        filterStudents to users.count { it.role == "ESTUDIANTE" },
+                        filterAdmins to users.count { it.role == "ADMIN" }
                     )
 
                     // Chips filters row
@@ -151,7 +160,7 @@ fun AdminUsersScreen(
                             .padding(horizontal = 16.dp, vertical = 10.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        listOf("Todos", "Docentes", "Estudiantes", "Admins").forEach { label ->
+                        listOf(filterAll, filterTeachers, filterStudents, filterAdmins).forEach { label ->
                             val active = filter == label
                             Box(
                                 modifier = Modifier
@@ -159,13 +168,13 @@ fun AdminUsersScreen(
                                     .clickable { filter = label }
                                     .padding(horizontal = 12.dp, vertical = 5.dp)
                             ) {
-                                Text(text = "$label · ${counts[label]}", fontSize = 12.sp, color = if (active) colors.accentText else colors.textSecondary)
+                                Text(text = stringResource(R.string.admin_users_filter_chip, label, counts.getValue(label)), fontSize = 12.sp, color = if (active) colors.accentText else colors.textSecondary)
                             }
                         }
                     }
 
                     if (filtered.isEmpty()) {
-                        GlifoBanner(text = "Nadie coincide con esa búsqueda.", modifier = Modifier.padding(horizontal = 2.dp))
+                        GlifoBanner(text = stringResource(R.string.admin_users_no_match), modifier = Modifier.padding(horizontal = 2.dp))
                     }
 
                     Column(
@@ -235,16 +244,19 @@ private fun AddUserDialog(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Agregar usuario", fontSize = 17.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                Icon(Icons.Default.Close, contentDescription = "Cerrar", tint = colors.textSecondary, modifier = Modifier.clickable(onClick = onDismiss))
+                Text(stringResource(R.string.admin_users_add_dialog_title), fontSize = 17.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.common_close), tint = colors.textSecondary, modifier = Modifier.clickable(onClick = onDismiss))
             }
             Spacer(modifier = Modifier.height(12.dp))
-            GlifoField(label = "Nombre completo", value = name, onValueChange = { name = it })
+            GlifoField(label = stringResource(R.string.register_field_full_name), value = name, onValueChange = { name = it })
             Spacer(modifier = Modifier.height(8.dp))
-            GlifoField(label = "Correo", value = email, placeholder = "usuario@una.ac.cr", onValueChange = { email = it })
+            GlifoField(label = stringResource(R.string.login_email_label), value = email, placeholder = stringResource(R.string.admin_users_field_email_placeholder), onValueChange = { email = it })
             Spacer(modifier = Modifier.height(10.dp))
+            val studentLabel = stringResource(R.string.admin_users_role_student)
+            val teacherLabel = stringResource(R.string.admin_users_role_teacher)
+            val adminLabel = stringResource(R.string.admin_users_role_admin)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("ESTUDIANTE" to "Estudiante", "DOCENTE" to "Docente", "ADMIN" to "Admin").forEach { (value, label) ->
+                listOf("ESTUDIANTE" to studentLabel, "DOCENTE" to teacherLabel, "ADMIN" to adminLabel).forEach { (value, label) ->
                     val selected = role == value
                     Box(
                         modifier = Modifier
@@ -258,7 +270,7 @@ private fun AddUserDialog(
             }
             Spacer(modifier = Modifier.height(14.dp))
             GlifoButton(
-                text = "Agregar",
+                text = stringResource(R.string.teacher_add_button),
                 enabled = name.isNotBlank() && email.isNotBlank(),
                 onClick = { onAdd(name, email, role) }
             )
@@ -275,6 +287,7 @@ fun AdminUserDetailScreen(
     viewModel: AdminUserDetailViewModel = hiltViewModel()
 ) {
     val colors = GlifoTheme.colors
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val uiState by viewModel.state.collectAsState()
 
@@ -291,7 +304,7 @@ fun AdminUserDetailScreen(
             onNavigationClick = onNavigateBack,
             actions = {
                 TextButton(onClick = onSaveSuccess) {
-                    Text("Guardar", color = colors.accentText, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                    Text(stringResource(R.string.correct_fragment_save), color = colors.accentText, fontSize = 16.sp, fontWeight = FontWeight.Medium)
                 }
             }
         )
@@ -299,7 +312,7 @@ fun AdminUserDetailScreen(
         when (val state = uiState) {
             is UiState.Loading -> GlifoLoadingBox()
             is UiState.Empty -> GlifoLoadingBox()
-            is UiState.Error -> GlifoErrorBox(state.error.toMessage(), onRetry = { viewModel.load(userName) })
+            is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = { viewModel.load(userName) })
             is UiState.Success -> {
                 val user = state.data.user
                 val privs = state.data.privileges
@@ -335,12 +348,12 @@ fun AdminUserDetailScreen(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    GlifoField(label = "Nombre completo", value = userName)
+                    GlifoField(label = stringResource(R.string.register_field_full_name), value = userName)
                     Spacer(modifier = Modifier.height(10.dp))
-                    GlifoField(label = "Correo institucional", value = user.email)
+                    GlifoField(label = stringResource(R.string.forgot_password_field_email), value = user.email)
 
                     Text(
-                        text = "ROLES ASIGNADOS",
+                        text = stringResource(R.string.admin_user_detail_roles_section),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
                         letterSpacing = 0.6.sp,
@@ -349,10 +362,13 @@ fun AdminUserDetailScreen(
                     )
 
                     GlifoCard(tight = true) {
+                        // roleName doubles as the comparison key against state.data.roleKey and
+                        // checkedRole below, so it stays untranslated on purpose — only the
+                        // description is UI copy.
                         listOf(
-                            Pair("Estudiante", "Rol principal en la plataforma · activo"),
-                            Pair("Docente", "Acceso a temarios y métricas de grupo"),
-                            Pair("Administrador", "Acceso total al sistema")
+                            Pair("Estudiante", stringResource(R.string.admin_user_detail_role_student_desc)),
+                            Pair("Docente", stringResource(R.string.admin_user_detail_role_teacher_desc)),
+                            Pair("Administrador", stringResource(R.string.admin_user_detail_role_admin_desc))
                         ).forEachIndexed { i, (roleName, desc) ->
                             GlifoItem(showBottomBorder = i < 2) {
                                 Column(modifier = Modifier.weight(1f)) {
@@ -369,7 +385,7 @@ fun AdminUserDetailScreen(
                     }
 
                     Text(
-                        text = "PRIVILEGIOS EFECTIVOS",
+                        text = stringResource(R.string.admin_user_detail_privileges_section),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
                         letterSpacing = 0.6.sp,
@@ -396,7 +412,7 @@ fun AdminUserDetailScreen(
                             }
                         }
                         Text(
-                            text = "Se calculan desde user_roles y role_privileges. No se asignan uno por uno.",
+                            text = stringResource(R.string.admin_user_detail_privileges_note),
                             fontSize = 12.sp,
                             color = colors.textSecondary,
                             lineHeight = 16.sp,
@@ -407,7 +423,7 @@ fun AdminUserDetailScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     GlifoButton(
-                        text = if (user.isActive) "Desactivar la cuenta" else "Reactivar la cuenta",
+                        text = if (user.isActive) stringResource(R.string.admin_user_detail_deactivate) else stringResource(R.string.admin_user_detail_reactivate),
                         variant = GlifoButtonVariant.Danger,
                         onClick = {
                             scope.launch {
@@ -435,6 +451,7 @@ fun AdminRolesScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val colors = GlifoTheme.colors
+    val context = LocalContext.current
     val uiState by viewModel.state.collectAsState()
 
     ModalNavigationDrawer(
@@ -476,7 +493,7 @@ fun AdminRolesScreen(
                 .background(colors.background)
         ) {
             GlifoTopAppBar(
-                title = "Roles",
+                title = stringResource(R.string.admin_roles_title),
                 onNavigationClick = { scope.launch { drawerState.open() } }
                 // No "add role" action here on purpose — Estudiante/Docente/Administrador
                 // are the platform's fixed roles, not something admins create ad hoc.
@@ -485,7 +502,7 @@ fun AdminRolesScreen(
             when (val state = uiState) {
                 is UiState.Loading -> GlifoLoadingBox()
                 is UiState.Empty -> GlifoLoadingBox()
-                is UiState.Error -> GlifoErrorBox(state.error.toMessage(), onRetry = viewModel::load)
+                is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
                 is UiState.Success -> {
                     val roles = state.data
 
@@ -506,7 +523,7 @@ fun AdminRolesScreen(
                                     ) {
                                         Text(role.name, fontSize = 18.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
                                         GlifoBadge(
-                                            text = "${role.userCount} USUARIOS",
+                                            text = stringResource(R.string.admin_roles_user_count_badge, role.userCount),
                                             backgroundColor = if (role.isSensitive) colors.alertSoft else colors.accentSoft,
                                             textColor = if (role.isSensitive) colors.alert else colors.accentText
                                         )
@@ -517,7 +534,7 @@ fun AdminRolesScreen(
                                             GlifoBadge(text = it, backgroundColor = colors.neutralSoft, textColor = colors.textSecondary)
                                         }
                                         if (role.extraPrivilegeCount > 0) {
-                                            GlifoBadge(text = "+${role.extraPrivilegeCount}", backgroundColor = colors.neutralSoft, textColor = colors.textSecondary)
+                                            GlifoBadge(text = stringResource(R.string.admin_roles_extra_count, role.extraPrivilegeCount), backgroundColor = colors.neutralSoft, textColor = colors.textSecondary)
                                         }
                                     }
                                 }
@@ -534,8 +551,8 @@ fun AdminRolesScreen(
                             ) {
                                 Icon(Icons.Default.Shield, contentDescription = null, tint = colors.accentText, modifier = Modifier.size(20.dp))
                                 Column {
-                                    Text("Ningún rol lee apuntes ajenos", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                                    Text("No existe el privilegio note:read:any. El docente solo ve datos agregados.", fontSize = 12.sp, color = colors.textSecondary, lineHeight = 16.sp, modifier = Modifier.padding(top = 4.dp))
+                                    Text(stringResource(R.string.admin_roles_no_shared_access_title), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                                    Text(stringResource(R.string.admin_roles_no_shared_access_description), fontSize = 12.sp, color = colors.textSecondary, lineHeight = 16.sp, modifier = Modifier.padding(top = 4.dp))
                                 }
                             }
                         }
@@ -563,6 +580,7 @@ fun AdminCoursesScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val colors = GlifoTheme.colors
+    val context = LocalContext.current
     val uiState by viewModel.state.collectAsState()
 
     ModalNavigationDrawer(
@@ -604,14 +622,14 @@ fun AdminCoursesScreen(
                 .background(colors.background)
         ) {
             GlifoTopAppBar(
-                title = "Cursos",
+                title = stringResource(R.string.admin_courses_title),
                 onNavigationClick = { scope.launch { drawerState.open() } }
             )
 
             when (val state = uiState) {
                 is UiState.Loading -> GlifoLoadingBox()
                 is UiState.Empty -> GlifoLoadingBox()
-                is UiState.Error -> GlifoErrorBox(state.error.toMessage(), onRetry = viewModel::load)
+                is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
                 is UiState.Success -> {
                     val coursesWithStats = state.data
 
@@ -637,10 +655,10 @@ fun AdminCoursesScreen(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(text = course.name, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                                        if (!stats.hasSyllabus) GlifoBadge(text = "SIN TEMARIO", backgroundColor = colors.alertSoft, textColor = colors.alert)
+                                        if (!stats.hasSyllabus) GlifoBadge(text = stringResource(R.string.admin_courses_no_syllabus_badge), backgroundColor = colors.alertSoft, textColor = colors.alert)
                                     }
                                     Text(
-                                        text = "${course.code} · ${stats.instructorName}",
+                                        text = stringResource(R.string.courses_code_instructor, course.code, stats.instructorName),
                                         fontFamily = FontFamily.Monospace,
                                         fontSize = 11.sp,
                                         color = colors.textSecondary,
@@ -650,7 +668,11 @@ fun AdminCoursesScreen(
                                         CovBar(v = stats.verified, r = stats.repaired, e = stats.escalated, u = stats.uncertain, modifier = Modifier.padding(vertical = 8.dp))
                                     }
                                     Text(
-                                        text = "${stats.studentCount} estudiantes" + if (stats.hasSyllabus) " · ${stats.coveragePercent}% de cobertura" else "",
+                                        text = if (stats.hasSyllabus) {
+                                            stringResource(R.string.admin_courses_students_with_coverage, stats.studentCount, stats.coveragePercent)
+                                        } else {
+                                            stringResource(R.string.teacher_gaps_student_count, stats.studentCount)
+                                        },
                                         fontSize = 12.sp,
                                         color = colors.textSecondary
                                     )

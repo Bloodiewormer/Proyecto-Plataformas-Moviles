@@ -13,10 +13,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.domain.model.GlifoRole
 import cr.ac.una.glifo.core.ui.component.*
@@ -42,6 +45,7 @@ fun StudyScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val colors = GlifoTheme.colors
+    val context = LocalContext.current
     val user by sessionViewModel.currentUser.collectAsState()
     val uiState by viewModel.state.collectAsState()
 
@@ -93,15 +97,15 @@ fun StudyScreen(
                 .background(colors.background)
         ) {
             GlifoTopAppBar(
-                title = (uiState as? UiState.Success)?.data?.course?.name ?: "Curso",
-                subtitle = "Estudio de",
+                title = (uiState as? UiState.Success)?.data?.course?.name ?: stringResource(R.string.capture_default_course_name),
+                subtitle = stringResource(R.string.study_subtitle),
                 onNavigationClick = { scope.launch { drawerState.open() } }
             )
 
             when (val state = uiState) {
                 is UiState.Loading -> GlifoLoadingBox()
                 is UiState.Empty -> GlifoLoadingBox()
-                is UiState.Error -> GlifoErrorBox(state.error.toMessage(), onRetry = { viewModel.load(courseId) })
+                is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = { viewModel.load(courseId) })
                 is UiState.Success -> {
                     val flashcardCount = state.data.flashcardCount
                     val quizQuestion = state.data.quizQuestion
@@ -124,11 +128,11 @@ fun StudyScreen(
                                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                                 ) {
                                     Icon(imageVector = Icons.Default.Psychology, contentDescription = null, tint = colors.accentText, modifier = Modifier.size(22.dp))
-                                    Text("$flashcardCount flashcards", fontSize = 18.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                                    Text(stringResource(R.string.study_flashcard_count, flashcardCount), fontSize = 18.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary, modifier = Modifier.weight(1f))
                                     Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
                                 }
                                 Text(
-                                    text = "Generadas de los temas parciales. 4 son de la corrección de ayer.",
+                                    text = stringResource(R.string.study_flashcard_description),
                                     fontSize = 14.sp,
                                     color = colors.textSecondary,
                                     lineHeight = 20.sp,
@@ -148,11 +152,11 @@ fun StudyScreen(
                                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                                 ) {
                                     Icon(imageVector = Icons.Default.DonutLarge, contentDescription = null, tint = colors.accentText, modifier = Modifier.size(22.dp))
-                                    Text("Quiz de 5 preguntas", fontSize = 18.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                                    Text(stringResource(R.string.study_quiz_title), fontSize = 18.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary, modifier = Modifier.weight(1f))
                                     Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
                                 }
                                 Text(
-                                    text = "Sobre los cinco vacíos con menos evidencia, empezando por ${quizQuestion.topicLabel}",
+                                    text = stringResource(R.string.study_quiz_description, quizQuestion.topicLabel),
                                     fontSize = 14.sp,
                                     color = colors.textSecondary,
                                     lineHeight = 20.sp,
@@ -162,7 +166,7 @@ fun StudyScreen(
                         }
 
                         Text(
-                            text = "El material de estudio sale de la cobertura, no de un temario genérico: solo pregunta lo que tus apuntes no sostienen.",
+                            text = stringResource(R.string.study_footer_note),
                             fontSize = 13.sp,
                             color = colors.textSecondary,
                             lineHeight = 20.sp,

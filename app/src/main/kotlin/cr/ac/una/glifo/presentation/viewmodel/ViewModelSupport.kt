@@ -1,17 +1,26 @@
 package cr.ac.una.glifo.presentation.viewmodel
 
+import android.content.Context
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.AppError
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.domain.error.Result
 
-/** User-facing (Spanish) message for an [AppError] — shared by every ViewModel's error UI. */
-fun AppError.toMessage(): String = when (this) {
-    is AppError.NoConnection -> "Sin conexión. Intentá de nuevo."
-    is AppError.Unauthorized -> "Tu sesión expiró. Iniciá sesión de nuevo."
+/**
+ * User-facing message for an [AppError] — shared by every ViewModel's error UI. Takes a
+ * [Context] rather than being `@Composable` + `stringResource()`: some call sites resolve
+ * this inside a `coroutineScope.launch { }` block (e.g. login/register submit handlers),
+ * where a `@Composable` function cannot legally be called. [Validation]/[Server]/[Database]
+ * carry messages that already came from the mock/backend or were built elsewhere — those
+ * stay as-is, only the three fixed cases are localized here.
+ */
+fun AppError.toMessage(context: Context): String = when (this) {
+    is AppError.NoConnection -> context.getString(R.string.error_no_connection)
+    is AppError.Unauthorized -> context.getString(R.string.error_unauthorized)
     is AppError.Validation -> issue
     is AppError.Server -> message
     is AppError.Database -> message
-    is AppError.Unknown -> "Ocurrió un error inesperado."
+    is AppError.Unknown -> context.getString(R.string.error_unknown)
 }
 
 /** Straight [Result] → [UiState] mapping for screens that don't need a distinct Empty case. */

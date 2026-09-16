@@ -14,11 +14,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.domain.model.ConfidenceState
 import cr.ac.una.glifo.domain.model.GlifoRole
@@ -45,6 +48,7 @@ fun CoverageScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val colors = GlifoTheme.colors
+    val context = LocalContext.current
     val user by sessionViewModel.currentUser.collectAsState()
     val uiState by viewModel.state.collectAsState()
 
@@ -96,12 +100,12 @@ fun CoverageScreen(
                 .background(colors.background)
         ) {
             GlifoTopAppBar(
-                title = (uiState as? UiState.Success)?.data?.course?.name ?: "Curso",
-                subtitle = "Cobertura de",
+                title = (uiState as? UiState.Success)?.data?.course?.name ?: stringResource(R.string.capture_default_course_name),
+                subtitle = stringResource(R.string.coverage_subtitle),
                 onNavigationClick = { scope.launch { drawerState.open() } },
                 actions = {
                     IconButton(onClick = onNavigateToDelta) {
-                        Icon(imageVector = Icons.Default.CalendarToday, contentDescription = "Calendario", tint = colors.textSecondary, modifier = Modifier.size(20.dp))
+                        Icon(imageVector = Icons.Default.CalendarToday, contentDescription = stringResource(R.string.coverage_calendar_description), tint = colors.textSecondary, modifier = Modifier.size(20.dp))
                     }
                 }
             )
@@ -109,7 +113,7 @@ fun CoverageScreen(
             when (val state = uiState) {
                 is UiState.Loading -> GlifoLoadingBox()
                 is UiState.Empty -> GlifoLoadingBox()
-                is UiState.Error -> GlifoErrorBox(state.error.toMessage(), onRetry = { viewModel.load(courseId) })
+                is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = { viewModel.load(courseId) })
                 is UiState.Success -> {
                     val summary = state.data.summary
                     val topics = state.data.topics
@@ -139,7 +143,7 @@ fun CoverageScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text("${summary.topicCount} temas", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                                    Text(stringResource(R.string.coverage_topic_count, summary.topicCount), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
                                     Text("${summary.coveragePercent}%", fontSize = 22.sp, fontWeight = FontWeight.SemiBold, color = colors.accentText)
                                 }
 
@@ -156,21 +160,21 @@ fun CoverageScreen(
                                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                             GlifoConfidenceChip(state = ConfidenceState.Verified)
-                                            Text("${summary.solidCount} sólidos", fontSize = 12.sp, color = colors.textSecondary)
+                                            Text(stringResource(R.string.coverage_solid_count, summary.solidCount), fontSize = 12.sp, color = colors.textSecondary)
                                         }
                                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                             GlifoConfidenceChip(state = ConfidenceState.Escalated)
-                                            Text("${summary.absentCount} ausentes", fontSize = 12.sp, color = colors.textSecondary)
+                                            Text(stringResource(R.string.coverage_absent_count, summary.absentCount), fontSize = 12.sp, color = colors.textSecondary)
                                         }
                                     }
                                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                             GlifoConfidenceChip(state = ConfidenceState.Repaired)
-                                            Text("${summary.partialCount} parciales", fontSize = 12.sp, color = colors.textSecondary)
+                                            Text(stringResource(R.string.coverage_partial_count, summary.partialCount), fontSize = 12.sp, color = colors.textSecondary)
                                         }
                                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                             GlifoConfidenceChip(state = ConfidenceState.Uncertain)
-                                            Text("${summary.doubtfulCount} dudosos", fontSize = 12.sp, color = colors.textSecondary)
+                                            Text(stringResource(R.string.coverage_doubtful_count, summary.doubtfulCount), fontSize = 12.sp, color = colors.textSecondary)
                                         }
                                     }
                                 }
