@@ -5,7 +5,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -111,17 +110,6 @@ fun GlifoNavHost(
         }
 
         composable(Screen.Login.route) {
-            val context = LocalContext.current
-            val entryPoint = dagger.hilt.android.EntryPointAccessors.fromActivity(
-                context as android.app.Activity,
-                cr.ac.una.glifo.presentation.viewmodel.ViewModelFactoryEntryPoint::class.java
-            )
-            val factory = cr.ac.una.glifo.presentation.viewmodel.LoginViewModelFactory(
-                entryPoint.authRepository(),
-                entryPoint.sessionRepository()
-            )
-            val viewModel: cr.ac.una.glifo.presentation.viewmodel.LoginViewModel = androidx.lifecycle.viewmodel.compose.viewModel(factory = factory)
-
             LoginScreen(
                 onNavigateToRegister = {
                     navController.navigate(Screen.Register.route)
@@ -138,23 +126,11 @@ fun GlifoNavHost(
                     navController.navigate(homeRoute) {
                         popUpTo(Screen.Splash.route) { inclusive = true }
                     }
-                },
-                viewModel = viewModel
+                }
             )
         }
 
         composable(Screen.Register.route) {
-            val context = LocalContext.current
-            val entryPoint = dagger.hilt.android.EntryPointAccessors.fromActivity(
-                context as android.app.Activity,
-                cr.ac.una.glifo.presentation.viewmodel.ViewModelFactoryEntryPoint::class.java
-            )
-            val factory = cr.ac.una.glifo.presentation.viewmodel.RegisterViewModelFactory(
-                entryPoint.authRepository(),
-                entryPoint.sessionRepository()
-            )
-            val viewModel: cr.ac.una.glifo.presentation.viewmodel.RegisterViewModel = androidx.lifecycle.viewmodel.compose.viewModel(factory = factory)
-
             RegisterScreen(
                 onNavigateToLogin = {
                     navController.popBackStack()
@@ -163,8 +139,7 @@ fun GlifoNavHost(
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Splash.route) { inclusive = true }
                     }
-                },
-                viewModel = viewModel
+                }
             )
         }
 
@@ -177,18 +152,6 @@ fun GlifoNavHost(
 
         // ── B: Inicio ────────────────────────────────────────────────────────
         composable(Screen.Home.route) {
-            val context = LocalContext.current
-            val entryPoint = dagger.hilt.android.EntryPointAccessors.fromActivity(
-                context as android.app.Activity,
-                cr.ac.una.glifo.presentation.viewmodel.ViewModelFactoryEntryPoint::class.java
-            )
-            val factory = cr.ac.una.glifo.presentation.viewmodel.HomeViewModelFactory(
-                entryPoint.courseRepository(),
-                entryPoint.noteRepository(),
-                entryPoint.syncRepository()
-            )
-            val viewModel: cr.ac.una.glifo.presentation.viewmodel.HomeViewModel = androidx.lifecycle.viewmodel.compose.viewModel(factory = factory)
-
             HomeScreen(
                 onNavigateToCourse = { courseId ->
                     navController.navigate(Screen.CourseDetail.createRoute(courseId))
@@ -211,23 +174,11 @@ fun GlifoNavHost(
                     navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
                     }
-                },
-                viewModel = viewModel
+                }
             )
         }
 
         composable(Screen.HomeTeacher.route) {
-            val context = LocalContext.current
-            val entryPoint = dagger.hilt.android.EntryPointAccessors.fromActivity(
-                context as android.app.Activity,
-                cr.ac.una.glifo.presentation.viewmodel.ViewModelFactoryEntryPoint::class.java
-            )
-            val factory = cr.ac.una.glifo.presentation.viewmodel.TeacherHomeViewModelFactory(
-                entryPoint.courseRepository(),
-                entryPoint.teacherRepository()
-            )
-            val viewModel: cr.ac.una.glifo.presentation.viewmodel.TeacherHomeViewModel = androidx.lifecycle.viewmodel.compose.viewModel(factory = factory)
-
             TeacherHomeScreen(
                 onNavigateToCourses = { navController.navigate(Screen.TeacherCourses.route) },
                 onNavigateToSyllabus = { navController.navigate(Screen.TeacherSyllabus.route) },
@@ -241,24 +192,11 @@ fun GlifoNavHost(
                     navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.HomeTeacher.route) { inclusive = true }
                     }
-                },
-                viewModel = viewModel
+                }
             )
         }
 
         composable(Screen.HomeAdmin.route) {
-            val context = LocalContext.current
-            val entryPoint = dagger.hilt.android.EntryPointAccessors.fromActivity(
-                context as android.app.Activity,
-                cr.ac.una.glifo.presentation.viewmodel.ViewModelFactoryEntryPoint::class.java
-            )
-            val factory = cr.ac.una.glifo.presentation.viewmodel.AdminHomeViewModelFactory(
-                entryPoint.adminRepository(),
-                entryPoint.courseRepository(),
-                entryPoint.syncRepository()
-            )
-            val viewModel: cr.ac.una.glifo.presentation.viewmodel.AdminHomeViewModel = androidx.lifecycle.viewmodel.compose.viewModel(factory = factory)
-
             AdminHomeScreen(
                 onNavigateToUsers = { navController.navigate(Screen.AdminUsers.route) },
                 onNavigateToCourses = { navController.navigate(Screen.AdminCourses.route) },
@@ -270,8 +208,7 @@ fun GlifoNavHost(
                     navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.HomeAdmin.route) { inclusive = true }
                     }
-                },
-                viewModel = viewModel
+                }
             )
         }
 

@@ -33,7 +33,7 @@ object NetworkModule {
      * reach the mock, turn the emulator's Wi-Fi off (mobile data on) or update the emulator
      * in SDK Manager. Nothing machine-specific belongs in this constant — no LAN IPs.
      */
-    private const val BASE_URL = "http://127.0.0.1:3000/api/v1/"
+    private const val BASE_URL = "http://10.0.2.2:3000/api/v1/"
 
     @Provides
     @Singleton

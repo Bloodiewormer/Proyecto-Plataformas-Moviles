@@ -52,7 +52,7 @@ fun HomeScreen(
     onNavigateToDelta: () -> Unit,
     onNavigateToNoteDetail: (Long) -> Unit,
     onLogout: () -> Unit,
-    viewModel: HomeViewModel,
+    viewModel: HomeViewModel = hiltViewModel(),
     sessionViewModel: SessionViewModel = hiltViewModel()
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -375,7 +375,7 @@ fun TeacherHomeScreen(
     onNavigateToProfile: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onLogout: () -> Unit,
-    viewModel: TeacherHomeViewModel,
+    viewModel: TeacherHomeViewModel = hiltViewModel(),
     sessionViewModel: SessionViewModel = hiltViewModel()
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -577,7 +577,7 @@ fun AdminHomeScreen(
     onNavigateToAiCost: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onLogout: () -> Unit,
-    viewModel: AdminHomeViewModel,
+    viewModel: AdminHomeViewModel = hiltViewModel(),
     sessionViewModel: SessionViewModel = hiltViewModel()
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)

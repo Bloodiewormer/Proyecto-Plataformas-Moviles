@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import cr.ac.una.glifo.domain.error.Result
 import cr.ac.una.glifo.core.ui.component.GlifoButton
 import cr.ac.una.glifo.core.ui.component.GlifoField
@@ -29,7 +30,7 @@ private val EMAIL_REGEX = Regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,
 fun RegisterScreen(
     onNavigateToLogin: () -> Unit,
     onRegisterSuccess: () -> Unit,
-    viewModel: RegisterViewModel
+    viewModel: RegisterViewModel = hiltViewModel()
 ) {
     val colors = GlifoTheme.colors
     val coroutineScope = rememberCoroutineScope()
