@@ -124,20 +124,27 @@ object RegionClassifier {
 
         var score = 0f
 
-        // Un signo de igualdad es la pista mas fuerte de todas.
-        if (text.contains('=')) score += 0.40f
+        // Un signo de igualdad o flecha de deducción/operación es una pista matemática fuerte
+        if (text.contains('=') || text.contains("->") || text.contains('→')) score += 0.35f
 
-        score += (symbolRatio * 2.5f).coerceAtMost(0.30f)
-        score += (digitRatio * 1.5f).coerceAtMost(0.20f)
+        // 'x' o 'X' como multiplicación entre números o términos algebraicos (ej. 3.6 x 10, Mx10)
+        val hasMultiplicationX = Regex("\\d\\s*[xX]\\s*\\d|\\b[xX]\\s*10|[a-zA-Z]\\s*[xX]\\s*10").containsMatchIn(text)
+        if (hasMultiplicationX) score += 0.25f
+
+        score += (symbolRatio * 2.5f).coerceAtMost(0.35f)
+        score += (digitRatio * 2.0f).coerceAtMost(0.40f)
+
+        // Si hay una presencia significativa de dígitos o símbolos de operación
+        if (digitRatio >= 0.30f || symbolRatio >= 0.15f) score += 0.20f
 
         // Pocas letras para la cantidad de caracteres: no es prosa.
         if (letterRatio < 0.45f) score += 0.15f
 
         // Las formulas son cortas y ocupan una o dos lineas.
-        if (ocr.lineCount <= 2 && chars <= 24) score += 0.10f
+        if (ocr.lineCount <= 2 && chars <= 28) score += 0.10f
 
         // Palabras largas y mayoria de letras: es un parrafo, aunque tenga algun parentesis.
-        if (averageWordLength >= 4f && letterRatio > 0.6f) score -= 0.25f
+        if (averageWordLength >= 4.5f && letterRatio > 0.7f && digitRatio < 0.15f) score -= 0.30f
 
         return score.coerceIn(0f, 1f)
     }

@@ -137,7 +137,7 @@
       "responses": [
         {
           "uuid": "31ee36e7-6918-4e80-9f7b-ba4fe86d1780",
-          "body": "{\n  \"data\": [\n    { \"id\": 1, \"name\": \"Cálculo I\", \"code\": \"MAT-135\", \"join_code\": \"GLF-CALC1\" },\n    { \"id\": 2, \"name\": \"Física General\", \"code\": \"FIS-100\", \"join_code\": \"GLF-FIS100\" }\n  ],\n  \"meta\": { \"page\": 0, \"size\": 20, \"total\": 2 }\n}",
+          "body": "{\n  \"data\": [\n    { \"id\": 1, \"name\": \"Cálculo I\", \"code\": \"MAT-135\", \"join_code\": \"GLF-CALC1\" },\n    { \"id\": 2, \"name\": \"Física General\", \"code\": \"FIS-100\", \"join_code\": \"GLF-FIS100\" },\n    { \"id\": 3, \"name\": \"Plataformas Móviles\", \"code\": \"EIF411\", \"join_code\": \"GLF-4K2P\" },\n    { \"id\": 4, \"name\": \"Álgebra Lineal\", \"code\": \"MAT-101\", \"join_code\": \"ALG-101X\" }\n  ],\n  \"meta\": { \"page\": 0, \"size\": 20, \"total\": 4 }\n}",
           "latency": 0,
           "statusCode": 200,
           "label": "",
@@ -390,7 +390,7 @@
       "responses": [
         {
           "uuid": "47a1d235-29c5-4706-9f6d-4d29358bbae0",
-          "body": "{\n  \"data\": [\n    { \"id\": 1, \"course_id\": {{queryParam 'courseId'}}, \"title\": \"Derivadas\", \"class_date\": \"2026-08-20\" },\n    { \"id\": 2, \"course_id\": {{queryParam 'courseId'}}, \"title\": \"Integrales\", \"class_date\": \"2026-08-27\" }\n  ],\n  \"meta\": { \"page\": 0, \"size\": 20, \"total\": 2 }\n}",
+          "body": "{\n  \"data\": [\n    { \"id\": 1, \"course_id\": {{#if (queryParam 'courseId')}}{{queryParam 'courseId'}}{{else}}1{{/if}}, \"title\": \"Derivadas y Regla de la Cadena\", \"class_date\": \"2026-08-20\" },\n    { \"id\": 2, \"course_id\": {{#if (queryParam 'courseId')}}{{queryParam 'courseId'}}{{else}}1{{/if}}, \"title\": \"Integrales Impropias\", \"class_date\": \"2026-08-27\" }\n  ],\n  \"meta\": { \"page\": 0, \"size\": 20, \"total\": 2 }\n}",
           "latency": 0,
           "statusCode": 200,
           "label": "",
@@ -455,7 +455,7 @@
         },
         {
           "uuid": "11574dfe-b676-4e69-8c42-b996148e808d",
-          "body": "{\n  \"data\": {\n    \"id\": 3,\n    \"course_id\": {{body 'course_id'}},\n    \"title\": \"{{body 'title'}}\",\n    \"class_date\": \"{{body 'class_date'}}\"\n  }\n}",
+          "body": "{\n  \"data\": {\n    \"id\": 3,\n    \"course_id\": {{#if (body 'course_id')}}{{body 'course_id'}}{{else}}1{{/if}},\n    \"title\": \"{{body 'title'}}\",\n    \"class_date\": \"{{body 'class_date'}}\"\n  }\n}",
           "latency": 0,
           "statusCode": 201,
           "label": "",

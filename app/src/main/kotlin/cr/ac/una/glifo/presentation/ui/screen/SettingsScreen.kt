@@ -29,6 +29,8 @@ import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
+import cr.ac.una.glifo.core.ui.theme.AppLanguage
+import cr.ac.una.glifo.core.ui.theme.LanguageManager
 import cr.ac.una.glifo.core.ui.theme.ThemeManager
 import cr.ac.una.glifo.core.ui.theme.ThemeMode
 import cr.ac.una.glifo.presentation.viewmodel.SettingsViewModel
@@ -126,6 +128,36 @@ fun SettingsScreen(
                                 .weight(1f)
                                 .background(if (selected) colors.accentSoft else colors.neutralSoft, RoundedCornerShape(999.dp))
                                 .clickable { ThemeManager.setMode(context, mode) }
+                                .padding(vertical = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(label, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = if (selected) colors.accentText else colors.textSecondary)
+                        }
+                    }
+                }
+            }
+
+            GlifoCard(modifier = Modifier.padding(bottom = 18.dp)) {
+                Text(stringResource(R.string.settings_language_title), fontSize = 16.sp, color = colors.textPrimary)
+                Text(
+                    text = stringResource(R.string.settings_language_description),
+                    fontSize = 12.sp,
+                    color = colors.textSecondary,
+                    lineHeight = 16.sp,
+                    modifier = Modifier.padding(top = 4.dp, bottom = 10.dp)
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf(
+                        AppLanguage.System to stringResource(R.string.settings_language_system),
+                        AppLanguage.Spanish to stringResource(R.string.settings_language_es),
+                        AppLanguage.English to stringResource(R.string.settings_language_en)
+                    ).forEach { (lang, label) ->
+                        val selected = LanguageManager.language == lang
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .background(if (selected) colors.accentSoft else colors.neutralSoft, RoundedCornerShape(999.dp))
+                                .clickable { LanguageManager.setLanguage(context, lang) }
                                 .padding(vertical = 8.dp),
                             contentAlignment = Alignment.Center
                         ) {

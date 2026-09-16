@@ -14,4 +14,6 @@ interface NoteRepository {
     suspend fun getChips(noteId: Long): Result<List<ConfidenceState>>
     suspend fun getNoteContent(noteId: Long): Result<NoteContent>
     suspend fun saveCorrection(noteId: Long, regionIndex: Int, correctedText: String): Result<Unit>
+    suspend fun createNote(courseId: Long, title: String, classDate: String): Result<Note>
+    suspend fun deleteNote(noteId: Long): Result<Unit>
 }

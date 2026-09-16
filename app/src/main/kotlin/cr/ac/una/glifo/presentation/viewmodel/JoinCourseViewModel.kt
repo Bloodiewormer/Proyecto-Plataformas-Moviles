@@ -26,6 +26,9 @@ class JoinCourseViewModel @Inject constructor(
     private val _searchState = MutableStateFlow<UiState<JoinCourseResult>?>(null)
     val searchState: StateFlow<UiState<JoinCourseResult>?> = _searchState.asStateFlow()
 
+    private val _joinState = MutableStateFlow<UiState<Unit>?>(null)
+    val joinState: StateFlow<UiState<Unit>?> = _joinState.asStateFlow()
+
     fun search(joinCode: String) {
         viewModelScope.launch {
             _searchState.value = UiState.Loading
@@ -44,7 +47,18 @@ class JoinCourseViewModel @Inject constructor(
         }
     }
 
+    fun joinCourse(joinCode: String) {
+        viewModelScope.launch {
+            _joinState.value = UiState.Loading
+            when (val result = courseRepository.joinCourse(joinCode)) {
+                is Result.Success -> _joinState.value = UiState.Success(Unit)
+                is Result.Failure -> _joinState.value = UiState.Error(result.error)
+            }
+        }
+    }
+
     fun reset() {
         _searchState.value = null
+        _joinState.value = null
     }
 }

@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -29,6 +30,7 @@ import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
 import cr.ac.una.glifo.presentation.viewmodel.JoinCourseViewModel
+import cr.ac.una.glifo.presentation.viewmodel.toMessage
 
 @Composable
 fun JoinCourseScreen(
@@ -37,8 +39,16 @@ fun JoinCourseScreen(
     viewModel: JoinCourseViewModel = hiltViewModel()
 ) {
     val colors = GlifoTheme.colors
+    val context = LocalContext.current
     var courseCode by remember { mutableStateOf("") }
     val searchState by viewModel.searchState.collectAsState()
+    val joinState by viewModel.joinState.collectAsState()
+
+    LaunchedEffect(joinState) {
+        if (joinState is UiState.Success) {
+            onJoinSuccess()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -144,8 +154,26 @@ fun JoinCourseScreen(
                                 GlifoButton(
                                     text = stringResource(R.string.join_course_join_button),
                                     small = true,
-                                    onClick = onJoinSuccess
+                                    enabled = joinState !is UiState.Loading,
+                                    onClick = { viewModel.joinCourse(foundCourse.joinCode) }
                                 )
+
+                                if (joinState is UiState.Loading) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                                        CircularProgressIndicator(color = colors.accent, modifier = Modifier.size(20.dp))
+                                    }
+                                }
+
+                                if (joinState is UiState.Error) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    val errorMsg = (joinState as UiState.Error).error.toMessage(context)
+                                    GlifoBanner(
+                                        text = errorMsg,
+                                        icon = Icons.Default.Warning,
+                                        isWarning = true
+                                    )
+                                }
                             }
                         }
                     }

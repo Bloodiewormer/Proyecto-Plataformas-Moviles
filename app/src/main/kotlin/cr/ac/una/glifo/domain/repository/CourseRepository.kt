@@ -12,4 +12,5 @@ interface CourseRepository {
     suspend fun getCourseStats(courseId: Long): Result<CourseStats>
     suspend fun findCourseByJoinCode(joinCode: String): Result<Course>
     suspend fun createCourse(name: String, code: String, term: String): Result<Course>
+    suspend fun joinCourse(joinCode: String): Result<Unit>
 }

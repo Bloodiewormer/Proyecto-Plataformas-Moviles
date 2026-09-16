@@ -5,7 +5,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
+import cr.ac.una.glifo.core.ui.theme.LanguageManager
 import cr.ac.una.glifo.core.ui.theme.ThemeManager
 import cr.ac.una.glifo.core.ui.theme.ThemeMode
 import cr.ac.una.glifo.presentation.navigation.GlifoNavHost
@@ -16,16 +21,26 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         ThemeManager.init(this)
+        LanguageManager.init(this)
         enableEdgeToEdge()
         setContent {
+            val currentLanguage = LanguageManager.language
+            val localizedContext = remember(currentLanguage) {
+                LanguageManager.wrapContext(this, currentLanguage)
+            }
             val systemDark = isSystemInDarkTheme()
             val darkTheme = when (ThemeManager.mode) {
                 ThemeMode.Light -> false
                 ThemeMode.Dark -> true
                 ThemeMode.System -> systemDark
             }
-            GlifoTheme(darkTheme = darkTheme) {
-                GlifoNavHost()
+            CompositionLocalProvider(
+                LocalContext provides localizedContext,
+                LocalConfiguration provides localizedContext.resources.configuration
+            ) {
+                GlifoTheme(darkTheme = darkTheme) {
+                    GlifoNavHost()
+                }
             }
         }
     }

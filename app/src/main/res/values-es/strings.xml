@@ -94,6 +94,11 @@
     <string name="settings_theme_light">Claro</string>
     <string name="settings_theme_dark">Oscuro</string>
     <string name="settings_theme_system">Sistema</string>
+    <string name="settings_language_title">Idioma</string>
+    <string name="settings_language_description">Selecciona el idioma de la aplicación.</string>
+    <string name="settings_language_system">Sistema</string>
+    <string name="settings_language_es">Español</string>
+    <string name="settings_language_en">Inglés</string>
     <string name="settings_section_capture">CAPTURA</string>
     <string name="settings_save_original_photo">Guardar la foto original</string>
     <string name="settings_reject_low_quality">Rechazar fotos de baja calidad</string>

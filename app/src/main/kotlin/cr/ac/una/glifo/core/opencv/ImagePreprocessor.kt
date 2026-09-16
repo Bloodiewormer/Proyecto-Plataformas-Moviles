@@ -39,10 +39,11 @@ object ImagePreprocessor {
 
     /**
      * Calcula y corrige el ángulo de inclinación del texto en la imagen.
+     * Incluye compuertas de seguridad para no rotar erróneamente en ángulos espurios (> 15°).
      */
     private fun deskew(src: Mat): Mat {
         val gray = Mat()
-        Imgproc.cvtColor(src, gray, Imgproc.COLOR_BGR2GRAY)
+        Imgproc.cvtColor(src, gray, Imgproc.COLOR_RGBA2GRAY)
         
         Core.bitwise_not(gray, gray)
         val thresh = Mat()
@@ -63,8 +64,27 @@ object ImagePreprocessor {
         val box = Imgproc.minAreaRect(points)
         
         var angle = box.angle
-        if (angle < -45.0) {
-            angle += 90.0
+        if (box.size.width < box.size.height) {
+            if (angle > 45.0) {
+                angle -= 90.0
+            }
+        } else {
+            if (angle < -45.0) {
+                angle += 90.0
+            } else if (angle > 45.0) {
+                angle -= 90.0
+            }
+        }
+        
+        gray.release()
+        thresh.release()
+        coords.release()
+        points.release()
+
+        // Si la inclinación es menor a 0.5° (despreciable) o mayor a 15° (falso positivo de bordes/sombras),
+        // no aplicamos rotación para no desorientar o degradar la imagen para ML Kit.
+        if (kotlin.math.abs(angle) < 0.5 || kotlin.math.abs(angle) > 15.0) {
+            return src.clone()
         }
         
         val center = box.center
@@ -72,11 +92,6 @@ object ImagePreprocessor {
         
         val rotated = Mat()
         Imgproc.warpAffine(src, rotated, rotMat, src.size(), Imgproc.INTER_CUBIC, Core.BORDER_REPLICATE)
-        
-        gray.release()
-        thresh.release()
-        coords.release()
-        points.release()
         rotMat.release()
         
         return rotated
@@ -84,21 +99,26 @@ object ImagePreprocessor {
 
     /**
      * Contrast Limited Adaptive Histogram Equalization (CLAHE).
+     * Aplica un suavizado previo suave para evitar amplificar grano o renglones del cuaderno.
      */
     private fun applyCLAHE(src: Mat): Mat {
         val gray = Mat()
         if (src.channels() >= 3) {
-            Imgproc.cvtColor(src, gray, Imgproc.COLOR_BGR2GRAY)
+            Imgproc.cvtColor(src, gray, Imgproc.COLOR_RGBA2GRAY)
         } else {
             src.copyTo(gray)
         }
         
-        val clahe = Imgproc.createCLAHE(2.0, Size(8.0, 8.0))
+        val smoothed = Mat()
+        Imgproc.GaussianBlur(gray, smoothed, Size(3.0, 3.0), 0.0)
+        gray.release()
+
+        val clahe = Imgproc.createCLAHE(1.8, Size(8.0, 8.0))
         val dst = Mat()
-        clahe.apply(gray, dst)
+        clahe.apply(smoothed, dst)
+        smoothed.release()
         
         clahe.collectGarbage()
-        gray.release()
         
         val colorDst = Mat()
         Imgproc.cvtColor(dst, colorDst, Imgproc.COLOR_GRAY2RGBA)

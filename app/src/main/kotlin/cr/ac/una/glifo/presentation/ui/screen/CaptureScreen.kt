@@ -76,6 +76,25 @@ fun CaptureScreen(
         permissionWasRequested = true
     }
 
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            try {
+                val fileName = "glifo_gallery_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(java.util.Date())}.jpg"
+                val outputFile = File(context.cacheDir, fileName)
+                context.contentResolver.openInputStream(uri)?.use { input ->
+                    outputFile.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+                onCapturePhoto(outputFile.absolutePath)
+            } catch (e: Exception) {
+                // Safeguard against stream read errors
+            }
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -102,7 +121,9 @@ fun CaptureScreen(
                             val preview = Preview.Builder().build().also {
                                 it.setSurfaceProvider(previewView.surfaceProvider)
                             }
-                            val capture = ImageCapture.Builder().build()
+                            val capture = ImageCapture.Builder()
+                                .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
+                                .build()
                             imageCapture = capture
                             try {
                                 cameraProvider.unbindAll()
@@ -183,7 +204,8 @@ fun CaptureScreen(
                         modifier = Modifier
                             .size(40.dp)
                             .background(colors.surfaceHigh, RoundedCornerShape(7.dp))
-                            .border(1.dp, colors.border, RoundedCornerShape(7.dp)),
+                            .border(1.dp, colors.border, RoundedCornerShape(7.dp))
+                            .clickable { galleryLauncher.launch("image/*") },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(imageVector = Icons.Default.Image, contentDescription = stringResource(R.string.capture_gallery_description), tint = colors.textSecondary, modifier = Modifier.size(18.dp))

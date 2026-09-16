@@ -44,36 +44,98 @@ object CapturePipeline {
 
         if (working !== source && working !== preprocessed) working.recycle()
 
+        val ocrStartedAt = System.currentTimeMillis()
+
+        // 1. Reconocimiento de bloques de texto con ML Kit sobre la imagen completa en una sola pasada.
+        // Esto le brinda a ML Kit todo el contexto visual y del modelo de lenguaje,
+        // maximizando la calidad del texto y reduciendo drásticamente el tiempo de proceso.
+        val mlKitBlocks = try {
+            TextRecognizerN1.recognizeBlocks(preprocessed)
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (_: Exception) {
+            emptyList()
+        }
+
+        // 2. Segmentación visual con OpenCV para encontrar trazos, diagramas y fórmulas.
         val segmented = runCatching { PageSegmenter.segment(preprocessed) }
             .getOrDefault(emptyList())
-            .ifEmpty { listOf(fullPage(preprocessed)) }
 
-        // N1: OCR local region por region. Secuencial a proposito, porque el recognizer de
-        // ML Kit serializa las peticiones internamente y lanzarlas en paralelo solo agrega
-        // presion de memoria con los recortes.
-        val ocrStartedAt = System.currentTimeMillis()
-        val ocrResults = segmented.map { region ->
-            try {
-                TextRecognizerN1.recognizeRegion(preprocessed, region.bounds)
-            } catch (cancellation: CancellationException) {
-                // Salir de la pantalla cancela el scope: hay que dejar propagar en vez de
-                // seguir procesando regiones que ya nadie va a mirar.
-                throw cancellation
-            } catch (_: Exception) {
-                // Una region ilegible no invalida la pagina entera: queda sin texto y el
-                // clasificador la mandara a N2.
-                OcrResult.Empty
-            }
-        }
         val ocrMillis = System.currentTimeMillis() - ocrStartedAt
 
-        // Clasificador: cada fragmento sale ya enrutado a su nivel.
-        val regions = segmented.mapIndexed { index, region ->
+        // 3. Fusión híbrida:
+        // Si ML Kit detectó bloques de texto:
+        //   - Cada bloque de texto se conserva con su texto de alta calidad y sus confianzas.
+        //   - Se incorporan regiones de OpenCV que no se solapan con los bloques de ML Kit
+        //     (diagramas, dibujos o fórmulas manuscritas que el modelo de texto no reconoció).
+        // Si ML Kit no detectó bloques (ej. página exclusivamente gráfica o manuscrito denso):
+        //   - Fallback a la segmentación tradicional de OpenCV con recognizeRegion.
+        val candidateRegions = mutableListOf<Pair<RegionBounds, OcrResult>>()
+
+        if (mlKitBlocks.isNotEmpty()) {
+            mlKitBlocks.forEach { block ->
+                candidateRegions.add(block.bounds to block.ocr)
+            }
+
+            segmented.forEach { segRegion ->
+                val overlapsWithTextBlock = mlKitBlocks.any { block ->
+                    regionsOverlap(segRegion.bounds, block.bounds)
+                }
+                if (!overlapsWithTextBlock) {
+                    val ocr = try {
+                        TextRecognizerN1.recognizeRegion(preprocessed, segRegion.bounds)
+                    } catch (cancellation: CancellationException) {
+                        throw cancellation
+                    } catch (_: Exception) {
+                        OcrResult.Empty
+                    }
+                    candidateRegions.add(segRegion.bounds to ocr)
+                }
+            }
+        } else if (segmented.isNotEmpty()) {
+            segmented.forEach { region ->
+                val ocr = try {
+                    TextRecognizerN1.recognizeRegion(preprocessed, region.bounds)
+                } catch (cancellation: CancellationException) {
+                    throw cancellation
+                } catch (_: Exception) {
+                    OcrResult.Empty
+                }
+                candidateRegions.add(region.bounds to ocr)
+            }
+        } else {
+            val fullOcr = try {
+                TextRecognizerN1.recognize(preprocessed)
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (_: Exception) {
+                OcrResult.Empty
+            }
+            candidateRegions.add(
+                RegionBounds(0, 0, preprocessed.width, preprocessed.height) to fullOcr
+            )
+        }
+
+        // Orden de lectura natural (arriba hacia abajo, izquierda hacia derecha)
+        val sortedCandidates = candidateRegions.sortedWith(compareBy({ it.first.top }, { it.first.left }))
+
+        // Medir métricas de tinta reales y clasificar cada región
+        val regions = sortedCandidates.mapIndexed { index, (bounds, ocr) ->
+            val metrics = runCatching {
+                PageSegmenter.measureBounds(preprocessed, bounds)
+            }.getOrDefault(
+                RegionInkMetrics(
+                    inkDensity = 0.05f,
+                    componentCount = ocr.text.count { !it.isWhitespace() },
+                    aspectRatio = bounds.width.toFloat() / bounds.height.coerceAtLeast(1).toFloat()
+                )
+            )
+
             RegionClassifier.classify(
                 index = index,
-                bounds = region.bounds,
-                metrics = region.metrics,
-                ocr = ocrResults[index],
+                bounds = bounds,
+                metrics = metrics,
+                ocr = ocr,
                 glossary = glossary
             )
         }
@@ -89,6 +151,22 @@ object CapturePipeline {
         if (preprocessed !== source) preprocessed.recycle()
 
         analysis
+    }
+
+    /**
+     * Determina si dos rectángulos se solapan significativamente (más del 30% del área menor).
+     */
+    private fun regionsOverlap(a: RegionBounds, b: RegionBounds): Boolean {
+        val overlapLeft = maxOf(a.left, b.left)
+        val overlapTop = maxOf(a.top, b.top)
+        val overlapRight = minOf(a.right, b.right)
+        val overlapBottom = minOf(a.bottom, b.bottom)
+
+        if (overlapRight <= overlapLeft || overlapBottom <= overlapTop) return false
+
+        val overlapArea = (overlapRight - overlapLeft) * (overlapBottom - overlapTop)
+        val minArea = minOf(a.area, b.area).coerceAtLeast(1)
+        return (overlapArea.toFloat() / minArea) > 0.30f
     }
 
     /** Cuando la segmentacion no encuentra nada, N1 igual corre sobre la pagina completa. */

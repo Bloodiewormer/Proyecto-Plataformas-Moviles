@@ -27,6 +27,12 @@ data class OcrResult(
     }
 }
 
+/** Bloque de texto detectado nativamente por ML Kit en la página completa. */
+data class RecognizedBlock(
+    val bounds: RegionBounds,
+    val ocr: OcrResult
+)
+
 /**
  * Pipeline N1: Reconocimiento optico de caracteres local con ML Kit (Issue #16).
  *
@@ -39,9 +45,8 @@ object TextRecognizerN1 {
     /** Un recorte mas chico que esto no le da a ML Kit suficiente contexto para leer. */
     private const val MIN_CROP_PX = 32
 
-    /** Margen que se le suma al recorte: las tildes y los rabos de las letras suelen
-     *  quedar justo fuera del rectangulo que devolvio la segmentacion. */
-    private const val CROP_PADDING_PX = 8
+    /** Margen mínimo que se le suma al recorte para no cortar ascendentes, descendentes ni tildes. */
+    private const val MIN_CROP_PADDING_PX = 24
 
     private val recognizer: TextRecognizer by lazy {
         TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
@@ -49,6 +54,52 @@ object TextRecognizerN1 {
 
     /** Corre N1 sobre la imagen completa (se usa cuando la segmentacion no encontro nada). */
     suspend fun recognize(bitmap: Bitmap): OcrResult = process(bitmap)
+
+    /**
+     * Corre N1 sobre la imagen completa en una sola pasada de inferencia, extrayendo los
+     * bloques de texto delimitados nativamente por el modelo de ML Kit con sus coordenadas
+     * reales y texto enriquecido con el contexto lingüístico de la página completa.
+     */
+    suspend fun recognizeBlocks(bitmap: Bitmap): List<RecognizedBlock> = suspendCancellableCoroutine { continuation ->
+        val image = InputImage.fromBitmap(bitmap, 0)
+        recognizer.process(image)
+            .addOnSuccessListener { visionText ->
+                if (!continuation.isActive) return@addOnSuccessListener
+                val blocks = visionText.textBlocks.mapNotNull { block ->
+                    val bbox = block.boundingBox ?: return@mapNotNull null
+                    val lines = block.lines
+                    if (lines.isEmpty()) return@mapNotNull null
+
+                    val text = lines.joinToString("\n") { it.text }.trim()
+                    if (text.isBlank()) return@mapNotNull null
+
+                    val wordCount = lines.sumOf { it.elements.size }
+                    val reported = lines.mapNotNull { line ->
+                        val value: Float? = line.confidence
+                        if (value == null || value.isNaN() || value <= 0f) null else value
+                    }
+
+                    val left = bbox.left.coerceIn(0, bitmap.width - 1)
+                    val top = bbox.top.coerceIn(0, bitmap.height - 1)
+                    val width = bbox.width().coerceAtLeast(1).coerceAtMost(bitmap.width - left)
+                    val height = bbox.height().coerceAtLeast(1).coerceAtMost(bitmap.height - top)
+
+                    RecognizedBlock(
+                        bounds = RegionBounds(left, top, width, height),
+                        ocr = OcrResult(
+                            text = text,
+                            lineCount = lines.size,
+                            wordCount = wordCount,
+                            confidence = if (reported.isEmpty()) null else reported.average().toFloat().coerceIn(0f, 1f)
+                        )
+                    )
+                }
+                continuation.resume(blocks)
+            }
+            .addOnFailureListener { error ->
+                if (continuation.isActive) continuation.resumeWithException(error)
+            }
+    }
 
     /** Corre N1 sobre una region concreta de la pagina, recortandola antes de pasarla al modelo. */
     suspend fun recognizeRegion(page: Bitmap, bounds: RegionBounds): OcrResult {
@@ -59,14 +110,16 @@ object TextRecognizerN1 {
     }
 
     /**
-     * Recorta con margen y sin salirse de la pagina. Devuelve null si la region es tan
-     * chica que ML Kit la rechazaria de todas formas.
+     * Recorta con margen generoso y sin salirse de la pagina.
      */
     private fun cropWithPadding(page: Bitmap, bounds: RegionBounds): Bitmap? {
-        val left = (bounds.left - CROP_PADDING_PX).coerceIn(0, page.width - 1)
-        val top = (bounds.top - CROP_PADDING_PX).coerceIn(0, page.height - 1)
-        val right = (bounds.right + CROP_PADDING_PX).coerceIn(left + 1, page.width)
-        val bottom = (bounds.bottom + CROP_PADDING_PX).coerceIn(top + 1, page.height)
+        val padX = maxOf(MIN_CROP_PADDING_PX, (bounds.width * 0.08f).toInt())
+        val padY = maxOf(MIN_CROP_PADDING_PX, (bounds.height * 0.12f).toInt())
+
+        val left = (bounds.left - padX).coerceIn(0, page.width - 1)
+        val top = (bounds.top - padY).coerceIn(0, page.height - 1)
+        val right = (bounds.right + padX).coerceIn(left + 1, page.width)
+        val bottom = (bounds.bottom + padY).coerceIn(top + 1, page.height)
 
         val width = right - left
         val height = bottom - top

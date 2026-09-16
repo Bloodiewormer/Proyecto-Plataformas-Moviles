@@ -44,14 +44,15 @@ object PageSegmenter {
 
         val gray = Mat()
         if (src.channels() >= 3) {
-            Imgproc.cvtColor(src, gray, Imgproc.COLOR_BGR2GRAY)
+            Imgproc.cvtColor(src, gray, Imgproc.COLOR_RGBA2GRAY)
         } else {
             src.copyTo(gray)
         }
         src.release()
 
         // Binarizacion adaptativa: la tinta queda en blanco (255) sobre fondo negro, y
-        // aguanta que la hoja este iluminada de forma despareja.
+        // aguanta que la hoja este iluminada de forma despareja. Umbral ajustado a 8.0
+        // para retener trazos suaves de lápiz o bolígrafos claros.
         val binary = Mat()
         val blockSize = oddAtLeast(max(gray.rows(), gray.cols()) / 40, 15)
         Imgproc.adaptiveThreshold(
@@ -61,7 +62,7 @@ object PageSegmenter {
             Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C,
             Imgproc.THRESH_BINARY_INV,
             blockSize,
-            12.0
+            8.0
         )
         gray.release()
 
@@ -73,19 +74,19 @@ object PageSegmenter {
         val width = binary.cols()
         val height = binary.rows()
 
-        // Dos pasadas de cierre: la horizontal pega las letras en palabras y lineas; la
-        // vertical pega lineas consecutivas en un mismo parrafo o bloque.
+        // Dos pasadas de cierre: la horizontal pega las letras en palabras y lineas cohesivas;
+        // la vertical ayuda a agrupar líneas contiguas de un mismo párrafo o fórmula.
         val merged = Mat()
         val horizontal = Imgproc.getStructuringElement(
             Imgproc.MORPH_RECT,
-            Size(max(8.0, width / 45.0), 1.0)
+            Size(max(14.0, width / 30.0), 1.0)
         )
         Imgproc.morphologyEx(binary, merged, Imgproc.MORPH_CLOSE, horizontal)
         horizontal.release()
 
         val vertical = Imgproc.getStructuringElement(
             Imgproc.MORPH_RECT,
-            Size(1.0, max(4.0, height / 90.0))
+            Size(1.0, max(5.0, height / 60.0))
         )
         Imgproc.morphologyEx(merged, merged, Imgproc.MORPH_CLOSE, vertical)
         vertical.release()
@@ -177,9 +178,50 @@ object PageSegmenter {
         return pending
     }
 
-    private fun intersects(a: Rect, b: Rect): Boolean =
-        a.x < b.x + b.width && b.x < a.x + a.width &&
+    private fun intersects(a: Rect, b: Rect): Boolean {
+        // Permitir un margen horizontal de proximidad para fusionar palabras cercanas en la misma línea
+        val hPad = 12
+        return a.x < b.x + b.width + hPad && b.x < a.x + a.width + hPad &&
             a.y < b.y + b.height && b.y < a.y + a.height
+    }
+
+    /**
+     * Mide métricas de tinta para una región específica sobre el bitmap de la página.
+     */
+    fun measureBounds(bitmap: Bitmap, bounds: RegionBounds): RegionInkMetrics {
+        val src = Mat()
+        Utils.bitmapToMat(bitmap, src)
+        val gray = Mat()
+        if (src.channels() >= 3) {
+            Imgproc.cvtColor(src, gray, Imgproc.COLOR_RGBA2GRAY)
+        } else {
+            src.copyTo(gray)
+        }
+        src.release()
+
+        val binary = Mat()
+        val blockSize = oddAtLeast(max(gray.rows(), gray.cols()) / 40, 15)
+        Imgproc.adaptiveThreshold(
+            gray,
+            binary,
+            255.0,
+            Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C,
+            Imgproc.THRESH_BINARY_INV,
+            blockSize,
+            8.0
+        )
+        gray.release()
+
+        val rect = Rect(
+            bounds.left.coerceIn(0, binary.cols() - 1),
+            bounds.top.coerceIn(0, binary.rows() - 1),
+            bounds.width.coerceAtLeast(1).coerceAtMost(binary.cols() - bounds.left),
+            bounds.height.coerceAtLeast(1).coerceAtMost(binary.rows() - bounds.top)
+        )
+        val metrics = measure(binary, rect)
+        binary.release()
+        return metrics
+    }
 
     private fun union(a: Rect, b: Rect): Rect {
         val left = minOf(a.x, b.x)
@@ -195,11 +237,23 @@ object PageSegmenter {
         return if (v % 2 == 0) v + 1 else v
     }
 
-    /** Helper de escalado usado por el pipeline para no procesar fotos de 12 MP enteras. */
-    fun scaleToMaxDimension(bitmap: Bitmap, maxDimension: Int): Bitmap {
+    /**
+     * Helper de escalado usado por el pipeline:
+     * - Reduce fotos de alta resolución (12 MP) a un tamaño de trabajo óptimo (1600 px).
+     * - Si la imagen es una miniatura de muy baja resolución (< 1000 px, ej. 374x534), la escala hacia
+     *   arriba para que los caracteres individuales tengan al menos 16-20 píxeles de altura,
+     *   permitiendo que los extractores convolucionales de ML Kit detecten trazos en vez de manchas.
+     */
+    fun scaleToMaxDimension(bitmap: Bitmap, maxDimension: Int = 1600, minDimension: Int = 1000): Bitmap {
         val largest = max(bitmap.width, bitmap.height)
-        if (largest <= maxDimension) return bitmap
-        val factor = maxDimension.toDouble() / largest
+        if (largest in minDimension..maxDimension) return bitmap
+
+        val factor = if (largest > maxDimension) {
+            maxDimension.toDouble() / largest
+        } else {
+            minDimension.toDouble() / largest
+        }
+
         val targetWidth = (bitmap.width * factor).roundToInt().coerceAtLeast(1)
         val targetHeight = (bitmap.height * factor).roundToInt().coerceAtLeast(1)
         return Bitmap.createScaledBitmap(bitmap, targetWidth, targetHeight, true)
