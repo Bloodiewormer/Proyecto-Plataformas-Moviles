@@ -92,6 +92,9 @@ dependencies {
     // OpenCV
     implementation(libs.opencv)
 
+    // ML Kit — Pipeline N1: OCR local con el modelo latino empaquetado (sin llamadas de red)
+    implementation(libs.mlkit.text.recognition)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

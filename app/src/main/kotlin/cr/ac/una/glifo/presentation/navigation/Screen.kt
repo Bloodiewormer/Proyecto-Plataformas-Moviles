@@ -28,7 +28,13 @@ sealed class Screen(val route: String) {
             if (photoPath != null) "capture_review?photoPath=${java.net.URLEncoder.encode(photoPath, "UTF-8")}"
             else "capture_review"
     }
-    data object CaptureProcessing : Screen("capture_processing")
+    // La foto viaja hasta acá porque el pipeline local (N0 → segmentación → N1 → clasificador)
+    // corre en esta pantalla; sin ruta de archivo solo se puede mostrar el recorrido genérico.
+    data object CaptureProcessing : Screen("capture_processing?photoPath={photoPath}") {
+        fun createRoute(photoPath: String? = null) =
+            if (photoPath != null) "capture_processing?photoPath=${java.net.URLEncoder.encode(photoPath, "UTF-8")}"
+            else "capture_processing"
+    }
 
     // E — Apuntes
     data object NoteList : Screen("notes/{courseId}") {

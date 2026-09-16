@@ -350,12 +350,20 @@ fun GlifoNavHost(
                 photoPath = photoPath,
                 onNavigateBack = { navController.popBackStack() },
                 onRetakePhoto = { navController.popBackStack() },
-                onProcessAnyway = { navController.navigate(Screen.CaptureProcessing.route) }
+                onProcessAnyway = { navController.navigate(Screen.CaptureProcessing.createRoute(photoPath)) }
             )
         }
 
-        composable(Screen.CaptureProcessing.route) {
+        composable(
+            route = Screen.CaptureProcessing.route,
+            arguments = listOf(navArgument("photoPath") {
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
+            })
+        ) { backStackEntry ->
             CaptureProcessingScreen(
+                photoPath = backStackEntry.arguments?.getString("photoPath"),
                 onNavigateBack = { navController.popBackStack() },
                 onViewResults = {
                     navController.navigate(Screen.NoteDetail.createRoute(1L)) {
