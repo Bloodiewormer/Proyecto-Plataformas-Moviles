@@ -89,7 +89,7 @@ class JpaRepositoryAndEntityIntegrationTest {
             code = "EIF411"
             name = "Diseño y Programación de Plataformas Móviles"
             term = "II-2026"
-            joinCode = "UNA-EIF411-2026"
+            joinCode = "UNA-EIF411"
         }
 
         val savedCourse = courseRepository.save(course)
@@ -132,7 +132,7 @@ class JpaRepositoryAndEntityIntegrationTest {
             code = "MAT101"
             name = "Cálculo I"
             term = "II-2026"
-            joinCode = "MAT-101-TEST"
+            joinCode = "MAT101-TST"
         })
 
         val enrollment = Enrollment().apply {
@@ -157,7 +157,7 @@ class JpaRepositoryAndEntityIntegrationTest {
             code = "EIF411"
             name = "Móviles"
             term = "II-2026"
-            joinCode = "TEST-NOTE-JOIN"
+            joinCode = "TST-NOTE"
         })
 
         val note = Note().apply {
@@ -165,7 +165,7 @@ class JpaRepositoryAndEntityIntegrationTest {
             this.course = course
             this.title = "Apuntes Sesión 5 - Persistencia"
             this.classDate = LocalDate.now()
-            this.status = "PROCESSED"
+            this.status = "READY"
         }
 
         val page1 = NotePage().apply {
@@ -220,7 +220,7 @@ class JpaRepositoryAndEntityIntegrationTest {
             code = "EIF411-ORPHAN"
             name = "Móviles Orphan Test"
             term = "II-2026"
-            joinCode = "ORPHAN-JOIN"
+            joinCode = "TST-ORPHAN"
         })
 
         val note = Note().apply {

@@ -10,7 +10,7 @@ class Privilege {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0
 
-    @Column(nullable = false, unique = true, length = 50)
+    @Column(nullable = false, unique = true, length = 64)
     var name: String = ""
 
     @Column(length = 255)
