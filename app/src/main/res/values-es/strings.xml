@@ -239,6 +239,7 @@
     <string name="notes_empty_no_notes">Todavía no tenés apuntes.</string>
     <string name="notes_pending_captures">%1$d capturas en cola</string>
     <string name="notes_empty_no_match">Ningún apunte coincide con esa búsqueda.</string>
+    <string name="notes_empty_course">Este curso todavía no tiene apuntes. Captura una página con la cámara.</string>
     <string name="notes_date_page_count">%1$s · %2$d páginas</string>
 
     <!-- NoteDetailScreen -->

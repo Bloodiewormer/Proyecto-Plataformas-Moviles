@@ -340,7 +340,9 @@ fun GlifoNavHost(
             route = Screen.NoteList.route,
             arguments = listOf(navArgument("courseId") { type = NavType.LongType })
         ) { backStackEntry ->
-            val courseId = backStackEntry.arguments?.getLong("courseId") ?: 1L
+            // Notas, cobertura y estudio siguen al curso activo: si se cambia de curso estando aquí,
+            // la pantalla pasa al nuevo en vez de quedarse con el de la ruta.
+            val courseId = activeCourseId ?: backStackEntry.arguments?.getLong("courseId") ?: return@composable
             NotesScreen(
                 courseId = courseId,
                 onNavigateBackOrMenu = { navController.popBackStack() },
@@ -415,7 +417,9 @@ fun GlifoNavHost(
             route = Screen.Coverage.route,
             arguments = listOf(navArgument("courseId") { type = NavType.LongType })
         ) { backStackEntry ->
-            val courseId = backStackEntry.arguments?.getLong("courseId") ?: 1L
+            // Notas, cobertura y estudio siguen al curso activo: si se cambia de curso estando aquí,
+            // la pantalla pasa al nuevo en vez de quedarse con el de la ruta.
+            val courseId = activeCourseId ?: backStackEntry.arguments?.getLong("courseId") ?: return@composable
             CoverageScreen(
                 courseId = courseId,
                 onNavigateBackOrMenu = { navController.popBackStack() },
@@ -458,7 +462,9 @@ fun GlifoNavHost(
             route = Screen.StudyHub.route,
             arguments = listOf(navArgument("courseId") { type = NavType.LongType })
         ) { backStackEntry ->
-            val courseId = backStackEntry.arguments?.getLong("courseId") ?: 1L
+            // Notas, cobertura y estudio siguen al curso activo: si se cambia de curso estando aquí,
+            // la pantalla pasa al nuevo en vez de quedarse con el de la ruta.
+            val courseId = activeCourseId ?: backStackEntry.arguments?.getLong("courseId") ?: return@composable
             StudyScreen(
                 courseId = courseId,
                 onNavigateBackOrMenu = { navController.popBackStack() },
