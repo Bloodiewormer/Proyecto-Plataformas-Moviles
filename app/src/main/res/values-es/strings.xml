@@ -518,4 +518,13 @@
     <string name="sync_queue_retry_failed">Reintentar fallidas</string>
     <string name="sync_queue_attempts">%1$d intento(s) · %2$s</string>
     <string name="sync_queue_result">%1$d subidas · %2$d pendientes</string>
+    <!-- Selector del curso activo -->
+    <string name="course_switcher_title">Cambiar curso</string>
+    <string name="course_switcher_hint">El curso activo es el que usan Inicio, Apuntes, Cobertura, Estudio y la cámara.</string>
+    <string name="course_switcher_code">%1$s · código %2$s</string>
+    <string name="course_switcher_active">Curso activo</string>
+    <string name="course_switcher_empty">Todavía no tienes cursos.</string>
+    <string name="course_switcher_join">Unirme a un curso</string>
+    <string name="course_switcher_create">Crear un curso</string>
+    <string name="drawer_no_active_course">Ningún curso elegido</string>
 </resources>

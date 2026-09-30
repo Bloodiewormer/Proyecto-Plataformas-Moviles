@@ -42,6 +42,7 @@ class CourseDetailViewModel @Inject constructor(
                 return@launch
             }
             val courseResult = courseRepository.getCourseDetail(courseId)
+            (courseResult as? Result.Success)?.value?.let { activeCourseStore.set(it.id, it.name) }
             _state.value = UiState.Success(
                 CourseDetailUiData(course = (courseResult as? Result.Success)?.value, stats = stats)
             )

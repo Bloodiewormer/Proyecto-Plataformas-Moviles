@@ -15,6 +15,8 @@ sealed class Screen(val route: String) {
     // C — Cursos Estudiante
     data object Courses : Screen("courses")
     data object JoinCourse : Screen("join_course")
+    // Selector del curso activo ("Cambiar" en el menú, o el título del inicio)
+    data object CourseSwitcher : Screen("course_switcher")
     data object CourseDetail : Screen("course/{courseId}") {
         fun createRoute(courseId: Long) = "course/$courseId"
     }

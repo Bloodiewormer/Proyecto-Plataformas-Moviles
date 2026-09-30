@@ -15,6 +15,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -41,7 +43,11 @@ class HomeViewModel @Inject constructor(
     private val _state = MutableStateFlow<UiState<HomeUiData>>(UiState.Loading)
     val state: StateFlow<UiState<HomeUiData>> = _state.asStateFlow()
 
-    init { load() }
+    init {
+        // Se recarga sola cuando el usuario elige otro curso en el selector.
+        viewModelScope.launch { activeCourseStore.activeCourseId.drop(1).distinctUntilChanged().collect { load() } }
+        load()
+    }
 
     fun load() {
         viewModelScope.launch {
@@ -49,7 +55,7 @@ class HomeViewModel @Inject constructor(
             val pending = (syncRepository.getPendingCount() as? Result.Success)?.value ?: 0
 
             val courseId = activeCourseStore.activeCourseId.value ?: when (val courses = courseRepository.getStudentCourses()) {
-                is Result.Success -> courses.value.firstOrNull()?.id?.also(activeCourseStore::set)
+                is Result.Success -> courses.value.firstOrNull()?.also { activeCourseStore.set(it.id, it.name) }?.id
                 is Result.Failure -> {
                     // Sin red y sin curso guardado todavía no hay nada que mostrar del curso,
                     // pero la cola offline sí es real.
@@ -65,7 +71,8 @@ class HomeViewModel @Inject constructor(
 
             _state.value = UiState.Success(
                 HomeUiData(
-                    course = (courseRepository.getCourseDetail(courseId) as? Result.Success)?.value,
+                    course = (courseRepository.getCourseDetail(courseId) as? Result.Success)?.value
+                        ?.also { activeCourseStore.set(it.id, it.name) },
                     stats = (courseRepository.getCourseStats(courseId) as? Result.Success)?.value,
                     recentNotes = (noteRepository.getNoteMetaList(courseId) as? Result.Success)?.value.orEmpty().take(2),
                     pendingSyncCount = pending
