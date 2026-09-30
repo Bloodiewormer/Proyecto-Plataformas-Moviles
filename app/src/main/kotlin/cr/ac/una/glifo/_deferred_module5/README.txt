@@ -1,3 +1,8 @@
+UPDATE (D-28, Lab 4): Room is active again in `data/datasource/local/` with the two tables
+the offline pipeline needs: `local_course_context` (#27) and `processed_pages` (#28), wired
+by `data/di/DatabaseModule.kt`. What is left in this folder (notes, outbox, users) is still
+deferred; move it into `data/datasource/local/` when that work is resumed.
+
 Per D-24 (Glifo_Bitacora_Decisiones.md) and Glifo_Arquitectura_Estandares.md §2:
 
   "No `data/local/` package or DAO exists in the Android code until [Module 5 /

@@ -3,6 +3,7 @@ package cr.ac.una.glifo.data.datasource.remote
 import cr.ac.una.glifo.data.dto.ApiResponse
 import cr.ac.una.glifo.data.dto.AuthResponse
 import cr.ac.una.glifo.data.dto.CourseDetailResponse
+import cr.ac.una.glifo.data.dto.CourseGlossaryResponse
 import cr.ac.una.glifo.data.dto.CourseResponse
 import cr.ac.una.glifo.data.dto.CreateCourseRequest
 import cr.ac.una.glifo.data.dto.CreateNoteRequest
@@ -56,6 +57,10 @@ interface GlifoApi {
 
     @POST("enrollments")
     suspend fun joinCourse(@Body request: JoinCourseRequest): ApiResponse<EnrollmentResponse>
+
+    // Glosario + versiones para el contexto offline del pipeline (D-17, issue #27)
+    @GET("courses/{id}/glossary")
+    suspend fun getCourseGlossary(@Path("id") courseId: Long): ApiResponse<CourseGlossaryResponse>
 
     // Notes
     @GET("notes")

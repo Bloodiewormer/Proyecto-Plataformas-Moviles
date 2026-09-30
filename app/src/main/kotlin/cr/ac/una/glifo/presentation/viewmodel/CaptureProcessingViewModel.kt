@@ -32,6 +32,7 @@ class CaptureProcessingViewModel @Inject constructor(
     val state: StateFlow<UiState<CaptureProcessingUiData>> = _state.asStateFlow()
 
     private var loadedFor: String? = null
+    private var loadedCourse: Long? = null
     private var hasLoaded = false
 
     /**
@@ -39,9 +40,10 @@ class CaptureProcessingViewModel @Inject constructor(
      * foto con exito, porque N0+N1 sobre una pagina completa cuesta segundos y la pantalla
      * se recompone varias veces.
      */
-    fun load(photoPath: String?) {
-        if (hasLoaded && loadedFor == photoPath && _state.value is UiState.Success) return
+    fun load(photoPath: String?, courseId: Long? = null) {
+        if (hasLoaded && loadedFor == photoPath && loadedCourse == courseId && _state.value is UiState.Success) return
         loadedFor = photoPath
+        loadedCourse = courseId
         hasLoaded = true
 
         viewModelScope.launch {
@@ -49,9 +51,9 @@ class CaptureProcessingViewModel @Inject constructor(
 
             // El analisis se pide primero para que el repositorio lo cachee y los pasos se
             // deriven de ese mismo resultado en lugar de volver a procesar la imagen.
-            val analysis = photoPath?.let { captureRepository.analyzePage(it) }
+            val analysis = photoPath?.let { captureRepository.analyzePage(it, courseId) }
 
-            when (val steps = captureRepository.getProcessingSteps(photoPath)) {
+            when (val steps = captureRepository.getProcessingSteps(photoPath, courseId)) {
                 is Result.Success -> _state.value = UiState.Success(
                     CaptureProcessingUiData(
                         steps = steps.value,
@@ -63,5 +65,5 @@ class CaptureProcessingViewModel @Inject constructor(
         }
     }
 
-    fun retry() = load(loadedFor)
+    fun retry() = load(loadedFor, loadedCourse)
 }

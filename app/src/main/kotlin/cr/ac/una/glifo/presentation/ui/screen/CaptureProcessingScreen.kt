@@ -42,6 +42,7 @@ import kotlin.math.roundToInt
 @Composable
 fun CaptureProcessingScreen(
     photoPath: String? = null,
+    courseId: Long? = null,
     onNavigateBack: () -> Unit,
     onViewResults: () -> Unit,
     viewModel: CaptureProcessingViewModel = hiltViewModel()
@@ -50,7 +51,7 @@ fun CaptureProcessingScreen(
     val context = LocalContext.current
     val uiState by viewModel.state.collectAsState()
 
-    LaunchedEffect(photoPath) { viewModel.load(photoPath) }
+    LaunchedEffect(photoPath, courseId) { viewModel.load(photoPath, courseId) }
 
     Column(
         modifier = Modifier
@@ -225,8 +226,9 @@ fun CaptureProcessingScreen(
                     }
 
                     // Real output of the local pipeline: what each fragment turned out to be
-                    // and where the router sent it.
-                    if (analysis != null && analysis.regions.isNotEmpty() && revealedCount >= 3) {
+                    // and where the router sent it. Shown once the classifier step (4th, after
+                    // dedup, N0 and N1) has been revealed.
+                    if (analysis != null && analysis.regions.isNotEmpty() && revealedCount >= 4) {
                         RegionRoutingSection(analysis)
                     }
 

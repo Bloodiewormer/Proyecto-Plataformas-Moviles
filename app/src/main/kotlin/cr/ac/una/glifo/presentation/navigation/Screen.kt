@@ -23,17 +23,17 @@ sealed class Screen(val route: String) {
     data object Capture : Screen("capture/{courseId}") {
         fun createRoute(courseId: Long = 1L) = "capture/$courseId"
     }
-    data object CaptureReview : Screen("capture_review?photoPath={photoPath}") {
-        fun createRoute(photoPath: String? = null) =
-            if (photoPath != null) "capture_review?photoPath=${java.net.URLEncoder.encode(photoPath, "UTF-8")}"
-            else "capture_review"
+    // El curso acompaña a la foto: el pipeline lo necesita para leer el glosario de Room (#27)
+    // y para comparar contra las páginas ya procesadas de ese curso (#28).
+    data object CaptureReview : Screen("capture_review?photoPath={photoPath}&courseId={courseId}") {
+        fun createRoute(photoPath: String? = null, courseId: Long? = null) =
+            "capture_review" + captureQuery(photoPath, courseId)
     }
     // La foto viaja hasta acá porque el pipeline local (N0 → segmentación → N1 → clasificador)
     // corre en esta pantalla; sin ruta de archivo solo se puede mostrar el recorrido genérico.
-    data object CaptureProcessing : Screen("capture_processing?photoPath={photoPath}") {
-        fun createRoute(photoPath: String? = null) =
-            if (photoPath != null) "capture_processing?photoPath=${java.net.URLEncoder.encode(photoPath, "UTF-8")}"
-            else "capture_processing"
+    data object CaptureProcessing : Screen("capture_processing?photoPath={photoPath}&courseId={courseId}") {
+        fun createRoute(photoPath: String? = null, courseId: Long? = null) =
+            "capture_processing" + captureQuery(photoPath, courseId)
     }
 
     // E — Apuntes
@@ -92,4 +92,13 @@ sealed class Screen(val route: String) {
     // K — Perfil y Ajustes
     data object Settings : Screen("settings")
     data object Profile : Screen("profile")
+}
+
+/** Query de las rutas de captura; los argumentos ausentes se omiten y toman su valor por defecto. */
+private fun captureQuery(photoPath: String?, courseId: Long?): String {
+    val params = listOfNotNull(
+        photoPath?.let { "photoPath=${java.net.URLEncoder.encode(it, "UTF-8")}" },
+        courseId?.let { "courseId=$it" }
+    )
+    return if (params.isEmpty()) "" else params.joinToString("&", prefix = "?")
 }

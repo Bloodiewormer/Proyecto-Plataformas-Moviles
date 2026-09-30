@@ -53,6 +53,14 @@ data class RecognizedRegion(
     val metrics: RegionInkMetrics
 )
 
+/** De qué página ya procesada salió un análisis reutilizado, y qué tan parecidas eran. */
+data class PageReuse(
+    val perceptualHash: String,
+    /** Bits distintos entre los dos hashes (de 64). */
+    val hammingDistance: Int,
+    val processedAt: Long
+)
+
 /** Salida completa del pipeline local para una captura. */
 data class PageAnalysis(
     val regions: List<RecognizedRegion>,
@@ -61,7 +69,9 @@ data class PageAnalysis(
     /** Milisegundos que tardó N1 (solo el OCR, para poder mostrarlo en la UI). */
     val ocrMillis: Long,
     /** Milisegundos del pipeline completo (N0 + segmentación + N1 + clasificador). */
-    val totalMillis: Long
+    val totalMillis: Long,
+    /** No es null cuando el resultado se reutilizó de una página ya procesada (issue #28). */
+    val reusedFrom: PageReuse? = null
 ) {
     val regionCount: Int get() = regions.size
     val textCount: Int get() = regions.count { it.kind == RegionKind.Text }
