@@ -4,6 +4,7 @@ import cr.ac.una.glifo.course.entity.Course
 import cr.ac.una.glifo.course.entity.SyllabusTopic
 import cr.ac.una.glifo.user.entity.User
 import jakarta.persistence.*
+import org.hibernate.Hibernate
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import java.time.Instant
@@ -59,7 +60,13 @@ class Note {
         pages.remove(page)
     }
 
-    override fun equals(other: Any?): Boolean = other is Note && id != 0L && id == other.id
-    override fun hashCode(): Int = id.hashCode()
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
+        other as Note
+        return id != 0L && id == other.id
+    }
+
+    override fun hashCode(): Int = Hibernate.getClass(this).hashCode()
     override fun toString(): String = "Note(id=$id, title='$title', status='$status', classDate=$classDate)"
 }

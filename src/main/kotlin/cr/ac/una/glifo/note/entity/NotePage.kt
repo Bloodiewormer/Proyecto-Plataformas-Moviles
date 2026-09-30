@@ -1,6 +1,7 @@
 package cr.ac.una.glifo.note.entity
 
 import jakarta.persistence.*
+import org.hibernate.Hibernate
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import java.time.Instant
@@ -42,7 +43,13 @@ class NotePage {
     @Column(name = "processed_at")
     var processedAt: Instant? = null
 
-    override fun equals(other: Any?): Boolean = other is NotePage && id != 0L && id == other.id
-    override fun hashCode(): Int = id.hashCode()
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
+        other as NotePage
+        return id != 0L && id == other.id
+    }
+
+    override fun hashCode(): Int = Hibernate.getClass(this).hashCode()
     override fun toString(): String = "NotePage(id=$id, pageIndex=$pageIndex, perceptualHash='$perceptualHash', storageUri='$storageUri', levelReached='$levelReached', overallConfidence=$overallConfidence)"
 }

@@ -2,6 +2,7 @@ package cr.ac.una.glifo.study.entity
 
 import cr.ac.una.glifo.user.entity.User
 import jakarta.persistence.*
+import org.hibernate.Hibernate
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import java.time.Instant
@@ -31,7 +32,13 @@ class Attempt {
     @Column(name = "answered_at", nullable = false)
     var answeredAt: Instant = Instant.now()
 
-    override fun equals(other: Any?): Boolean = other is Attempt && id != 0L && id == other.id
-    override fun hashCode(): Int = id.hashCode()
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
+        other as Attempt
+        return id != 0L && id == other.id
+    }
+
+    override fun hashCode(): Int = Hibernate.getClass(this).hashCode()
     override fun toString(): String = "Attempt(id=$id, isCorrect=$isCorrect, answeredAt=$answeredAt)"
 }

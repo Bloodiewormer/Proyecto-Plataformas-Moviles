@@ -1,6 +1,7 @@
 package cr.ac.una.glifo.user.entity
 
 import jakarta.persistence.*
+import org.hibernate.Hibernate
 import java.time.Instant
 
 @Entity
@@ -42,7 +43,13 @@ class User {
     )
     var roles: MutableSet<Role> = mutableSetOf()
     
-    override fun equals(other: Any?): Boolean = other is User && id != 0L && id == other.id
-    override fun hashCode(): Int = id.hashCode()
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
+        other as User
+        return id != 0L && id == other.id
+    }
+
+    override fun hashCode(): Int = Hibernate.getClass(this).hashCode()
     override fun toString(): String = "User(id=$id, email='$email', firstName=$firstName, lastName=$lastName, isActive=$isActive)"
 }

@@ -3,6 +3,7 @@ package cr.ac.una.glifo.study.entity
 import cr.ac.una.glifo.course.entity.Course
 import cr.ac.una.glifo.course.entity.SyllabusTopic
 import jakarta.persistence.*
+import org.hibernate.Hibernate
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import java.time.Instant
@@ -32,7 +33,13 @@ class StudyItem {
     @Column(name = "created_at", nullable = false, updatable = false)
     var createdAt: Instant = Instant.now()
 
-    override fun equals(other: Any?): Boolean = other is StudyItem && id != 0L && id == other.id
-    override fun hashCode(): Int = id.hashCode()
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
+        other as StudyItem
+        return id != 0L && id == other.id
+    }
+
+    override fun hashCode(): Int = Hibernate.getClass(this).hashCode()
     override fun toString(): String = "StudyItem(id=$id, kind='$kind', createdAt=$createdAt)"
 }

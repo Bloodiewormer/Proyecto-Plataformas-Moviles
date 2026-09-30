@@ -2,6 +2,7 @@ package cr.ac.una.glifo.study.entity
 
 import cr.ac.una.glifo.user.entity.User
 import jakarta.persistence.*
+import org.hibernate.Hibernate
 import java.time.Instant
 
 @Entity
@@ -28,7 +29,13 @@ class ReviewSchedule {
     @Column(nullable = false)
     var ease: Float = 2.5f
 
-    override fun equals(other: Any?): Boolean = other is ReviewSchedule && id != 0L && id == other.id
-    override fun hashCode(): Int = id.hashCode()
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
+        other as ReviewSchedule
+        return id != 0L && id == other.id
+    }
+
+    override fun hashCode(): Int = Hibernate.getClass(this).hashCode()
     override fun toString(): String = "ReviewSchedule(id=$id, dueAt=$dueAt, intervalDays=$intervalDays, ease=$ease)"
 }

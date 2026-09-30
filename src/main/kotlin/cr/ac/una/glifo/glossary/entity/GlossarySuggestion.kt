@@ -4,6 +4,7 @@ import cr.ac.una.glifo.course.entity.Course
 import cr.ac.una.glifo.note.entity.Note
 import cr.ac.una.glifo.user.entity.User
 import jakarta.persistence.*
+import org.hibernate.Hibernate
 import java.time.Instant
 
 @Entity
@@ -40,7 +41,13 @@ class GlossarySuggestion {
     @Column(name = "resolved_at")
     var resolvedAt: Instant? = null
 
-    override fun equals(other: Any?): Boolean = other is GlossarySuggestion && id != 0L && id == other.id
-    override fun hashCode(): Int = id.hashCode()
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
+        other as GlossarySuggestion
+        return id != 0L && id == other.id
+    }
+
+    override fun hashCode(): Int = Hibernate.getClass(this).hashCode()
     override fun toString(): String = "GlossarySuggestion(id=$id, originalText='$originalText', suggestedCorrection='$suggestedCorrection', status='$status')"
 }

@@ -1,6 +1,7 @@
 package cr.ac.una.glifo.course.entity
 
 import jakarta.persistence.*
+import org.hibernate.Hibernate
 
 @Entity
 @Table(name = "syllabus_topics")
@@ -26,7 +27,13 @@ class SyllabusTopic {
     @Column(name = "order_index", nullable = false)
     var orderIndex: Int = 0
     
-    override fun equals(other: Any?): Boolean = other is SyllabusTopic && id != 0L && id == other.id
-    override fun hashCode(): Int = id.hashCode()
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
+        other as SyllabusTopic
+        return id != 0L && id == other.id
+    }
+
+    override fun hashCode(): Int = Hibernate.getClass(this).hashCode()
     override fun toString(): String = "SyllabusTopic(id=$id, code='$code', title='$title', orderIndex=$orderIndex)"
 }

@@ -3,6 +3,7 @@ package cr.ac.una.glifo.ops.entity
 import cr.ac.una.glifo.course.entity.Course
 import cr.ac.una.glifo.user.entity.User
 import jakarta.persistence.*
+import org.hibernate.Hibernate
 import java.math.BigDecimal
 import java.time.Instant
 
@@ -42,7 +43,13 @@ class AiCall {
     @Column(name = "created_at", nullable = false, updatable = false)
     var createdAt: Instant = Instant.now()
 
-    override fun equals(other: Any?): Boolean = other is AiCall && id != 0L && id == other.id
-    override fun hashCode(): Int = id.hashCode()
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
+        other as AiCall
+        return id != 0L && id == other.id
+    }
+
+    override fun hashCode(): Int = Hibernate.getClass(this).hashCode()
     override fun toString(): String = "AiCall(id=$id, callType='$callType', level='$level', latencyMs=$latencyMs)"
 }

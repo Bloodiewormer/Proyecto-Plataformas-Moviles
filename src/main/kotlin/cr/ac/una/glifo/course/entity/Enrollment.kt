@@ -2,6 +2,7 @@ package cr.ac.una.glifo.course.entity
 
 import cr.ac.una.glifo.user.entity.User
 import jakarta.persistence.*
+import org.hibernate.Hibernate
 import java.time.Instant
 
 @Entity
@@ -25,7 +26,13 @@ class Enrollment {
     @Column(name = "joined_at", nullable = false, updatable = false)
     var joinedAt: Instant = Instant.now()
     
-    override fun equals(other: Any?): Boolean = other is Enrollment && id != 0L && id == other.id
-    override fun hashCode(): Int = id.hashCode()
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
+        other as Enrollment
+        return id != 0L && id == other.id
+    }
+
+    override fun hashCode(): Int = Hibernate.getClass(this).hashCode()
     override fun toString(): String = "Enrollment(id=$id, status='$status', joinedAt=$joinedAt)"
 }
