@@ -13,6 +13,7 @@ import cr.ac.una.glifo.note.repository.NoteRepository
 import cr.ac.una.glifo.user.entity.User
 import cr.ac.una.glifo.user.repository.RoleRepository
 import cr.ac.una.glifo.user.repository.UserRepository
+import jakarta.persistence.EntityManager
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -25,6 +26,9 @@ import java.time.LocalDate
 @ActiveProfiles("test")
 @Transactional
 class JpaRepositoryAndEntityIntegrationTest {
+
+    @Autowired
+    private lateinit var entityManager: EntityManager
 
     @Autowired
     private lateinit var userRepository: UserRepository
@@ -204,5 +208,72 @@ class JpaRepositoryAndEntityIntegrationTest {
             assertTrue(noteString.contains("Apuntes Sesión 5"))
             assertTrue(pageString.contains("a1b2c3d4e5f60718"))
         }
+    }
+
+    @Test
+    fun `debe eliminar pagina huerfana de la base de datos al removerla de Note por orphanRemoval`() {
+        val student = userRepository.findByEmail("estudiante@est.una.ac.cr")
+            ?: userRepository.findAll().first()
+
+        val course = courseRepository.save(Course().apply {
+            owner = student
+            code = "EIF411-ORPHAN"
+            name = "Móviles Orphan Test"
+            term = "II-2026"
+            joinCode = "ORPHAN-JOIN"
+        })
+
+        val note = Note().apply {
+            this.user = student
+            this.course = course
+            this.title = "Nota para prueba de orphanRemoval"
+            this.classDate = LocalDate.now()
+            this.status = "DRAFT"
+        }
+
+        val page1 = NotePage().apply {
+            this.pageIndex = 0
+            this.perceptualHash = "1111222233334444"
+            this.storageUri = "file:///storage/notes/p1.jpg"
+            this.levelReached = "N0"
+            this.overallConfidence = 0.9f
+        }
+
+        val page2 = NotePage().apply {
+            this.pageIndex = 1
+            this.perceptualHash = "5555666677778888"
+            this.storageUri = "file:///storage/notes/p2.jpg"
+            this.levelReached = "N1"
+            this.overallConfidence = 0.85f
+        }
+
+        note.addPage(page1)
+        note.addPage(page2)
+
+        val savedNote = noteRepository.save(note)
+        entityManager.flush()
+        entityManager.clear()
+
+        // 1. Verificar que inicialmente se persistieron 2 páginas
+        assertEquals(2L, notePageRepository.countByNoteId(savedNote.id))
+
+        // 2. Volver a cargar la nota desde el repositorio
+        val loadedNote = noteRepository.findById(savedNote.id).orElseThrow()
+        assertEquals(2, loadedNote.pages.size)
+
+        // 3. Remover la primera página de la colección
+        val pageToRemove = loadedNote.pages.first()
+        loadedNote.removePage(pageToRemove)
+
+        // 4. Guardar, flush() y clear() del EntityManager
+        noteRepository.save(loadedNote)
+        entityManager.flush()
+        entityManager.clear()
+
+        // 5. Verificar que en BD queda exactamente 1 página para esa nota
+        assertEquals(1L, notePageRepository.countByNoteId(savedNote.id))
+        val remainingPages = notePageRepository.findByNoteIdOrderByPageIndex(savedNote.id)
+        assertEquals(1, remainingPages.size)
+        assertEquals("5555666677778888", remainingPages.first().perceptualHash)
     }
 }
