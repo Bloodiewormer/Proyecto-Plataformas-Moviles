@@ -135,7 +135,12 @@ fun NotesScreen(
                         }
 
                         if (notes.isEmpty()) {
-                            GlifoBanner(text = stringResource(R.string.notes_empty_no_match))
+                            // Sin búsqueda, la lista vacía es que el curso todavía no tiene apuntes.
+                            GlifoBanner(
+                                text = stringResource(
+                                    if (query.isBlank()) R.string.notes_empty_course else R.string.notes_empty_no_match
+                                )
+                            )
                         }
 
                         Column(

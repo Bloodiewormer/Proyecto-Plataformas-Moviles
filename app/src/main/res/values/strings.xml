@@ -239,6 +239,7 @@
     <string name="notes_empty_no_notes">You don\'t have any notes yet.</string>
     <string name="notes_pending_captures">%1$d captures queued</string>
     <string name="notes_empty_no_match">No note matches that search.</string>
+    <string name="notes_empty_course">This course has no notes yet. Capture a page with the camera.</string>
     <string name="notes_date_page_count">%1$s · %2$d pages</string>
 
     <!-- NoteDetailScreen -->
