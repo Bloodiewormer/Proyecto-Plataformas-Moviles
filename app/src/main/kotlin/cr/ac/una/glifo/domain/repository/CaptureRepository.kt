@@ -12,9 +12,12 @@ interface CaptureRepository {
     /**
      * Corre el tramo local del pipeline sobre la foto: N0, segmentacion, N1 (OCR con ML Kit)
      * y el clasificador que enruta cada region. Sin foto no hay nada que analizar.
+     *
+     * Con [courseId], el scorer usa el glosario del curso guardado en Room (#27) y, si la
+     * pagina ya se habia procesado para ese curso, se reutiliza ese resultado (#28).
      */
-    suspend fun analyzePage(photoPath: String?): Result<PageAnalysis>
+    suspend fun analyzePage(photoPath: String?, courseId: Long? = null): Result<PageAnalysis>
 
     /** Linea de tiempo del procesamiento, derivada del analisis real cuando hay foto. */
-    suspend fun getProcessingSteps(photoPath: String? = null): Result<List<CaptureStep>>
+    suspend fun getProcessingSteps(photoPath: String? = null, courseId: Long? = null): Result<List<CaptureStep>>
 }

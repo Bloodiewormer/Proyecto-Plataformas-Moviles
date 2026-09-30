@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -269,38 +270,32 @@ fun GlifoNavHost(
                 courseId = courseId,
                 onNavigateBack = { navController.popBackStack() },
                 onCapturePhoto = { photoPath ->
-                    navController.navigate(Screen.CaptureReview.createRoute(photoPath))
+                    navController.navigate(Screen.CaptureReview.createRoute(photoPath, courseId))
                 }
             )
         }
 
         composable(
             route = Screen.CaptureReview.route,
-            arguments = listOf(navArgument("photoPath") {
-                type = NavType.StringType
-                nullable = true
-                defaultValue = null
-            })
+            arguments = captureArguments()
         ) { backStackEntry ->
             val photoPath = backStackEntry.arguments?.getString("photoPath")
+            val courseId = backStackEntry.captureCourseId()
             CaptureReviewScreen(
                 photoPath = photoPath,
                 onNavigateBack = { navController.popBackStack() },
                 onRetakePhoto = { navController.popBackStack() },
-                onProcessAnyway = { navController.navigate(Screen.CaptureProcessing.createRoute(photoPath)) }
+                onProcessAnyway = { navController.navigate(Screen.CaptureProcessing.createRoute(photoPath, courseId)) }
             )
         }
 
         composable(
             route = Screen.CaptureProcessing.route,
-            arguments = listOf(navArgument("photoPath") {
-                type = NavType.StringType
-                nullable = true
-                defaultValue = null
-            })
+            arguments = captureArguments()
         ) { backStackEntry ->
             CaptureProcessingScreen(
                 photoPath = backStackEntry.arguments?.getString("photoPath"),
+                courseId = backStackEntry.captureCourseId(),
                 onNavigateBack = { navController.popBackStack() },
                 onViewResults = {
                     navController.navigate(Screen.NoteDetail.createRoute(1L)) {
@@ -660,3 +655,22 @@ fun GlifoNavHost(
         }
     }
 }
+
+/** Argumentos compartidos por las rutas de revision y procesamiento de una captura. */
+private fun captureArguments() = listOf(
+    navArgument("photoPath") {
+        type = NavType.StringType
+        nullable = true
+        defaultValue = null
+    },
+    // Navigation no admite Long nullable: -1 significa "captura sin curso".
+    navArgument("courseId") {
+        type = NavType.LongType
+        defaultValue = NO_COURSE
+    }
+)
+
+private const val NO_COURSE = -1L
+
+private fun NavBackStackEntry.captureCourseId(): Long? =
+    arguments?.getLong("courseId", NO_COURSE)?.takeIf { it != NO_COURSE }

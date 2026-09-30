@@ -592,6 +592,64 @@
       "responseMode": null,
       "streamingMode": null,
       "streamingInterval": 0
+    },
+    {
+      "uuid": "e107f3f0-ff8c-46ff-87b3-ec1244bab387",
+      "type": "http",
+      "documentation": "Glosario canónico del curso + versiones, para LocalCourseContext (D-17, issue #27)",
+      "method": "get",
+      "endpoint": "courses/:id/glossary",
+      "responses": [
+        {
+          "uuid": "ea812c18-b3a6-4ad8-bea1-c79bb9eaa130",
+          "body": "{ \"message\": \"Curso no encontrado\" }",
+          "latency": 0,
+          "statusCode": 404,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "params",
+              "modifier": "id",
+              "value": "999",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "62b166fa-7f75-4501-8ede-9b69f332f14a",
+          "body": "{\n  \"data\": {\n    \"course_id\": {{urlParam 'id'}},\n    \"course_name\": \"Cálculo I\",\n    \"syllabus_version\": 2,\n    \"glossary_version\": 3,\n    \"entries\": [\n      {\n        \"term\": \"Sumatoria\",\n        \"canonical_form\": \"\\\\sum_{n=1}^{\\\\infty}\",\n        \"kind\": \"SYMBOL\"\n      },\n      {\n        \"term\": \"Converge\",\n        \"canonical_form\": \"conv. · cnv · converg.\",\n        \"kind\": \"TERM\"\n      },\n      {\n        \"term\": \"Radio de convergencia\",\n        \"canonical_form\": \"R\",\n        \"kind\": \"TERM\"\n      },\n      {\n        \"term\": \"Integral impropia\",\n        \"canonical_form\": \"\\\\int_a^{\\\\infty}\",\n        \"kind\": \"SYMBOL\"\n      },\n      {\n        \"term\": \"Límite\",\n        \"canonical_form\": \"\\\\lim_{n \\\\to \\\\infty}\",\n        \"kind\": \"NOTATION\"\n      }\n    ]\n  }\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
     }
   ],
   "rootChildren": [
@@ -638,6 +696,10 @@
     {
       "type": "route",
       "uuid": "7b253172-3cad-48af-b36a-3164d50bcf8b"
+    },
+    {
+      "type": "route",
+      "uuid": "e107f3f0-ff8c-46ff-87b3-ec1244bab387"
     }
   ],
   "proxyMode": false,

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.domain.model.CourseDetail
+import cr.ac.una.glifo.domain.repository.CourseContextRepository
 import cr.ac.una.glifo.domain.repository.CourseRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,7 +16,8 @@ import javax.inject.Inject
 /** CaptureScreen only needs the course name/code for its top bar label. */
 @HiltViewModel
 class CaptureViewModel @Inject constructor(
-    private val courseRepository: CourseRepository
+    private val courseRepository: CourseRepository,
+    private val courseContextRepository: CourseContextRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<UiState<CourseDetail>>(UiState.Loading)
@@ -30,5 +32,8 @@ class CaptureViewModel @Inject constructor(
             _state.value = UiState.Loading
             _state.value = courseRepository.getCourseDetail(courseId).toUiState()
         }
+        // #27: mientras el estudiante encuadra la foto se actualiza el glosario del curso en
+        // Room. Si no hay red no pasa nada: el pipeline usa la última copia guardada.
+        viewModelScope.launch { courseContextRepository.refresh(courseId) }
     }
 }

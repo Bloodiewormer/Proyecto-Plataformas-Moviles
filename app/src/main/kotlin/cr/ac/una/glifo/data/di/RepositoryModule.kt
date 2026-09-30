@@ -4,6 +4,7 @@ import cr.ac.una.glifo.data.repository.AdminRepositoryImpl
 import cr.ac.una.glifo.data.repository.AiCostRepositoryImpl
 import cr.ac.una.glifo.data.repository.AuthRepositoryImpl
 import cr.ac.una.glifo.data.repository.CaptureRepositoryImpl
+import cr.ac.una.glifo.data.repository.CourseContextRepositoryImpl
 import cr.ac.una.glifo.data.repository.CourseRepositoryImpl
 import cr.ac.una.glifo.data.repository.CoverageRepositoryImpl
 import cr.ac.una.glifo.data.repository.NoteRepositoryImpl
@@ -15,6 +16,7 @@ import cr.ac.una.glifo.domain.repository.AdminRepository
 import cr.ac.una.glifo.domain.repository.AiCostRepository
 import cr.ac.una.glifo.domain.repository.AuthRepository
 import cr.ac.una.glifo.domain.repository.CaptureRepository
+import cr.ac.una.glifo.domain.repository.CourseContextRepository
 import cr.ac.una.glifo.domain.repository.CourseRepository
 import cr.ac.una.glifo.domain.repository.CoverageRepository
 import cr.ac.una.glifo.domain.repository.NoteRepository
@@ -48,6 +50,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindCourseRepository(impl: CourseRepositoryImpl): CourseRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindCourseContextRepository(impl: CourseContextRepositoryImpl): CourseContextRepository
 
     @Binds
     @Singleton
