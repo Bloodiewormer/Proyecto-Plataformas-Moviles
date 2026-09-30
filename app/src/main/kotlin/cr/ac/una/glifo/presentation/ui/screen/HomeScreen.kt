@@ -82,9 +82,9 @@ fun HomeScreen(
                     role = GlifoRole.Student,
                     currentScreen = "home",
                     activeCourseName = (uiState as? UiState.Success)?.data?.course?.name ?: stringResource(R.string.home_default_active_course),
-                    userName = user?.fullName ?: "Brandon Brenes",
-                    userEmail = user?.email ?: "estudiante@est.una.ac.cr",
-                    userInitials = user?.initials ?: "BB",
+                    userName = user?.fullName.orEmpty(),
+                    userEmail = user?.email.orEmpty(),
+                    userInitials = user?.initials.orEmpty(),
                     onNavigate = { route ->
                         scope.launch { drawerState.close() }
                         when (route) {
@@ -172,8 +172,8 @@ fun HomeScreen(
                                 .verticalScroll(rememberScrollState())
                                 .padding(14.dp)
                         ) {
-                            // Cobertura del curso Card
-                            GlifoStaggeredEntry(index = 0) {
+                            // Cobertura del curso Card (solo si el módulo de cobertura respondió)
+                            if (stats != null) GlifoStaggeredEntry(index = 0) {
                                 GlifoCard(onClick = onNavigateToCoverage) {
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
@@ -406,9 +406,9 @@ fun TeacherHomeScreen(
                     role = GlifoRole.Teacher,
                     currentScreen = "home_teacher",
                     activeCourseName = (uiState as? UiState.Success)?.data?.course?.code ?: stringResource(R.string.teacher_home_default_course_code),
-                    userName = user?.fullName ?: "Maikol Guzmán",
-                    userEmail = user?.email ?: "docente@una.ac.cr",
-                    userInitials = user?.initials ?: "MG",
+                    userName = user?.fullName.orEmpty(),
+                    userEmail = user?.email.orEmpty(),
+                    userInitials = user?.initials.orEmpty(),
                     onNavigate = { route ->
                         scope.launch { drawerState.close() }
                         when (route) {
@@ -608,9 +608,9 @@ fun AdminHomeScreen(
                 GlifoDrawerContent(
                     role = GlifoRole.Admin,
                     currentScreen = "home_admin",
-                    userName = user?.fullName ?: "Admin Glifo",
-                    userEmail = user?.email ?: "admin@una.ac.cr",
-                    userInitials = user?.initials ?: "AD",
+                    userName = user?.fullName.orEmpty(),
+                    userEmail = user?.email.orEmpty(),
+                    userInitials = user?.initials.orEmpty(),
                     onNavigate = { route ->
                         scope.launch { drawerState.close() }
                         when (route) {

@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import cr.ac.una.glifo.R
+import cr.ac.una.glifo.core.common.AppError
 import cr.ac.una.glifo.domain.error.Result
 import cr.ac.una.glifo.core.ui.component.GlifoButton
 import cr.ac.una.glifo.core.ui.component.GlifoField
@@ -88,11 +89,7 @@ fun RegisterScreen(
         if (!validateFieldsSync()) return
         isSubmitting = true
         coroutineScope.launch {
-            if (viewModel.emailExists(email)) {
-                isSubmitting = false
-                emailError = errorEmailExists
-                return@launch
-            }
+            // El servidor es quien sabe si el correo ya existe: responde 409 al registrar.
             when (val result = viewModel.register(fullName, email, password)) {
                 is Result.Success -> {
                     isSubmitting = false
@@ -100,7 +97,8 @@ fun RegisterScreen(
                 }
                 is Result.Failure -> {
                     isSubmitting = false
-                    emailError = result.error.toMessage(context)
+                    val error = result.error
+                    emailError = if (error is AppError.Server && error.code == "409") errorEmailExists else error.toMessage(context)
                 }
             }
         }

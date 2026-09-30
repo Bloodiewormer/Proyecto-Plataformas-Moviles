@@ -31,6 +31,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun NotesScreen(
+    courseId: Long,
     onNavigateBackOrMenu: () -> Unit,
     onNavigateToNoteDetail: (Long) -> Unit,
     onNavigateToCapture: () -> Unit,
@@ -47,6 +48,9 @@ fun NotesScreen(
     val context = LocalContext.current
     val user by sessionViewModel.currentUser.collectAsState()
     val uiState by viewModel.state.collectAsState()
+
+    // Se recarga al volver del detalle o de una captura nueva: la lista sale de Room.
+    LaunchedEffect(courseId) { viewModel.load(courseId) }
 
     var searchOpen by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf("") }
@@ -67,9 +71,9 @@ fun NotesScreen(
                 GlifoDrawerContent(
                     role = GlifoRole.Student,
                     currentScreen = "notes",
-                    userName = user?.fullName ?: "Brandon Brenes",
-                    userEmail = user?.email ?: "estudiante@est.una.ac.cr",
-                    userInitials = user?.initials ?: "BB",
+                    userName = user?.fullName.orEmpty(),
+                    userEmail = user?.email.orEmpty(),
+                    userInitials = user?.initials.orEmpty(),
                     onNavigate = { route ->
                         scope.launch { drawerState.close() }
                         onNavigateDrawer(route)

@@ -476,4 +476,46 @@
     <string name="admin_courses_title">Cursos</string>
     <string name="admin_courses_no_syllabus_badge">SIN TEMARIO</string>
     <string name="admin_courses_students_with_coverage">%1$d estudiantes · %2$d%% de cobertura</string>
+    <!-- Lab 4: apuntes reales (#25) y cola de sincronización (#26) -->
+    <string name="note_detail_page_label_local">%1$d página(s) procesada(s) en este teléfono · %2$d regiones</string>
+    <string name="note_detail_page_label_server">Reconstrucción del servidor</string>
+    <string name="note_detail_pending_sync">Pendiente de sincronizar</string>
+    <string name="note_detail_corrected_badge">Corregido por ti</string>
+    <string name="note_detail_formula_badge">FÓRMULA · N1.5 pendiente</string>
+    <string name="note_detail_formula_badge_resolved">FÓRMULA · N1.5</string>
+    <string name="note_detail_unreadable_fragment">[no se reconoció texto]</string>
+    <string name="note_detail_unavailable_title">Todavía no hay contenido en este teléfono</string>
+    <string name="note_detail_unavailable_description">Este apunte aún no tiene páginas procesadas ni reconstrucción del servidor.</string>
+    <plurals name="note_detail_fragments_to_review">
+        <item quantity="one">%1$d fragmento necesita tu revisión</item>
+        <item quantity="other">%1$d fragmentos necesitan tu revisión</item>
+    </plurals>
+    <string name="correct_fragment_input_label">TU CORRECCIÓN</string>
+    <string name="correct_fragment_nothing_title">No hay nada que corregir</string>
+    <string name="correct_fragment_nothing_description">Todos los fragmentos de este apunte superan el umbral de confianza.</string>
+    <string name="correct_fragment_no_suggestions">No hay términos parecidos en el glosario del curso guardado en este teléfono.</string>
+    <string name="correct_fragment_saved_locally">La corrección se guarda con el apunte y marca el fragmento como verificado.</string>
+    <string name="formula_viewer_ocr_read_section">LO QUE LEYÓ N1</string>
+    <string name="formula_viewer_latex_pending">La conversión a LaTeX (N1.5) todavía no se ejecutó para esta región. Mientras tanto puedes corregir el texto.</string>
+    <string name="formula_viewer_kind_confidence">Confianza de la clasificación</string>
+    <string name="formula_viewer_route">Ruta</string>
+    <string name="formula_viewer_none_title">No hay fórmulas en este apunte</string>
+    <string name="formula_viewer_none_description">El clasificador de regiones no envió ninguna región a OCR matemático.</string>
+    <string name="region_provenance_server_note">Este fragmento viene de la reconstrucción del servidor. Las señales por región solo existen para páginas procesadas en este teléfono.</string>
+    <string name="region_provenance_factor_ocr">Confianza del OCR (ML Kit)</string>
+    <string name="region_provenance_factor_kind">Clasificación del tipo de región</string>
+    <string name="region_provenance_factor_ink">Densidad de tinta</string>
+    <string name="region_provenance_step_n0">N0 · preprocesamiento (OpenCV)</string>
+    <string name="region_provenance_step_n1">N1 · OCR de texto (ML Kit)</string>
+    <string name="region_provenance_step_classifier">Clasificador · %1$s</string>
+    <string name="region_provenance_step_n15">N1.5 · OCR matemático</string>
+    <string name="region_provenance_step_n2">N2 · reparación por visión</string>
+    <string name="region_provenance_state_done">hecho</string>
+    <string name="region_provenance_state_pending">pendiente</string>
+    <string name="region_provenance_state_skipped">no hizo falta</string>
+    <string name="sync_queue_failed_badge">FALLÓ</string>
+    <string name="sync_queue_sync_now">Sincronizar ahora</string>
+    <string name="sync_queue_retry_failed">Reintentar fallidas</string>
+    <string name="sync_queue_attempts">%1$d intento(s) · %2$s</string>
+    <string name="sync_queue_result">%1$d subidas · %2$d pendientes</string>
 </resources>

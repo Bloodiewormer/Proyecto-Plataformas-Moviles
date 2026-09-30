@@ -1,12 +1,12 @@
 package cr.ac.una.glifo.data.repository
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import cr.ac.una.glifo.core.common.AppError
 import cr.ac.una.glifo.core.opencv.ImageQualityAnalyzer
 import cr.ac.una.glifo.core.pipeline.CapturePipeline
 import cr.ac.una.glifo.core.pipeline.PerceptualHasher
-import cr.ac.una.glifo.data.datasource.dummy.DummyCaptureProvider
 import cr.ac.una.glifo.domain.error.Result
 import cr.ac.una.glifo.domain.model.CaptureQualityCheck
 import cr.ac.una.glifo.domain.model.CaptureStep
@@ -14,18 +14,23 @@ import cr.ac.una.glifo.domain.model.LocalCourseContext
 import cr.ac.una.glifo.domain.model.PageAnalysis
 import cr.ac.una.glifo.domain.repository.CaptureRepository
 import cr.ac.una.glifo.domain.repository.CourseContextRepository
+import cr.ac.una.glifo.domain.repository.NoteRepository
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class CaptureRepositoryImpl @Inject constructor(
+    @ApplicationContext private val appContext: Context,
     private val courseContextRepository: CourseContextRepository,
-    private val pageDeduplicator: PageDeduplicator
+    private val pageDeduplicator: PageDeduplicator,
+    private val noteRepository: NoteRepository
 ) : CaptureRepository {
 
     // La pantalla de procesamiento pide el analisis y los pasos por separado, y volver a
@@ -35,13 +40,34 @@ class CaptureRepositoryImpl @Inject constructor(
     private var lastKey: Pair<String, Long?>? = null
     private var lastAnalysis: PageAnalysis? = null
     private var lastContext: LocalCourseContext? = null
+    private var lastHash: String? = null
+
+    override suspend fun saveAsNote(photoPath: String, courseId: Long): Result<Long> {
+        val analysis = when (val analyzed = analyzePage(photoPath, courseId)) {
+            is Result.Success -> analyzed.value
+            is Result.Failure -> return analyzed
+        }
+        val hash = lastHash
+            ?: return Result.Failure(AppError.Validation("photo", "No se pudo calcular la huella de la página."))
+
+        // La galería y la cámara dejan la foto en cacheDir, que el sistema puede vaciar; el
+        // apunte necesita la foto para mostrar el recorte original de cada región.
+        val storedPath = withContext(Dispatchers.IO) {
+            runCatching {
+                val dir = File(appContext.filesDir, "pages").apply { mkdirs() }
+                val target = File(dir, "${hash}_${System.currentTimeMillis()}.jpg")
+                File(photoPath).copyTo(target, overwrite = true).absolutePath
+            }.getOrDefault(photoPath)
+        }
+        return noteRepository.saveCapture(courseId, storedPath, hash, analysis)
+    }
 
     override suspend fun getQualityChecks(photoPath: String?): Result<List<CaptureQualityCheck>> {
         val bitmap = decode(photoPath)
         if (bitmap != null) {
             return Result.Success(ImageQualityAnalyzer.analyzeQuality(bitmap))
         }
-        return Result.Success(DummyCaptureProvider.getQualityChecks())
+        return noPhoto()
     }
 
     override suspend fun hasQualityWarning(photoPath: String?): Result<Boolean> {
@@ -49,7 +75,7 @@ class CaptureRepositoryImpl @Inject constructor(
         if (bitmap != null) {
             return Result.Success(ImageQualityAnalyzer.analyzeQuality(bitmap).any { it.isWarning })
         }
-        return Result.Success(DummyCaptureProvider.hasQualityWarning())
+        return noPhoto()
     }
 
     override suspend fun analyzePage(photoPath: String?, courseId: Long?): Result<PageAnalysis> {
@@ -93,6 +119,7 @@ class CaptureRepositoryImpl @Inject constructor(
                 lastKey = key
                 lastAnalysis = analysis
                 lastContext = context
+                lastHash = hash ?: runCatching { PerceptualHasher.hash(bitmap) }.getOrNull()
                 Result.Success(analysis)
             } catch (cancellation: CancellationException) {
                 // Cancelar la pantalla no es un fallo del pipeline: se deja propagar.
@@ -110,7 +137,7 @@ class CaptureRepositoryImpl @Inject constructor(
 
     override suspend fun getProcessingSteps(photoPath: String?, courseId: Long?): Result<List<CaptureStep>> {
         if (photoPath == null) {
-            return Result.Success(DummyCaptureProvider.getProcessingSteps())
+            return noPhoto()
         }
         return when (val analysis = analyzePage(photoPath, courseId)) {
             is Result.Success -> Result.Success(stepsWithOfflineContext(analysis.value, courseId))
@@ -156,6 +183,9 @@ class CaptureRepositoryImpl @Inject constructor(
             else -> "glosario v${context.glossaryVersion} (${context.entries.size} términos, copia local)"
         }
     }
+
+    private fun <T> noPhoto(): Result<T> =
+        Result.Failure(AppError.Validation("photo", "No hay ninguna foto para analizar."))
 
     private suspend fun decode(photoPath: String?): Bitmap? {
         if (photoPath == null) return null

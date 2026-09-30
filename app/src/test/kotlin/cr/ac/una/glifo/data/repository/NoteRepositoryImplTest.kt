@@ -1,127 +1,195 @@
 package cr.ac.una.glifo.data.repository
 
+import com.google.gson.JsonParser
 import cr.ac.una.glifo.core.common.AppError
+import cr.ac.una.glifo.core.sync.SyncScheduler
+import cr.ac.una.glifo.data.datasource.local.GlifoDatabase
+import cr.ac.una.glifo.data.datasource.local.dao.NoteDao
+import cr.ac.una.glifo.data.datasource.local.dao.SyncOperationDao
+import cr.ac.una.glifo.data.datasource.local.entity.FragmentCorrectionEntity
+import cr.ac.una.glifo.data.datasource.local.entity.NoteEntity
+import cr.ac.una.glifo.data.datasource.local.entity.NotePageEntity
 import cr.ac.una.glifo.data.datasource.remote.GlifoApi
 import cr.ac.una.glifo.data.dto.ApiResponse
 import cr.ac.una.glifo.data.dto.NoteDetailResponse
 import cr.ac.una.glifo.data.dto.NoteResponse
+import cr.ac.una.glifo.data.mapper.toSnapshotJson
 import cr.ac.una.glifo.domain.error.Result
+import cr.ac.una.glifo.domain.model.ConfidenceState
+import cr.ac.una.glifo.domain.model.NoteContentSource
+import cr.ac.una.glifo.domain.model.PageAnalysis
+import cr.ac.una.glifo.domain.model.RecognizedRegion
+import cr.ac.una.glifo.domain.model.RegionBounds
+import cr.ac.una.glifo.domain.model.RegionInkMetrics
+import cr.ac.una.glifo.domain.model.RegionKind
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.test.runTest
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import retrofit2.HttpException
-import retrofit2.Response
 import java.io.IOException
 
 class NoteRepositoryImplTest {
 
     private val api = mockk<GlifoApi>()
-    private val repository = NoteRepositoryImpl(api)
+    private val noteDao = mockk<NoteDao>(relaxed = true)
+    private val syncDao = mockk<SyncOperationDao>(relaxed = true)
+    private val repository = NoteRepositoryImpl(
+        api = api,
+        database = mockk<GlifoDatabase>(),
+        noteDao = noteDao,
+        syncDao = syncDao,
+        syncScheduler = mockk<SyncScheduler>(relaxed = true)
+    )
 
-    private fun httpException(code: Int, body: String = ""): HttpException {
-        val responseBody = body.toResponseBody("application/json".toMediaTypeOrNull())
-        return HttpException(Response.error<Any>(code, responseBody))
-    }
+    private val localNote = NoteEntity(id = 7L, serverId = null, courseId = 1L, title = "Apunte 30/09", classDate = "2026-09-30", status = "PROCESSING", createdAt = 0L)
+    private val remoteNote = NoteEntity(id = 8L, serverId = 42L, courseId = 1L, title = "Derivadas", classDate = "2026-08-20", status = "READY", createdAt = 0L)
+
+    private val analysis = PageAnalysis(
+        regions = listOf(
+            RecognizedRegion(0, RegionBounds(0, 0, 100, 20), "Límite de una función", 1, 0.93f, RegionKind.Text, 0.9f, "N1 · verificado", ConfidenceState.Verified, RegionInkMetrics(0.1f, 20, 5f)),
+            RecognizedRegion(1, RegionBounds(0, 30, 100, 20), "converjencia", 1, 0.41f, RegionKind.Text, 0.8f, "N2 · reparación", ConfidenceState.Uncertain, RegionInkMetrics(0.1f, 12, 5f)),
+            RecognizedRegion(2, RegionBounds(0, 60, 80, 30), "lim x→a", 1, 0.5f, RegionKind.Math, 0.7f, "N1.5 · OCR matemático", ConfidenceState.Repaired, RegionInkMetrics(0.2f, 9, 2.6f))
+        ),
+        pageWidth = 1200, pageHeight = 1600, ocrMillis = 800, totalMillis = 1500
+    )
+    private val page = NotePageEntity(id = 3L, noteId = 7L, pageIndex = 0, perceptualHash = "c3a1f0e98b7d6245", photoPath = "/p.jpg", levelReached = "N1", overallConfidence = 0.67f, analysisJson = analysis.toSnapshotJson(), processedAt = 0L)
 
     @Test
-    fun `getNotesForCourse should return list of notes from api`() = runTest {
-        val mockData = listOf(
-            NoteResponse(id = 1L, courseId = 1L, title = "Derivadas", classDate = "2026-08-20"),
-            NoteResponse(id = 2L, courseId = 1L, title = "Integrales", classDate = "2026-08-27")
-        )
-        coEvery { api.getNotes(1L) } returns ApiResponse(data = mockData)
+    fun `remote notes are cached in Room and read back from there`() = runTest {
+        val cached = slot<List<NoteEntity>>()
+        coEvery { api.getNotes(1L) } returns ApiResponse(listOf(NoteResponse(42L, 1L, "Derivadas", "2026-08-20", "READY")))
+        coEvery { noteDao.cacheRemoteNotes(1L, capture(cached)) } returns Unit
+        coEvery { noteDao.notesForCourse(1L) } returns listOf(remoteNote, localNote)
 
         val result = repository.getNotesForCourse(1L)
 
-        assertTrue(result is Result.Success)
-        assertEquals(2, (result as Result.Success).value.size)
-        assertEquals("Derivadas", result.value[0].title)
+        assertEquals(42L, cached.captured.single().serverId)
+        // La lista incluye también la captura local que el servidor todavía no tiene.
+        assertEquals(listOf(8L, 7L), (result as Result.Success).value.map { it.id })
     }
 
     @Test
-    fun `getNotesForCourse should map IOException to NoConnection`() = runTest {
-        coEvery { api.getNotes(any()) } throws IOException("Mock server unreachable")
+    fun `offline with cached notes returns the Room copy instead of an error`() = runTest {
+        coEvery { api.getNotes(1L) } throws IOException("sin red")
+        coEvery { noteDao.notesForCourse(1L) } returns listOf(remoteNote)
 
         val result = repository.getNotesForCourse(1L)
 
-        assertEquals(Result.Failure(AppError.NoConnection), result)
+        assertEquals(listOf("Derivadas"), (result as Result.Success).value.map { it.title })
     }
 
     @Test
-    fun `getNote should return note on success`() = runTest {
-        val noteDetail = NoteDetailResponse(
-            id = 1L,
-            courseId = 1L,
-            title = "Derivadas",
-            classDate = "2026-08-20",
-            content = null
+    fun `offline with nothing cached reports NoConnection`() = runTest {
+        coEvery { api.getNotes(1L) } throws IOException("sin red")
+        coEvery { noteDao.notesForCourse(1L) } returns emptyList()
+
+        assertEquals(Result.Failure(AppError.NoConnection), repository.getNotesForCourse(1L))
+    }
+
+    @Test
+    fun `content of a captured note comes from the stored pipeline analysis`() = runTest {
+        coEvery { noteDao.noteById(7L) } returns localNote
+        coEvery { noteDao.pagesForNote(7L) } returns listOf(page)
+        coEvery { noteDao.correctionsForNote(7L) } returns emptyList()
+        coEvery { syncDao.pendingForNote(7L) } returns 2
+
+        val content = (repository.getNoteContent(7L) as Result.Success).value
+
+        assertEquals(NoteContentSource.LocalPipeline, content.source)
+        assertEquals(listOf("p0-r0", "p0-r1", "p0-r2"), content.fragments.map { it.id })
+        assertEquals(1, content.uncertainCount)
+        assertEquals("p0-r1", content.weakestFragment?.id)
+        assertEquals("p0-r2", content.firstFormula?.id)
+        assertEquals(1200, content.page(0)?.analyzedWidth)
+        assertTrue(content.hasPendingSync)
+    }
+
+    @Test
+    fun `a saved correction replaces the text and marks the fragment verified`() = runTest {
+        coEvery { noteDao.noteById(7L) } returns localNote
+        coEvery { noteDao.pagesForNote(7L) } returns listOf(page)
+        coEvery { noteDao.correctionsForNote(7L) } returns listOf(
+            FragmentCorrectionEntity(7L, "p0-r1", "convergencia", "converjencia", 0L)
         )
-        coEvery { api.getNote(1L) } returns ApiResponse(data = noteDetail)
 
-        val result = repository.getNote(1L)
+        val fragment = (repository.getNoteContent(7L) as Result.Success).value.fragment("p0-r1")!!
 
-        assertTrue(result is Result.Success)
-        assertEquals("Derivadas", (result as Result.Success).value.title)
+        assertEquals("convergencia", fragment.displayText)
+        assertEquals(ConfidenceState.Verified, fragment.state)
     }
 
     @Test
-    fun `getNote should map 404 to Server error`() = runTest {
-        coEvery { api.getNote(999L) } throws httpException(404, "{\"message\":\"Apunte no encontrado\"}")
+    fun `saving a correction stores the original text next to the new one`() = runTest {
+        val saved = slot<FragmentCorrectionEntity>()
+        coEvery { noteDao.noteById(7L) } returns localNote
+        coEvery { noteDao.pagesForNote(7L) } returns listOf(page)
+        coEvery { noteDao.correctionsForNote(7L) } returns emptyList()
+        coEvery { noteDao.upsertCorrection(capture(saved)) } returns Unit
 
-        val result = repository.getNote(999L)
-
-        assertTrue(result is Result.Failure)
-        val error = (result as Result.Failure).error
-        assertTrue(error is AppError.Server)
-        assertEquals("Apunte no encontrado", (error as AppError.Server).message)
-    }
-
-    @Test
-    fun `createNote should validate empty title`() = runTest {
-        val result = repository.createNote(1L, "", "2026-08-20")
-
-        assertTrue(result is Result.Failure)
-        assertTrue((result as Result.Failure).error is AppError.Validation)
-        coVerify(exactly = 0) { api.createNote(any()) }
-    }
-
-    @Test
-    fun `createNote should call api and return created note on success`() = runTest {
-        val created = NoteResponse(id = 3L, courseId = 1L, title = "Límites", classDate = "2026-08-15")
-        coEvery { api.createNote(any()) } returns ApiResponse(data = created)
-
-        val result = repository.createNote(1L, "Límites", "2026-08-15")
-
-        assertTrue(result is Result.Success)
-        assertEquals(3L, (result as Result.Success).value.id)
-        assertEquals("Límites", result.value.title)
-    }
-
-    @Test
-    fun `deleteNote should return success when api returns successful response`() = runTest {
-        coEvery { api.deleteNote(1L) } returns Response.success(Unit)
-
-        val result = repository.deleteNote(1L)
+        val result = repository.saveCorrection(7L, "p0-r1", "  convergencia ")
 
         assertEquals(Result.Success(Unit), result)
+        assertEquals("convergencia", saved.captured.correctedText)
+        assertEquals("converjencia", saved.captured.originalText)
     }
 
     @Test
-    fun `deleteNote should map 404 when note does not exist`() = runTest {
-        val responseBody = "{\"message\":\"Apunte no encontrado\"}".toResponseBody("application/json".toMediaTypeOrNull())
-        coEvery { api.deleteNote(999L) } returns Response.error(404, responseBody)
+    fun `a blank correction is rejected`() = runTest {
+        val result = repository.saveCorrection(7L, "p0-r1", "   ")
 
-        val result = repository.deleteNote(999L)
+        assertTrue((result as Result.Failure).error is AppError.Validation)
+    }
 
-        assertTrue(result is Result.Failure)
-        val error = (result as Result.Failure).error
-        assertTrue(error is AppError.Server)
-        assertEquals("Apunte no encontrado", (error as AppError.Server).message)
+    @Test
+    fun `a server note without local pages shows the stored IA-01 reconstruction`() = runTest {
+        val contentJson = """{"schemaVersion":1,"blocks":[{"id":"b1","type":"HEADING","text":"Límites"},{"id":"b2","type":"PARAGRAPH","spans":[{"text":"[ilegible]","confidence":0.2,"resolvedAt":"UNRESOLVED","isUncertain":true}]}]}"""
+        coEvery { noteDao.noteById(8L) } returns remoteNote
+        coEvery { noteDao.pagesForNote(8L) } returns emptyList()
+        coEvery { noteDao.correctionsForNote(8L) } returns emptyList()
+        coEvery { api.getNote(42L) } returns ApiResponse(
+            NoteDetailResponse(42L, 1L, "Derivadas", "2026-08-20", "READY", JsonParser.parseString(contentJson))
+        )
+
+        val content = (repository.getNoteContent(8L) as Result.Success).value
+
+        assertEquals(NoteContentSource.ServerReconstruction, content.source)
+        assertEquals(listOf("Límites", "[ilegible]"), content.fragments.map { it.text })
+        assertEquals(ConfidenceState.Uncertain, content.fragments[1].state)
+        coVerify { noteDao.setServerContent(8L, any(), "READY") }
+    }
+
+    @Test
+    fun `a note with no pages and no reconstruction says so instead of inventing content`() = runTest {
+        coEvery { noteDao.noteById(8L) } returns remoteNote
+        coEvery { noteDao.pagesForNote(8L) } returns emptyList()
+        coEvery { noteDao.correctionsForNote(8L) } returns emptyList()
+        coEvery { api.getNote(42L) } returns ApiResponse(NoteDetailResponse(42L, 1L, "Derivadas", "2026-08-20", "READY", null))
+
+        val content = (repository.getNoteContent(8L) as Result.Success).value
+
+        assertEquals(NoteContentSource.Unavailable, content.source)
+        assertTrue(content.fragments.isEmpty())
+    }
+
+    @Test
+    fun `deleting a note that never reached the server does not call the API`() = runTest {
+        coEvery { noteDao.noteById(7L) } returns localNote
+
+        assertEquals(Result.Success(Unit), repository.deleteNote(7L))
+        coVerify(exactly = 0) { api.deleteNote(any()) }
+        coVerify { noteDao.deleteNote(7L) }
+    }
+
+    @Test
+    fun `an unknown note id is a 404`() = runTest {
+        coEvery { noteDao.noteById(99L) } returns null
+
+        val error = (repository.getNoteContent(99L) as Result.Failure).error
+
+        assertEquals("404", (error as AppError.Server).code)
     }
 }

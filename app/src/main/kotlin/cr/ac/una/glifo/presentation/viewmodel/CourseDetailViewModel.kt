@@ -1,5 +1,6 @@
 package cr.ac.una.glifo.presentation.viewmodel
 
+import cr.ac.una.glifo.core.datastore.ActiveCourseStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cr.ac.una.glifo.core.common.UiState
@@ -18,7 +19,8 @@ data class CourseDetailUiData(val course: CourseDetail?, val stats: CourseStats)
 
 @HiltViewModel
 class CourseDetailViewModel @Inject constructor(
-    private val courseRepository: CourseRepository
+    private val courseRepository: CourseRepository,
+    private val activeCourseStore: ActiveCourseStore
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<UiState<CourseDetailUiData>>(UiState.Loading)
@@ -29,6 +31,8 @@ class CourseDetailViewModel @Inject constructor(
     fun load(courseId: Long) {
         if (loadedFor == courseId) return
         loadedFor = courseId
+        // Abrir un curso lo vuelve el curso activo del inicio y del menú.
+        activeCourseStore.set(courseId)
         viewModelScope.launch {
             _state.value = UiState.Loading
             val statsResult = courseRepository.getCourseStats(courseId)

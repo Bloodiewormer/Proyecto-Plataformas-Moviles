@@ -47,6 +47,7 @@ import cr.ac.una.glifo.presentation.ui.screen.StudyScreen
 import cr.ac.una.glifo.presentation.ui.screen.AiCostScreen
 import cr.ac.una.glifo.presentation.ui.screen.SyncQueueScreen
 import cr.ac.una.glifo.presentation.ui.screen.*
+import cr.ac.una.glifo.presentation.viewmodel.ActiveCourseViewModel
 import cr.ac.una.glifo.presentation.viewmodel.SessionViewModel
 
 /**
@@ -57,15 +58,15 @@ import cr.ac.una.glifo.presentation.viewmodel.SessionViewModel
  * before, passing the raw id straight into `navController.navigate` and silently
  * failing to match any destination).
  */
-private fun navigateFromDrawer(navController: NavHostController, route: String, activeCourseId: Long = 1L) {
+private fun navigateFromDrawer(navController: NavHostController, route: String, activeCourseId: Long?) {
     val target = when (route) {
         "home" -> Screen.Home.route
         "home_teacher" -> Screen.HomeTeacher.route
         "home_admin" -> Screen.HomeAdmin.route
         "courses" -> Screen.Courses.route
-        "notes" -> Screen.NoteList.createRoute(activeCourseId)
-        "coverage" -> Screen.Coverage.createRoute(activeCourseId)
-        "study" -> Screen.StudyHub.createRoute(activeCourseId)
+        "notes" -> activeCourseId?.let(Screen.NoteList::createRoute) ?: Screen.Courses.route
+        "coverage" -> activeCourseId?.let(Screen.Coverage::createRoute) ?: Screen.Courses.route
+        "study" -> activeCourseId?.let(Screen.StudyHub::createRoute) ?: Screen.Courses.route
         "sync" -> Screen.SyncQueue.route
         "ai_cost" -> Screen.AiCost.route
         "teacher_courses" -> Screen.TeacherCourses.route
@@ -89,6 +90,13 @@ fun GlifoNavHost(
     // @Singleton, so every route below shares the same session state without
     // threading it through nav arguments.
     val sessionViewModel: SessionViewModel = hiltViewModel()
+    val activeCourseViewModel: ActiveCourseViewModel = hiltViewModel()
+    val activeCourseId by activeCourseViewModel.activeCourseId.collectAsState()
+
+    // Las rutas por curso usan el curso activo; si todavía no hay ninguno, se elige en Cursos.
+    fun navigateToCourseRoute(route: (Long) -> String) {
+        navController.navigate(activeCourseId?.let(route) ?: Screen.Courses.route)
+    }
 
     // A single, consistent motion for every screen transition in the app instead of
     // an instant cut — kept subtle (short duration, small horizontal offset).
@@ -158,14 +166,14 @@ fun GlifoNavHost(
                     navController.navigate(Screen.CourseDetail.createRoute(courseId))
                 },
                 onNavigateToCourses = { navController.navigate(Screen.Courses.route) },
-                onNavigateToNotes = { navController.navigate(Screen.NoteList.createRoute(1L)) },
-                onNavigateToCoverage = { navController.navigate(Screen.Coverage.createRoute(1L)) },
-                onNavigateToStudy = { navController.navigate(Screen.StudyHub.createRoute(1L)) },
+                onNavigateToNotes = { navigateToCourseRoute { Screen.NoteList.createRoute(it) } },
+                onNavigateToCoverage = { navigateToCourseRoute { Screen.Coverage.createRoute(it) } },
+                onNavigateToStudy = { navigateToCourseRoute { Screen.StudyHub.createRoute(it) } },
                 onNavigateToSync = { navController.navigate(Screen.SyncQueue.route) },
                 onNavigateToAiCost = { navController.navigate(Screen.AiCost.route) },
                 onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
                 onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
-                onNavigateToCapture = { navController.navigate(Screen.Capture.createRoute(1L)) },
+                onNavigateToCapture = { navigateToCourseRoute { Screen.Capture.createRoute(it) } },
                 onNavigateToFlashcards = { navController.navigate(Screen.FlashcardSession.route) },
                 onNavigateToQuiz = { navController.navigate(Screen.QuizSession.route) },
                 onNavigateToDelta = { navController.navigate(Screen.CoverageDelta.route) },
@@ -219,7 +227,7 @@ fun GlifoNavHost(
                 onNavigateBackOrMenu = { navController.popBackStack() },
                 onNavigateToCourseDetail = { courseId -> navController.navigate(Screen.CourseDetail.createRoute(courseId)) },
                 onNavigateToJoinCourse = { navController.navigate(Screen.JoinCourse.route) },
-                onNavigateDrawer = { route -> navigateFromDrawer(navController, route) },
+                onNavigateDrawer = { route -> navigateFromDrawer(navController, route, activeCourseId) },
                 onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                 onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
                 onLogout = {
@@ -297,8 +305,9 @@ fun GlifoNavHost(
                 photoPath = backStackEntry.arguments?.getString("photoPath"),
                 courseId = backStackEntry.captureCourseId(),
                 onNavigateBack = { navController.popBackStack() },
-                onViewResults = {
-                    navController.navigate(Screen.NoteDetail.createRoute(1L)) {
+                // La captura ya quedó guardada como apunte (#25): se abre ese apunte, no uno fijo.
+                onViewResults = { noteId ->
+                    navController.navigate(Screen.NoteDetail.createRoute(noteId)) {
                         popUpTo(Screen.Capture.route) { inclusive = true }
                     }
                 }
@@ -312,6 +321,7 @@ fun GlifoNavHost(
         ) { backStackEntry ->
             val courseId = backStackEntry.arguments?.getLong("courseId") ?: 1L
             NotesScreen(
+                courseId = courseId,
                 onNavigateBackOrMenu = { navController.popBackStack() },
                 onNavigateToNoteDetail = { noteId -> navController.navigate(Screen.NoteDetail.createRoute(noteId)) },
                 onNavigateToCapture = { navController.navigate(Screen.Capture.createRoute(courseId)) },
@@ -331,23 +341,24 @@ fun GlifoNavHost(
             route = Screen.NoteDetail.route,
             arguments = listOf(navArgument("noteId") { type = NavType.LongType })
         ) { backStackEntry ->
-            val noteId = backStackEntry.arguments?.getLong("noteId") ?: 1L
+            val noteId = backStackEntry.arguments?.getLong("noteId") ?: return@composable
             NoteDetailScreen(
                 noteId = noteId,
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToCorrect = { navController.navigate(Screen.CorrectFragment.createRoute(noteId)) },
-                onNavigateToFormula = { navController.navigate(Screen.FormulaViewer.createRoute(noteId)) },
-                onNavigateToProvenance = { navController.navigate(Screen.RegionProvenance.createRoute(noteId)) }
+                onNavigateToCorrect = { fragment -> navController.navigate(Screen.CorrectFragment.createRoute(noteId, fragment)) },
+                onNavigateToFormula = { fragment -> navController.navigate(Screen.FormulaViewer.createRoute(noteId, fragment)) },
+                onNavigateToProvenance = { fragment -> navController.navigate(Screen.RegionProvenance.createRoute(noteId, fragment)) }
             )
         }
 
         composable(
             route = Screen.CorrectFragment.route,
-            arguments = listOf(navArgument("noteId") { type = NavType.LongType })
+            arguments = noteFragmentArguments()
         ) { backStackEntry ->
-            val noteId = backStackEntry.arguments?.getLong("noteId") ?: 1L
+            val noteId = backStackEntry.arguments?.getLong("noteId") ?: return@composable
             CorrectFragmentScreen(
                 noteId = noteId,
+                fragmentId = backStackEntry.arguments?.getString("fragment"),
                 onNavigateBack = { navController.popBackStack() },
                 onSaveCorrection = { navController.popBackStack() }
             )
@@ -355,23 +366,25 @@ fun GlifoNavHost(
 
         composable(
             route = Screen.FormulaViewer.route,
-            arguments = listOf(navArgument("noteId") { type = NavType.LongType })
+            arguments = noteFragmentArguments()
         ) { backStackEntry ->
-            val noteId = backStackEntry.arguments?.getLong("noteId") ?: 1L
+            val noteId = backStackEntry.arguments?.getLong("noteId") ?: return@composable
             FormulaViewerScreen(
                 noteId = noteId,
+                fragmentId = backStackEntry.arguments?.getString("fragment"),
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToCorrect = { navController.navigate(Screen.CorrectFragment.createRoute(noteId)) }
+                onNavigateToCorrect = { fragment -> navController.navigate(Screen.CorrectFragment.createRoute(noteId, fragment)) }
             )
         }
 
         composable(
             route = Screen.RegionProvenance.route,
-            arguments = listOf(navArgument("noteId") { type = NavType.LongType })
+            arguments = noteFragmentArguments()
         ) { backStackEntry ->
-            val noteId = backStackEntry.arguments?.getLong("noteId") ?: 1L
+            val noteId = backStackEntry.arguments?.getLong("noteId") ?: return@composable
             RegionProvenanceScreen(
                 noteId = noteId,
+                fragmentId = backStackEntry.arguments?.getString("fragment"),
                 onNavigateBack = { navController.popBackStack() }
             )
         }
@@ -407,7 +420,7 @@ fun GlifoNavHost(
             TopicDetailScreen(
                 topicName = topicName,
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToStudy = { navController.navigate(Screen.StudyHub.createRoute(1L)) },
+                onNavigateToStudy = { navigateToCourseRoute { Screen.StudyHub.createRoute(it) } },
                 onNavigateToNoteDetail = { noteId -> navController.navigate(Screen.NoteDetail.createRoute(noteId)) }
             )
         }
@@ -458,7 +471,7 @@ fun GlifoNavHost(
         composable(Screen.QuizResult.route) {
             QuizResultScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToCoverage = { navController.navigate(Screen.Coverage.createRoute(1L)) },
+                onNavigateToCoverage = { navigateToCourseRoute { Screen.Coverage.createRoute(it) } },
                 onNavigateToGlossary = { navController.navigate(Screen.TeacherGlossary.route) }
             )
         }
@@ -468,7 +481,7 @@ fun GlifoNavHost(
             SyncQueueScreen(
                 onNavigateBackOrMenu = { navController.popBackStack() },
                 onNavigateToNoteDetail = { noteId -> navController.navigate(Screen.NoteDetail.createRoute(noteId)) },
-                onNavigateDrawer = { route -> navigateFromDrawer(navController, route) },
+                onNavigateDrawer = { route -> navigateFromDrawer(navController, route, activeCourseId) },
                 onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                 onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
                 onLogout = {
@@ -485,7 +498,7 @@ fun GlifoNavHost(
             AiCostScreen(
                 role = user?.role ?: GlifoRole.Student,
                 onNavigateBackOrMenu = { navController.popBackStack() },
-                onNavigateDrawer = { route -> navigateFromDrawer(navController, route) },
+                onNavigateDrawer = { route -> navigateFromDrawer(navController, route, activeCourseId) },
                 onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                 onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
                 onLogout = {
@@ -503,7 +516,7 @@ fun GlifoNavHost(
                 onNavigateBackOrMenu = { navController.popBackStack() },
                 onNavigateToNewCourse = { navController.navigate(Screen.TeacherNewCourse.route) },
                 onNavigateToSyllabus = { navController.navigate(Screen.TeacherSyllabus.route) },
-                onNavigateDrawer = { route -> navigateFromDrawer(navController, route) },
+                onNavigateDrawer = { route -> navigateFromDrawer(navController, route, activeCourseId) },
                 onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                 onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
                 onLogout = {
@@ -532,7 +545,7 @@ fun GlifoNavHost(
         composable(Screen.TeacherGlossary.route) {
             TeacherGlossaryScreen(
                 onNavigateBackOrMenu = { navController.popBackStack() },
-                onNavigateDrawer = { route -> navigateFromDrawer(navController, route) },
+                onNavigateDrawer = { route -> navigateFromDrawer(navController, route, activeCourseId) },
                 onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                 onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
                 onLogout = {
@@ -548,7 +561,7 @@ fun GlifoNavHost(
             TeacherGapsScreen(
                 onNavigateBackOrMenu = { navController.popBackStack() },
                 onNavigateToTopicDetail = { topicName -> navController.navigate(Screen.TopicDetail.createRoute(topicName)) },
-                onNavigateDrawer = { route -> navigateFromDrawer(navController, route) },
+                onNavigateDrawer = { route -> navigateFromDrawer(navController, route, activeCourseId) },
                 onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                 onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
                 onLogout = {
@@ -565,7 +578,7 @@ fun GlifoNavHost(
             AdminCoursesScreen(
                 onNavigateBackOrMenu = { navController.popBackStack() },
                 onNavigateToCourseDetail = { courseId -> navController.navigate(Screen.CourseDetail.createRoute(courseId)) },
-                onNavigateDrawer = { route -> navigateFromDrawer(navController, route) },
+                onNavigateDrawer = { route -> navigateFromDrawer(navController, route, activeCourseId) },
                 onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                 onLogout = {
                     sessionViewModel.logout()
@@ -580,7 +593,7 @@ fun GlifoNavHost(
             AdminUsersScreen(
                 onNavigateBackOrMenu = { navController.popBackStack() },
                 onNavigateToUserDetail = { userName -> navController.navigate(Screen.AdminUserDetail.createRoute(userName)) },
-                onNavigateDrawer = { route -> navigateFromDrawer(navController, route) },
+                onNavigateDrawer = { route -> navigateFromDrawer(navController, route, activeCourseId) },
                 onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                 onLogout = {
                     sessionViewModel.logout()
@@ -606,7 +619,7 @@ fun GlifoNavHost(
         composable(Screen.AdminRoles.route) {
             AdminRolesScreen(
                 onNavigateBackOrMenu = { navController.popBackStack() },
-                onNavigateDrawer = { route -> navigateFromDrawer(navController, route) },
+                onNavigateDrawer = { route -> navigateFromDrawer(navController, route, activeCourseId) },
                 onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                 onLogout = {
                     sessionViewModel.logout()
@@ -674,3 +687,13 @@ private const val NO_COURSE = -1L
 
 private fun NavBackStackEntry.captureCourseId(): Long? =
     arguments?.getLong("courseId", NO_COURSE)?.takeIf { it != NO_COURSE }
+
+/** noteId obligatorio + el fragmento opcional que se tocó en el detalle del apunte. */
+private fun noteFragmentArguments() = listOf(
+    navArgument("noteId") { type = NavType.LongType },
+    navArgument("fragment") {
+        type = NavType.StringType
+        nullable = true
+        defaultValue = null
+    }
+)

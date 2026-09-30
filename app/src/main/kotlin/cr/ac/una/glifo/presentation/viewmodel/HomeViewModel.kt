@@ -3,6 +3,7 @@ package cr.ac.una.glifo.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cr.ac.una.glifo.core.common.UiState
+import cr.ac.una.glifo.core.datastore.ActiveCourseStore
 import cr.ac.una.glifo.domain.error.Result
 import cr.ac.una.glifo.domain.model.CourseDetail
 import cr.ac.una.glifo.domain.model.CourseStats
@@ -19,22 +20,23 @@ import javax.inject.Inject
 
 data class HomeUiData(
     val course: CourseDetail?,
-    val stats: CourseStats,
+    /** Métricas de cobertura y estudio; null mientras esos módulos (Lab 5/6) no respondan. */
+    val stats: CourseStats?,
     val recentNotes: List<NoteMeta>,
     val pendingSyncCount: Int
 )
 
-/** Screen B2: Inicio Estudiante. Hardcodes the same "active course" the dummy data assumed. */
+/**
+ * Screen B2: Inicio Estudiante. El curso activo es el último que abrió el estudiante o, la
+ * primera vez, el primero de sus cursos; ya no hay un id fijo.
+ */
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val courseRepository: CourseRepository,
     private val noteRepository: NoteRepository,
-    private val syncRepository: SyncRepository
+    private val syncRepository: SyncRepository,
+    private val activeCourseStore: ActiveCourseStore
 ) : ViewModel() {
-
-    companion object {
-        const val ACTIVE_COURSE_ID = 1L
-    }
 
     private val _state = MutableStateFlow<UiState<HomeUiData>>(UiState.Loading)
     val state: StateFlow<UiState<HomeUiData>> = _state.asStateFlow()
@@ -44,22 +46,29 @@ class HomeViewModel @Inject constructor(
     fun load() {
         viewModelScope.launch {
             _state.value = UiState.Loading
-            val statsResult = courseRepository.getCourseStats(ACTIVE_COURSE_ID)
-            val stats = (statsResult as? Result.Success)?.value
-            if (stats == null) {
-                _state.value = UiState.Error((statsResult as Result.Failure).error)
+            val pending = (syncRepository.getPendingCount() as? Result.Success)?.value ?: 0
+
+            val courseId = activeCourseStore.activeCourseId.value ?: when (val courses = courseRepository.getStudentCourses()) {
+                is Result.Success -> courses.value.firstOrNull()?.id?.also(activeCourseStore::set)
+                is Result.Failure -> {
+                    // Sin red y sin curso guardado todavía no hay nada que mostrar del curso,
+                    // pero la cola offline sí es real.
+                    _state.value = UiState.Success(HomeUiData(null, null, emptyList(), pending))
+                    return@launch
+                }
+            }
+
+            if (courseId == null) {
+                _state.value = UiState.Success(HomeUiData(null, null, emptyList(), pending))
                 return@launch
             }
-            val courseResult = courseRepository.getCourseDetail(ACTIVE_COURSE_ID)
-            val notesResult = noteRepository.getNoteMetaList()
-            val pendingResult = syncRepository.getPendingCount()
 
             _state.value = UiState.Success(
                 HomeUiData(
-                    course = (courseResult as? Result.Success)?.value,
-                    stats = stats,
-                    recentNotes = (notesResult as? Result.Success)?.value.orEmpty().take(2),
-                    pendingSyncCount = (pendingResult as? Result.Success)?.value ?: 0
+                    course = (courseRepository.getCourseDetail(courseId) as? Result.Success)?.value,
+                    stats = (courseRepository.getCourseStats(courseId) as? Result.Success)?.value,
+                    recentNotes = (noteRepository.getNoteMetaList(courseId) as? Result.Success)?.value.orEmpty().take(2),
+                    pendingSyncCount = pending
                 )
             )
         }

@@ -78,9 +78,9 @@ fun TeacherCoursesScreen(
                 GlifoDrawerContent(
                     role = GlifoRole.Teacher,
                     currentScreen = "teacher_courses",
-                    userName = user?.fullName ?: "Maikol Guzmán",
-                    userEmail = user?.email ?: "docente@una.ac.cr",
-                    userInitials = user?.initials ?: "MG",
+                    userName = user?.fullName.orEmpty(),
+                    userEmail = user?.email.orEmpty(),
+                    userInitials = user?.initials.orEmpty(),
                     onNavigate = { route ->
                         scope.launch { drawerState.close() }
                         onNavigateDrawer(route)
@@ -520,9 +520,9 @@ fun TeacherGlossaryScreen(
                 GlifoDrawerContent(
                     role = GlifoRole.Teacher,
                     currentScreen = "glossary",
-                    userName = user?.fullName ?: "Maikol Guzmán",
-                    userEmail = user?.email ?: "docente@una.ac.cr",
-                    userInitials = user?.initials ?: "MG",
+                    userName = user?.fullName.orEmpty(),
+                    userEmail = user?.email.orEmpty(),
+                    userInitials = user?.initials.orEmpty(),
                     onNavigate = { route ->
                         scope.launch { drawerState.close() }
                         onNavigateDrawer(route)
@@ -751,9 +751,9 @@ fun TeacherGapsScreen(
                 GlifoDrawerContent(
                     role = GlifoRole.Teacher,
                     currentScreen = "gaps",
-                    userName = user?.fullName ?: "Maikol Guzmán",
-                    userEmail = user?.email ?: "docente@una.ac.cr",
-                    userInitials = user?.initials ?: "MG",
+                    userName = user?.fullName.orEmpty(),
+                    userEmail = user?.email.orEmpty(),
+                    userInitials = user?.initials.orEmpty(),
                     onNavigate = { route ->
                         scope.launch { drawerState.close() }
                         onNavigateDrawer(route)

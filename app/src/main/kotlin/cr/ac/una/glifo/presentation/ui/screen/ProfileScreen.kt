@@ -136,7 +136,7 @@ fun ProfileScreen(
                                 contentScale = ContentScale.Crop
                             )
                         } else {
-                            Text(user?.initials ?: "BB", fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = colors.accentText)
+                            Text(user?.initials.orEmpty(), fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = colors.accentText)
                         }
                     }
                     Box(
@@ -157,8 +157,8 @@ fun ProfileScreen(
                     }
                 }
                 Spacer(modifier = Modifier.height(12.dp))
-                Text(user?.fullName ?: "Brandon Brenes", fontSize = 20.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                Text(user?.email ?: "estudiante@est.una.ac.cr", fontSize = 13.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp, bottom = 8.dp))
+                Text(user?.fullName.orEmpty(), fontSize = 20.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                Text(user?.email.orEmpty(), fontSize = 13.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp, bottom = 8.dp))
                 GlifoBadge(text = roleLabel)
             }
 

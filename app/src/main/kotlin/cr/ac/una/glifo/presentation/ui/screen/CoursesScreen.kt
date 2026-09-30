@@ -68,9 +68,9 @@ fun CoursesScreen(
                 GlifoDrawerContent(
                     role = GlifoRole.Student,
                     currentScreen = "courses",
-                    userName = user?.fullName ?: "Brandon Brenes",
-                    userEmail = user?.email ?: "estudiante@est.una.ac.cr",
-                    userInitials = user?.initials ?: "BB",
+                    userName = user?.fullName.orEmpty(),
+                    userEmail = user?.email.orEmpty(),
+                    userInitials = user?.initials.orEmpty(),
                     onNavigate = { route ->
                         scope.launch { drawerState.close() }
                         onNavigateDrawer(route)

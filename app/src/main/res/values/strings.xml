@@ -476,4 +476,46 @@
     <string name="admin_courses_title">Courses</string>
     <string name="admin_courses_no_syllabus_badge">NO SYLLABUS</string>
     <string name="admin_courses_students_with_coverage">%1$d students · %2$d%% coverage</string>
+    <!-- Lab 4: apuntes reales (#25) y cola de sincronización (#26) -->
+    <string name="note_detail_page_label_local">%1$d page(s) processed on this device · %2$d regions</string>
+    <string name="note_detail_page_label_server">Reconstruction from the server</string>
+    <string name="note_detail_pending_sync">Waiting to sync</string>
+    <string name="note_detail_corrected_badge">Corrected by you</string>
+    <string name="note_detail_formula_badge">FORMULA · N1.5 pending</string>
+    <string name="note_detail_formula_badge_resolved">FORMULA · N1.5</string>
+    <string name="note_detail_unreadable_fragment">[no text recognized]</string>
+    <string name="note_detail_unavailable_title">No content on this device yet</string>
+    <string name="note_detail_unavailable_description">This note has no processed pages or server reconstruction yet.</string>
+    <plurals name="note_detail_fragments_to_review">
+        <item quantity="one">%1$d fragment needs your review</item>
+        <item quantity="other">%1$d fragments need your review</item>
+    </plurals>
+    <string name="correct_fragment_input_label">YOUR CORRECTION</string>
+    <string name="correct_fragment_nothing_title">Nothing to correct</string>
+    <string name="correct_fragment_nothing_description">Every fragment of this note is above the confidence threshold.</string>
+    <string name="correct_fragment_no_suggestions">No similar terms in the course glossary saved on this device.</string>
+    <string name="correct_fragment_saved_locally">The correction is saved with the note and marks the fragment as verified.</string>
+    <string name="formula_viewer_ocr_read_section">WHAT N1 READ</string>
+    <string name="formula_viewer_latex_pending">LaTeX conversion (N1.5) has not run for this region yet. You can correct the text in the meantime.</string>
+    <string name="formula_viewer_kind_confidence">Classification confidence</string>
+    <string name="formula_viewer_route">Route</string>
+    <string name="formula_viewer_none_title">No formulas in this note</string>
+    <string name="formula_viewer_none_description">The region classifier did not route any region to math OCR.</string>
+    <string name="region_provenance_server_note">This fragment comes from the server reconstruction. Per-region signals are only available for pages processed on this device.</string>
+    <string name="region_provenance_factor_ocr">OCR confidence (ML Kit)</string>
+    <string name="region_provenance_factor_kind">Region type classification</string>
+    <string name="region_provenance_factor_ink">Ink density</string>
+    <string name="region_provenance_step_n0">N0 · preprocessing (OpenCV)</string>
+    <string name="region_provenance_step_n1">N1 · text OCR (ML Kit)</string>
+    <string name="region_provenance_step_classifier">Classifier · %1$s</string>
+    <string name="region_provenance_step_n15">N1.5 · math OCR</string>
+    <string name="region_provenance_step_n2">N2 · vision repair</string>
+    <string name="region_provenance_state_done">done</string>
+    <string name="region_provenance_state_pending">pending</string>
+    <string name="region_provenance_state_skipped">not needed</string>
+    <string name="sync_queue_failed_badge">FAILED</string>
+    <string name="sync_queue_sync_now">Sync now</string>
+    <string name="sync_queue_retry_failed">Retry failed</string>
+    <string name="sync_queue_attempts">%1$d attempt(s) · %2$s</string>
+    <string name="sync_queue_result">%1$d uploaded · %2$d pending</string>
 </resources>
