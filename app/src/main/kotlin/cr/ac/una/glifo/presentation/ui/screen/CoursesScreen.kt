@@ -48,6 +48,7 @@ fun CoursesScreen(
     val context = LocalContext.current
     val user by sessionViewModel.currentUser.collectAsState()
     val uiState by viewModel.state.collectAsState()
+    val activeCourseId by viewModel.activeCourseId.collectAsState()
 
     var searchOpen by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf("") }
@@ -146,7 +147,7 @@ fun CoursesScreen(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(text = course.name, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                                        if (course.id == 1L) GlifoBadge(text = stringResource(R.string.courses_active_badge))
+                                        if (course.id == activeCourseId) GlifoBadge(text = stringResource(R.string.courses_active_badge))
                                     }
                                     Text(
                                         text = stringResource(R.string.courses_code_instructor, course.code, stats.instructorName),

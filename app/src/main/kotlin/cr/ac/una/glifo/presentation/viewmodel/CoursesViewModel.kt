@@ -3,6 +3,7 @@ package cr.ac.una.glifo.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cr.ac.una.glifo.core.common.UiState
+import cr.ac.una.glifo.core.datastore.ActiveCourseStore
 import cr.ac.una.glifo.domain.error.Result
 import cr.ac.una.glifo.domain.model.Course
 import cr.ac.una.glifo.domain.model.CourseStats
@@ -19,11 +20,15 @@ data class CourseWithStats(val course: Course, val stats: CourseStats)
 /** CoursesScreen (student "Mis cursos"). */
 @HiltViewModel
 class CoursesViewModel @Inject constructor(
-    private val courseRepository: CourseRepository
+    private val courseRepository: CourseRepository,
+    private val activeCourseStore: ActiveCourseStore
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<UiState<List<CourseWithStats>>>(UiState.Loading)
     val state: StateFlow<UiState<List<CourseWithStats>>> = _state.asStateFlow()
+
+    /** Para marcar en la lista cuál es el curso activo. */
+    val activeCourseId: StateFlow<Long?> = activeCourseStore.activeCourseId
 
     init { load() }
 

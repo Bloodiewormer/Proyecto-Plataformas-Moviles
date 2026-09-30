@@ -282,6 +282,7 @@
     <string name="study_quiz_title">Quiz de 5 preguntas</string>
     <string name="study_quiz_description">Sobre los cinco vacíos con menos evidencia, empezando por %1$s</string>
     <string name="study_footer_note">El material de estudio sale de la cobertura, no de un temario genérico: solo pregunta lo que tus apuntes no sostienen.</string>
+    <string name="study_empty_course">Todavía no hay material de estudio para este curso. Elige un curso o captura apuntes primero.</string>
 
     <!-- FlashcardScreen -->
     <string name="flashcard_progress_counter">%1$d / %2$d</string>

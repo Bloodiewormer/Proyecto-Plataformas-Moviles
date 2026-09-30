@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cr.ac.una.glifo.core.common.AppError
 import cr.ac.una.glifo.core.common.UiState
+import cr.ac.una.glifo.core.datastore.ActiveCourseStore
 import cr.ac.una.glifo.domain.error.Result
 import cr.ac.una.glifo.domain.model.Course
 import cr.ac.una.glifo.domain.model.CourseStats
@@ -19,7 +20,8 @@ data class JoinCourseResult(val course: Course, val stats: CourseStats)
 
 @HiltViewModel
 class JoinCourseViewModel @Inject constructor(
-    private val courseRepository: CourseRepository
+    private val courseRepository: CourseRepository,
+    private val activeCourseStore: ActiveCourseStore
 ) : ViewModel() {
 
     /** Null until the user searches once — lets the screen tell "not searched" from "not found". */
@@ -51,7 +53,11 @@ class JoinCourseViewModel @Inject constructor(
         viewModelScope.launch {
             _joinState.value = UiState.Loading
             when (val result = courseRepository.joinCourse(joinCode)) {
-                is Result.Success -> _joinState.value = UiState.Success(Unit)
+                is Result.Success -> {
+                    // El curso al que se acaba de unir pasa a ser el activo: inicio, apuntes y estudio lo siguen.
+                    (_searchState.value as? UiState.Success)?.data?.course?.let { activeCourseStore.set(it.id, it.name) }
+                    _joinState.value = UiState.Success(Unit)
+                }
                 is Result.Failure -> _joinState.value = UiState.Error(result.error)
             }
         }

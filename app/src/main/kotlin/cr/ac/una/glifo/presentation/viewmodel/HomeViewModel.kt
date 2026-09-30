@@ -10,8 +10,10 @@ import cr.ac.una.glifo.domain.model.CourseStats
 import cr.ac.una.glifo.domain.model.NoteMeta
 import cr.ac.una.glifo.domain.repository.CourseRepository
 import cr.ac.una.glifo.domain.repository.NoteRepository
+import cr.ac.una.glifo.domain.repository.StudyRepository
 import cr.ac.una.glifo.domain.repository.SyncRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,7 +27,10 @@ data class HomeUiData(
     /** Métricas de cobertura y estudio; null mientras esos módulos (Lab 5/6) no respondan. */
     val stats: CourseStats?,
     val recentNotes: List<NoteMeta>,
-    val pendingSyncCount: Int
+    val pendingSyncCount: Int,
+    /** Material de estudio del curso activo (0 si todavía no hay). */
+    val flashcardCount: Int = 0,
+    val quizCount: Int = 0
 )
 
 /**
@@ -37,11 +42,14 @@ class HomeViewModel @Inject constructor(
     private val courseRepository: CourseRepository,
     private val noteRepository: NoteRepository,
     private val syncRepository: SyncRepository,
+    private val studyRepository: StudyRepository,
     private val activeCourseStore: ActiveCourseStore
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<UiState<HomeUiData>>(UiState.Loading)
     val state: StateFlow<UiState<HomeUiData>> = _state.asStateFlow()
+
+    private var loadJob: Job? = null
 
     init {
         // Se recarga sola cuando el usuario elige otro curso en el selector.
@@ -50,7 +58,9 @@ class HomeViewModel @Inject constructor(
     }
 
     fun load() {
-        viewModelScope.launch {
+        // Al cambiar de curso se cancela la carga anterior: si terminara después, pisaría la del nuevo.
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _state.value = UiState.Loading
             val pending = (syncRepository.getPendingCount() as? Result.Success)?.value ?: 0
 
@@ -75,7 +85,9 @@ class HomeViewModel @Inject constructor(
                         ?.also { activeCourseStore.set(it.id, it.name) },
                     stats = (courseRepository.getCourseStats(courseId) as? Result.Success)?.value,
                     recentNotes = (noteRepository.getNoteMetaList(courseId) as? Result.Success)?.value.orEmpty().take(2),
-                    pendingSyncCount = pending
+                    pendingSyncCount = pending,
+                    flashcardCount = (studyRepository.getFlashcards(courseId) as? Result.Success)?.value?.size ?: 0,
+                    quizCount = if (studyRepository.getQuizQuestion(courseId) is Result.Success) 1 else 0
                 )
             )
         }

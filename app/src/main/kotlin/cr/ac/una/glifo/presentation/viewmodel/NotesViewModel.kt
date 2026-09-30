@@ -11,6 +11,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -26,11 +27,14 @@ class NotesViewModel @Inject constructor(
     val state: StateFlow<UiState<NotesUiData>> = _state.asStateFlow()
 
     private var courseId: Long? = null
+    private var loadJob: Job? = null
 
     /** Apuntes del curso: del servidor si hay red, de Room si no (#25). */
     fun load(courseId: Long) {
         this.courseId = courseId
-        viewModelScope.launch {
+        // Al cambiar de curso se cancela la carga anterior: si terminara después, pisaría la del nuevo.
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _state.value = UiState.Loading
             when (val result = noteRepository.getNoteMetaList(courseId)) {
                 is Result.Success -> {
