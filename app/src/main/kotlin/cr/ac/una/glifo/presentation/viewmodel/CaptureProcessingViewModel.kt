@@ -2,6 +2,7 @@ package cr.ac.una.glifo.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import cr.ac.una.glifo.core.common.AppError
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.domain.error.Result
 import cr.ac.una.glifo.domain.model.CaptureStep
@@ -66,4 +67,26 @@ class CaptureProcessingViewModel @Inject constructor(
     }
 
     fun retry() = load(loadedFor, loadedCourse)
+
+    private val _saving = MutableStateFlow(false)
+    val saving: StateFlow<Boolean> = _saving.asStateFlow()
+
+    private val _saveError = MutableStateFlow<AppError?>(null)
+    val saveError: StateFlow<AppError?> = _saveError.asStateFlow()
+
+    /** Guarda la captura como apunte del curso y devuelve su id local a [onSaved]. */
+    fun saveAsNote(photoPath: String, courseId: Long, onSaved: (Long) -> Unit) {
+        if (_saving.value) return
+        viewModelScope.launch {
+            _saving.value = true
+            when (val result = captureRepository.saveAsNote(photoPath, courseId)) {
+                is Result.Success -> {
+                    _saveError.value = null
+                    onSaved(result.value)
+                }
+                is Result.Failure -> _saveError.value = result.error
+            }
+            _saving.value = false
+        }
+    }
 }

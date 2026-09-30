@@ -2,31 +2,46 @@ package cr.ac.una.glifo.core.sync
 
 import android.content.Context
 import androidx.work.CoroutineWorker
-import androidx.work.ListenableWorker
 import androidx.work.WorkerParameters
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import cr.ac.una.glifo.domain.error.Result as DomainResult
+import cr.ac.una.glifo.domain.model.SyncRunOutcome
+import cr.ac.una.glifo.domain.repository.SyncRepository
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.components.SingletonComponent
+import androidx.work.ListenableWorker.Result as WorkResult
 
 /**
- * Background sync worker (WorkManager). Per D-24 / Glifo_Bitacora_Decisiones.md, Room and
- * any local persistence (`data/local/`, DAOs) are out of scope until Module 5 / Applied
- * Research — this worker previously read a `SyncQueueDao` that lived in `core/database/`,
- * which has been removed from the active source tree for that reason (see
- * `_deferred_module5/` at the repo root for the preserved Room modeling work).
+ * Vacía la cola offline (issue #26). La lógica vive en [SyncRepository.syncNow]; el worker
+ * solo traduce el resultado a lo que entiende WorkManager: `retry()` activa el backoff
+ * exponencial de [SyncScheduler].
  *
- * Left as a scaffold, not wired into any DI graph or WorkManager schedule yet: the real
- * queue this will drain is `domain.repository.SyncRepository` / `SyncOperation`, once
- * there's a persistence layer to back it. Do not reintroduce a Room dependency here before
- * Module 5.
+ * Hilt no inyecta Workers sin la librería hilt-work, así que el repositorio se obtiene con
+ * un EntryPoint del grafo de la aplicación.
  */
 class SyncWorker(
     context: Context,
     params: WorkerParameters
 ) : CoroutineWorker(context, params) {
 
-    override suspend fun doWork(): ListenableWorker.Result = withContext(Dispatchers.IO) {
-        // TODO(Module 5): drain the persisted sync queue once data/local/ exists.
-        // Until then there is nothing to process — dummy data lives entirely in memory.
-        ListenableWorker.Result.success()
+    @EntryPoint
+    @InstallIn(SingletonComponent::class)
+    interface SyncWorkerEntryPoint {
+        fun syncRepository(): SyncRepository
+    }
+
+    override suspend fun doWork(): WorkResult {
+        val repository = EntryPointAccessors
+            .fromApplication(applicationContext, SyncWorkerEntryPoint::class.java)
+            .syncRepository()
+
+        return when (val result = repository.syncNow()) {
+            is DomainResult.Success -> when (result.value.outcome) {
+                SyncRunOutcome.Completed -> WorkResult.success()
+                SyncRunOutcome.RetryLater -> WorkResult.retry()
+            }
+            is DomainResult.Failure -> WorkResult.retry()
+        }
     }
 }

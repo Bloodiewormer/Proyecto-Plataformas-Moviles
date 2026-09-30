@@ -25,7 +25,7 @@ import javax.inject.Inject
  * `Glifo_Bitacora_Decisiones.md` for the tool choice and the route contract); point
  * `NetworkModule`'s base URL at wherever Mockoon is serving.
  *
- * `emailExists`/`getDemoAccountHints` stay on [DummyAuthProvider] — they're dummy-phase-only
+ * `getDemoAccountHints` stays on [DummyAuthProvider] — they're dummy-phase-only
  * UI affordances (see [DemoAccountHint]'s KDoc) with no backend endpoint to call, not part
  * of what Lab 3 evaluates. Everything else in the app (courses, notes, study, …) is still
  * 100% dummy-backed per the standing "temporary until there's a real backend" decision —
@@ -49,10 +49,7 @@ class AuthRepositoryImpl @Inject constructor(
         )
         return callApi { api.register(request) }
     }
-
-    override suspend fun emailExists(email: String): Result<Boolean> =
-        Result.Success(DummyAuthProvider.emailExists(email))
-
+
     override suspend fun getDemoAccountHints(): Result<List<DemoAccountHint>> =
         Result.Success(DummyAuthProvider.demoAccounts.map { DemoAccountHint(it.email, it.password, it.role) })
 

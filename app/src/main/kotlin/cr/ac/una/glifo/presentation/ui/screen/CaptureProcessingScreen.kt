@@ -44,7 +44,7 @@ fun CaptureProcessingScreen(
     photoPath: String? = null,
     courseId: Long? = null,
     onNavigateBack: () -> Unit,
-    onViewResults: () -> Unit,
+    onViewResults: (noteId: Long) -> Unit,
     viewModel: CaptureProcessingViewModel = hiltViewModel()
 ) {
     val colors = GlifoTheme.colors
@@ -234,10 +234,18 @@ fun CaptureProcessingScreen(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
+                    // Ver resultados guarda la captura como apunte (#25) y la encola (#26).
+                    val saving by viewModel.saving.collectAsState()
+                    val saveError by viewModel.saveError.collectAsState()
+                    saveError?.let { error ->
+                        Text(error.toMessage(context), fontSize = 12.sp, color = colors.alert, modifier = Modifier.padding(bottom = 8.dp))
+                    }
                     GlifoButton(
                         text = stringResource(R.string.capture_processing_view_results),
-                        enabled = revealedCount >= revealTarget,
-                        onClick = onViewResults
+                        enabled = revealedCount >= revealTarget && !saving && photoPath != null && courseId != null,
+                        onClick = {
+                            if (photoPath != null && courseId != null) viewModel.saveAsNote(photoPath, courseId, onViewResults)
+                        }
                     )
                 }
             }

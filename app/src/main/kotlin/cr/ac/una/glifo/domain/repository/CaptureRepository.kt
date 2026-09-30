@@ -20,4 +20,10 @@ interface CaptureRepository {
 
     /** Linea de tiempo del procesamiento, derivada del analisis real cuando hay foto. */
     suspend fun getProcessingSteps(photoPath: String? = null, courseId: Long? = null): Result<List<CaptureStep>>
+
+    /**
+     * Guarda la captura ya analizada como apunte del curso (#25) y la deja en la cola de
+     * sincronizacion (#26). Devuelve el id local del apunte para abrir sus resultados.
+     */
+    suspend fun saveAsNote(photoPath: String, courseId: Long): Result<Long>
 }

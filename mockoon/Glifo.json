@@ -650,6 +650,64 @@
       "responseMode": null,
       "streamingMode": null,
       "streamingInterval": 0
+    },
+    {
+      "uuid": "a88f2084-c66f-4b29-b1ec-30b984a9e044",
+      "type": "http",
+      "documentation": "Página procesada en el teléfono que sube la cola offline (issue #26). id 999 = 404.",
+      "method": "post",
+      "endpoint": "notes/:id/pages",
+      "responses": [
+        {
+          "uuid": "091c1bd5-98c0-4f40-831f-1f0e67091871",
+          "body": "{ \"message\": \"Apunte no encontrado\" }",
+          "latency": 0,
+          "statusCode": 404,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "params",
+              "modifier": "id",
+              "value": "999",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "0976ea1b-6fd0-464f-ad8f-5d4ba703aedc",
+          "body": "{\n  \"data\": {\n    \"id\": {{faker 'number.int' 1000}},\n    \"note_id\": {{urlParam 'id'}},\n    \"page_index\": {{body 'page_index'}}\n  }\n}",
+          "latency": 0,
+          "statusCode": 201,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
     }
   ],
   "rootChildren": [
@@ -700,6 +758,10 @@
     {
       "type": "route",
       "uuid": "e107f3f0-ff8c-46ff-87b3-ec1244bab387"
+    },
+    {
+      "type": "route",
+      "uuid": "a88f2084-c66f-4b29-b1ec-30b984a9e044"
     }
   ],
   "proxyMode": false,

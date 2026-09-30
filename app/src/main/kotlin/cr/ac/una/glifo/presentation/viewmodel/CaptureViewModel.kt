@@ -3,6 +3,7 @@ package cr.ac.una.glifo.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cr.ac.una.glifo.core.common.UiState
+import cr.ac.una.glifo.core.datastore.ActiveCourseStore
 import cr.ac.una.glifo.domain.model.CourseDetail
 import cr.ac.una.glifo.domain.repository.CourseContextRepository
 import cr.ac.una.glifo.domain.repository.CourseRepository
@@ -17,7 +18,8 @@ import javax.inject.Inject
 @HiltViewModel
 class CaptureViewModel @Inject constructor(
     private val courseRepository: CourseRepository,
-    private val courseContextRepository: CourseContextRepository
+    private val courseContextRepository: CourseContextRepository,
+    private val activeCourseStore: ActiveCourseStore
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<UiState<CourseDetail>>(UiState.Loading)
@@ -28,6 +30,7 @@ class CaptureViewModel @Inject constructor(
     fun load(courseId: Long) {
         if (loadedFor == courseId) return
         loadedFor = courseId
+        activeCourseStore.set(courseId)
         viewModelScope.launch {
             _state.value = UiState.Loading
             _state.value = courseRepository.getCourseDetail(courseId).toUiState()

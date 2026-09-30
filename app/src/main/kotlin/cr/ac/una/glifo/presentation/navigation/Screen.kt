@@ -16,12 +16,12 @@ sealed class Screen(val route: String) {
     data object Courses : Screen("courses")
     data object JoinCourse : Screen("join_course")
     data object CourseDetail : Screen("course/{courseId}") {
-        fun createRoute(courseId: Long = 1L) = "course/$courseId"
+        fun createRoute(courseId: Long) = "course/$courseId"
     }
 
     // D — Captura
     data object Capture : Screen("capture/{courseId}") {
-        fun createRoute(courseId: Long = 1L) = "capture/$courseId"
+        fun createRoute(courseId: Long) = "capture/$courseId"
     }
     // El curso acompaña a la foto: el pipeline lo necesita para leer el glosario de Room (#27)
     // y para comparar contra las páginas ya procesadas de ese curso (#28).
@@ -38,24 +38,25 @@ sealed class Screen(val route: String) {
 
     // E — Apuntes
     data object NoteList : Screen("notes/{courseId}") {
-        fun createRoute(courseId: Long = 1L) = "notes/$courseId"
+        fun createRoute(courseId: Long) = "notes/$courseId"
     }
     data object NoteDetail : Screen("note/{noteId}") {
-        fun createRoute(noteId: Long = 1L) = "note/$noteId"
+        fun createRoute(noteId: Long) = "note/$noteId"
     }
-    data object CorrectFragment : Screen("correct_fragment/{noteId}") {
-        fun createRoute(noteId: Long = 1L) = "correct_fragment/$noteId"
+    // fragment: id del fragmento tocado ("p0-r3"); sin él, cada pantalla elige el más relevante.
+    data object CorrectFragment : Screen("correct_fragment/{noteId}?fragment={fragment}") {
+        fun createRoute(noteId: Long, fragmentId: String? = null) = "correct_fragment/$noteId" + fragmentQuery(fragmentId)
     }
-    data object FormulaViewer : Screen("formula_viewer/{noteId}") {
-        fun createRoute(noteId: Long = 1L) = "formula_viewer/$noteId"
+    data object FormulaViewer : Screen("formula_viewer/{noteId}?fragment={fragment}") {
+        fun createRoute(noteId: Long, fragmentId: String? = null) = "formula_viewer/$noteId" + fragmentQuery(fragmentId)
     }
-    data object RegionProvenance : Screen("region_provenance/{noteId}") {
-        fun createRoute(noteId: Long = 1L) = "region_provenance/$noteId"
+    data object RegionProvenance : Screen("region_provenance/{noteId}?fragment={fragment}") {
+        fun createRoute(noteId: Long, fragmentId: String? = null) = "region_provenance/$noteId" + fragmentQuery(fragmentId)
     }
 
     // F — Cobertura
     data object Coverage : Screen("coverage/{courseId}") {
-        fun createRoute(courseId: Long = 1L) = "coverage/$courseId"
+        fun createRoute(courseId: Long) = "coverage/$courseId"
     }
     data object TopicDetail : Screen("topic_detail/{topicName}") {
         fun createRoute(topicName: String) = "topic_detail/${java.net.URLEncoder.encode(topicName, "UTF-8")}"
@@ -64,7 +65,7 @@ sealed class Screen(val route: String) {
 
     // G — Estudio
     data object StudyHub : Screen("study_hub/{courseId}") {
-        fun createRoute(courseId: Long = 1L) = "study_hub/$courseId"
+        fun createRoute(courseId: Long) = "study_hub/$courseId"
     }
     data object FlashcardSession : Screen("flashcards")
     data object QuizSession : Screen("quiz")
@@ -93,6 +94,9 @@ sealed class Screen(val route: String) {
     data object Settings : Screen("settings")
     data object Profile : Screen("profile")
 }
+
+private fun fragmentQuery(fragmentId: String?): String =
+    fragmentId?.let { "?fragment=${java.net.URLEncoder.encode(it, "UTF-8")}" } ?: ""
 
 /** Query de las rutas de captura; los argumentos ausentes se omiten y toman su valor por defecto. */
 private fun captureQuery(photoPath: String?, courseId: Long?): String {

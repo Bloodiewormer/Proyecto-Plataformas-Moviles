@@ -66,9 +66,9 @@ fun SyncQueueScreen(
                 GlifoDrawerContent(
                     role = GlifoRole.Student,
                     currentScreen = "sync",
-                    userName = user?.fullName ?: "Brandon Brenes",
-                    userEmail = user?.email ?: "estudiante@est.una.ac.cr",
-                    userInitials = user?.initials ?: "BB",
+                    userName = user?.fullName.orEmpty(),
+                    userEmail = user?.email.orEmpty(),
+                    userInitials = user?.initials.orEmpty(),
                     onNavigate = { route ->
                         scope.launch { drawerState.close() }
                         onNavigateDrawer(route)
@@ -107,6 +107,42 @@ fun SyncQueueScreen(
                 is UiState.Success -> {
                     val items = state.data.items
                     val syncingCount = state.data.syncingCount
+                    val failedCount = items.count { it.status == SyncStatus.Failed }
+                    val running by viewModel.running.collectAsState()
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        GlifoButton(
+                            text = stringResource(R.string.sync_queue_sync_now),
+                            icon = Icons.Default.Sync,
+                            enabled = !running && items.any { it.status != SyncStatus.Done },
+                            modifier = Modifier.weight(1f),
+                            onClick = viewModel::syncNow
+                        )
+                        if (failedCount > 0) {
+                            GlifoButton(
+                                text = stringResource(R.string.sync_queue_retry_failed),
+                                variant = GlifoButtonVariant.Secondary,
+                                enabled = !running,
+                                modifier = Modifier.weight(1f),
+                                onClick = viewModel::retryFailed
+                            )
+                        }
+                    }
+                    state.data.lastRun?.let { run ->
+                        Text(
+                            stringResource(R.string.sync_queue_result, run.uploaded, run.remaining),
+                            fontSize = 12.sp,
+                            color = colors.textSecondary,
+                            modifier = Modifier.padding(horizontal = 14.dp)
+                        )
+                    }
+
+                    if (items.isEmpty()) {
+                        GlifoBanner(text = stringResource(R.string.sync_queue_empty))
+                    }
 
                     if (syncingCount > 0) {
                         val noteWord = if (syncingCount == 1) {
@@ -137,7 +173,20 @@ fun SyncQueueScreen(
                                     }
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(text = item.title, fontSize = 13.sp, color = colors.textPrimary)
-                                        Text(text = item.timestamp, fontSize = 11.sp, color = colors.textSecondary)
+                                        Text(
+                                            text = if (item.attempts > 0 && item.status != SyncStatus.Done) {
+                                                stringResource(R.string.sync_queue_attempts, item.attempts, item.timestamp)
+                                            } else {
+                                                item.timestamp
+                                            },
+                                            fontSize = 11.sp,
+                                            color = colors.textSecondary
+                                        )
+                                        if (item.status != SyncStatus.Done) {
+                                            item.lastError?.let { error ->
+                                                Text(text = error, fontSize = 11.sp, color = if (item.status == SyncStatus.Failed) colors.alert else colors.textSecondary)
+                                            }
+                                        }
                                         if (item.status == SyncStatus.Syncing) {
                                             var animate by remember { mutableStateOf(false) }
                                             LaunchedEffect(Unit) { animate = true }
@@ -165,6 +214,11 @@ fun SyncQueueScreen(
                                     }
                                     when (item.status) {
                                         SyncStatus.Queued -> GlifoBadge(text = stringResource(R.string.sync_queue_queued_badge))
+                                        SyncStatus.Failed -> GlifoBadge(
+                                            text = stringResource(R.string.sync_queue_failed_badge),
+                                            backgroundColor = colors.alertSoft,
+                                            textColor = colors.alert
+                                        )
                                         SyncStatus.Done -> Icon(imageVector = Icons.Default.Check, contentDescription = null, tint = colors.verified, modifier = Modifier.size(16.dp))
                                         SyncStatus.Syncing -> {}
                                     }

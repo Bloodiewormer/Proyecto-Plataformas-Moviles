@@ -4,7 +4,9 @@ import android.content.Context
 import androidx.room.Room
 import cr.ac.una.glifo.data.datasource.local.GlifoDatabase
 import cr.ac.una.glifo.data.datasource.local.dao.LocalCourseContextDao
+import cr.ac.una.glifo.data.datasource.local.dao.NoteDao
 import cr.ac.una.glifo.data.datasource.local.dao.ProcessedPageDao
+import cr.ac.una.glifo.data.datasource.local.dao.SyncOperationDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -16,10 +18,18 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
 
+    /**
+     * v1 solo tenía cachés que se vuelven a descargar o recalcular (glosario, páginas ya
+     * procesadas), así que pasar a v2 borrando esas tablas no pierde nada del estudiante.
+     * A partir de v2 hay capturas sin sincronizar: el próximo cambio de esquema necesita una
+     * Migration real, no borrar.
+     */
     @Provides
     @Singleton
     fun provideGlifoDatabase(@ApplicationContext context: Context): GlifoDatabase =
-        Room.databaseBuilder(context, GlifoDatabase::class.java, "glifo.db").build()
+        Room.databaseBuilder(context, GlifoDatabase::class.java, "glifo.db")
+            .fallbackToDestructiveMigrationFrom(dropAllTables = true, 1)
+            .build()
 
     @Provides
     fun provideLocalCourseContextDao(database: GlifoDatabase): LocalCourseContextDao =
@@ -28,4 +38,10 @@ object DatabaseModule {
     @Provides
     fun provideProcessedPageDao(database: GlifoDatabase): ProcessedPageDao =
         database.processedPageDao()
+
+    @Provides
+    fun provideNoteDao(database: GlifoDatabase): NoteDao = database.noteDao()
+
+    @Provides
+    fun provideSyncOperationDao(database: GlifoDatabase): SyncOperationDao = database.syncOperationDao()
 }

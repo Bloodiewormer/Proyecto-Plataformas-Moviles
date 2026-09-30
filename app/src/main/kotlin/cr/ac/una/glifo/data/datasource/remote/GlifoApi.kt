@@ -6,11 +6,13 @@ import cr.ac.una.glifo.data.dto.CourseDetailResponse
 import cr.ac.una.glifo.data.dto.CourseGlossaryResponse
 import cr.ac.una.glifo.data.dto.CourseResponse
 import cr.ac.una.glifo.data.dto.CreateCourseRequest
+import cr.ac.una.glifo.data.dto.CreateNotePageRequest
 import cr.ac.una.glifo.data.dto.CreateNoteRequest
 import cr.ac.una.glifo.data.dto.EnrollmentResponse
 import cr.ac.una.glifo.data.dto.JoinCourseRequest
 import cr.ac.una.glifo.data.dto.LoginRequest
 import cr.ac.una.glifo.data.dto.NoteDetailResponse
+import cr.ac.una.glifo.data.dto.NotePageResponse
 import cr.ac.una.glifo.data.dto.NoteResponse
 import cr.ac.una.glifo.data.dto.RegisterRequest
 import retrofit2.Response
@@ -74,4 +76,8 @@ interface GlifoApi {
 
     @DELETE("notes/{id}")
     suspend fun deleteNote(@Path("id") id: Long): Response<Unit>
+
+    // Página ya procesada en el teléfono; la sube la cola offline (issue #26)
+    @POST("notes/{id}/pages")
+    suspend fun uploadPage(@Path("id") noteId: Long, @Body request: CreateNotePageRequest): ApiResponse<NotePageResponse>
 }

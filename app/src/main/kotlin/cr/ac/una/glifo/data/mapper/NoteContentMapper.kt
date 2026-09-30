@@ -1,0 +1,164 @@
+package cr.ac.una.glifo.data.mapper
+
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
+import cr.ac.una.glifo.core.pipeline.RegionClassifier
+import cr.ac.una.glifo.data.datasource.local.entity.FragmentCorrectionEntity
+import cr.ac.una.glifo.data.datasource.local.entity.NoteEntity
+import cr.ac.una.glifo.data.datasource.local.entity.NotePageEntity
+import cr.ac.una.glifo.domain.model.ConfidenceState
+import cr.ac.una.glifo.domain.model.Note
+import cr.ac.una.glifo.domain.model.NoteContent
+import cr.ac.una.glifo.domain.model.NoteContentSource
+import cr.ac.una.glifo.domain.model.NoteFragment
+import cr.ac.una.glifo.domain.model.NotePageInfo
+import cr.ac.una.glifo.domain.model.RegionKind
+
+fun NoteEntity.toDomain(): Note = Note(id = id, courseId = courseId, title = title, classDate = classDate)
+
+/**
+ * Contenido de un apunte capturado en este teléfono: una fila por región que devolvió el
+ * pipeline, en orden de lectura, con las correcciones del estudiante aplicadas encima.
+ */
+fun buildLocalNoteContent(
+    note: NoteEntity,
+    pages: List<NotePageEntity>,
+    corrections: List<FragmentCorrectionEntity>,
+    hasPendingSync: Boolean
+): NoteContent {
+    val corrected = corrections.associate { it.fragmentId to it.correctedText }
+    val pageInfos = mutableListOf<NotePageInfo>()
+    val fragments = mutableListOf<NoteFragment>()
+
+    pages.sortedBy { it.pageIndex }.forEach { page ->
+        val analysis = pageAnalysisFromSnapshotJson(page.analysisJson)
+        pageInfos += NotePageInfo(
+            pageIndex = page.pageIndex,
+            photoPath = page.photoPath,
+            analyzedWidth = analysis?.pageWidth ?: 0,
+            analyzedHeight = analysis?.pageHeight ?: 0,
+            levelReached = page.levelReached,
+            overallConfidence = page.overallConfidence
+        )
+        analysis?.regions?.forEach { region ->
+            val id = "p${page.pageIndex}-r${region.index}"
+            fragments += NoteFragment(
+                id = id,
+                pageIndex = page.pageIndex,
+                text = region.text,
+                kind = region.kind,
+                state = if (id in corrected) ConfidenceState.Verified else region.confidenceState,
+                confidence = region.ocrConfidence,
+                route = region.route,
+                bounds = region.bounds,
+                kindConfidence = region.kindConfidence,
+                metrics = region.metrics,
+                correctedText = corrected[id]
+            )
+        }
+    }
+
+    return NoteContent(
+        note = note.toDomain(),
+        source = if (pages.isEmpty()) NoteContentSource.Unavailable else NoteContentSource.LocalPipeline,
+        pages = pageInfos,
+        fragments = fragments,
+        hasPendingSync = hasPendingSync,
+        threshold = RegionClassifier.TEXT_CONFIDENCE_GATE
+    )
+}
+
+/**
+ * Contenido de un apunte que solo existe en el servidor: la reconstrucción IA-01 guardada en
+ * notes.content (Glifo_UML_Modeling.md §5.5). Sin reconstrucción, el apunte queda sin
+ * contenido en vez de mostrar texto inventado.
+ */
+fun buildServerNoteContent(
+    note: NoteEntity,
+    corrections: List<FragmentCorrectionEntity>,
+    hasPendingSync: Boolean
+): NoteContent {
+    val corrected = corrections.associate { it.fragmentId to it.correctedText }
+    val fragments = note.contentJson?.let { parseReconstruction(it, corrected) }.orEmpty()
+    return NoteContent(
+        note = note.toDomain(),
+        source = if (fragments.isEmpty()) NoteContentSource.Unavailable else NoteContentSource.ServerReconstruction,
+        pages = emptyList(),
+        fragments = fragments,
+        hasPendingSync = hasPendingSync,
+        threshold = RegionClassifier.TEXT_CONFIDENCE_GATE
+    )
+}
+
+/** Recorre `blocks` del documento IA-01; un bloque PARAGRAPH aporta un fragmento por span. */
+internal fun parseReconstruction(json: String, corrected: Map<String, String> = emptyMap()): List<NoteFragment> {
+    val root = runCatching { JsonParser.parseString(json).asJsonObject }.getOrNull() ?: return emptyList()
+    val blocks = root.getAsJsonArray("blocks") ?: return emptyList()
+    val fragments = mutableListOf<NoteFragment>()
+
+    blocks.forEach { element ->
+        val block = element.asJsonObject
+        val blockId = block.string("id") ?: "b${fragments.size}"
+        when (block.string("type")) {
+            "HEADING" -> fragments += serverFragment(
+                id = blockId, text = block.string("text").orEmpty(), kind = RegionKind.Text,
+                resolvedAt = "N1", confidence = 1f, uncertain = false, corrected = corrected
+            )
+            "PARAGRAPH" -> block.getAsJsonArray("spans")?.forEachIndexed { i, spanElement ->
+                val span = spanElement.asJsonObject
+                fragments += serverFragment(
+                    id = "$blockId-s$i",
+                    text = span.string("text").orEmpty(),
+                    kind = RegionKind.Text,
+                    resolvedAt = span.string("resolvedAt") ?: "N1",
+                    confidence = span.float("confidence") ?: 0f,
+                    uncertain = span.get("isUncertain")?.asBoolean ?: false,
+                    corrected = corrected
+                )
+            }
+            "FORMULA" -> fragments += serverFragment(
+                id = blockId, text = block.string("latex").orEmpty(), kind = RegionKind.Math,
+                resolvedAt = block.string("resolvedAt") ?: "N1_5",
+                confidence = block.float("confidence") ?: 0f, uncertain = false, corrected = corrected
+            )
+            "FIGURE" -> fragments += serverFragment(
+                id = blockId, text = block.string("caption").orEmpty(), kind = RegionKind.Drawing,
+                resolvedAt = block.string("resolvedAt") ?: "N2",
+                confidence = block.float("confidence") ?: 0f, uncertain = false, corrected = corrected
+            )
+        }
+    }
+    return fragments
+}
+
+private fun serverFragment(
+    id: String,
+    text: String,
+    kind: RegionKind,
+    resolvedAt: String,
+    confidence: Float,
+    uncertain: Boolean,
+    corrected: Map<String, String>
+): NoteFragment {
+    // resolvedAt dice qué nivel resolvió el fragmento; se traduce a la escala de la UI (§1).
+    val state = when {
+        id in corrected -> ConfidenceState.Verified
+        uncertain || resolvedAt == "UNRESOLVED" -> ConfidenceState.Uncertain
+        resolvedAt == "N1_5" -> ConfidenceState.Repaired
+        resolvedAt == "N2" || resolvedAt == "N3" -> ConfidenceState.Escalated
+        else -> ConfidenceState.Verified
+    }
+    return NoteFragment(
+        id = id,
+        pageIndex = 0,
+        text = text,
+        kind = kind,
+        state = state,
+        confidence = confidence,
+        route = "$resolvedAt · reconstrucción del servidor",
+        correctedText = corrected[id]
+    )
+}
+
+private fun JsonObject.string(name: String): String? = get(name)?.takeIf { !it.isJsonNull }?.asString
+private fun JsonObject.float(name: String): Float? = get(name)?.takeIf { !it.isJsonNull }?.asFloat

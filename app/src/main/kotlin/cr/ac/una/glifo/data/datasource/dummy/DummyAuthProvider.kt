@@ -59,9 +59,6 @@ object DummyAuthProvider {
     fun findAccount(email: String, password: String): DummyAccount? =
         accounts.find { it.email.equals(email.trim(), ignoreCase = true) && it.password == password }
 
-    fun emailExists(email: String): Boolean =
-        accounts.any { it.email.equals(email.trim(), ignoreCase = true) }
-
     fun register(fullName: String, email: String, password: String): DummyAccount {
         val account = DummyAccount(
             id = (accounts.maxOfOrNull { it.id } ?: 0L) + 1L,

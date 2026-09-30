@@ -25,12 +25,14 @@ class NotesViewModel @Inject constructor(
     private val _state = MutableStateFlow<UiState<NotesUiData>>(UiState.Loading)
     val state: StateFlow<UiState<NotesUiData>> = _state.asStateFlow()
 
-    init { load() }
+    private var courseId: Long? = null
 
-    fun load() {
+    /** Apuntes del curso: del servidor si hay red, de Room si no (#25). */
+    fun load(courseId: Long) {
+        this.courseId = courseId
         viewModelScope.launch {
             _state.value = UiState.Loading
-            when (val result = noteRepository.getNoteMetaList()) {
+            when (val result = noteRepository.getNoteMetaList(courseId)) {
                 is Result.Success -> {
                     val pending = (syncRepository.getPendingCount() as? Result.Success)?.value ?: 0
                     _state.value = UiState.Success(NotesUiData(result.value, pending))
@@ -38,5 +40,9 @@ class NotesViewModel @Inject constructor(
                 is Result.Failure -> _state.value = UiState.Error(result.error)
             }
         }
+    }
+
+    fun load() {
+        courseId?.let { load(it) }
     }
 }

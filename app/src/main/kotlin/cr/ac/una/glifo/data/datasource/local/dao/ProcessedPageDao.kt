@@ -21,4 +21,8 @@ interface ProcessedPageDao {
 
     @Query("SELECT * FROM processed_pages WHERE id = :id")
     suspend fun getById(id: Long): ProcessedPageEntity?
+
+    /** Todas las páginas que pasaron por el pipeline en este teléfono (uso de IA, #46/#47). */
+    @Query("SELECT * FROM processed_pages ORDER BY processed_at")
+    suspend fun all(): List<ProcessedPageEntity>
 }

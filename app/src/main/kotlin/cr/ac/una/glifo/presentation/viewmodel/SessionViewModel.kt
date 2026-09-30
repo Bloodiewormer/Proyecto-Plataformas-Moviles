@@ -1,5 +1,6 @@
 package cr.ac.una.glifo.presentation.viewmodel
 
+import cr.ac.una.glifo.core.datastore.ActiveCourseStore
 import androidx.lifecycle.ViewModel
 import cr.ac.una.glifo.domain.model.User
 import cr.ac.una.glifo.domain.repository.SessionRepository
@@ -15,7 +16,8 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class SessionViewModel @Inject constructor(
-    private val sessionRepository: SessionRepository
+    private val sessionRepository: SessionRepository,
+    private val activeCourseStore: ActiveCourseStore
 ) : ViewModel() {
 
     val currentUser: StateFlow<User?> = sessionRepository.currentUser
@@ -23,7 +25,10 @@ class SessionViewModel @Inject constructor(
 
     fun login(user: User) = sessionRepository.login(user)
 
-    fun logout() = sessionRepository.logout()
+    fun logout() {
+        sessionRepository.logout()
+        activeCourseStore.clear()
+    }
 
     fun setProfilePhotoUri(uri: String?) = sessionRepository.setProfilePhotoUri(uri)
 }

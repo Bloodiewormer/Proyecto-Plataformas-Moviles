@@ -9,6 +9,9 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import cr.ac.una.glifo.core.pipeline.PerceptualHasher
 import cr.ac.una.glifo.data.datasource.local.entity.LocalCourseContextEntity
+import cr.ac.una.glifo.data.datasource.local.entity.NoteEntity
+import cr.ac.una.glifo.data.datasource.local.entity.NotePageEntity
+import cr.ac.una.glifo.data.datasource.local.entity.SyncOperationEntity
 import cr.ac.una.glifo.data.datasource.local.entity.ProcessedPageEntity
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -85,6 +88,60 @@ class GlifoDatabaseTest {
         assertEquals(1, hashes.size)
         assertEquals("c3a1f0e98b7d6245", hashes.single().perceptualHash)
         assertEquals("/a.jpg", dao.getById(id)?.photoPath)
+    }
+
+    private fun note(serverId: Long?, title: String, courseId: Long = 1L) = NoteEntity(
+        serverId = serverId, courseId = courseId, title = title, classDate = "2026-09-30", status = "READY", createdAt = 0L
+    )
+
+    @Test
+    fun cachingRemoteNotesUpdatesExistingOnesAndKeepsLocalCaptures() = runBlocking {
+        val dao = db.noteDao()
+        val localId = dao.insertNote(note(serverId = null, title = "Captura offline"))
+        dao.insertPage(NotePageEntity(noteId = localId, pageIndex = 0, perceptualHash = "c3a1f0e98b7d6245", photoPath = "/a.jpg", levelReached = "N1", overallConfidence = 0.8f, analysisJson = "{}", processedAt = 0L))
+        dao.cacheRemoteNotes(1L, listOf(note(42L, "Derivadas"), note(43L, "Integrales")))
+
+        // Segunda lectura del servidor: 42 cambió de título y 43 ya no existe.
+        dao.cacheRemoteNotes(1L, listOf(note(42L, "Derivadas (v2)")))
+
+        val titles = dao.notesForCourse(1L).map { it.title }.toSet()
+        assertEquals(setOf("Captura offline", "Derivadas (v2)"), titles)
+        assertEquals(1, dao.pageHashesForCourse(1L).size)
+    }
+
+    @Test
+    fun syncQueueRowsJoinTheNoteTitleAndDeletingTheNoteCascades() = runBlocking {
+        val notes = db.noteDao()
+        val sync = db.syncOperationDao()
+        val noteId = notes.insertNote(note(serverId = null, title = "Apunte"))
+        val pageId = notes.insertPage(NotePageEntity(noteId = noteId, pageIndex = 0, perceptualHash = "0000000000000000", photoPath = "/b.jpg", levelReached = "N1", overallConfidence = 0.5f, analysisJson = "{}", processedAt = 0L))
+        sync.insert(SyncOperationEntity(entityType = SyncOperationEntity.TYPE_CREATE_NOTE, idempotencyKey = "k1", noteId = noteId, createdAt = 1L, updatedAt = 1L))
+        sync.insert(SyncOperationEntity(entityType = SyncOperationEntity.TYPE_UPLOAD_PAGE, idempotencyKey = "k2", noteId = noteId, pageId = pageId, createdAt = 2L, updatedAt = 2L))
+
+        val rows = sync.queueRows()
+        assertEquals(listOf("Apunte", "Apunte"), rows.map { it.noteTitle })
+        assertEquals(0, rows.first { it.entityType == SyncOperationEntity.TYPE_UPLOAD_PAGE }.pageIndex)
+        assertEquals(listOf(SyncOperationEntity.TYPE_CREATE_NOTE, SyncOperationEntity.TYPE_UPLOAD_PAGE), sync.runnable().map { it.entityType })
+        assertEquals(2, sync.pendingCount())
+
+        notes.deleteNote(noteId)
+
+        assertEquals(0, sync.pendingCount())
+        assertEquals(0, notes.pagesForNote(noteId).size)
+    }
+
+    @Test
+    fun failedOperationsCanBeRequeued() = runBlocking {
+        val notes = db.noteDao()
+        val sync = db.syncOperationDao()
+        val noteId = notes.insertNote(note(serverId = null, title = "Apunte"))
+        val opId = sync.insert(SyncOperationEntity(entityType = SyncOperationEntity.TYPE_CREATE_NOTE, idempotencyKey = "k3", noteId = noteId, createdAt = 1L, updatedAt = 1L))
+        sync.update(opId, SyncOperationEntity.STATUS_FAILED, 1, "400", 5L)
+        assertTrue(sync.runnable().isEmpty())
+
+        assertEquals(1, sync.requeueFailed(9L))
+
+        assertEquals(listOf(opId), sync.runnable().map { it.id })
     }
 
     /**
