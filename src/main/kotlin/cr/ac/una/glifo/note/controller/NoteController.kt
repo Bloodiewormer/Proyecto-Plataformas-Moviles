@@ -1,6 +1,7 @@
 package cr.ac.una.glifo.note.controller
 
 import cr.ac.una.glifo.common.dto.ApiResponse
+import cr.ac.una.glifo.note.dto.CreateNotePageRequest
 import cr.ac.una.glifo.note.dto.CreateNoteRequest
 import cr.ac.una.glifo.note.dto.NotePageResponse
 import cr.ac.una.glifo.note.dto.NoteResponse
@@ -11,7 +12,6 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
-import org.springframework.web.multipart.MultipartFile
 
 @RestController
 @RequestMapping("/api/v1/notes")
@@ -63,26 +63,15 @@ class NoteController(
     @ResponseStatus(HttpStatus.CREATED)
     fun uploadPage(
         @PathVariable id: Long,
-        @RequestParam("pageIndex") pageIndex: Int,
-        @RequestParam("file") file: MultipartFile
-    ): ApiResponse<NotePageResponse> {
-        // Placeholder for uploading a page
-        return ApiResponse(
-            data = NotePageResponse(
-                id = 1L,
-                noteId = id,
-                pageIndex = pageIndex,
-                storageUri = "placeholder/uri",
-                levelReached = "N0",
-                overallConfidence = 0.0f,
-                processedAt = null
-            )
-        )
-    }
+        @Valid @RequestBody request: CreateNotePageRequest,
+        @AuthenticationPrincipal user: GlifoUserDetails
+    ): ApiResponse<NotePageResponse> =
+        ApiResponse(data = noteService.addPage(id, user.userId, request))
 
     @GetMapping("/{id}/pages")
-    fun getPages(@PathVariable id: Long): ApiResponse<List<NotePageResponse>> {
-        // Placeholder for listing pages
-        return ApiResponse(data = emptyList())
-    }
+    fun getPages(
+        @PathVariable id: Long,
+        @AuthenticationPrincipal user: GlifoUserDetails
+    ): ApiResponse<List<NotePageResponse>> =
+        ApiResponse(data = noteService.getPages(id, user.userId))
 }
