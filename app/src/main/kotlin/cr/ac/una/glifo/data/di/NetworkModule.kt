@@ -21,19 +21,8 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    /**
-     * `10.0.2.2` is the emulator's virtual router alias for the host machine's loopback
-     * (the emulator manages the whole `10.0.2/24` space: `.1` gateway, `.2` host loopback,
-     * `.15` the device over ethernet, `.16` over Wi-Fi). The port is whatever the Mockoon
-     * environment listens on — 3000 here, see D-25 for the route contract.
-     *
-     * **Known emulator gotcha:** on emulator versions before 36.5 the alias only resolves
-     * over the cellular/ethernet interface, not over the emulated Wi-Fi AP — with Wi-Fi on,
-     * requests to `10.0.2.2` leak out to the real LAN and hang unanswered. If the app can't
-     * reach the mock, turn the emulator's Wi-Fi off (mobile data on) or update the emulator
-     * in SDK Manager. Nothing machine-specific belongs in this constant — no LAN IPs.
-     */
-    private const val BASE_URL = "http://10.0.2.2:3000/api/v1/"
+
+    private const val BASE_URL = "http://127.0.0.1:8080/api/v1/"
 
     @Provides
     @Singleton
