@@ -1,0 +1,14 @@
+# Alternativa a crear la base en pgAdmin: levanta PostgreSQL con el mismo usuario, clave y
+# base que application.properties (glifo / 12345 / glifo).
+#   docker compose up -d
+services:
+  postgres:
+    image: postgres:18
+    container_name: glifo-postgres
+    environment:
+      POSTGRES_USER: glifo
+      POSTGRES_PASSWORD: "12345"
+      POSTGRES_DB: glifo
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
+    ports:
+      - "5432:5432"

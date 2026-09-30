@@ -2,21 +2,37 @@ package cr.ac.una.glifo.ops.entity
 
 import cr.ac.una.glifo.user.entity.User
 import jakarta.persistence.*
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import java.time.Instant
 
 @Entity(name = "notifications")
+@Table(
+    name = "notifications",
+    indexes = [
+        Index(name = "idx_notifications_user_read", columnList = "user_id, read_at"),
+    ],
+    check = [
+        CheckConstraint(
+            name = "ck_notifications_kind",
+            constraint = "kind IN ('SYNC_COMPLETE', 'REVIEW_DUE', 'COVERAGE_DROP')",
+        ),
+    ],
+)
 class Notification {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     var user: User? = null
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 30)
     var kind: String = ""
 
-    @Column(columnDefinition = "jsonb")
+    // El contenido cambia según el tipo de notificación.
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", nullable = false)
     var payload: String = ""
 
     @Column(name = "sent_at")

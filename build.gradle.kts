@@ -45,12 +45,8 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
 
-    // --- Migraciones SQL ---
-    // Desactivadas en application.properties: igual que en clase, el esquema lo genera
-    // Hibernate a partir de las entidades (spring.jpa.hibernate.ddl-auto). Se conservan
-    // junto con db/migration/V1__baseline.sql para el issue de modelado de la base (#23).
-    implementation("org.flywaydb:flyway-core")
-    implementation("org.flywaydb:flyway-database-postgresql")
+    // Sin Flyway: igual que en clase, el esquema lo genera Hibernate a partir de las
+    // entidades (spring.jpa.hibernate.ddl-auto) y import.sql carga los datos (D-27).
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")

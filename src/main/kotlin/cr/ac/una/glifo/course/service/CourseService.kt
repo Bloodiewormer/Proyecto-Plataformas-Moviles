@@ -35,16 +35,9 @@ class CourseService(
             this.joinCode = UUID.randomUUID().toString().substring(0, 8).uppercase()
         }
 
-        val savedCourse = courseRepository.save(course)
-
-        val enrollment = Enrollment().apply {
-            this.user = owner
-            this.course = savedCourse
-            this.status = "OWNER"
-        }
-        enrollmentRepository.save(enrollment)
-
-        return savedCourse.toResponse()
+        // El docente queda ligado por courses.owner_user_id, no por una matrícula:
+        // enrollments.status solo admite ACTIVE, PENDING o REMOVED.
+        return courseRepository.save(course).toResponse()
     }
 
     @Transactional(readOnly = true)

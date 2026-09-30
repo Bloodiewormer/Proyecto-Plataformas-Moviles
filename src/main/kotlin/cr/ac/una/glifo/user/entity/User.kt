@@ -14,13 +14,13 @@ class User {
     @Column(name = "password_hash", nullable = false)
     var passwordHash: String = ""
     
-    @Column(name = "first_name")
+    @Column(name = "first_name", length = 100)
     var firstName: String? = null
-    
-    @Column(name = "last_name")
+
+    @Column(name = "last_name", length = 100)
     var lastName: String? = null
-    
-    @Column(name = "avatar_url")
+
+    @Column(name = "avatar_url", length = 512)
     var avatarUrl: String? = null
     
     @Column(name = "is_active", nullable = false)

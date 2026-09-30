@@ -6,7 +6,7 @@ import jakarta.persistence.*
 class Privilege {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 64)
     var name: String = ""
     var description: String? = null
     
