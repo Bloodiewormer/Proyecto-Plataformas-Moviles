@@ -5,7 +5,8 @@ import cr.ac.una.glifo.user.entity.User
 import jakarta.persistence.*
 import java.time.Instant
 
-@Entity(name = "topic_coverage")
+@Entity
+@Table(name = "topic_coverage")
 class TopicCoverage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,10 +20,16 @@ class TopicCoverage {
     @JoinColumn(name = "syllabus_topic_id")
     var syllabusTopic: SyllabusTopic? = null
 
+    @Column(nullable = false, length = 30)
     var state: String = "UNSEEN"
+
+    @Column(nullable = false)
     var score: Float = 0.0f
+
+    @Column(name = "updated_at", nullable = false)
     var updatedAt: Instant = Instant.now()
 
     override fun equals(other: Any?): Boolean = other is TopicCoverage && id != 0L && id == other.id
     override fun hashCode(): Int = id.hashCode()
+    override fun toString(): String = "TopicCoverage(id=$id, state='$state', score=$score, updatedAt=$updatedAt)"
 }

@@ -6,7 +6,8 @@ import cr.ac.una.glifo.user.entity.User
 import jakarta.persistence.*
 import java.time.Instant
 
-@Entity(name = "glossary_suggestions")
+@Entity
+@Table(name = "glossary_suggestions")
 class GlossarySuggestion {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,16 +25,22 @@ class GlossarySuggestion {
     @JoinColumn(name = "note_id")
     var note: Note? = null
 
-    @Column(nullable = false, length = 255)
+    @Column(name = "original_text", nullable = false, length = 255)
     var originalText: String = ""
 
-    @Column(nullable = false, length = 255)
+    @Column(name = "suggested_correction", nullable = false, length = 255)
     var suggestedCorrection: String = ""
 
+    @Column(nullable = false, length = 30)
     var status: String = "PENDING"
+
+    @Column(name = "created_at", nullable = false, updatable = false)
     var createdAt: Instant = Instant.now()
+
+    @Column(name = "resolved_at")
     var resolvedAt: Instant? = null
 
     override fun equals(other: Any?): Boolean = other is GlossarySuggestion && id != 0L && id == other.id
     override fun hashCode(): Int = id.hashCode()
+    override fun toString(): String = "GlossarySuggestion(id=$id, originalText='$originalText', suggestedCorrection='$suggestedCorrection', status='$status')"
 }

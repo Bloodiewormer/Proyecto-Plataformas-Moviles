@@ -4,7 +4,8 @@ import cr.ac.una.glifo.user.entity.User
 import jakarta.persistence.*
 import java.time.Instant
 
-@Entity(name = "review_schedule")
+@Entity
+@Table(name = "review_schedule")
 class ReviewSchedule {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -18,10 +19,16 @@ class ReviewSchedule {
     @JoinColumn(name = "study_item_id")
     var studyItem: StudyItem? = null
 
+    @Column(name = "due_at", nullable = false)
     var dueAt: Instant = Instant.now()
+
+    @Column(name = "interval_days", nullable = false)
     var intervalDays: Int = 1
+
+    @Column(nullable = false)
     var ease: Float = 2.5f
 
     override fun equals(other: Any?): Boolean = other is ReviewSchedule && id != 0L && id == other.id
     override fun hashCode(): Int = id.hashCode()
+    override fun toString(): String = "ReviewSchedule(id=$id, dueAt=$dueAt, intervalDays=$intervalDays, ease=$ease)"
 }

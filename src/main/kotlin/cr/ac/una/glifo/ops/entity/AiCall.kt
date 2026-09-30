@@ -6,9 +6,11 @@ import jakarta.persistence.*
 import java.math.BigDecimal
 import java.time.Instant
 
-@Entity(name = "ai_calls")
+@Entity
+@Table(name = "ai_calls")
 class AiCall {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -19,10 +21,10 @@ class AiCall {
     @JoinColumn(name = "course_id")
     var course: Course? = null
 
-    @Column(name = "call_type", nullable = false)
+    @Column(name = "call_type", nullable = false, length = 50)
     var callType: String = ""
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     var level: String = ""
 
     @Column(name = "input_tokens", nullable = false)
@@ -37,8 +39,10 @@ class AiCall {
     @Column(name = "latency_ms", nullable = false)
     var latencyMs: Int = 0
 
+    @Column(name = "created_at", nullable = false, updatable = false)
     var createdAt: Instant = Instant.now()
 
     override fun equals(other: Any?): Boolean = other is AiCall && id != 0L && id == other.id
     override fun hashCode(): Int = id.hashCode()
+    override fun toString(): String = "AiCall(id=$id, callType='$callType', level='$level', latencyMs=$latencyMs)"
 }

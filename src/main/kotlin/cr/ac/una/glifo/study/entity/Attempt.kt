@@ -2,9 +2,12 @@ package cr.ac.una.glifo.study.entity
 
 import cr.ac.una.glifo.user.entity.User
 import jakarta.persistence.*
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import java.time.Instant
 
-@Entity(name = "attempts")
+@Entity
+@Table(name = "attempts")
 class Attempt {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -18,12 +21,17 @@ class Attempt {
     @JoinColumn(name = "study_item_id")
     var studyItem: StudyItem? = null
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     var response: String = ""
 
+    @Column(name = "is_correct", nullable = false)
     var isCorrect: Boolean = false
+
+    @Column(name = "answered_at", nullable = false)
     var answeredAt: Instant = Instant.now()
 
     override fun equals(other: Any?): Boolean = other is Attempt && id != 0L && id == other.id
     override fun hashCode(): Int = id.hashCode()
+    override fun toString(): String = "Attempt(id=$id, isCorrect=$isCorrect, answeredAt=$answeredAt)"
 }

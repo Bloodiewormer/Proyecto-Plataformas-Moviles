@@ -3,9 +3,11 @@ package cr.ac.una.glifo.user.entity
 import jakarta.persistence.*
 import java.time.Instant
 
-@Entity(name = "users")
+@Entity
+@Table(name = "users")
 class User {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0
     
     @Column(nullable = false, unique = true)
@@ -42,4 +44,5 @@ class User {
     
     override fun equals(other: Any?): Boolean = other is User && id != 0L && id == other.id
     override fun hashCode(): Int = id.hashCode()
+    override fun toString(): String = "User(id=$id, email='$email', firstName=$firstName, lastName=$lastName, isActive=$isActive)"
 }

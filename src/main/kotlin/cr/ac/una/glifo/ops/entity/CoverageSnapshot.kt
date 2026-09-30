@@ -5,9 +5,11 @@ import cr.ac.una.glifo.user.entity.User
 import jakarta.persistence.*
 import java.time.Instant
 
-@Entity(name = "coverage_snapshots")
+@Entity
+@Table(name = "coverage_snapshots")
 class CoverageSnapshot {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -21,9 +23,10 @@ class CoverageSnapshot {
     @Column(name = "coverage_pct", nullable = false)
     var coveragePct: Float = 0.0f
 
-    @Column(name = "taken_at")
+    @Column(name = "taken_at", nullable = false)
     var takenAt: Instant = Instant.now()
 
     override fun equals(other: Any?): Boolean = other is CoverageSnapshot && id != 0L && id == other.id
     override fun hashCode(): Int = id.hashCode()
+    override fun toString(): String = "CoverageSnapshot(id=$id, coveragePct=$coveragePct, takenAt=$takenAt)"
 }
