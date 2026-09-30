@@ -1,5 +1,7 @@
 package cr.ac.una.glifo.note.service
 
+import cr.ac.una.glifo.common.exception.BusinessException
+import cr.ac.una.glifo.common.exception.ResourceNotFoundException
 import cr.ac.una.glifo.course.repository.CourseRepository
 import cr.ac.una.glifo.course.repository.SyllabusTopicRepository
 import cr.ac.una.glifo.note.dto.CreateNoteRequest
@@ -12,6 +14,7 @@ import cr.ac.una.glifo.user.repository.UserRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
+import java.time.format.DateTimeParseException
 
 @Service
 class NoteService(
@@ -23,18 +26,23 @@ class NoteService(
 
     @Transactional
     fun createNote(userId: Long, request: CreateNoteRequest): NoteResponse {
-        val user = userRepository.findById(userId).orElseThrow { IllegalArgumentException("User not found") }
-        val course = courseRepository.findById(request.courseId).orElseThrow { IllegalArgumentException("Course not found") }
+        val user = userRepository.findById(userId).orElseThrow { ResourceNotFoundException("Usuario no encontrado") }
+        val course = courseRepository.findById(request.courseId).orElseThrow { ResourceNotFoundException("Curso no encontrado") }
         val syllabusTopic = request.syllabusTopicId?.let {
-            syllabusTopicRepository.findById(it).orElseThrow { IllegalArgumentException("SyllabusTopic not found") }
+            syllabusTopicRepository.findById(it).orElseThrow { ResourceNotFoundException("Tema del temario no encontrado") }
+        }
+        val classDate = try {
+            LocalDate.parse(request.classDate)
+        } catch (_: DateTimeParseException) {
+            throw BusinessException("La fecha de la clase debe tener el formato AAAA-MM-DD", "VALIDATION_FAILED")
         }
 
         val note = Note().apply {
             this.user = user
             this.course = course
             this.syllabusTopic = syllabusTopic
-            this.classDate = LocalDate.parse(request.classDate)
-            this.title = request.title
+            this.classDate = classDate
+            this.title = request.title.trim()
             this.status = NoteStatus.DRAFT.name
         }
 
@@ -52,14 +60,16 @@ class NoteService(
     }
 
     @Transactional(readOnly = true)
-    fun getNoteById(noteId: Long): NoteResponse {
-        val note = noteRepository.findById(noteId).orElseThrow { IllegalArgumentException("Note not found") }
-        return note.toResponse()
+    fun getNoteById(noteId: Long, userId: Long): NoteResponse = findOwnedNote(noteId, userId).toResponse()
+
+    @Transactional
+    fun deleteNote(noteId: Long, userId: Long) {
+        noteRepository.delete(findOwnedNote(noteId, userId))
     }
 
     @Transactional
-    fun updateNoteStatus(noteId: Long, newStatus: String) {
-        val note = noteRepository.findById(noteId).orElseThrow { IllegalArgumentException("Note not found") }
+    fun updateNoteStatus(noteId: Long, userId: Long, newStatus: String) {
+        val note = findOwnedNote(noteId, userId)
         val currentStatus = NoteStatus.valueOf(note.status)
         val targetStatus = NoteStatus.valueOf(newStatus)
 
@@ -71,10 +81,20 @@ class NoteService(
         }
 
         if (!isValidTransition) {
-            throw IllegalStateException("Invalid status transition from \$currentStatus to \$targetStatus")
+            throw IllegalStateException("Invalid status transition from $currentStatus to $targetStatus")
         }
 
         note.status = targetStatus.name
         noteRepository.save(note)
+    }
+
+    /**
+     * Un apunte solo lo ve o lo borra su dueño. Si es de otra persona se responde 404 (no
+     * 403), para no revelar que ese id existe.
+     */
+    private fun findOwnedNote(noteId: Long, userId: Long): Note {
+        val note = noteRepository.findById(noteId).orElseThrow { ResourceNotFoundException("Apunte no encontrado") }
+        if (note.user.id != userId) throw ResourceNotFoundException("Apunte no encontrado")
+        return note
     }
 }

@@ -2,8 +2,14 @@ package cr.ac.una.glifo.common.exception
 
 open class BusinessException(message: String, val code: String) : RuntimeException(message)
 
-class ResourceNotFoundException(resource: String, id: Any) : BusinessException("$resource with id $id not found", "NOT_FOUND")
+/** 404. El mensaje llega tal cual al frontend, así que va en español. */
+class ResourceNotFoundException(message: String) : BusinessException(message, "NOT_FOUND") {
+    constructor(resource: String, id: Any) : this("$resource with id $id not found")
+}
 
-class DuplicateResourceException(resource: String, field: String) : BusinessException("$resource with this $field already exists", "DUPLICATE")
+/** 409. El mensaje llega tal cual al frontend, así que va en español. */
+class DuplicateResourceException(message: String) : BusinessException(message, "DUPLICATE") {
+    constructor(resource: String, field: String) : this("$resource with this $field already exists")
+}
 
 class UnauthorizedException(message: String = "Unauthorized") : BusinessException(message, "UNAUTHORIZED")

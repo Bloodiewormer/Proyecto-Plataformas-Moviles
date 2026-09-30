@@ -27,7 +27,7 @@ class AuthService(
     @Transactional
     fun register(request: RegisterRequest): AuthResponse {
         if (userRepository.existsByEmail(request.email)) {
-            throw DuplicateResourceException("User", "email")
+            throw DuplicateResourceException("Ya existe una cuenta con ese correo")
         }
 
         val user = User()

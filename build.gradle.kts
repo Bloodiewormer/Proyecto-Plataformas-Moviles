@@ -1,9 +1,17 @@
-
+// Proyecto generado con el mismo esquema que Spring Initializr (start.spring.io):
+// Gradle con Kotlin DSL, lenguaje Kotlin, la última versión estable de Spring Boot y
+// empaquetado Jar. Las dependencias base son las que se ven en clase (Web, Data JPA,
+// driver de PostgreSQL y el módulo Kotlin de Jackson); el resto las usa el código de
+// seguridad (JWT) que ya traía el proyecto.
 plugins {
     id("org.springframework.boot") version "4.1.0"
     id("io.spring.dependency-management") version "1.1.7"
     kotlin("jvm") version "2.4.10"
+    // kotlin-spring: abre (open) las clases anotadas con @Component, @Service,
+    // @Configuration, etc., porque Spring necesita poder heredarlas para crear proxies.
     kotlin("plugin.spring") version "2.4.10"
+    // kotlin-jpa: genera el constructor sin argumentos que JPA/Hibernate exige en
+    // cada @Entity.
     kotlin("plugin.jpa") version "2.4.10"
 }
 
@@ -21,35 +29,48 @@ repositories {
 }
 
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    implementation("org.springframework.boot:spring-boot-starter-security")
+    // --- Las del curso ---
     implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    runtimeOnly("org.postgresql:postgresql")
+    // Spring Boot 4 serializa los JSON con Jackson 3 (paquete tools.jackson), así que el
+    // módulo Kotlin tiene que ser el de Jackson 3 para que pueda construir data classes.
+    implementation("tools.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
-    implementation("org.flywaydb:flyway-core")
-    implementation("org.flywaydb:flyway-database-postgresql")
-    
-    // Validation
+
+    // --- Seguridad (JWT) y validación de requests ---
+    implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-validation")
-    
-    // JWT
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
-    
-    runtimeOnly("org.postgresql:postgresql")
+
+    // --- Migraciones SQL ---
+    // Desactivadas en application.properties: igual que en clase, el esquema lo genera
+    // Hibernate a partir de las entidades (spring.jpa.hibernate.ddl-auto). Se conservan
+    // junto con db/migration/V1__baseline.sql para el issue de modelado de la base (#23).
+    implementation("org.flywaydb:flyway-core")
+    implementation("org.flywaydb:flyway-database-postgresql")
+
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile>().configureEach {
+kotlin {
     compilerOptions {
         freeCompilerArgs.add("-Xjsr305=strict")
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
     }
+}
+
+// Hibernate necesita poder heredar las entidades para cargar relaciones LAZY (crea un
+// proxy como subclase). En Kotlin las clases son final por defecto, así que se abren.
+allOpen {
+    annotation("jakarta.persistence.Entity")
+    annotation("jakarta.persistence.MappedSuperclass")
+    annotation("jakarta.persistence.Embeddable")
 }
 
 tasks.withType<Test> {

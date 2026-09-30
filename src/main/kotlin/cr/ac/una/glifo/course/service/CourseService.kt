@@ -60,17 +60,17 @@ class CourseService(
     @Transactional(readOnly = true)
     fun getCourseById(id: Long): CourseResponse {
         val course = courseRepository.findById(id)
-            .orElseThrow { ResourceNotFoundException("Course", id) }
+            .orElseThrow { ResourceNotFoundException("Curso no encontrado") }
         return course.toResponse()
     }
 
     @Transactional
     fun joinCourse(joinCode: String, userId: Long): EnrollmentResponse {
-        val course = courseRepository.findByJoinCode(joinCode)
-            ?: throw ResourceNotFoundException("Course", joinCode)
+        val course = courseRepository.findByJoinCode(joinCode.trim())
+            ?: throw ResourceNotFoundException("Código de curso inválido")
 
         if (enrollmentRepository.existsByUserIdAndCourseId(userId, course.id)) {
-            throw DuplicateResourceException("Enrollment", "userId and courseId")
+            throw DuplicateResourceException("Ya estás matriculado en este curso")
         }
 
         val user = userRepository.findById(userId)
