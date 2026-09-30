@@ -313,6 +313,8 @@ fun GlifoTopAppBar(
     onNavigationClick: (() -> Unit)? = null,
     isBack: Boolean = false,
     hasDropdown: Boolean = false,
+    /** Con [hasDropdown], tocar el título (y la flecha) lo ejecuta: p. ej. abrir el selector de curso. */
+    onTitleClick: (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
     customTitle: (@Composable () -> Unit)? = null
 ) {
@@ -355,6 +357,13 @@ fun GlifoTopAppBar(
                 Column(
                     modifier = Modifier
                         .weight(1f)
+                        .then(
+                            if (onTitleClick != null) {
+                                Modifier.clip(RoundedCornerShape(6.dp)).clickable(onClick = onTitleClick)
+                            } else {
+                                Modifier
+                            }
+                        )
                         .padding(start = 2.dp),
                     verticalArrangement = Arrangement.Center
                 ) {
@@ -650,24 +659,15 @@ data class GlifoDrawerItem(
 fun GlifoDrawerContent(
     role: GlifoRole = GlifoRole.Student,
     currentScreen: String = "home",
-    activeCourseName: String = if (role == GlifoRole.Teacher) "EIF411" else "Cálculo II",
-    userName: String = when (role) {
-        GlifoRole.Teacher -> "Maikol Guzmán"
-        GlifoRole.Admin -> "Admin Glifo"
-        GlifoRole.Student -> "Brandon Brenes"
-    },
-    userEmail: String = when (role) {
-        GlifoRole.Teacher -> "maikol.guzman@una.cr"
-        GlifoRole.Admin -> "admin@glifo.app"
-        GlifoRole.Student -> "bbrenes@est.una.ac.cr"
-    },
-    userInitials: String = when (role) {
-        GlifoRole.Teacher -> "MG"
-        GlifoRole.Admin -> "AD"
-        GlifoRole.Student -> "BB"
-    },
+    // El curso activo y "Cambiar" salen de LocalActiveCourse (lo provee el NavHost), así el
+    // menú muestra lo mismo en todas las pantallas. Los parámetros quedan para previews.
+    activeCourseName: String? = LocalActiveCourse.current.name,
+    userName: String = "",
+    userEmail: String = "",
+    userInitials: String = "",
     onNavigate: (String) -> Unit,
-    onChangeCourseClick: () -> Unit = {},
+    // null: "Cambiar" navega a "course_switcher" por onNavigate, como los demás ítems (cierra el menú).
+    onChangeCourseClick: (() -> Unit)? = null,
     onProfileClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {}
@@ -817,10 +817,13 @@ fun GlifoDrawerContent(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = activeCourseName,
+                        text = activeCourseName ?: stringResource(R.string.drawer_no_active_course),
                         fontSize = 15.sp,
-                        color = colors.textPrimary,
-                        fontWeight = FontWeight.Medium
+                        color = if (activeCourseName != null) colors.textPrimary else colors.textSecondary,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
                     )
                     Text(
                         text = stringResource(R.string.drawer_change_course),
@@ -828,7 +831,7 @@ fun GlifoDrawerContent(
                         color = colors.accentText,
                         modifier = Modifier
                             .clip(RoundedCornerShape(4.dp))
-                            .clickable(onClick = onChangeCourseClick)
+                            .clickable(onClick = onChangeCourseClick ?: { onNavigate(COURSE_SWITCHER_ROUTE) })
                             .padding(4.dp)
                     )
                 }

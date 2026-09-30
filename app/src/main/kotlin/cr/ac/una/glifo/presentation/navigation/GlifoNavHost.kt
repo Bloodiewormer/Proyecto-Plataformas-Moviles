@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -16,6 +17,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import cr.ac.una.glifo.core.ui.component.ActiveCourseUi
+import cr.ac.una.glifo.core.ui.component.COURSE_SWITCHER_ROUTE
+import cr.ac.una.glifo.core.ui.component.LocalActiveCourse
 import cr.ac.una.glifo.domain.model.GlifoRole
 import cr.ac.una.glifo.presentation.ui.screen.AdminCoursesScreen
 import cr.ac.una.glifo.presentation.ui.screen.AdminRolesScreen
@@ -64,6 +68,7 @@ private fun navigateFromDrawer(navController: NavHostController, route: String, 
         "home_teacher" -> Screen.HomeTeacher.route
         "home_admin" -> Screen.HomeAdmin.route
         "courses" -> Screen.Courses.route
+        COURSE_SWITCHER_ROUTE -> Screen.CourseSwitcher.route
         "notes" -> activeCourseId?.let(Screen.NoteList::createRoute) ?: Screen.Courses.route
         "coverage" -> activeCourseId?.let(Screen.Coverage::createRoute) ?: Screen.Courses.route
         "study" -> activeCourseId?.let(Screen.StudyHub::createRoute) ?: Screen.Courses.route
@@ -100,6 +105,14 @@ fun GlifoNavHost(
 
     // A single, consistent motion for every screen transition in the app instead of
     // an instant cut — kept subtle (short duration, small horizontal offset).
+    val activeCourse by activeCourseViewModel.activeCourse.collectAsState()
+    val activeCourseUi = ActiveCourseUi(
+        name = activeCourse?.name,
+        onChangeCourse = { navController.navigate(Screen.CourseSwitcher.route) { launchSingleTop = true } }
+    )
+
+    // El menú lateral de cualquier pantalla lee de aquí el curso activo y cómo cambiarlo.
+    CompositionLocalProvider(LocalActiveCourse provides activeCourseUi) {
     NavHost(
         navController = navController,
         startDestination = startDestination,
@@ -236,6 +249,14 @@ fun GlifoNavHost(
                         popUpTo(Screen.Home.route) { inclusive = true }
                     }
                 }
+            )
+        }
+
+        composable(Screen.CourseSwitcher.route) {
+            CourseSwitcherScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onJoinCourse = { navController.navigate(Screen.JoinCourse.route) },
+                onCreateCourse = { navController.navigate(Screen.TeacherNewCourse.route) }
             )
         }
 
@@ -666,6 +687,7 @@ fun GlifoNavHost(
                 }
             )
         }
+    }
     }
 }
 

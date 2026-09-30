@@ -3,6 +3,7 @@ package cr.ac.una.glifo.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cr.ac.una.glifo.core.common.UiState
+import cr.ac.una.glifo.core.datastore.ActiveCourseStore
 import cr.ac.una.glifo.domain.error.Result
 import cr.ac.una.glifo.domain.model.CourseStats
 import cr.ac.una.glifo.domain.model.TeacherGapTopic
@@ -15,8 +16,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-private const val TEACHER_ACTIVE_COURSE_ID = 3L
-
 data class TeacherGapsUiData(
     val stats: CourseStats,
     val gaps: List<TeacherGapTopic>
@@ -25,7 +24,8 @@ data class TeacherGapsUiData(
 @HiltViewModel
 class TeacherGapsViewModel @Inject constructor(
     private val courseRepository: CourseRepository,
-    private val teacherRepository: TeacherRepository
+    private val teacherRepository: TeacherRepository,
+    private val activeCourseStore: ActiveCourseStore
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<UiState<TeacherGapsUiData>>(UiState.Loading)
@@ -36,7 +36,12 @@ class TeacherGapsViewModel @Inject constructor(
     fun load() {
         viewModelScope.launch {
             _state.value = UiState.Loading
-            when (val statsResult = courseRepository.getCourseStats(TEACHER_ACTIVE_COURSE_ID)) {
+            val courseId = activeCourseStore.resolveTeacherCourseId(courseRepository)
+            if (courseId == null) {
+                _state.value = UiState.Empty
+                return@launch
+            }
+            when (val statsResult = courseRepository.getCourseStats(courseId)) {
                 is Result.Failure -> _state.value = UiState.Error(statsResult.error)
                 is Result.Success -> {
                     when (val gapsResult = teacherRepository.getGaps()) {

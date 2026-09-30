@@ -518,4 +518,13 @@
     <string name="sync_queue_retry_failed">Retry failed</string>
     <string name="sync_queue_attempts">%1$d attempt(s) · %2$s</string>
     <string name="sync_queue_result">%1$d uploaded · %2$d pending</string>
+    <!-- Selector del curso activo -->
+    <string name="course_switcher_title">Change course</string>
+    <string name="course_switcher_hint">The active course is used by Home, Notes, Coverage, Study and the camera.</string>
+    <string name="course_switcher_code">%1$s · code %2$s</string>
+    <string name="course_switcher_active">Active course</string>
+    <string name="course_switcher_empty">You don\'t have any courses yet.</string>
+    <string name="course_switcher_join">Join a course</string>
+    <string name="course_switcher_create">Create a course</string>
+    <string name="drawer_no_active_course">No course selected</string>
 </resources>

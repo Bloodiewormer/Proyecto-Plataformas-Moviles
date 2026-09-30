@@ -61,6 +61,7 @@ fun HomeScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val colors = GlifoTheme.colors
+    val activeCourse = LocalActiveCourse.current
     val context = LocalContext.current
     val user by sessionViewModel.currentUser.collectAsState()
     val uiState by viewModel.state.collectAsState()
@@ -81,7 +82,6 @@ fun HomeScreen(
                 GlifoDrawerContent(
                     role = GlifoRole.Student,
                     currentScreen = "home",
-                    activeCourseName = (uiState as? UiState.Success)?.data?.course?.name ?: stringResource(R.string.home_default_active_course),
                     userName = user?.fullName.orEmpty(),
                     userEmail = user?.email.orEmpty(),
                     userInitials = user?.initials.orEmpty(),
@@ -99,7 +99,7 @@ fun HomeScreen(
                     },
                     onChangeCourseClick = {
                         scope.launch { drawerState.close() }
-                        onNavigateToCourses()
+                        activeCourse.onChangeCourse()
                     },
                     onProfileClick = {
                         scope.launch { drawerState.close() }
@@ -142,6 +142,7 @@ fun HomeScreen(
                             title = course?.name ?: stringResource(R.string.home_default_active_course),
                             subtitle = stringResource(R.string.home_subtitle_active_course),
                             hasDropdown = true,
+                            onTitleClick = activeCourse.onChangeCourse,
                             onNavigationClick = {
                                 scope.launch { drawerState.open() }
                             },
@@ -385,6 +386,7 @@ fun TeacherHomeScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val colors = GlifoTheme.colors
+    val activeCourse = LocalActiveCourse.current
     val context = LocalContext.current
     val user by sessionViewModel.currentUser.collectAsState()
     val uiState by viewModel.state.collectAsState()
@@ -405,7 +407,6 @@ fun TeacherHomeScreen(
                 GlifoDrawerContent(
                     role = GlifoRole.Teacher,
                     currentScreen = "home_teacher",
-                    activeCourseName = (uiState as? UiState.Success)?.data?.course?.code ?: stringResource(R.string.teacher_home_default_course_code),
                     userName = user?.fullName.orEmpty(),
                     userEmail = user?.email.orEmpty(),
                     userInitials = user?.initials.orEmpty(),
@@ -421,7 +422,7 @@ fun TeacherHomeScreen(
                     },
                     onChangeCourseClick = {
                         scope.launch { drawerState.close() }
-                        onNavigateToCourses()
+                        activeCourse.onChangeCourse()
                     },
                     onProfileClick = {
                         scope.launch { drawerState.close() }
@@ -449,6 +450,7 @@ fun TeacherHomeScreen(
                 title = (uiState as? UiState.Success)?.data?.course?.code ?: stringResource(R.string.teacher_home_default_course_code),
                 subtitle = stringResource(R.string.home_subtitle_active_course),
                 hasDropdown = true,
+                onTitleClick = activeCourse.onChangeCourse,
                 onNavigationClick = { scope.launch { drawerState.open() } }
             )
 
