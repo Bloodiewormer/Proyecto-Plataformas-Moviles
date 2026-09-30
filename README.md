@@ -144,8 +144,11 @@ este backend sin modificar sus DTOs. Desde el emulador, la URL es
 | POST | `/api/v1/enrollments` | JWT | `{data: matrícula}` |
 | GET | `/api/v1/notes?courseId=` | JWT | `{data: [apunte]}` |
 | POST | `/api/v1/notes` | JWT | `{data: apunte}` |
-| GET | `/api/v1/notes/{id}` | JWT | `{data: apunte}` |
+| GET | `/api/v1/notes/{id}` | JWT | `{data: apunte}` (incluye `content` JSONB) |
 | DELETE | `/api/v1/notes/{id}` | JWT | 204 sin cuerpo |
+| PATCH | `/api/v1/notes/{id}/status` | JWT | 200 sin cuerpo; `{status}` sigue DRAFT → PROCESSING → READY, o ARCHIVED |
+| POST | `/api/v1/notes/{id}/pages` | JWT | 201 `{data: página}`; 409 si ese `page_index` ya existe (la cola offline lo toma como "ya estaba") |
+| GET | `/api/v1/notes/{id}/pages` | JWT | `{data: [página]}` con `regions` y `quality_metrics` JSONB |
 
 Convenciones:
 
