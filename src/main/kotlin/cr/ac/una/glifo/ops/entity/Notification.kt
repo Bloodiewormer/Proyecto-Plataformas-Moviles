@@ -2,11 +2,12 @@ package cr.ac.una.glifo.ops.entity
 
 import cr.ac.una.glifo.user.entity.User
 import jakarta.persistence.*
+import org.hibernate.Hibernate
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import java.time.Instant
 
-@Entity(name = "notifications")
+@Entity
 @Table(
     name = "notifications",
     indexes = [
@@ -20,7 +21,8 @@ import java.time.Instant
     ],
 )
 class Notification {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -41,6 +43,13 @@ class Notification {
     @Column(name = "read_at")
     var readAt: Instant? = null
 
-    override fun equals(other: Any?): Boolean = other is Notification && id != 0L && id == other.id
-    override fun hashCode(): Int = id.hashCode()
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
+        other as Notification
+        return id != 0L && id == other.id
+    }
+
+    override fun hashCode(): Int = Hibernate.getClass(this).hashCode()
+    override fun toString(): String = "Notification(id=$id, kind='$kind', sentAt=$sentAt, readAt=$readAt)"
 }

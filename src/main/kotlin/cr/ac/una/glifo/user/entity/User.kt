@@ -1,11 +1,16 @@
 package cr.ac.una.glifo.user.entity
 
 import jakarta.persistence.*
+import org.hibernate.Hibernate
+import org.hibernate.annotations.CreationTimestamp
+import org.hibernate.annotations.UpdateTimestamp
 import java.time.Instant
 
-@Entity(name = "users")
+@Entity
+@Table(name = "users")
 class User {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0
     
     @Column(nullable = false, unique = true)
@@ -26,9 +31,11 @@ class User {
     @Column(name = "is_active", nullable = false)
     var isActive: Boolean = true
     
+    @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     var createdAt: Instant = Instant.now()
     
+    @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     var updatedAt: Instant = Instant.now()
     
@@ -40,6 +47,13 @@ class User {
     )
     var roles: MutableSet<Role> = mutableSetOf()
     
-    override fun equals(other: Any?): Boolean = other is User && id != 0L && id == other.id
-    override fun hashCode(): Int = id.hashCode()
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
+        other as User
+        return id != 0L && id == other.id
+    }
+
+    override fun hashCode(): Int = Hibernate.getClass(this).hashCode()
+    override fun toString(): String = "User(id=$id, email='$email', firstName=$firstName, lastName=$lastName, isActive=$isActive)"
 }

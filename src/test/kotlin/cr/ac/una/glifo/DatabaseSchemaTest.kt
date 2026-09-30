@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -20,10 +21,11 @@ import kotlin.test.assertTrue
 /**
  * Issue #23: verifica contra PostgreSQL real que el esquema que genera Hibernate es el del
  * modelo (21 tablas, 7 columnas JSONB, CHECK y UNIQUE) y que import.sql lo deja con datos.
- * Necesita la base "glifo" igual que GlifoApplicationTests. Cada test corre dentro de una
+ * Usa la base "glifo_test" (perfil test), igual que los demás tests de integración. Cada test corre dentro de una
  * transacción que se revierte, así que no ensucia los datos de import.sql.
  */
 @SpringBootTest
+@ActiveProfiles("test")
 @Transactional
 class DatabaseSchemaTest {
 

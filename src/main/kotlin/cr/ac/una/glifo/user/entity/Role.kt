@@ -1,13 +1,19 @@
 package cr.ac.una.glifo.user.entity
 
 import jakarta.persistence.*
+import org.hibernate.Hibernate
 
-@Entity(name = "roles")
+@Entity
+@Table(name = "roles")
 class Role {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0
+
     @Column(nullable = false, unique = true, length = 50)
     var name: String = ""
+
+    @Column(length = 255)
     var description: String? = null
     
     @ManyToMany(fetch = FetchType.EAGER)
@@ -18,6 +24,13 @@ class Role {
     )
     var privileges: MutableSet<Privilege> = mutableSetOf()
     
-    override fun equals(other: Any?): Boolean = other is Role && id != 0L && id == other.id
-    override fun hashCode(): Int = id.hashCode()
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
+        other as Role
+        return id != 0L && id == other.id
+    }
+
+    override fun hashCode(): Int = Hibernate.getClass(this).hashCode()
+    override fun toString(): String = "Role(id=$id, name='$name', description=$description)"
 }

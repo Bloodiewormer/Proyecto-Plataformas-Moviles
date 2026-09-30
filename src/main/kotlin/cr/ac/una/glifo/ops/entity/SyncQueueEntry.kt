@@ -2,12 +2,14 @@ package cr.ac.una.glifo.ops.entity
 
 import cr.ac.una.glifo.user.entity.User
 import jakarta.persistence.*
+import org.hibernate.Hibernate
+import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import java.time.Instant
 import java.util.UUID
 
-@Entity(name = "sync_queue")
+@Entity
 @Table(
     name = "sync_queue",
     indexes = [
@@ -21,7 +23,8 @@ import java.util.UUID
     ],
 )
 class SyncQueueEntry {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -55,9 +58,17 @@ class SyncQueueEntry {
     @Column(nullable = false, length = 12)
     var status: String = "PENDING"
 
-    @Column(nullable = false, updatable = false)
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
     var createdAt: Instant = Instant.now()
 
-    override fun equals(other: Any?): Boolean = other is SyncQueueEntry && id != 0L && id == other.id
-    override fun hashCode(): Int = id.hashCode()
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
+        other as SyncQueueEntry
+        return id != 0L && id == other.id
+    }
+
+    override fun hashCode(): Int = Hibernate.getClass(this).hashCode()
+    override fun toString(): String = "SyncQueueEntry(id=$id, entityType='$entityType', status='$status', attempts=$attempts)"
 }

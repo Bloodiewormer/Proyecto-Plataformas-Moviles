@@ -3,13 +3,15 @@ package cr.ac.una.glifo.study.entity
 import cr.ac.una.glifo.course.entity.SyllabusTopic
 import cr.ac.una.glifo.user.entity.User
 import jakarta.persistence.*
+import org.hibernate.Hibernate
 import org.hibernate.annotations.OnDelete
 import org.hibernate.annotations.OnDeleteAction
+import org.hibernate.annotations.UpdateTimestamp
 import java.time.Instant
 
 // Relacional a propósito, no JSONB: state y score se filtran y agregan en cada pantalla
 // de cobertura (Glifo_UML_Modeling.md §5.1).
-@Entity(name = "topic_coverage")
+@Entity
 @Table(
     name = "topic_coverage",
     uniqueConstraints = [
@@ -46,9 +48,17 @@ class TopicCoverage {
     @Column(nullable = false)
     var score: Float = 0.0f
 
-    @Column(nullable = false)
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
     var updatedAt: Instant = Instant.now()
 
-    override fun equals(other: Any?): Boolean = other is TopicCoverage && id != 0L && id == other.id
-    override fun hashCode(): Int = id.hashCode()
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
+        other as TopicCoverage
+        return id != 0L && id == other.id
+    }
+
+    override fun hashCode(): Int = Hibernate.getClass(this).hashCode()
+    override fun toString(): String = "TopicCoverage(id=$id, state='$state', score=$score, updatedAt=$updatedAt)"
 }

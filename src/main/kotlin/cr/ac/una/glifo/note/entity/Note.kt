@@ -4,14 +4,16 @@ import cr.ac.una.glifo.course.entity.Course
 import cr.ac.una.glifo.course.entity.SyllabusTopic
 import cr.ac.una.glifo.user.entity.User
 import jakarta.persistence.*
+import org.hibernate.Hibernate
+import org.hibernate.annotations.CreationTimestamp
+import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.annotations.OnDelete
 import org.hibernate.annotations.OnDeleteAction
-import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import java.time.Instant
 import java.time.LocalDate
 
-@Entity(name = "notes")
+@Entity
 @Table(
     name = "notes",
     indexes = [
@@ -23,7 +25,8 @@ import java.time.LocalDate
     ],
 )
 class Note {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -40,7 +43,7 @@ class Note {
     @OnDelete(action = OnDeleteAction.SET_NULL)
     var syllabusTopic: SyllabusTopic? = null
 
-    @Column(nullable = false)
+    @Column(name = "class_date", nullable = false)
     var classDate: LocalDate = LocalDate.now()
 
     @Column(nullable = false, length = 200)
@@ -56,11 +59,32 @@ class Note {
     @Column(columnDefinition = "jsonb")
     var content: String? = null
 
+    @Column(name = "content_generated_at")
     var contentGeneratedAt: Instant? = null
 
-    @Column(nullable = false, updatable = false)
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
     var createdAt: Instant = Instant.now()
 
-    override fun equals(other: Any?): Boolean = other is Note && id != 0L && id == other.id
-    override fun hashCode(): Int = id.hashCode()
+    @OneToMany(mappedBy = "note", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
+    var pages: MutableList<NotePage> = mutableListOf()
+
+    fun addPage(page: NotePage) {
+        pages.add(page)
+        page.note = this
+    }
+
+    fun removePage(page: NotePage) {
+        pages.remove(page)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
+        other as Note
+        return id != 0L && id == other.id
+    }
+
+    override fun hashCode(): Int = Hibernate.getClass(this).hashCode()
+    override fun toString(): String = "Note(id=$id, title='$title', status='$status', classDate=$classDate)"
 }
