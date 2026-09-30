@@ -39,7 +39,6 @@ fun CourseDetailScreen(
     onNavigateToDelta: () -> Unit,
     onNavigateToCapture: () -> Unit,
     onNavigateToSync: () -> Unit,
-    onNavigateToNoteDetail: (Long) -> Unit,
     viewModel: CourseDetailViewModel = hiltViewModel()
 ) {
     val colors = GlifoTheme.colors
@@ -171,7 +170,7 @@ fun CourseDetailScreen(
                     )
 
                     GlifoCard(tight = true) {
-                        GlifoItem(compact = true, onClick = { onNavigateToNoteDetail(1L) }) {
+                        GlifoItem(compact = true, onClick = onNavigateToNotes) {
                             Icon(Icons.AutoMirrored.Filled.Notes, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
                             Text(stringResource(R.string.course_detail_confidence_map), fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
                             Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(16.dp))

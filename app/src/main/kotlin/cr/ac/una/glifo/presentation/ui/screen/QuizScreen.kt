@@ -48,7 +48,7 @@ fun QuizScreen(
 
     when (val state = uiState) {
         is UiState.Loading -> GlifoLoadingBox()
-        is UiState.Empty -> GlifoLoadingBox()
+        is UiState.Empty -> GlifoBanner(text = stringResource(R.string.study_empty_course))
         is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
         is UiState.Success -> QuizContent(state.data, colors, onNavigateBack, onNavigateToResult)
     }

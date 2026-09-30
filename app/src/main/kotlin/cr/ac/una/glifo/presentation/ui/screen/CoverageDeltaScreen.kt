@@ -35,7 +35,7 @@ import cr.ac.una.glifo.presentation.viewmodel.toMessage
 @Composable
 fun CoverageDeltaScreen(
     onNavigateBack: () -> Unit,
-    onNavigateToNoteDetail: (Long) -> Unit,
+    onNavigateToNotes: () -> Unit,
     viewModel: CoverageDeltaViewModel = hiltViewModel()
 ) {
     val colors = GlifoTheme.colors
@@ -154,7 +154,7 @@ fun CoverageDeltaScreen(
             GlifoButton(
                 text = stringResource(R.string.coverage_delta_view_illegible_note),
                 variant = GlifoButtonVariant.Secondary,
-                onClick = { onNavigateToNoteDetail(3L) }
+                onClick = onNavigateToNotes
             )
         }
             }

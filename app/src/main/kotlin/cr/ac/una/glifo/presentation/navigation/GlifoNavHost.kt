@@ -275,7 +275,7 @@ fun GlifoNavHost(
             route = Screen.CourseDetail.route,
             arguments = listOf(navArgument("courseId") { type = NavType.LongType })
         ) { backStackEntry ->
-            val courseId = backStackEntry.arguments?.getLong("courseId") ?: 1L
+            val courseId = backStackEntry.arguments?.getLong("courseId") ?: return@composable
             CourseDetailScreen(
                 courseId = courseId,
                 onNavigateBack = { navController.popBackStack() },
@@ -285,7 +285,6 @@ fun GlifoNavHost(
                 onNavigateToDelta = { navController.navigate(Screen.CoverageDelta.route) },
                 onNavigateToCapture = { navController.navigate(Screen.Capture.createRoute(courseId)) },
                 onNavigateToSync = { navController.navigate(Screen.SyncQueue.route) },
-                onNavigateToNoteDetail = { noteId -> navController.navigate(Screen.NoteDetail.createRoute(noteId)) }
             )
         }
 
@@ -294,7 +293,7 @@ fun GlifoNavHost(
             route = Screen.Capture.route,
             arguments = listOf(navArgument("courseId") { type = NavType.LongType })
         ) { backStackEntry ->
-            val courseId = backStackEntry.arguments?.getLong("courseId") ?: 1L
+            val courseId = backStackEntry.arguments?.getLong("courseId") ?: return@composable
             CaptureScreen(
                 courseId = courseId,
                 onNavigateBack = { navController.popBackStack() },
@@ -453,7 +452,7 @@ fun GlifoNavHost(
         composable(Screen.CoverageDelta.route) {
             CoverageDeltaScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToNoteDetail = { noteId -> navController.navigate(Screen.NoteDetail.createRoute(noteId)) }
+                onNavigateToNotes = { navigateToCourseRoute { Screen.NoteList.createRoute(it) } }
             )
         }
 

@@ -61,6 +61,7 @@ fun TeacherCoursesScreen(
     val context = LocalContext.current
     val user by sessionViewModel.currentUser.collectAsState()
     val uiState by viewModel.state.collectAsState()
+    val activeCourseId by viewModel.activeCourseId.collectAsState()
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -136,7 +137,7 @@ fun TeacherCoursesScreen(
                             GlifoStaggeredEntry(index = i) {
                                 if (stats.hasSyllabus) {
                                     GlifoCard(
-                                        onClick = onNavigateToSyllabus,
+                                        onClick = { viewModel.select(course); onNavigateToSyllabus() },
                                         modifier = Modifier.padding(bottom = 10.dp)
                                     ) {
                                         Row(
@@ -145,7 +146,7 @@ fun TeacherCoursesScreen(
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
                                             Text(text = course.name, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                                            GlifoBadge(text = stringResource(R.string.courses_active_badge))
+                                            if (course.id == activeCourseId) GlifoBadge(text = stringResource(R.string.courses_active_badge))
                                         }
                                         Text(stringResource(R.string.teacher_courses_code_term, course.code), fontFamily = FontFamily.Monospace, fontSize = 11.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
                                         CovBar(v = stats.verified, r = stats.repaired, e = stats.escalated, u = stats.uncertain, modifier = Modifier.padding(vertical = 8.dp))
@@ -153,7 +154,7 @@ fun TeacherCoursesScreen(
                                     }
                                 } else {
                                     GlifoCard(
-                                        onClick = onNavigateToSyllabus,
+                                        onClick = { viewModel.select(course); onNavigateToSyllabus() },
                                         borderColor = colors.alertLine,
                                         modifier = Modifier.padding(bottom = 14.dp)
                                     ) {

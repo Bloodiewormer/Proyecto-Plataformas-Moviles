@@ -282,6 +282,7 @@
     <string name="study_quiz_title">5-question quiz</string>
     <string name="study_quiz_description">On the five gaps with the least evidence, starting with %1$s</string>
     <string name="study_footer_note">Study material comes from coverage, not a generic syllabus: it only asks what your notes don\'t support.</string>
+    <string name="study_empty_course">There is no study material for this course yet. Pick a course or capture notes first.</string>
 
     <!-- FlashcardScreen -->
     <string name="flashcard_progress_counter">%1$d / %2$d</string>

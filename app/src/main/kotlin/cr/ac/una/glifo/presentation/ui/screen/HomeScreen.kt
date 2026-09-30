@@ -132,8 +132,8 @@ fun HomeScreen(
                     val course = data.course
                     val stats = data.stats
                     val recentNotes = data.recentNotes
-                    val flashcardCount = 12
-                    val quizCount = 1
+                    val flashcardCount = data.flashcardCount
+                    val quizCount = data.quizCount
                     val pendingSyncCount = data.pendingSyncCount
 
                     Column(modifier = Modifier.fillMaxSize()) {

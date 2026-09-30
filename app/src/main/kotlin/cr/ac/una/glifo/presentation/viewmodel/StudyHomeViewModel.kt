@@ -12,6 +12,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -28,11 +29,14 @@ class StudyHomeViewModel @Inject constructor(
     val state: StateFlow<UiState<StudyHomeUiData>> = _state.asStateFlow()
 
     private var loadedFor: Long? = null
+    private var loadJob: Job? = null
 
     fun load(courseId: Long) {
-        if (loadedFor == courseId) return
+        if (loadedFor == courseId && _state.value is UiState.Success) return
         loadedFor = courseId
-        viewModelScope.launch {
+        // Al cambiar de curso se cancela la carga anterior: si terminara después, pisaría la del nuevo.
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _state.value = UiState.Loading
             val quizResult = studyRepository.getQuizQuestion(courseId)
             val quiz = (quizResult as? Result.Success)?.value
