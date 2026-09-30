@@ -4,6 +4,7 @@ import cr.ac.una.glifo.course.entity.Course
 import cr.ac.una.glifo.user.entity.User
 import jakarta.persistence.*
 import org.hibernate.Hibernate
+import org.hibernate.annotations.CreationTimestamp
 import java.math.BigDecimal
 import java.time.Instant
 
@@ -40,6 +41,7 @@ class AiCall {
     @Column(name = "latency_ms", nullable = false)
     var latencyMs: Int = 0
 
+    @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     var createdAt: Instant = Instant.now()
 

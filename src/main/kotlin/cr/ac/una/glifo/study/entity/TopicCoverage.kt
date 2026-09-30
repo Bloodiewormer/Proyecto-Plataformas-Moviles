@@ -4,6 +4,7 @@ import cr.ac.una.glifo.course.entity.SyllabusTopic
 import cr.ac.una.glifo.user.entity.User
 import jakarta.persistence.*
 import org.hibernate.Hibernate
+import org.hibernate.annotations.UpdateTimestamp
 import java.time.Instant
 
 @Entity
@@ -27,6 +28,7 @@ class TopicCoverage {
     @Column(nullable = false)
     var score: Float = 0.0f
 
+    @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     var updatedAt: Instant = Instant.now()
 

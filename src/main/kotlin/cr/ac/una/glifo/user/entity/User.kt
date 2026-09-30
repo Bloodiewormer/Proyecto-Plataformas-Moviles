@@ -2,6 +2,8 @@ package cr.ac.una.glifo.user.entity
 
 import jakarta.persistence.*
 import org.hibernate.Hibernate
+import org.hibernate.annotations.CreationTimestamp
+import org.hibernate.annotations.UpdateTimestamp
 import java.time.Instant
 
 @Entity
@@ -29,9 +31,11 @@ class User {
     @Column(name = "is_active", nullable = false)
     var isActive: Boolean = true
     
+    @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     var createdAt: Instant = Instant.now()
     
+    @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     var updatedAt: Instant = Instant.now()
     

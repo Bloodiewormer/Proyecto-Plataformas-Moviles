@@ -3,6 +3,7 @@ package cr.ac.una.glifo.ops.entity
 import cr.ac.una.glifo.user.entity.User
 import jakarta.persistence.*
 import org.hibernate.Hibernate
+import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import java.time.Instant
@@ -42,6 +43,7 @@ class SyncQueueEntry {
     @Column(nullable = false, length = 30)
     var status: String = "PENDING"
 
+    @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     var createdAt: Instant = Instant.now()
 

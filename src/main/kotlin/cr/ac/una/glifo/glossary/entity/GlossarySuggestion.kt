@@ -5,6 +5,7 @@ import cr.ac.una.glifo.note.entity.Note
 import cr.ac.una.glifo.user.entity.User
 import jakarta.persistence.*
 import org.hibernate.Hibernate
+import org.hibernate.annotations.CreationTimestamp
 import java.time.Instant
 
 @Entity
@@ -35,6 +36,7 @@ class GlossarySuggestion {
     @Column(nullable = false, length = 30)
     var status: String = "PENDING"
 
+    @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     var createdAt: Instant = Instant.now()
 

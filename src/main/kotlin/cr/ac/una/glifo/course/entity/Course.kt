@@ -3,6 +3,7 @@ package cr.ac.una.glifo.course.entity
 import cr.ac.una.glifo.user.entity.User
 import jakarta.persistence.*
 import org.hibernate.Hibernate
+import org.hibernate.annotations.CreationTimestamp
 import java.time.Instant
 
 @Entity
@@ -34,6 +35,7 @@ class Course {
     @Column(name = "syllabus_parsed_at")
     var syllabusParsedAt: Instant? = null
     
+    @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     var createdAt: Instant = Instant.now()
 

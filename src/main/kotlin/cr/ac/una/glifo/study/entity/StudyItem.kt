@@ -4,6 +4,7 @@ import cr.ac.una.glifo.course.entity.Course
 import cr.ac.una.glifo.course.entity.SyllabusTopic
 import jakarta.persistence.*
 import org.hibernate.Hibernate
+import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import java.time.Instant
@@ -30,6 +31,7 @@ class StudyItem {
     @Column(columnDefinition = "jsonb")
     var payload: String = ""
 
+    @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     var createdAt: Instant = Instant.now()
 
