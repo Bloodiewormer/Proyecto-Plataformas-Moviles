@@ -22,10 +22,14 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 
+/**
+ * Relaciones entre entidades: N a N (usuario-rol), 1 a N (curso-temas, apunte-páginas),
+ * N a 1 (matrícula), cascada y orphanRemoval, probadas a través de los repositorios.
+ */
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
-class JpaRepositoryAndEntityIntegrationTest {
+class EntityRelationshipsTest {
 
     @Autowired
     private lateinit var entityManager: EntityManager
@@ -146,7 +150,6 @@ class JpaRepositoryAndEntityIntegrationTest {
         val enrollments = enrollmentRepository.findByUserId(student.id)
         assertTrue(enrollments.any { it.course?.id == course.id })
     }
-
     @Test
     fun `debe persistir Note y NotePages en cascada mediante relacion OneToMany y ManyToOne`() {
         val student = userRepository.findByEmail("estudiante@est.una.ac.cr")
