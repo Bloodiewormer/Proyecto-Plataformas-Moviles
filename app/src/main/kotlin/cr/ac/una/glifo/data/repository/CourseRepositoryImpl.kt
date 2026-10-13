@@ -1,6 +1,7 @@
 package cr.ac.una.glifo.data.repository
 
 import cr.ac.una.glifo.core.common.AppError
+import cr.ac.una.glifo.core.datastore.ActiveCourseStore
 import cr.ac.una.glifo.data.datasource.dummy.DummyCourseProvider
 import cr.ac.una.glifo.data.datasource.remote.ApiErrorHandler
 import cr.ac.una.glifo.data.datasource.remote.GlifoApi
@@ -15,12 +16,24 @@ import cr.ac.una.glifo.domain.repository.CourseRepository
 import javax.inject.Inject
 
 /**
- * CourseRepository implementation consuming Retrofit + Gson [GlifoApi] against Mockoon.
+ * CourseRepository implementation consuming Retrofit + Gson [GlifoApi] against Mockoon/Backend.
  * Maps network operations to domain [Result] and [AppError] via [ApiErrorHandler].
  */
-class CourseRepositoryImpl @Inject constructor(
+class CourseRepositoryImpl : CourseRepository {
+
     private val api: GlifoApi
-) : CourseRepository {
+    private val activeCourseStore: ActiveCourseStore?
+
+    @Inject
+    constructor(api: GlifoApi, activeCourseStore: ActiveCourseStore) {
+        this.api = api
+        this.activeCourseStore = activeCourseStore
+    }
+
+    constructor(api: GlifoApi) {
+        this.api = api
+        this.activeCourseStore = null
+    }
 
     override suspend fun getStudentCourses(): Result<List<Course>> =
         ApiErrorHandler.safeApiCall(
@@ -67,7 +80,11 @@ class CourseRepositoryImpl @Inject constructor(
         }
         return ApiErrorHandler.safeApiCall(
             apiCall = { api.createCourse(CreateCourseRequest(name = name.trim(), code = code.trim(), term = term.trim())) },
-            transform = { it.data.toDomain() }
+            transform = { response ->
+                val course = response.data.toDomain()
+                activeCourseStore?.set(course.id, course.name)
+                course
+            }
         )
     }
 
@@ -78,7 +95,14 @@ class CourseRepositoryImpl @Inject constructor(
         }
         return ApiErrorHandler.safeApiCall(
             apiCall = { api.joinCourse(JoinCourseRequest(trimmed)) },
-            transform = {}
+            transform = { response ->
+                // Activa el curso recién matriculado usando course_id y course_name de EnrollmentResponse (#32 d).
+                activeCourseStore?.set(
+                    courseId = response.data.courseId,
+                    name = response.data.courseName?.takeIf { it.isNotBlank() }
+                )
+            }
         )
     }
 }
+

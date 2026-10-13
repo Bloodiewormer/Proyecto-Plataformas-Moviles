@@ -8,13 +8,16 @@ import cr.ac.una.glifo.data.dto.CourseResponse
 import cr.ac.una.glifo.data.dto.CreateCourseRequest
 import cr.ac.una.glifo.data.dto.CreateNotePageRequest
 import cr.ac.una.glifo.data.dto.CreateNoteRequest
+import cr.ac.una.glifo.data.dto.CreateSyllabusTopicRequest
 import cr.ac.una.glifo.data.dto.EnrollmentResponse
 import cr.ac.una.glifo.data.dto.JoinCourseRequest
 import cr.ac.una.glifo.data.dto.LoginRequest
 import cr.ac.una.glifo.data.dto.NoteDetailResponse
 import cr.ac.una.glifo.data.dto.NotePageResponse
 import cr.ac.una.glifo.data.dto.NoteResponse
+import cr.ac.una.glifo.data.dto.PublishSyllabusRequest
 import cr.ac.una.glifo.data.dto.RegisterRequest
+import cr.ac.una.glifo.data.dto.SyllabusTopicResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -60,6 +63,22 @@ interface GlifoApi {
     @POST("enrollments")
     suspend fun joinCourse(@Body request: JoinCourseRequest): ApiResponse<EnrollmentResponse>
 
+    // Temario / Topics del curso (#32)
+    @POST("courses/{id}/syllabus")
+    suspend fun publishSyllabus(
+        @Path("id") courseId: Long,
+        @Body request: PublishSyllabusRequest
+    ): ApiResponse<List<SyllabusTopicResponse>>
+
+    @GET("courses/{id}/topics")
+    suspend fun getCourseTopics(@Path("id") courseId: Long): ApiResponse<List<SyllabusTopicResponse>>
+
+    @POST("courses/{id}/topics")
+    suspend fun addCourseTopic(
+        @Path("id") courseId: Long,
+        @Body request: CreateSyllabusTopicRequest
+    ): ApiResponse<SyllabusTopicResponse>
+
     // Glosario + versiones para el contexto offline del pipeline (D-17, issue #27)
     @GET("courses/{id}/glossary")
     suspend fun getCourseGlossary(@Path("id") courseId: Long): ApiResponse<CourseGlossaryResponse>
@@ -81,3 +100,4 @@ interface GlifoApi {
     @POST("notes/{id}/pages")
     suspend fun uploadPage(@Path("id") noteId: Long, @Body request: CreateNotePageRequest): ApiResponse<NotePageResponse>
 }
+
