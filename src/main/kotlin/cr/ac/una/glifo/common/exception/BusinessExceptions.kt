@@ -12,4 +12,16 @@ class DuplicateResourceException(message: String) : BusinessException(message, "
     constructor(resource: String, field: String) : this("$resource with this $field already exists")
 }
 
+/**
+ * 400. Los datos tienen la forma correcta pero no cumplen una regla que solo se puede
+ * revisar en el servicio (por ejemplo, una fecha que no existe en el calendario).
+ */
+class BadRequestException(message: String) : BusinessException(message, "VALIDATION_FAILED")
+
+/**
+ * 409. La petición es válida, pero choca con el estado actual del recurso (por ejemplo,
+ * pasar un apunte de READY a DRAFT).
+ */
+class ConflictException(message: String) : BusinessException(message, "CONFLICT")
+
 class UnauthorizedException(message: String = "Unauthorized") : BusinessException(message, "UNAUTHORIZED")

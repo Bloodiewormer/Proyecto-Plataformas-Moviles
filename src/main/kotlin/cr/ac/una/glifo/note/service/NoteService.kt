@@ -1,6 +1,8 @@
 package cr.ac.una.glifo.note.service
 
+import cr.ac.una.glifo.common.exception.BadRequestException
 import cr.ac.una.glifo.common.exception.BusinessException
+import cr.ac.una.glifo.common.exception.ConflictException
 import cr.ac.una.glifo.common.exception.DuplicateResourceException
 import cr.ac.una.glifo.common.exception.ResourceNotFoundException
 import cr.ac.una.glifo.course.repository.CourseRepository
@@ -9,6 +11,7 @@ import cr.ac.una.glifo.note.dto.CreateNotePageRequest
 import cr.ac.una.glifo.note.dto.CreateNoteRequest
 import cr.ac.una.glifo.note.dto.NotePageResponse
 import cr.ac.una.glifo.note.dto.NoteResponse
+import cr.ac.una.glifo.note.dto.UpdateNoteRequest
 import cr.ac.una.glifo.note.entity.Note
 import cr.ac.una.glifo.note.entity.NotePage
 import cr.ac.una.glifo.note.entity.NoteStatus
@@ -41,22 +44,45 @@ class NoteService(
         val syllabusTopic = request.syllabusTopicId?.let {
             syllabusTopicRepository.findById(it).orElseThrow { ResourceNotFoundException("Tema del temario no encontrado") }
         }
-        val classDate = try {
-            LocalDate.parse(request.classDate)
-        } catch (_: DateTimeParseException) {
-            throw BusinessException("La fecha de la clase debe tener el formato AAAA-MM-DD", "VALIDATION_FAILED")
-        }
-
         val note = Note().apply {
             this.user = user
             this.course = course
             this.syllabusTopic = syllabusTopic
-            this.classDate = classDate
+            this.classDate = parseClassDate(request.classDate)
             this.title = request.title.trim()
             this.status = NoteStatus.DRAFT.name
         }
 
         return noteRepository.save(note).toResponse()
+    }
+
+    /** PUT: reemplaza título, fecha y tema. El curso y el estado no se editan por aquí. */
+    @Transactional
+    fun updateNote(noteId: Long, userId: Long, request: UpdateNoteRequest): NoteResponse {
+        val note = findOwnedNote(noteId, userId)
+        val syllabusTopic = request.syllabusTopicId?.let { topicId ->
+            val topic = syllabusTopicRepository.findById(topicId)
+                .orElseThrow { ResourceNotFoundException("Tema del temario no encontrado") }
+            if (topic.course?.id != note.course.id) {
+                throw BadRequestException("El tema no pertenece al curso del apunte")
+            }
+            topic
+        }
+
+        note.title = request.title.trim()
+        note.classDate = parseClassDate(request.classDate)
+        note.syllabusTopic = syllabusTopic
+        return noteRepository.save(note).toResponse(includeContent = true)
+    }
+
+    /**
+     * El DTO ya valida el formato AAAA-MM-DD; esto atrapa fechas con ese formato que no
+     * existen en el calendario, como 2026-02-30.
+     */
+    private fun parseClassDate(value: String): LocalDate = try {
+        LocalDate.parse(value)
+    } catch (_: DateTimeParseException) {
+        throw BadRequestException("La fecha de la clase no es una fecha válida")
     }
 
     @Transactional(readOnly = true)
@@ -116,11 +142,17 @@ class NoteService(
         noteRepository.delete(findOwnedNote(noteId, userId))
     }
 
+    /**
+     * Cambia el estado respetando el ciclo de vida del apunte. Un estado desconocido es un
+     * 400; una transición no permitida es un 409, porque la petición es válida pero choca
+     * con el estado actual.
+     */
     @Transactional
-    fun updateNoteStatus(noteId: Long, userId: Long, newStatus: String) {
+    fun updateNoteStatus(noteId: Long, userId: Long, newStatus: String): NoteResponse {
         val note = findOwnedNote(noteId, userId)
         val currentStatus = NoteStatus.valueOf(note.status)
-        val targetStatus = NoteStatus.valueOf(newStatus)
+        val targetStatus = NoteStatus.entries.firstOrNull { it.name == newStatus }
+            ?: throw BadRequestException("Estado desconocido: $newStatus")
 
         val isValidTransition = when (currentStatus) {
             NoteStatus.DRAFT -> targetStatus == NoteStatus.PROCESSING || targetStatus == NoteStatus.ARCHIVED
@@ -130,11 +162,11 @@ class NoteService(
         }
 
         if (!isValidTransition) {
-            throw IllegalStateException("Invalid status transition from $currentStatus to $targetStatus")
+            throw ConflictException("No se puede pasar un apunte de $currentStatus a $targetStatus")
         }
 
         note.status = targetStatus.name
-        noteRepository.save(note)
+        return noteRepository.save(note).toResponse(includeContent = true)
     }
 
     /**

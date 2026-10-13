@@ -6,15 +6,25 @@ import cr.ac.una.glifo.user.dto.RegisterRequest
 import cr.ac.una.glifo.user.service.AuthService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
 /**
  * A diferencia del resto de la API, login y registro responden `{token, user}` sin el
  * envoltorio `data`: así lo consume la app (GlifoApi.login/register devuelven AuthResponse).
+ *
+ * | Método | Ruta           | Éxito | Errores                            |
+ * |--------|----------------|-------|------------------------------------|
+ * | POST   | /auth/register | 201   | 400, 409 (correo ya registrado), 415 |
+ * | POST   | /auth/login    | 200   | 400, 401 (credenciales), 415       |
  */
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping(
+    "\${url.auth}",
+    produces = [MediaType.APPLICATION_JSON_VALUE],
+    consumes = [MediaType.APPLICATION_JSON_VALUE]
+)
 class AuthController(private val authService: AuthService) {
 
     @PostMapping("/register")
