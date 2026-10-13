@@ -3,8 +3,11 @@ package cr.ac.una.glifo.course.controller
 import cr.ac.una.glifo.common.dto.ApiResponse
 import cr.ac.una.glifo.course.dto.CourseResponse
 import cr.ac.una.glifo.course.dto.CreateCourseRequest
+import cr.ac.una.glifo.course.dto.CreateSyllabusTopicRequest
 import cr.ac.una.glifo.course.dto.EnrollmentResponse
 import cr.ac.una.glifo.course.dto.JoinCourseRequest
+import cr.ac.una.glifo.course.dto.PublishSyllabusRequest
+import cr.ac.una.glifo.course.dto.SyllabusTopicResponse
 import cr.ac.una.glifo.course.service.CourseService
 import cr.ac.una.glifo.security.GlifoUserDetails
 import jakarta.validation.Valid
@@ -39,6 +42,34 @@ class CourseController(private val courseService: CourseService) {
         val response = courseService.getCourseById(id)
         return ResponseEntity.ok(ApiResponse(data = response))
     }
+
+    @PostMapping("/{id}/syllabus")
+    @PreAuthorize("hasAuthority('SYLLABUS_PUBLISH')")
+    fun publishSyllabus(
+        @PathVariable id: Long,
+        @Valid @RequestBody request: PublishSyllabusRequest,
+        @AuthenticationPrincipal user: GlifoUserDetails
+    ): ResponseEntity<ApiResponse<List<SyllabusTopicResponse>>> {
+        val response = courseService.publishSyllabus(id, request, user.userId)
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse(data = response))
+    }
+
+    @GetMapping("/{id}/topics")
+    fun getCourseTopics(@PathVariable id: Long): ResponseEntity<ApiResponse<List<SyllabusTopicResponse>>> {
+        val response = courseService.getCourseTopics(id)
+        return ResponseEntity.ok(ApiResponse(data = response))
+    }
+
+    @PostMapping("/{id}/topics")
+    @PreAuthorize("hasAuthority('SYLLABUS_PUBLISH')")
+    fun addCourseTopic(
+        @PathVariable id: Long,
+        @Valid @RequestBody request: CreateSyllabusTopicRequest,
+        @AuthenticationPrincipal user: GlifoUserDetails
+    ): ResponseEntity<ApiResponse<SyllabusTopicResponse>> {
+        val response = courseService.addSyllabusTopic(id, request, user.userId)
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse(data = response))
+    }
 }
 
 @RestController
@@ -54,3 +85,4 @@ class EnrollmentController(private val courseService: CourseService) {
         return ResponseEntity.ok(ApiResponse(data = response))
     }
 }
+

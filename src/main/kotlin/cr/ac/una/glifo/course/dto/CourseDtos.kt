@@ -1,7 +1,9 @@
 package cr.ac.una.glifo.course.dto
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotEmpty
 import java.time.Instant
 
 // Los nombres del JSON van en snake_case (@JsonProperty) porque así los lee la app
@@ -34,4 +36,37 @@ data class EnrollmentResponse(
     @JsonProperty("course_name") val courseName: String,
     val status: String,
     @JsonProperty("joined_at") val joinedAt: Instant
+)
+
+/** DTO de entrada para agregar un tema o subtema al temario del curso (#32). */
+data class CreateSyllabusTopicRequest(
+    @field:NotBlank(message = "El código del tema es obligatorio")
+    val code: String,
+    @field:NotBlank(message = "El título del tema es obligatorio")
+    val title: String,
+    @JsonProperty("order_index")
+    val orderIndex: Int = 1,
+    @JsonProperty("parent_id")
+    val parentId: Long? = null,
+    @JsonProperty("parent_code")
+    val parentCode: String? = null
+)
+
+/** DTO de entrada para publicar el temario estructurado de un curso (#32). */
+data class PublishSyllabusRequest(
+    @JsonProperty("source_uri")
+    val sourceUri: String? = null,
+    @field:NotEmpty(message = "El temario debe incluir al menos un tema")
+    @field:Valid
+    val topics: List<CreateSyllabusTopicRequest>
+)
+
+/** DTO de salida que representa un tema o unidad del temario (#32). */
+data class SyllabusTopicResponse(
+    val id: Long,
+    @JsonProperty("course_id") val courseId: Long,
+    @JsonProperty("parent_id") val parentId: Long?,
+    val code: String,
+    val title: String,
+    @JsonProperty("order_index") val orderIndex: Int
 )
