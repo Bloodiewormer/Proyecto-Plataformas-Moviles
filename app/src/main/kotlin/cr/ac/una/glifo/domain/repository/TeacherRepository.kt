@@ -11,7 +11,10 @@ interface TeacherRepository {
     suspend fun addGlossaryEntry(term: String, notation: String, isSymbol: Boolean): Result<Unit>
     suspend fun getGlossarySuggestions(): Result<List<GlossarySuggestion>>
     suspend fun getSyllabusFileName(): Result<String>
+    suspend fun isSyllabusPublished(): Result<Boolean> = Result.Success(false)
     suspend fun getSyllabusUnits(): Result<List<SyllabusUnitRow>>
     suspend fun addSyllabusTopic(label: String): Result<Unit>
+    suspend fun publishSyllabus(topics: List<String>): Result<Unit> = Result.Success(Unit)
     suspend fun getGaps(): Result<List<TeacherGapTopic>>
 }
+
