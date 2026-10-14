@@ -2,6 +2,9 @@ package cr.ac.una.glifo
 
 import cr.ac.una.glifo.course.dto.CourseResponse
 import cr.ac.una.glifo.course.dto.JoinCourseRequest
+import cr.ac.una.glifo.glossary.dto.CourseGlossaryResponse
+import cr.ac.una.glifo.glossary.dto.CreateGlossarySuggestionRequest
+import cr.ac.una.glifo.glossary.dto.GlossaryEntryResponse
 import cr.ac.una.glifo.note.dto.CreateNoteRequest
 import cr.ac.una.glifo.note.dto.NoteResponse
 import cr.ac.una.glifo.user.dto.AuthResponse
@@ -74,5 +77,28 @@ class ApiContractJsonTest {
 
         assertEquals(3, json["course_id"].asInt())
         assertEquals("2026-08-20", json["class_date"].asString())
+    }
+
+    @Test
+    fun `glosario usa el JSON que guarda la app en su copia offline`() {
+        val glossary = CourseGlossaryResponse(
+            courseId = 1, courseName = "Cálculo I", syllabusVersion = 2, glossaryVersion = 3,
+            entries = listOf(GlossaryEntryResponse(7, "ε", "\\varepsilon", "SYMBOL"))
+        )
+        val json = mapper.readTree(mapper.writeValueAsString(glossary))
+
+        assertEquals(3, json["glossary_version"].asInt())
+        assertEquals(2, json["syllabus_version"].asInt())
+        assertEquals("\\varepsilon", json["entries"][0]["canonical_form"].asString())
+    }
+
+    @Test
+    fun `sugerencia de glosario lee el JSON de la app`() {
+        val request = mapper.readValue(
+            """{"original_text":"cnv","suggested_correction":"converge","note_id":4}""",
+            CreateGlossarySuggestionRequest::class.java
+        )
+        assertEquals("converge", request.suggestedCorrection)
+        assertEquals(4L, request.noteId)
     }
 }

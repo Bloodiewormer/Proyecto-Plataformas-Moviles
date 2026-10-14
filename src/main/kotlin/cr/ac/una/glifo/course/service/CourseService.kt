@@ -132,6 +132,8 @@ class CourseService(
 
         course.syllabusSourceUri = request.sourceUri ?: "syllabus-${course.code}.json"
         course.syllabusParsedAt = Instant.now()
+        // La app compara esta versión con su copia offline del contexto del curso (D-17).
+        course.syllabusVersion += 1
         courseRepository.save(course)
 
         return syllabusTopicRepository.findByCourseIdOrderByOrderIndex(courseId).map { it.toResponse() }
@@ -181,7 +183,10 @@ class CourseService(
             this.orderIndex = nextOrderIndex
         }
 
-        return syllabusTopicRepository.save(topic).toResponse()
+        val saved = syllabusTopicRepository.save(topic)
+        course.syllabusVersion += 1
+        courseRepository.save(course)
+        return saved.toResponse()
     }
 }
 
