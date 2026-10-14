@@ -117,4 +117,63 @@ class ConfidenceScorerTest {
         assertFalse(strict.isAboveThreshold)
         assertTrue(lenient.isAboveThreshold)
     }
+
+    // ---------- Reglas agregadas en el issue #36 ----------
+
+    @Test
+    fun `should treat a region without segmentation as neutral ink evidence`() {
+        // Página completa sin segmentar: componentCount = 0 no dice nada, ni a favor ni en contra.
+        val result = ConfidenceScorer.score(cleanFragment("integral"), metrics(componentCount = 0))
+
+        assertEquals(0.7f, result.breakdown.getValue("inkAgreement"), 0.0001f)
+    }
+
+    @Test
+    fun `should step ink agreement exactly at each characters-per-component boundary`() {
+        val ocr = cleanFragment("abcdefghij") // 10 caracteres
+
+        fun ink(components: Int) =
+            ConfidenceScorer.score(ocr, metrics(componentCount = components)).breakdown.getValue("inkAgreement")
+
+        assertEquals(1f, ink(20), 0.0001f)    // 0.5 por componente
+        assertEquals(0.75f, ink(40), 0.0001f) // 0.25
+        assertEquals(0.5f, ink(100), 0.0001f) // 0.1
+        assertEquals(0.2f, ink(101), 0.0001f) // por debajo de 0.1
+    }
+
+    @Test
+    fun `should never exceed 1 even when a perfect fragment also matches the glossary`() {
+        val text = "serie geometrica"
+        val result = ConfidenceScorer.score(
+            cleanFragment(text),
+            metrics(componentCount = text.count { !it.isWhitespace() }),
+            glossary = listOf("geometrica")
+        )
+
+        assertEquals(0.10f, result.breakdown.getValue("glossaryBoost"), 0.0001f)
+        assertEquals(1f, result.value, 0.0001f)
+    }
+
+    @Test
+    fun `should not count blank glossary terms as a match`() {
+        // "".contains vale siempre true: un término vacío del glosario no debe premiar todo.
+        val result = ConfidenceScorer.score(cleanFragment("limite"), metrics(componentCount = 6), glossary = listOf("", "   "))
+
+        assertEquals(0f, result.breakdown.getValue("glossaryBoost"), 0.0001f)
+    }
+
+    @Test
+    fun `should match glossary terms ignoring case`() {
+        val result = ConfidenceScorer.score(cleanFragment("LIMITE lateral"), metrics(componentCount = 13), glossary = listOf("limite"))
+
+        assertEquals(0.10f, result.breakdown.getValue("glossaryBoost"), 0.0001f)
+    }
+
+    @Test
+    fun `should be deterministic for the same input`() {
+        val ocr = cleanFragment("x al cuadrado mas 3")
+        val regionMetrics = metrics(componentCount = 30)
+
+        assertEquals(ConfidenceScorer.score(ocr, regionMetrics), ConfidenceScorer.score(ocr, regionMetrics))
+    }
 }
