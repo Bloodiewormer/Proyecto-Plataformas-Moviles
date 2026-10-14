@@ -1,0 +1,1456 @@
+{
+  "info": {
+    "_postman_id": "c4b80199-a90c-42b3-a18d-6c2af5d9c6ca",
+    "name": "Glifo API - Lab 5 Collection",
+    "description": "Colección de pruebas automatizadas del Webservice de Glifo (EIF411 - Lab 5, Issues #31 y #32). Valida el formato real de la API en main y encadena recursos dinámicamente para poder ejecutarse múltiples veces en Collection Runner / Newman.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01 - Health",
+      "item": [
+        {
+          "name": "GET Health Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Response wraps payload in data with status UP', function () {",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data.status).to.eql('UP');",
+                  "    pm.expect(jsonData.data.service).to.eql('glifo-api');",
+                  "});",
+                  "console.info('Health status:', jsonData.data.status);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/health",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "health"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Auth",
+      "item": [
+        {
+          "name": "POST Register Random Student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Auth response returns token and user at root', function () {",
+                  "    pm.expect(jsonData).to.have.property('token');",
+                  "    pm.expect(jsonData.token).to.be.a('string').and.not.empty;",
+                  "    pm.expect(jsonData).to.have.property('user');",
+                  "    pm.expect(jsonData.user.role).to.eql('Student');",
+                  "});",
+                  "console.info('Registered random student user id:', jsonData.user.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"{{$randomFullName}}\",\n  \"email\": \"est.{{$randomInt}}.{{$timestamp}}@est.una.ac.cr\",\n  \"password\": \"Estudiante123\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/auth/register",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "auth",
+                "register"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST Login Teacher",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Teacher login returns JWT token and Teacher role at root', function () {",
+                  "    pm.expect(jsonData).to.have.property('token');",
+                  "    pm.expect(jsonData.token).to.be.a('string').and.not.empty;",
+                  "    pm.expect(jsonData).to.have.property('user');",
+                  "    pm.expect(jsonData.user.role).to.eql('Teacher');",
+                  "});",
+                  "",
+                  "pm.environment.set('jwt_token_teacher', jsonData.token);",
+                  "console.info('Saved jwt_token_teacher for user:', jsonData.user.email);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{teacher_email}}\",\n  \"password\": \"{{teacher_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/auth/login",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "auth",
+                "login"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST Login Student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Student login returns JWT token and Student role at root', function () {",
+                  "    pm.expect(jsonData).to.have.property('token');",
+                  "    pm.expect(jsonData.token).to.be.a('string').and.not.empty;",
+                  "    pm.expect(jsonData).to.have.property('user');",
+                  "    pm.expect(jsonData.user.role).to.eql('Student');",
+                  "});",
+                  "",
+                  "pm.environment.set('jwt_token_student', jsonData.token);",
+                  "console.info('Saved jwt_token_student for user:', jsonData.user.email);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{student_email}}\",\n  \"password\": \"{{student_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/auth/login",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "auth",
+                "login"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Courses",
+      "item": [
+        {
+          "name": "POST Create Course (Teacher)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Created course returns id, 8-char join_code and PENDING syllabus_status in data', function () {",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data.id).to.be.a('number');",
+                  "    pm.expect(jsonData.data.join_code).to.be.a('string').and.have.lengthOf(8);",
+                  "    pm.expect(jsonData.data.syllabus_status).to.eql('PENDING');",
+                  "});",
+                  "",
+                  "pm.environment.set('course_id', jsonData.data.id);",
+                  "pm.environment.set('join_code', jsonData.data.join_code);",
+                  "console.info('Saved course_id:', jsonData.data.id, 'join_code:', jsonData.data.join_code);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_teacher}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"EIF-{{$randomInt}}\",\n  \"name\": \"Plataformas Móviles {{$randomWords}}\",\n  \"term\": \"II-2026\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/courses",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "courses"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET List Courses (Teacher)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "const courseId = Number(pm.environment.get('course_id'));",
+                  "pm.test('Teacher courses list includes newly created course', function () {",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "    const found = jsonData.data.find(c => c.id === courseId);",
+                  "    pm.expect(found).to.not.be.undefined;",
+                  "});",
+                  "console.info('Teacher total courses:', jsonData.data.length);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_teacher}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/courses",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "courses"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Course by ID (Teacher)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "const courseId = Number(pm.environment.get('course_id'));",
+                  "const joinCode = pm.environment.get('join_code');",
+                  "pm.test('Course detail matches created course_id and join_code', function () {",
+                  "    pm.expect(jsonData.data.id).to.eql(courseId);",
+                  "    pm.expect(jsonData.data.join_code).to.eql(joinCode);",
+                  "});",
+                  "console.info('Verified course detail id:', jsonData.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_teacher}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/courses/{{course_id}}",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "courses",
+                "{{course_id}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Syllabus and Topics",
+      "item": [
+        {
+          "name": "POST Publish Syllabus (Teacher)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Published syllabus returns list of created topics in data', function () {",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data).to.be.an('array').that.is.not.empty;",
+                  "    pm.expect(jsonData.data.length).to.be.at.least(3);",
+                  "});",
+                  "",
+                  "const firstTopicId = jsonData.data[0].id;",
+                  "pm.environment.set('topic_id', firstTopicId);",
+                  "console.info('Saved topic_id:', firstTopicId, 'Total topics published:', jsonData.data.length);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_teacher}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"source_uri\": \"programa-{{course_id}}.pdf\",\n  \"topics\": [\n    {\n      \"code\": \"1\",\n      \"title\": \"Unidad 1: {{$randomWords}}\",\n      \"order_index\": 1\n    },\n    {\n      \"code\": \"1.1\",\n      \"title\": \"{{$randomLoremSentence}}\",\n      \"order_index\": 2,\n      \"parent_code\": \"1\"\n    },\n    {\n      \"code\": \"1.2\",\n      \"title\": \"{{$randomLoremSentence}}\",\n      \"order_index\": 3,\n      \"parent_code\": \"1\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/courses/{{course_id}}/syllabus",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "courses",
+                "{{course_id}}",
+                "syllabus"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST Add Manual Topic (Teacher)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "const courseId = Number(pm.environment.get('course_id'));",
+                  "const parentId = Number(pm.environment.get('topic_id'));",
+                  "pm.test('Added topic belongs to course and parent unit', function () {",
+                  "    pm.expect(jsonData.data.id).to.be.a('number');",
+                  "    pm.expect(jsonData.data.course_id).to.eql(courseId);",
+                  "    pm.expect(jsonData.data.parent_id).to.eql(parentId);",
+                  "});",
+                  "console.info('Added manual topic id:', jsonData.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_teacher}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"1.3\",\n  \"title\": \"Tema adicional: {{$randomLoremSentence}}\",\n  \"order_index\": 4,\n  \"parent_id\": {{topic_id}}\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/courses/{{course_id}}/topics",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "courses",
+                "{{course_id}}",
+                "topics"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Course Topics (Teacher)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Course topics list includes published and manual topics', function () {",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "    pm.expect(jsonData.data.length).to.be.at.least(4);",
+                  "});",
+                  "console.info('Retrieved topics count:', jsonData.data.length);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_teacher}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/courses/{{course_id}}/topics",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "courses",
+                "{{course_id}}",
+                "topics"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - Enrollments",
+      "item": [
+        {
+          "name": "POST Join Course by Code (Student)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "const expectedCourseId = Number(pm.environment.get('course_id'));",
+                  "pm.test('Enrollment returns course_id, course_name and ACTIVE status', function () {",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data.course_id).to.eql(expectedCourseId);",
+                  "    pm.expect(jsonData.data.course_name).to.be.a('string').and.not.empty;",
+                  "    pm.expect(jsonData.data.status).to.eql('ACTIVE');",
+                  "});",
+                  "console.info('Enrolled student in course:', jsonData.data.course_id, jsonData.data.course_name);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"join_code\": \"{{join_code}}\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/enrollments",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "enrollments"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET List Courses (Student)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "const courseId = Number(pm.environment.get('course_id'));",
+                  "pm.test('Student courses list contains newly joined course', function () {",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "    const enrolled = jsonData.data.find(c => c.id === courseId);",
+                  "    pm.expect(enrolled).to.not.be.undefined;",
+                  "    pm.expect(enrolled.syllabus_status).to.eql('PARSED');",
+                  "});",
+                  "console.info('Student enrolled courses count:', jsonData.data.length);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/courses",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "courses"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Course Topics (Student)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Student can read published topics of the course', function () {",
+                  "    pm.expect(jsonData.data).to.be.an('array').that.is.not.empty;",
+                  "});",
+                  "console.info('Student read topics count:', jsonData.data.length);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/courses/{{course_id}}/topics",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "courses",
+                "{{course_id}}",
+                "topics"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 - Notes",
+      "item": [
+        {
+          "name": "POST Create Note (Student)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "const courseId = Number(pm.environment.get('course_id'));",
+                  "pm.test('Created note belongs to course and starts in DRAFT', function () {",
+                  "    pm.expect(jsonData.data.id).to.be.a('number');",
+                  "    pm.expect(jsonData.data.course_id).to.eql(courseId);",
+                  "    pm.expect(jsonData.data.status).to.eql('DRAFT');",
+                  "});",
+                  "",
+                  "pm.environment.set('note_id', jsonData.data.id);",
+                  "console.info('Saved note_id:', jsonData.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"course_id\": {{course_id}},\n  \"syllabus_topic_id\": {{topic_id}},\n  \"class_date\": \"2026-10-13\",\n  \"title\": \"Apunte {{$randomWords}}\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/notes",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "notes"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET List Notes by Course (Student)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "const noteId = Number(pm.environment.get('note_id'));",
+                  "pm.test('Notes list contains created note', function () {",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "    const found = jsonData.data.find(n => n.id === noteId);",
+                  "    pm.expect(found).to.not.be.undefined;",
+                  "});",
+                  "console.info('Notes count for course:', jsonData.data.length);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/notes?courseId={{course_id}}",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "notes"
+              ],
+              "query": [
+                {
+                  "key": "courseId",
+                  "value": "{{course_id}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Note by ID (Student)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "const noteId = Number(pm.environment.get('note_id'));",
+                  "pm.test('Note detail matches note_id', function () {",
+                  "    pm.expect(jsonData.data.id).to.eql(noteId);",
+                  "});",
+                  "console.info('Fetched note detail id:', jsonData.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/notes/{{note_id}}",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "notes",
+                "{{note_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST Upload Note Page (Student)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "const noteId = Number(pm.environment.get('note_id'));",
+                  "pm.test('Uploaded page returns id and matches note_id', function () {",
+                  "    pm.expect(jsonData.data.id).to.be.a('number');",
+                  "    pm.expect(jsonData.data.note_id).to.eql(noteId);",
+                  "    pm.expect(jsonData.data.page_index).to.eql(0);",
+                  "});",
+                  "",
+                  "pm.environment.set('page_id', jsonData.data.id);",
+                  "console.info('Saved page_id:', jsonData.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"page_index\": 0,\n  \"perceptual_hash\": \"a1b2c3d4e5f60123\",\n  \"level_reached\": \"N1\",\n  \"overall_confidence\": 0.91,\n  \"regions\": [\n    {\n      \"kind\": \"TEXT\",\n      \"text\": \"{{$randomLoremSentence}}\",\n      \"confidence\": 0.91\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/notes/{{note_id}}/pages",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "notes",
+                "{{note_id}}",
+                "pages"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Note Pages (Student)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "const pageId = Number(pm.environment.get('page_id'));",
+                  "pm.test('Note pages list includes uploaded page_id', function () {",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "    const found = jsonData.data.find(p => p.id === pageId);",
+                  "    pm.expect(found).to.not.be.undefined;",
+                  "});",
+                  "console.info('Note pages count:', jsonData.data.length);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/notes/{{note_id}}/pages",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "notes",
+                "{{note_id}}",
+                "pages"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH Update Note Status to READY (Student)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "console.info('Updated note status to READY for note_id:', pm.environment.get('note_id'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"READY\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/notes/{{note_id}}/status",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "notes",
+                "{{note_id}}",
+                "status"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE Note by ID (Student)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 204 No Content', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});",
+                  "console.info('Deleted note_id:', pm.environment.get('note_id'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/notes/{{note_id}}",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "notes",
+                "{{note_id}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 - Negative Cases (400, 401, 403, 404, 409)",
+      "item": [
+        {
+          "name": "400 Bad Request - Create Course with Empty Fields",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400 Bad Request', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Error response is flat at root with VALIDATION_FAILED', function () {",
+                  "    pm.expect(jsonData.code).to.eql('VALIDATION_FAILED');",
+                  "    pm.expect(jsonData.message).to.be.a('string').and.not.empty;",
+                  "    pm.expect(jsonData).to.have.property('timestamp');",
+                  "});",
+                  "console.info('400 Validation message:', jsonData.message);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_teacher}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"\",\n  \"name\": \"\",\n  \"term\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/courses",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "courses"
+              ]
+            }
+          }
+        },
+        {
+          "name": "401 Unauthorized - Request Without Authorization Header",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401 Unauthorized', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Error response has UNAUTHORIZED code and message', function () {",
+                  "    pm.expect(jsonData.code).to.eql('UNAUTHORIZED');",
+                  "    pm.expect(jsonData.message).to.be.a('string').and.not.empty;",
+                  "});",
+                  "console.info('401 Unauthorized message:', jsonData.message);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/courses",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "courses"
+              ]
+            }
+          }
+        },
+        {
+          "name": "403 Forbidden - Student Publishing Syllabus",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403 Forbidden', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Error response has FORBIDDEN code and message at root', function () {",
+                  "    pm.expect(jsonData.code).to.eql('FORBIDDEN');",
+                  "    pm.expect(jsonData.message).to.be.a('string').and.not.empty;",
+                  "});",
+                  "console.info('403 Forbidden message:', jsonData.message);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"topics\": [\n    {\n      \"code\": \"9\",\n      \"title\": \"Intento no autorizado\",\n      \"order_index\": 1\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/courses/{{course_id}}/syllabus",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "courses",
+                "{{course_id}}",
+                "syllabus"
+              ]
+            }
+          }
+        },
+        {
+          "name": "404 Not Found - Join Course with Invalid Code",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 404 Not Found', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Error response has NOT_FOUND code and invalid code message', function () {",
+                  "    pm.expect(jsonData.code).to.eql('NOT_FOUND');",
+                  "    pm.expect(jsonData.message).to.include('inválido');",
+                  "});",
+                  "console.info('404 Not Found message:', jsonData.message);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"join_code\": \"INVALID9\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/enrollments",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "enrollments"
+              ]
+            }
+          }
+        },
+        {
+          "name": "409 Conflict - Duplicate Enrollment in Same Course",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 409 Conflict', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Error response has DUPLICATE code and already enrolled message', function () {",
+                  "    pm.expect(jsonData.code).to.eql('DUPLICATE');",
+                  "    pm.expect(jsonData.message).to.include('matriculado');",
+                  "});",
+                  "console.info('409 Duplicate enrollment message:', jsonData.message);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"join_code\": \"{{join_code}}\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/enrollments",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "enrollments"
+              ]
+            }
+          }
+        },
+        {
+          "name": "409 Conflict - Publish Syllabus Twice for Same Course",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 409 Conflict', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Error response has DUPLICATE code when publishing syllabus twice', function () {",
+                  "    pm.expect(jsonData.code).to.eql('DUPLICATE');",
+                  "    pm.expect(jsonData.message).to.include('publicado');",
+                  "});",
+                  "console.info('409 Duplicate syllabus message:', jsonData.message);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_teacher}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"topics\": [\n    {\n      \"code\": \"2\",\n      \"title\": \"Segunda publicación duplicada\",\n      \"order_index\": 1\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/courses/{{course_id}}/syllabus",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "courses",
+                "{{course_id}}",
+                "syllabus"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
