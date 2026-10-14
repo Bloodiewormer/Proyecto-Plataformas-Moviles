@@ -215,6 +215,8 @@
     <string name="join_course_topic_count">%1$d temas</string>
     <string name="join_course_join_button">Unirme a este curso</string>
     <string name="join_course_not_found">No encontramos ningún curso con ese código. Revisalo con tu profesor.</string>
+    <string name="join_course_invalid_code">Código de curso inválido. Revisalo con tu profesor.</string>
+    <string name="join_course_already_enrolled">Ya estás matriculado en este curso.</string>
     <string name="join_course_privacy_note">Tus apuntes son privados. El profesor ve la cobertura del grupo, nunca tus fotos.</string>
 
     <!-- CourseDetailScreen -->
@@ -411,6 +413,11 @@
     <string name="teacher_syllabus_extraction_note">Se extrajeron %1$d unidades y %2$d temas. Revisalos antes de publicar: el temario se procesa una sola vez.</string>
     <string name="teacher_syllabus_structure_section">ESTRUCTURA DETECTADA</string>
     <string name="teacher_syllabus_add_topic_manually">Agregar un tema a mano</string>
+    <string name="teacher_syllabus_no_active_course">Seleccioná o creá un curso activo primero.</string>
+    <string name="teacher_syllabus_topic_title_required">El título del tema es obligatorio.</string>
+    <string name="teacher_syllabus_empty_topics_error">Agregá al menos un tema antes de publicar el temario.</string>
+    <string name="teacher_syllabus_already_published">El temario de este curso ya está publicado.</string>
+    <string name="teacher_syllabus_pending_unit_label">1 · Temas pendientes</string>
 
     <!-- TeacherGlossaryScreen -->
     <string name="teacher_glossary_title">Glosario</string>

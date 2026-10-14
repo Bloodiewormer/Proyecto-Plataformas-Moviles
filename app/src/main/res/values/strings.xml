@@ -215,6 +215,8 @@
     <string name="join_course_topic_count">%1$d topics</string>
     <string name="join_course_join_button">Join this course</string>
     <string name="join_course_not_found">We couldn\'t find a course with that code. Check it with your teacher.</string>
+    <string name="join_course_invalid_code">Invalid course code. Check it with your teacher.</string>
+    <string name="join_course_already_enrolled">You\'re already enrolled in this course.</string>
     <string name="join_course_privacy_note">Your notes are private. The teacher sees the group\'s coverage, never your photos.</string>
 
     <!-- CourseDetailScreen -->
@@ -411,6 +413,11 @@
     <string name="teacher_syllabus_extraction_note">%1$d units and %2$d topics were extracted. Review them before publishing: the syllabus is processed only once.</string>
     <string name="teacher_syllabus_structure_section">DETECTED STRUCTURE</string>
     <string name="teacher_syllabus_add_topic_manually">Add a topic by hand</string>
+    <string name="teacher_syllabus_no_active_course">Select or create an active course first.</string>
+    <string name="teacher_syllabus_topic_title_required">The topic title is required.</string>
+    <string name="teacher_syllabus_empty_topics_error">Add at least one topic before publishing the syllabus.</string>
+    <string name="teacher_syllabus_already_published">The syllabus for this course has already been published.</string>
+    <string name="teacher_syllabus_pending_unit_label">1 · Pending topics</string>
 
     <!-- TeacherGlossaryScreen -->
     <string name="teacher_glossary_title">Glossary</string>

@@ -36,6 +36,7 @@ data class JoinCourseRequest(
 data class EnrollmentResponse(
     @SerializedName("id") val id: Long,
     @SerializedName("course_id") val courseId: Long,
+    @SerializedName("course_name") val courseName: String? = null,
     @SerializedName("status") val status: String
 )
 
@@ -80,3 +81,29 @@ data class NotePageResponse(
     @SerializedName("note_id") val noteId: Long,
     @SerializedName("page_index") val pageIndex: Int
 )
+
+/** DTO de entrada para agregar un tema o subtema al temario (#32). */
+data class CreateSyllabusTopicRequest(
+    @SerializedName("code") val code: String,
+    @SerializedName("title") val title: String,
+    @SerializedName("order_index") val orderIndex: Int = 1,
+    @SerializedName("parent_id") val parentId: Long? = null,
+    @SerializedName("parent_code") val parentCode: String? = null
+)
+
+/** DTO de entrada para publicar el temario estructurado de un curso (#32). */
+data class PublishSyllabusRequest(
+    @SerializedName("source_uri") val sourceUri: String? = null,
+    @SerializedName("topics") val topics: List<CreateSyllabusTopicRequest>
+)
+
+/** DTO de salida que representa un tema o subtema del temario (#32). */
+data class SyllabusTopicResponse(
+    @SerializedName("id") val id: Long,
+    @SerializedName("course_id") val courseId: Long,
+    @SerializedName("parent_id") val parentId: Long? = null,
+    @SerializedName("code") val code: String,
+    @SerializedName("title") val title: String,
+    @SerializedName("order_index") val orderIndex: Int
+)
+

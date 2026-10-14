@@ -1,9 +1,11 @@
 package cr.ac.una.glifo.data.repository
 
+import android.content.Context
 import cr.ac.una.glifo.core.common.AppError
 import cr.ac.una.glifo.core.datastore.ActiveCourseStore
 import cr.ac.una.glifo.data.datasource.remote.GlifoApi
 import cr.ac.una.glifo.data.dto.ApiResponse
+import cr.ac.una.glifo.data.dto.CourseDetailResponse
 import cr.ac.una.glifo.data.dto.CourseGlossaryResponse
 import cr.ac.una.glifo.data.dto.CreateGlossaryEntryRequest
 import cr.ac.una.glifo.data.dto.GlossaryEntryResponse
@@ -30,7 +32,8 @@ class TeacherRepositoryImplTest {
     private val api = mockk<GlifoApi>()
     private val activeCourseId = MutableStateFlow<Long?>(10L)
     private val activeCourseStore = mockk<ActiveCourseStore> { every { activeCourseId } returns this@TeacherRepositoryImplTest.activeCourseId }
-    private val repository = TeacherRepositoryImpl(api, activeCourseStore)
+    private val context = mockk<Context>(relaxed = true)
+    private val repository = TeacherRepositoryImpl(context, api, activeCourseStore)
 
     private fun httpException(code: Int, body: String = ""): HttpException {
         val responseBody = body.toResponseBody("application/json".toMediaTypeOrNull())
@@ -116,6 +119,18 @@ class TeacherRepositoryImplTest {
         assertEquals(5L, suggestion.id)
         assertEquals("cnv", suggestion.term)
         assertEquals("→ converge · Ana Mora", suggestion.meta)
+    }
+
+    @Test
+    fun `el temario cuenta como publicado con PARSED del backend o PUBLISHED de Mockoon`() = runTest {
+        fun detail(status: String?) = ApiResponse(CourseDetailResponse(10L, "Cálculo I", "MAT-101", "GLF-CALC1", status))
+
+        coEvery { api.getCourse(10L) } returnsMany listOf(detail("PARSED"), detail("PUBLISHED"), detail("PENDING"), detail(null))
+
+        assertEquals(Result.Success(true), repository.isSyllabusPublished())
+        assertEquals(Result.Success(true), repository.isSyllabusPublished())
+        assertEquals(Result.Success(false), repository.isSyllabusPublished())
+        assertEquals(Result.Success(false), repository.isSyllabusPublished())
     }
 
     @Test
