@@ -6,20 +6,65 @@ import jakarta.validation.constraints.DecimalMax
 import jakarta.validation.constraints.DecimalMin
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
+import jakarta.validation.constraints.Positive
 import jakarta.validation.constraints.PositiveOrZero
+import jakarta.validation.constraints.Size
 import tools.jackson.databind.JsonNode
 
 // Los nombres del JSON van en snake_case (@JsonProperty) porque así los lee la app
 // (CourseDtos.kt del frontend: NoteResponse, CreateNoteRequest, …).
+//
+// DTOs de entrada (*Request): solo los campos que el cliente puede enviar. El dueño sale
+// del token, y el estado inicial, el contenido y las fechas de creación los pone el
+// backend. Los @Size coinciden con el largo de cada columna de la entidad.
+
+/** Formato ISO de las fechas de clase (AAAA-MM-DD), el mismo que manda la app. */
+private const val ISO_DATE = "^\\d{4}-\\d{2}-\\d{2}$"
 
 data class CreateNoteRequest(
-    @JsonProperty("course_id") val courseId: Long,
-    @JsonProperty("syllabus_topic_id") val syllabusTopicId: Long? = null,
+    @JsonProperty("course_id")
+    @field:Positive(message = "El curso es obligatorio")
+    val courseId: Long,
+    @JsonProperty("syllabus_topic_id")
+    @field:Positive(message = "El tema del temario no es válido")
+    val syllabusTopicId: Long? = null,
     @JsonProperty("class_date")
     @field:NotBlank(message = "La fecha de la clase es obligatoria")
+    @field:Pattern(regexp = ISO_DATE, message = "La fecha de la clase debe tener el formato AAAA-MM-DD")
     val classDate: String,
-    @field:NotBlank(message = "El título es obligatorio") val title: String
+    @field:NotBlank(message = "El título es obligatorio")
+    @field:Size(max = 200, message = "El título admite como máximo 200 caracteres")
+    val title: String
 )
+
+/**
+ * PUT /notes/{id}: reemplaza los datos editables del apunte. El curso no cambia (un apunte
+ * no se mueve de curso) y el estado tiene su propio endpoint con reglas de transición.
+ */
+data class UpdateNoteRequest(
+    @JsonProperty("syllabus_topic_id")
+    @field:Positive(message = "El tema del temario no es válido")
+    val syllabusTopicId: Long? = null,
+    @JsonProperty("class_date")
+    @field:NotBlank(message = "La fecha de la clase es obligatoria")
+    @field:Pattern(regexp = ISO_DATE, message = "La fecha de la clase debe tener el formato AAAA-MM-DD")
+    val classDate: String,
+    @field:NotBlank(message = "El título es obligatorio")
+    @field:Size(max = 200, message = "El título admite como máximo 200 caracteres")
+    val title: String
+)
+
+/** PATCH /notes/{id}/status: solo cambia el estado del ciclo de vida (NoteStatus). */
+data class UpdateNoteStatusRequest(
+    @field:NotBlank(message = "El estado es obligatorio")
+    @field:Pattern(
+        regexp = "^(DRAFT|PROCESSING|READY|ARCHIVED)$",
+        message = "El estado debe ser DRAFT, PROCESSING, READY o ARCHIVED"
+    )
+    val status: String
+)
+
+// DTO de salida.
 
 data class NoteResponse(
     val id: Long,
@@ -48,11 +93,19 @@ data class CreateNotePageRequest(
     @JsonProperty("perceptual_hash")
     @field:Pattern(regexp = "^[0-9a-f]{16}$", message = "El hash perceptual debe tener 16 caracteres hexadecimales")
     val perceptualHash: String,
-    @JsonProperty("level_reached") val levelReached: String = "N1",
+    @JsonProperty("level_reached")
+    @field:Pattern(
+        regexp = "^(N0|N1|N1_5|N2|N3|UNRESOLVED)$",
+        message = "El nivel de procesamiento debe ser N0, N1, N1_5, N2, N3 o UNRESOLVED"
+    )
+    val levelReached: String = "N1",
     @JsonProperty("overall_confidence")
-    @field:DecimalMin("0.0") @field:DecimalMax("1.0")
+    @field:DecimalMin(value = "0.0", message = "La confianza debe estar entre 0 y 1")
+    @field:DecimalMax(value = "1.0", message = "La confianza debe estar entre 0 y 1")
     val overallConfidence: Float = 0f,
-    @JsonProperty("storage_uri") val storageUri: String? = null,
+    @JsonProperty("storage_uri")
+    @field:Size(max = 512, message = "La ubicación de la imagen admite como máximo 512 caracteres")
+    val storageUri: String? = null,
     val regions: JsonNode? = null,
     @JsonProperty("quality_metrics") val qualityMetrics: JsonNode? = null
 )

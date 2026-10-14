@@ -119,8 +119,18 @@ curl -X POST http://localhost:8080/api/v1/auth/login \
 ./gradlew test
 ```
 
+Las pruebas que usan base de datos corren contra **`glifo_test`** (perfil `test`), así no
+borran los datos de desarrollo. Hay que crearla una vez, conectado como `postgres`:
+
+```sql
+CREATE DATABASE glifo_test OWNER glifo;
+```
+
 - `ApiContractJsonTest`: verifica que el JSON coincide con el que espera la app. No
   necesita base de datos.
+- `WebApiStatusCodesTest`: hace peticiones HTTP reales (MockMvc + login JWT) y verifica el
+  código semántico de cada caso: 200, 201 con `Location`, 204, 400 con `subErrors`, 401,
+  403, 404, 405, 409 y 415.
 - `GlifoApplicationTests`: levanta toda la aplicación, así que necesita la base `glifo`.
 - `DatabaseSchemaTest`: contra la base `glifo`, verifica las 21 tablas, las 7 columnas
   JSONB, que los `CHECK`/`UNIQUE` rechacen datos inválidos, el borrado en cascada y
@@ -133,31 +143,72 @@ La API reproduce el mock de Mockoon con el que se desarrolló la app
 este backend sin modificar sus DTOs. Desde el emulador, la URL es
 `http://10.0.2.2:8080/api/v1/`.
 
-| Método | Ruta | Auth | Respuesta |
-|---|---|---|---|
-| GET | `/api/v1/health` | — | `{data: {status, service, timestamp}}` |
-| POST | `/api/v1/auth/register` | — | `{token, user}` |
-| POST | `/api/v1/auth/login` | — | `{token, user}` |
-| GET | `/api/v1/courses` | JWT | `{data: [curso]}` (cursos del usuario) |
-| POST | `/api/v1/courses` | JWT (`COURSE_WRITE`) | `{data: curso}` |
-| GET | `/api/v1/courses/{id}` | JWT | `{data: curso}` |
-| POST | `/api/v1/enrollments` | JWT | `{data: matrícula}` |
-| GET | `/api/v1/notes?courseId=` | JWT | `{data: [apunte]}` |
-| POST | `/api/v1/notes` | JWT | `{data: apunte}` |
-| GET | `/api/v1/notes/{id}` | JWT | `{data: apunte}` (incluye `content` JSONB) |
-| DELETE | `/api/v1/notes/{id}` | JWT | 204 sin cuerpo |
-| PATCH | `/api/v1/notes/{id}/status` | JWT | 200 sin cuerpo; `{status}` sigue DRAFT → PROCESSING → READY, o ARCHIVED |
-| POST | `/api/v1/notes/{id}/pages` | JWT | 201 `{data: página}`; 409 si ese `page_index` ya existe (la cola offline lo toma como "ya estaba") |
-| GET | `/api/v1/notes/{id}/pages` | JWT | `{data: [página]}` con `regions` y `quality_metrics` JSONB |
+| Método | Ruta | Auth | Éxito | Errores |
+|---|---|---|---|---|
+| GET | `/api/v1/health` | — | 200 `{data: {status, service, timestamp}}` | — |
+| POST | `/api/v1/auth/register` | — | 201 `{token, user}` | 400, 409 (correo ya registrado), 415 |
+| POST | `/api/v1/auth/login` | — | 200 `{token, user}` | 400, 401 (credenciales), 415 |
+| GET | `/api/v1/courses` | JWT | 200 `{data: [curso]}` (cursos del usuario) | 401 |
+| POST | `/api/v1/courses` | JWT (`COURSE_WRITE`) | 201 `{data: curso}` + `Location` | 400, 403, 415 |
+| GET | `/api/v1/courses/{id}` | JWT | 200 `{data: curso}` | 400, 404 |
+| POST | `/api/v1/enrollments` | JWT | 201 `{data: matrícula}` | 400, 404 (código inválido), 409 (ya inscrito) |
+| GET | `/api/v1/notes?courseId=` | JWT | 200 `{data: [apunte]}` | 400 |
+| POST | `/api/v1/notes` | JWT | 201 `{data: apunte}` + `Location` | 400, 404 (curso), 415 |
+| GET | `/api/v1/notes/{id}` | JWT | 200 `{data: apunte}` (incluye `content` JSONB) | 400, 404 |
+| PUT | `/api/v1/notes/{id}` | JWT | 200 `{data: apunte}` (`title`, `class_date`, `syllabus_topic_id`) | 400, 404, 415 |
+| PATCH | `/api/v1/notes/{id}/status` | JWT | 200 `{data: apunte}`; `{status}` sigue DRAFT → PROCESSING → READY, o ARCHIVED | 400 (estado desconocido), 404, 409 (transición no permitida) |
+| DELETE | `/api/v1/notes/{id}` | JWT | 204 sin cuerpo | 400, 404 |
+| POST | `/api/v1/notes/{id}/pages` | JWT | 201 `{data: página}` | 400, 404, 409 (ese `page_index` ya existe: la cola offline lo toma como "ya estaba") |
+| GET | `/api/v1/notes/{id}/pages` | JWT | 200 `{data: [página]}` con `regions` y `quality_metrics` JSONB | 400, 404 |
+
+Además, para cualquier ruta: **404** si no existe, **405** si el método no está permitido,
+**415** si el `Content-Type` no es `application/json`, y **500** ante un error inesperado
+(sin detalles internos: esos quedan en el log del servidor).
 
 Convenciones:
 
+- Las rutas salen de `application.properties` (`url.api.v1`, `url.notes`, …), así una
+  futura `v2` no rompe a los clientes de la `v1`.
 - Login y registro devuelven `{token, user}` directo; el resto va dentro de `data`.
 - `user.role` es `"Student"`, `"Teacher"` o `"Admin"`.
 - Los campos de cursos y apuntes van en `snake_case` (`join_code`, `course_id`,
   `class_date`); los de usuario, en `camelCase` (`firstName`).
-- Los errores son `{"message": "..."}` en español, con 400, 401, 403, 404 o 409.
 - El token se manda como `Authorization: Bearer <token>`. Sin token la API responde 401.
+
+### DTOs y validación
+
+Cada recurso tiene **DTOs de entrada** (`*Request`), con solo los campos que el cliente
+puede enviar, y **DTOs de salida** (`*Response`), con solo lo que el cliente necesita ver.
+Las entidades JPA nunca salen de la API. Los mappers son funciones de extensión de Kotlin
+(`Note.toResponse()`, en los paquetes `mapper`).
+
+Los DTOs de entrada se validan con Bean Validation (`@Valid` en el controller y
+`@NotBlank`, `@Size`, `@Pattern`, `@Positive`… en los campos). Los `@Size` coinciden con el
+largo de cada columna, así un texto demasiado largo es un 400 y no un error de base de
+datos. Los ids de ruta también se validan (`@PathVariable @Positive id`).
+
+### Formato de error (`ApiError`)
+
+Todos los errores, incluidos los 401/403 del filtro de seguridad, tienen esta forma:
+
+```json
+{
+  "status": 400,
+  "error": "Bad Request",
+  "code": "VALIDATION_FAILED",
+  "message": "El título es obligatorio",
+  "timestamp": "2026-10-12T18:30:00Z",
+  "path": "/api/v1/notes",
+  "subErrors": [
+    { "field": "title", "rejectedValue": "", "message": "El título es obligatorio" }
+  ]
+}
+```
+
+`message` va siempre, en español, y es lo que muestra la app. `subErrors` aparece solo en
+los errores de validación. `code` es estable (`VALIDATION_FAILED`, `NOT_FOUND`,
+`CONFLICT`, `UNAUTHORIZED`, `FORBIDDEN`, `METHOD_NOT_ALLOWED`, …) para que el cliente
+decida qué hacer sin depender del texto.
 
 ## Base de datos (PostgreSQL + JSONB)
 
