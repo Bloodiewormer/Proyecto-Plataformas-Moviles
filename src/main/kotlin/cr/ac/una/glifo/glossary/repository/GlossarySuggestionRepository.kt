@@ -8,4 +8,7 @@ import org.springframework.stereotype.Repository
 interface GlossarySuggestionRepository : JpaRepository<GlossarySuggestion, Long> {
     fun findByCourseIdAndStatus(courseId: Long, status: String): List<GlossarySuggestion>
     fun findByUserId(userId: Long): List<GlossarySuggestion>
+    fun findByCourseIdAndStatusOrderByCreatedAtDesc(courseId: Long, status: String): List<GlossarySuggestion>
+    fun findByCourseIdOrderByCreatedAtDesc(courseId: Long): List<GlossarySuggestion>
+    fun findByIdAndCourseId(id: Long, courseId: Long): GlossarySuggestion?
 }

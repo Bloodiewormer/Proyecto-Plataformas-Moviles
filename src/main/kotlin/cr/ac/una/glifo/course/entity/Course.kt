@@ -3,6 +3,7 @@ package cr.ac.una.glifo.course.entity
 import cr.ac.una.glifo.user.entity.User
 import jakarta.persistence.*
 import org.hibernate.Hibernate
+import org.hibernate.annotations.ColumnDefault
 import org.hibernate.annotations.CreationTimestamp
 import java.time.Instant
 
@@ -41,6 +42,17 @@ class Course {
 
     @Column(name = "syllabus_parsed_at")
     var syllabusParsedAt: Instant? = null
+
+    // Versiones del contexto offline (D-17): la app guarda el glosario en Room con estos
+    // números y lo vuelve a bajar solo si alguno cambió. Cada cambio del glosario sube
+    // glossary_version; publicar el temario debería subir syllabus_version.
+    @ColumnDefault("1")
+    @Column(name = "syllabus_version", nullable = false)
+    var syllabusVersion: Int = 1
+
+    @ColumnDefault("1")
+    @Column(name = "glossary_version", nullable = false)
+    var glossaryVersion: Int = 1
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
