@@ -527,6 +527,7 @@ fun TeacherGlossaryScreen(
     var query by remember { mutableStateOf("") }
     var showAddDialog by remember { mutableStateOf(false) }
     val uiState by viewModel.state.collectAsState()
+    val actionError by viewModel.actionError.collectAsState()
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -608,6 +609,16 @@ fun TeacherGlossaryScreen(
                             .verticalScroll(rememberScrollState())
                             .padding(14.dp)
                     ) {
+                        actionError?.let { error ->
+                            GlifoBanner(
+                                text = error.toMessage(context),
+                                isWarning = true,
+                                modifier = Modifier
+                                    .padding(bottom = 12.dp)
+                                    .clickable { viewModel.dismissActionError() }
+                            )
+                        }
+
                         GlifoCard(
                             backgroundColor = colors.accentFaint,
                             borderColor = colors.accentLine
@@ -665,8 +676,18 @@ fun TeacherGlossaryScreen(
                                             Text(s.meta, fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
                                         }
                                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.teacher_glossary_discard_description), tint = colors.textSecondary, modifier = Modifier.size(20.dp))
-                                            Icon(Icons.Default.Check, contentDescription = stringResource(R.string.teacher_glossary_accept_description), tint = colors.verified, modifier = Modifier.size(20.dp))
+                                            Icon(
+                                                Icons.Default.Close,
+                                                contentDescription = stringResource(R.string.teacher_glossary_discard_description),
+                                                tint = colors.textSecondary,
+                                                modifier = Modifier.size(20.dp).clickable { viewModel.discardSuggestion(s.id) }
+                                            )
+                                            Icon(
+                                                Icons.Default.Check,
+                                                contentDescription = stringResource(R.string.teacher_glossary_accept_description),
+                                                tint = colors.verified,
+                                                modifier = Modifier.size(20.dp).clickable { viewModel.approveSuggestion(s.id) }
+                                            )
                                         }
                                     }
                                 }
