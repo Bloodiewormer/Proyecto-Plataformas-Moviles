@@ -31,6 +31,10 @@ class JoinCourseViewModel @Inject constructor(
     private val _joinState = MutableStateFlow<UiState<Unit>?>(null)
     val joinState: StateFlow<UiState<Unit>?> = _joinState.asStateFlow()
 
+    /**
+     * Retained for backwards compatibility with existing unit tests (`ActiveCourseFollowTest`);
+     * `JoinCourseScreen` now invokes [joinCourse] directly against `POST /api/v1/enrollments` (#32 d).
+     */
     fun search(joinCode: String) {
         viewModelScope.launch {
             _searchState.value = UiState.Loading
@@ -49,12 +53,16 @@ class JoinCourseViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Calls `POST /api/v1/enrollments` directly via [CourseRepository.joinCourse].
+     * `CourseRepositoryImpl` activates the course in [ActiveCourseStore] using `course_id` and `course_name`
+     * from `EnrollmentResponse` (#32 d).
+     */
     fun joinCourse(joinCode: String) {
         viewModelScope.launch {
             _joinState.value = UiState.Loading
             when (val result = courseRepository.joinCourse(joinCode)) {
                 is Result.Success -> {
-                    // El curso al que se acaba de unir pasa a ser el activo: inicio, apuntes y estudio lo siguen.
                     (_searchState.value as? UiState.Success)?.data?.course?.let { activeCourseStore.set(it.id, it.name) }
                     _joinState.value = UiState.Success(Unit)
                 }
@@ -68,3 +76,4 @@ class JoinCourseViewModel @Inject constructor(
         _joinState.value = null
     }
 }
+

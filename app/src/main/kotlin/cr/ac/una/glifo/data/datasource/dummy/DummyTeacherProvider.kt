@@ -1,7 +1,5 @@
 package cr.ac.una.glifo.data.datasource.dummy
 
-import cr.ac.una.glifo.domain.model.GlossaryEntry
-import cr.ac.una.glifo.domain.model.GlossarySuggestion
 import cr.ac.una.glifo.domain.model.SyllabusTopicRow
 import cr.ac.una.glifo.domain.model.SyllabusUnitRow
 import cr.ac.una.glifo.domain.model.TeacherGapTopic
@@ -9,23 +7,7 @@ import cr.ac.una.glifo.domain.model.ConfidenceState
 
 object DummyTeacherProvider {
 
-    private val glossaryEntries = mutableListOf(
-        GlossaryEntry("Sumatoria", "\\sum_{n=1}^{\\infty}", "SÍMBOLO", isSymbol = true),
-        GlossaryEntry("Converge", "conv. · cnv · converg.", "TÉRMINO", isSymbol = false),
-        GlossaryEntry("Radio de convergencia", "R", "TÉRMINO", isSymbol = false),
-        GlossaryEntry("Integral impropia", "\\int_a^{\\infty}", "SÍMBOLO", isSymbol = true),
-        GlossaryEntry("Límite n→∞", "\\lim_{n \\to \\infty}", "SÍMBOLO", isSymbol = true)
-    )
-
-    fun getGlossaryEntries(): List<GlossaryEntry> = glossaryEntries
-
-    fun addGlossaryEntry(term: String, notation: String, isSymbol: Boolean) {
-        glossaryEntries.add(0, GlossaryEntry(term.trim(), notation.trim(), if (isSymbol) "SÍMBOLO" else "TÉRMINO", isSymbol))
-    }
-
-    fun getGlossarySuggestions(): List<GlossarySuggestion> = listOf(
-        GlossarySuggestion("diverge", "corregido 7 veces esta semana")
-    )
+    // El glosario y sus sugerencias ya vienen del backend (TeacherRepositoryImpl, issue #33).
 
     fun getSyllabusFileName(): String = "programa-EIF411.pdf"
 

@@ -206,7 +206,7 @@ fun TeacherNewCourseScreen(
     var name by remember { mutableStateOf("") }
     var code by remember { mutableStateOf("") }
     var cycle by remember { mutableStateOf(defaultCycle) }
-    var joinCode by remember { mutableStateOf(generateJoinCode()) }
+    var createdJoinCode by remember { mutableStateOf<String?>(null) }
     var copied by remember { mutableStateOf(false) }
     var creating by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -228,45 +228,34 @@ fun TeacherNewCourseScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(14.dp)
         ) {
-            GlifoField(label = stringResource(R.string.teacher_new_course_field_name), value = name, placeholder = stringResource(R.string.teacher_new_course_field_name_placeholder), onValueChange = { name = it })
+            GlifoField(label = stringResource(R.string.teacher_new_course_field_name), value = name, placeholder = stringResource(R.string.teacher_new_course_field_name_placeholder), onValueChange = { if (createdJoinCode == null) name = it })
             Spacer(modifier = Modifier.height(10.dp))
-            GlifoField(label = stringResource(R.string.teacher_new_course_field_code), value = code, placeholder = stringResource(R.string.teacher_new_course_field_code_placeholder), onValueChange = { code = it })
+            GlifoField(label = stringResource(R.string.teacher_new_course_field_code), value = code, placeholder = stringResource(R.string.teacher_new_course_field_code_placeholder), onValueChange = { if (createdJoinCode == null) code = it })
             Spacer(modifier = Modifier.height(10.dp))
-            GlifoField(label = stringResource(R.string.teacher_new_course_field_cycle), value = cycle, onValueChange = { cycle = it })
+            GlifoField(label = stringResource(R.string.teacher_new_course_field_cycle), value = cycle, onValueChange = { if (createdJoinCode == null) cycle = it })
 
-            Text(
-                text = stringResource(R.string.teacher_new_course_join_code_section),
-                fontSize = 10.sp,
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = 0.6.sp,
-                color = colors.textSecondary,
-                modifier = Modifier.padding(top = 14.dp, bottom = 8.dp)
-            )
+            if (createdJoinCode != null) {
+                Text(
+                    text = stringResource(R.string.teacher_new_course_join_code_section),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 0.6.sp,
+                    color = colors.textSecondary,
+                    modifier = Modifier.padding(top = 14.dp, bottom = 8.dp)
+                )
 
-            GlifoCard(borderColor = colors.accentLine) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = joinCode,
-                        fontFamily = FontFamily.Monospace,
-                        fontSize = 24.sp,
-                        color = colors.accentText,
-                        letterSpacing = 3.sp
-                    )
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = stringResource(R.string.teacher_new_course_regenerate_code_description),
-                            tint = colors.textSecondary,
-                            modifier = Modifier
-                                .size(18.dp)
-                                .clickable {
-                                    joinCode = generateJoinCode()
-                                    copied = false
-                                }
+                GlifoCard(borderColor = colors.accentLine) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = createdJoinCode!!,
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 24.sp,
+                            color = colors.accentText,
+                            letterSpacing = 3.sp
                         )
                         Icon(
                             imageVector = if (copied) Icons.Default.Check else Icons.Default.ContentCopy,
@@ -275,13 +264,13 @@ fun TeacherNewCourseScreen(
                             modifier = Modifier
                                 .size(18.dp)
                                 .clickable {
-                                    clipboard.setText(AnnotatedString(joinCode))
+                                    clipboard.setText(AnnotatedString(createdJoinCode!!))
                                     copied = true
                                 }
                         )
                     }
+                    Text(stringResource(R.string.teacher_new_course_join_code_note), fontSize = 11.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 8.dp))
                 }
-                Text(stringResource(R.string.teacher_new_course_join_code_note), fontSize = 11.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 8.dp))
             }
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -309,30 +298,35 @@ fun TeacherNewCourseScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            GlifoButton(
-                text = if (creating) stringResource(R.string.teacher_new_course_button_creating) else stringResource(R.string.teacher_new_course_button_create),
-                enabled = name.isNotBlank() && code.isNotBlank() && !creating,
-                onClick = {
-                    creating = true
-                    errorMessage = null
-                    scope.launch {
-                        when (val result = viewModel.createCourse(name, code, cycle)) {
-                            is cr.ac.una.glifo.domain.error.Result.Success -> onCreateSuccess()
-                            is cr.ac.una.glifo.domain.error.Result.Failure -> {
-                                creating = false
-                                errorMessage = result.error.toMessage(context)
+            if (createdJoinCode == null) {
+                GlifoButton(
+                    text = if (creating) stringResource(R.string.teacher_new_course_button_creating) else stringResource(R.string.teacher_new_course_button_create),
+                    enabled = name.isNotBlank() && code.isNotBlank() && !creating,
+                    onClick = {
+                        creating = true
+                        errorMessage = null
+                        scope.launch {
+                            when (val result = viewModel.createCourse(name, code, cycle)) {
+                                is cr.ac.una.glifo.domain.error.Result.Success -> {
+                                    creating = false
+                                    createdJoinCode = result.value.joinCode
+                                }
+                                is cr.ac.una.glifo.domain.error.Result.Failure -> {
+                                    creating = false
+                                    errorMessage = result.error.toMessage(context)
+                                }
                             }
                         }
                     }
-                }
-            )
+                )
+            } else {
+                GlifoButton(
+                    text = stringResource(R.string.common_close),
+                    onClick = onCreateSuccess
+                )
+            }
         }
     }
-}
-
-private fun generateJoinCode(): String {
-    val chars = "23456789ABCDEFGHJKMNPQRSTUVWXYZ" // no ambiguous 0/O/1/I/L
-    return "GLF-" + (1..4).map { chars.random() }.joinToString("")
 }
 
 // ── Screen I3: Publicar Temario ───────────────────────────────────────────────
@@ -344,7 +338,9 @@ fun TeacherSyllabusScreen(
 ) {
     val colors = GlifoTheme.colors
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var showAddTopicDialog by remember { mutableStateOf(false) }
+    var publishError by remember { mutableStateOf<String?>(null) }
     val uiState by viewModel.state.collectAsState()
 
     Column(
@@ -357,11 +353,37 @@ fun TeacherSyllabusScreen(
             isBack = true,
             onNavigationClick = onNavigateBack,
             actions = {
-                TextButton(onClick = onPublishSuccess) {
+                TextButton(onClick = {
+                    publishError = null
+                    scope.launch {
+                        when (val result = viewModel.publishSyllabus()) {
+                            is cr.ac.una.glifo.domain.error.Result.Success -> onPublishSuccess()
+                            is cr.ac.una.glifo.domain.error.Result.Failure -> {
+                                val err = result.error
+                                publishError = when {
+                                    err is cr.ac.una.glifo.core.common.AppError.Validation &&
+                                        err.field == TeacherSyllabusViewModel.FIELD_ALREADY_PUBLISHED ->
+                                        context.getString(R.string.teacher_syllabus_already_published)
+                                    err is cr.ac.una.glifo.core.common.AppError.Validation &&
+                                        (err.field == TeacherSyllabusViewModel.FIELD_EMPTY_TOPICS || err.field == "topics") ->
+                                        context.getString(R.string.teacher_syllabus_empty_topics_error)
+                                    else -> err.toMessage(context)
+                                }
+                            }
+                        }
+                    }
+                }) {
                     Text(stringResource(R.string.teacher_syllabus_publish_button), color = colors.accentText, fontSize = 16.sp, fontWeight = FontWeight.Medium)
                 }
             }
         )
+
+        if (publishError != null) {
+            Box(modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)) {
+                GlifoBanner(text = publishError!!, isWarning = true)
+            }
+        }
+
 
         when (val state = uiState) {
             is UiState.Loading -> GlifoLoadingBox()
@@ -418,6 +440,7 @@ fun TeacherSyllabusScreen(
 
                     GlifoCard(tight = true) {
                         units.forEachIndexed { unitIdx, unit ->
+                            val unitLabel = unit.label.ifBlank { stringResource(R.string.teacher_syllabus_pending_unit_label) }
                             GlifoItem(compact = true, backgroundColor = colors.surfaceHigh, showBottomBorder = unit.topics.isEmpty() && unitIdx < units.size - 1) {
                                 Icon(
                                     imageVector = if (unit.topics.isNotEmpty()) Icons.Default.KeyboardArrowDown else Icons.AutoMirrored.Filled.KeyboardArrowRight,
@@ -425,7 +448,7 @@ fun TeacherSyllabusScreen(
                                     tint = colors.accentText,
                                     modifier = Modifier.size(18.dp)
                                 )
-                                Text(unit.label, fontWeight = FontWeight.Medium, fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                                Text(unitLabel, fontWeight = FontWeight.Medium, fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
                                 Text(stringResource(R.string.course_detail_topic_count, unit.topicCount), fontSize = 12.sp, color = colors.textSecondary)
                                 Icon(Icons.Default.Edit, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
                             }
@@ -504,6 +527,7 @@ fun TeacherGlossaryScreen(
     var query by remember { mutableStateOf("") }
     var showAddDialog by remember { mutableStateOf(false) }
     val uiState by viewModel.state.collectAsState()
+    val actionError by viewModel.actionError.collectAsState()
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -585,6 +609,16 @@ fun TeacherGlossaryScreen(
                             .verticalScroll(rememberScrollState())
                             .padding(14.dp)
                     ) {
+                        actionError?.let { error ->
+                            GlifoBanner(
+                                text = error.toMessage(context),
+                                isWarning = true,
+                                modifier = Modifier
+                                    .padding(bottom = 12.dp)
+                                    .clickable { viewModel.dismissActionError() }
+                            )
+                        }
+
                         GlifoCard(
                             backgroundColor = colors.accentFaint,
                             borderColor = colors.accentLine
@@ -642,8 +676,18 @@ fun TeacherGlossaryScreen(
                                             Text(s.meta, fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
                                         }
                                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.teacher_glossary_discard_description), tint = colors.textSecondary, modifier = Modifier.size(20.dp))
-                                            Icon(Icons.Default.Check, contentDescription = stringResource(R.string.teacher_glossary_accept_description), tint = colors.verified, modifier = Modifier.size(20.dp))
+                                            Icon(
+                                                Icons.Default.Close,
+                                                contentDescription = stringResource(R.string.teacher_glossary_discard_description),
+                                                tint = colors.textSecondary,
+                                                modifier = Modifier.size(20.dp).clickable { viewModel.discardSuggestion(s.id) }
+                                            )
+                                            Icon(
+                                                Icons.Default.Check,
+                                                contentDescription = stringResource(R.string.teacher_glossary_accept_description),
+                                                tint = colors.verified,
+                                                modifier = Modifier.size(20.dp).clickable { viewModel.approveSuggestion(s.id) }
+                                            )
                                         }
                                     }
                                 }
