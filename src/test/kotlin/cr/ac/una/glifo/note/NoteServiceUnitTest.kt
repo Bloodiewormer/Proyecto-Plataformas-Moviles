@@ -1,6 +1,7 @@
 package cr.ac.una.glifo.note
 
 import cr.ac.una.glifo.common.exception.BusinessException
+import cr.ac.una.glifo.common.exception.ConflictException
 import cr.ac.una.glifo.common.exception.ResourceNotFoundException
 import cr.ac.una.glifo.course.entity.Course
 import cr.ac.una.glifo.course.repository.CourseRepository
@@ -141,7 +142,8 @@ class NoteServiceUnitTest {
     fun `update a un estado no permitido falla y no guarda`() {
         `when`(noteRepository.findById(100L)).thenReturn(Optional.of(noteOf(student, "READY")))
 
-        assertThrows<IllegalStateException> { service.updateNoteStatus(100L, 1L, "DRAFT") }
+        // ConflictException: la Web API la responde como 409 Conflict (issue #30).
+        assertThrows<ConflictException> { service.updateNoteStatus(100L, 1L, "DRAFT") }
         verify(noteRepository, never()).save(any(Note::class.java))
     }
 

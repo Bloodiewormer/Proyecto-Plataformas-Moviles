@@ -1,7 +1,11 @@
 package cr.ac.una.glifo.security
 
+import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
+import org.springframework.http.HttpStatus
+import java.time.Instant
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration
@@ -20,7 +24,9 @@ import org.springframework.web.cors.CorsConfigurationSource
 @EnableMethodSecurity
 class SecurityConfig(
     private val jwtFilter: JwtFilter,
-    private val corsConfigurationSource: CorsConfigurationSource
+    private val corsConfigurationSource: CorsConfigurationSource,
+    @Value("\${url.auth}") private val authUrl: String,
+    @Value("\${url.health}") private val healthUrl: String
 ) {
 
     @Bean
@@ -41,9 +47,9 @@ class SecurityConfig(
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests { auth ->
                 auth.requestMatchers(
-                    "/api/v1/auth/register",
-                    "/api/v1/auth/login",
-                    "/api/v1/health",
+                    "$authUrl/register",
+                    "$authUrl/login",
+                    healthUrl,
                     "/error"
                 ).permitAll()
                     .anyRequest().authenticated()
@@ -51,11 +57,11 @@ class SecurityConfig(
             .exceptionHandling { handling ->
                 // Sin token (o con uno vencido) el cliente recibe 401, que es lo que la app
                 // interpreta como "la sesión expiró"; el 403 queda para "no tenés permiso".
-                handling.authenticationEntryPoint { _, response, _ ->
-                    writeError(response, HttpServletResponse.SC_UNAUTHORIZED, "UNAUTHORIZED", "Tu sesión expiró. Iniciá sesión de nuevo.")
+                handling.authenticationEntryPoint { request, response, _ ->
+                    writeError(request, response, HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "Tu sesión expiró. Iniciá sesión de nuevo.")
                 }
-                handling.accessDeniedHandler { _, response, _ ->
-                    writeError(response, HttpServletResponse.SC_FORBIDDEN, "FORBIDDEN", "No tenés permiso para realizar esta acción")
+                handling.accessDeniedHandler { request, response, _ ->
+                    writeError(request, response, HttpStatus.FORBIDDEN, "FORBIDDEN", "No tenés permiso para realizar esta acción")
                 }
             }
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter::class.java)
@@ -63,10 +69,22 @@ class SecurityConfig(
         return http.build()
     }
 
-    /** Mismo formato de error que GlobalExceptionHandler, escrito a mano porque ocurre en el filtro de seguridad, antes de llegar a un controller. */
-    private fun writeError(response: HttpServletResponse, status: Int, code: String, message: String) {
-        response.status = status
+    /**
+     * Mismo formato ApiError que GlobalExceptionHandler. Se escribe a mano porque el error
+     * ocurre en el filtro de seguridad, antes de llegar a un controller y a su advice.
+     */
+    private fun writeError(
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+        status: HttpStatus,
+        code: String,
+        message: String
+    ) {
+        response.status = status.value()
         response.contentType = "application/json;charset=UTF-8"
-        response.writer.write("""{"code":"$code","message":"$message"}""")
+        response.writer.write(
+            """{"status":${status.value()},"error":"${status.reasonPhrase}","code":"$code",""" +
+                """"message":"$message","timestamp":"${Instant.now()}","path":"${request.requestURI}"}"""
+        )
     }
 }

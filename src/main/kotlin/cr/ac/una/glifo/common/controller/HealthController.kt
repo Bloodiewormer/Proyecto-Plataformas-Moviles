@@ -1,6 +1,7 @@
 package cr.ac.una.glifo.common.controller
 
 import cr.ac.una.glifo.common.dto.ApiResponse
+import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -18,7 +19,7 @@ data class HealthResponse(
  * probar el login.
  */
 @RestController
-@RequestMapping("/api/v1/health")
+@RequestMapping("\${url.health}", produces = [MediaType.APPLICATION_JSON_VALUE])
 class HealthController {
 
     @GetMapping
