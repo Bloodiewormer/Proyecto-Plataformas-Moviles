@@ -536,4 +536,14 @@
     <string name="course_switcher_join">Unirme a un curso</string>
     <string name="course_switcher_create">Crear un curso</string>
     <string name="drawer_no_active_course">Ningún curso elegido</string>
+    <!-- Lab 6: generación de material de estudio IA-02 (#44) -->
+    <string name="study_generate_button">Generar material de estudio</string>
+    <string name="study_generating_ai">Generando con IA…</string>
+    <string name="study_quiz_count_title">Quiz de %1$d preguntas</string>
+    <string name="quiz_progress_format">%1$d de %2$d</string>
+    <string name="quiz_next_question_button">Siguiente pregunta</string>
+    <string name="study_error_no_connection">Sin conexión a internet. Revisa tu red e inténtalo de nuevo.</string>
+    <string name="study_error_ai_unavailable">El servicio de IA no está disponible en este momento. Inténtalo más tarde.</string>
+    <string name="study_error_forbidden">No tienes permiso para realizar esta acción en este curso.</string>
+    <string name="study_error_no_topics">Este curso todavía no tiene temas publicados en el temario.</string>
 </resources>

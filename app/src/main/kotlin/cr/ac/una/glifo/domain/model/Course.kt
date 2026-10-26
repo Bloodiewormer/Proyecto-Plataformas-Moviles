@@ -15,6 +15,16 @@ data class CourseDetail(
     val syllabusStatus: String?
 )
 
+/** Tema del temario de un curso (#32, #44). */
+data class SyllabusTopic(
+    val id: Long,
+    val courseId: Long,
+    val parentId: Long? = null,
+    val code: String,
+    val title: String,
+    val orderIndex: Int = 1
+)
+
 /**
  * Extra, UI-facing stats for a course (coverage breakdown, roster size, etc.) that a real
  * backend would likely compute server-side. Kept as its own model — rather than folded

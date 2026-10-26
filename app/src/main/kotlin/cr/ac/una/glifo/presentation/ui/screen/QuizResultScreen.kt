@@ -25,11 +25,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -69,7 +69,11 @@ private fun QuizResultContent(
     onNavigateToCoverage: () -> Unit,
     onNavigateToGlossary: () -> Unit
 ) {
-    val targetFraction = result.score.toFloat() / result.total.toFloat()
+    val targetFraction = if (result.total > 0) {
+        result.score.toFloat() / result.total.toFloat()
+    } else {
+        0f
+    }
 
     var animateIn by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { animateIn = true }
@@ -192,20 +196,22 @@ private fun QuizResultContent(
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            if (result.rescheduledCount != null && result.daysUntilReturn != null) {
+                Spacer(modifier = Modifier.height(10.dp))
 
-            GlifoCard(
-                backgroundColor = colors.accentFaint,
-                borderColor = colors.accentLine
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalAlignment = Alignment.Top
+                GlifoCard(
+                    backgroundColor = colors.accentFaint,
+                    borderColor = colors.accentLine
                 ) {
-                    Icon(imageVector = Icons.Default.CalendarToday, contentDescription = null, tint = colors.accentText, modifier = Modifier.size(20.dp))
-                    Column {
-                        Text(stringResource(R.string.quiz_result_rescheduled_count, result.rescheduledCount), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                        Text(stringResource(R.string.quiz_result_return_in_days, result.daysUntilReturn), fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 4.dp))
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Icon(imageVector = Icons.Default.CalendarToday, contentDescription = null, tint = colors.accentText, modifier = Modifier.size(20.dp))
+                        Column {
+                            Text(stringResource(R.string.quiz_result_rescheduled_count, result.rescheduledCount), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                            Text(stringResource(R.string.quiz_result_return_in_days, result.daysUntilReturn), fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 4.dp))
+                        }
                     }
                 }
             }

@@ -33,6 +33,7 @@ import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
+import cr.ac.una.glifo.domain.model.QuizQuestion
 import cr.ac.una.glifo.presentation.viewmodel.QuizViewModel
 import cr.ac.una.glifo.presentation.viewmodel.toMessage
 
@@ -45,24 +46,49 @@ fun QuizScreen(
     val colors = GlifoTheme.colors
     val context = LocalContext.current
     val uiState by viewModel.state.collectAsState()
+    val currentIndex by viewModel.currentIndex.collectAsState()
 
     when (val state = uiState) {
         is UiState.Loading -> GlifoLoadingBox()
         is UiState.Empty -> GlifoBanner(text = stringResource(R.string.study_empty_course))
         is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
-        is UiState.Success -> QuizContent(state.data, colors, onNavigateBack, onNavigateToResult)
+        is UiState.Success -> {
+            val questions = state.data
+            val safeIndex = currentIndex.coerceIn(0, questions.lastIndex)
+            QuizContent(
+                question = questions[safeIndex],
+                questionNumber = safeIndex + 1,
+                totalQuestions = questions.size,
+                isLastQuestion = safeIndex >= questions.lastIndex,
+                colors = colors,
+                onNavigateBack = onNavigateBack,
+                onSubmitAnswer = { selectedIdx ->
+                    viewModel.submitAnswer(selectedIdx, safeIndex)
+                },
+                onNextQuestion = { viewModel.nextQuestion() },
+                onNavigateToResult = {
+                    viewModel.finishQuiz()
+                    onNavigateToResult()
+                }
+            )
+        }
     }
 }
 
 @Composable
 private fun QuizContent(
-    question: cr.ac.una.glifo.domain.model.QuizQuestion,
+    question: QuizQuestion,
+    questionNumber: Int,
+    totalQuestions: Int,
+    isLastQuestion: Boolean,
     colors: cr.ac.una.glifo.core.ui.theme.GlifoColorScheme,
     onNavigateBack: () -> Unit,
+    onSubmitAnswer: (Int) -> Unit,
+    onNextQuestion: () -> Unit,
     onNavigateToResult: () -> Unit
 ) {
-    var selectedOption by remember { mutableStateOf<Int?>(null) }
-    var isAnswered by remember { mutableStateOf(false) }
+    var selectedOption by remember(questionNumber) { mutableStateOf<Int?>(null) }
+    var isAnswered by remember(questionNumber) { mutableStateOf(false) }
 
     fun borderFor(i: Int): androidx.compose.ui.graphics.Color {
         if (!isAnswered) return if (selectedOption == i) colors.accentText else colors.border
@@ -77,6 +103,9 @@ private fun QuizContent(
         if (i == selectedOption && selectedOption != question.correctIndex) return colors.alertFaint
         return colors.surface
     }
+
+    val progressFraction = (questionNumber.toFloat() / totalQuestions.coerceAtLeast(1).toFloat())
+        .coerceIn(0f, 1f)
 
     Column(
         modifier = Modifier
@@ -101,13 +130,13 @@ private fun QuizContent(
                         Box(
                             modifier = Modifier
                                 .fillMaxHeight()
-                                .fillMaxWidth(0.40f)
+                                .fillMaxWidth(progressFraction)
                                 .background(colors.accent)
                         )
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = stringResource(R.string.quiz_progress_counter),
+                        text = stringResource(R.string.quiz_progress_format, questionNumber, totalQuestions),
                         fontFamily = FontFamily.Monospace,
                         fontSize = 12.sp,
                         color = colors.textSecondary
@@ -194,12 +223,26 @@ private fun QuizContent(
                 GlifoButton(
                     text = stringResource(R.string.quiz_answer_button),
                     enabled = selectedOption != null,
-                    onClick = { isAnswered = true }
+                    onClick = {
+                        val chosen = selectedOption ?: return@GlifoButton
+                        isAnswered = true
+                        onSubmitAnswer(chosen)
+                    }
                 )
             } else {
                 GlifoButton(
-                    text = stringResource(R.string.quiz_view_result_button),
-                    onClick = onNavigateToResult
+                    text = if (isLastQuestion) {
+                        stringResource(R.string.quiz_view_result_button)
+                    } else {
+                        stringResource(R.string.quiz_next_question_button)
+                    },
+                    onClick = {
+                        if (isLastQuestion) {
+                            onNavigateToResult()
+                        } else {
+                            onNextQuestion()
+                        }
+                    }
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))

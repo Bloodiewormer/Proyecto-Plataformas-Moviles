@@ -12,13 +12,19 @@ import cr.ac.una.glifo.domain.error.Result
  * this inside a `coroutineScope.launch { }` block (e.g. login/register submit handlers),
  * where a `@Composable` function cannot legally be called. [Validation]/[Server]/[Database]
  * carry messages that already came from the mock/backend or were built elsewhere — those
- * stay as-is, only the three fixed cases are localized here.
+ * stay as-is, only the fixed cases and AI/permission status codes are localized here.
  */
 fun AppError.toMessage(context: Context): String = when (this) {
     is AppError.NoConnection -> context.getString(R.string.error_no_connection)
     is AppError.Unauthorized -> context.getString(R.string.error_unauthorized)
     is AppError.Validation -> issue
-    is AppError.Server -> message
+    is AppError.Server -> when (code) {
+        "502", "503", "AI_PROVIDER_ERROR", "AI_NOT_CONFIGURED" ->
+            context.getString(R.string.study_error_ai_unavailable)
+        "403" ->
+            context.getString(R.string.study_error_forbidden)
+        else -> message
+    }
     is AppError.Database -> message
     is AppError.Unknown -> context.getString(R.string.error_unknown)
 }

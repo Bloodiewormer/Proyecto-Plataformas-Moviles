@@ -12,6 +12,7 @@ import cr.ac.una.glifo.domain.error.Result
 import cr.ac.una.glifo.domain.model.Course
 import cr.ac.una.glifo.domain.model.CourseDetail
 import cr.ac.una.glifo.domain.model.CourseStats
+import cr.ac.una.glifo.domain.model.SyllabusTopic
 import cr.ac.una.glifo.domain.repository.CourseRepository
 import javax.inject.Inject
 
@@ -55,6 +56,12 @@ class CourseRepositoryImpl : CourseRepository {
 
     override suspend fun getCourseStats(courseId: Long): Result<CourseStats> =
         Result.Success(DummyCourseProvider.getStats(courseId))
+
+    override suspend fun getCourseTopics(courseId: Long): Result<List<SyllabusTopic>> =
+        ApiErrorHandler.safeApiCall(
+            apiCall = { api.getCourseTopics(courseId) },
+            transform = { response -> response.data.map { it.toDomain() } }
+        )
 
     override suspend fun findCourseByJoinCode(joinCode: String): Result<Course> {
         val trimmed = joinCode.trim()
@@ -105,4 +112,3 @@ class CourseRepositoryImpl : CourseRepository {
         )
     }
 }
-

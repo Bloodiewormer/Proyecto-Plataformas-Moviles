@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.core.datastore.ActiveCourseStore
+import cr.ac.una.glifo.domain.error.Result
 import cr.ac.una.glifo.domain.model.QuizResultInfo
 import cr.ac.una.glifo.domain.repository.StudyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -13,7 +14,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/** QuizResultScreen: sigue al curso activo y se recarga si se cambia de curso. */
+/**
+ * QuizResultScreen: sigue al curso activo y lee el último resultado real guardado en
+ * [StudyRepository]. Si no hay resultado guardado para el curso, expone [UiState.Empty].
+ */
 @HiltViewModel
 class QuizResultViewModel @Inject constructor(
     private val studyRepository: StudyRepository,
@@ -35,6 +39,12 @@ class QuizResultViewModel @Inject constructor(
             return
         }
         _state.value = UiState.Loading
-        _state.value = studyRepository.getQuizResult(courseId).toUiState()
+        _state.value = when (val result = studyRepository.getQuizResult(courseId)) {
+            is Result.Success -> {
+                val info = result.value
+                if (info == null) UiState.Empty else UiState.Success(info)
+            }
+            is Result.Failure -> UiState.Error(result.error)
+        }
     }
 }

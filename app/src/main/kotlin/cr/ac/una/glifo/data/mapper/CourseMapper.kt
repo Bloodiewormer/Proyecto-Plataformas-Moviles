@@ -6,6 +6,7 @@ import cr.ac.una.glifo.data.dto.CreateCourseRequest
 import cr.ac.una.glifo.data.dto.SyllabusTopicResponse
 import cr.ac.una.glifo.domain.model.Course
 import cr.ac.una.glifo.domain.model.CourseDetail
+import cr.ac.una.glifo.domain.model.SyllabusTopic
 import cr.ac.una.glifo.domain.model.SyllabusTopicRow
 import cr.ac.una.glifo.domain.model.SyllabusUnitRow
 
@@ -23,6 +24,15 @@ fun CourseDetailResponse.toDomain(): CourseDetail = CourseDetail(
     code = code,
     joinCode = joinCode,
     syllabusStatus = syllabusStatus
+)
+
+fun SyllabusTopicResponse.toDomain(): SyllabusTopic = SyllabusTopic(
+    id = id,
+    courseId = courseId,
+    parentId = parentId,
+    code = code,
+    title = title,
+    orderIndex = orderIndex
 )
 
 // Domain -> Request DTO
@@ -68,4 +78,3 @@ fun List<SyllabusTopicResponse>.toSyllabusUnitRows(): List<SyllabusUnitRow> {
         )
     )
 }
-

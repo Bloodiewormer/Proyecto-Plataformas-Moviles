@@ -19,6 +19,6 @@ data class QuizResultInfo(
     val headline: String,
     val subtext: String,
     val review: List<QuizResultRow>,
-    val rescheduledCount: Int,
-    val daysUntilReturn: Int
+    val rescheduledCount: Int? = null,
+    val daysUntilReturn: Int? = null
 )

@@ -64,17 +64,17 @@ class ActiveCourseFollowTest {
     @Test
     fun `quiz reloads for the new course after a switch`() = runTest(dispatcher) {
         val study = mockk<StudyRepository> {
-            coEvery { getQuizQuestion(1L) } returns Result.Success(quiz("calculo"))
-            coEvery { getQuizQuestion(2L) } returns Result.Success(quiz("moviles"))
+            coEvery { getQuizQuestions(1L) } returns Result.Success(listOf(quiz("calculo")))
+            coEvery { getQuizQuestions(2L) } returns Result.Success(listOf(quiz("moviles")))
         }
         activeId.value = 1L
         val vm = QuizViewModel(study, store)
         advanceUntilIdle()
-        assertEquals("calculo", (vm.state.value as UiState.Success).data.topicTag)
+        assertEquals("calculo", (vm.state.value as UiState.Success).data.single().topicTag)
 
         activeId.value = 2L
         advanceUntilIdle()
-        assertEquals("moviles", (vm.state.value as UiState.Success).data.topicTag)
+        assertEquals("moviles", (vm.state.value as UiState.Success).data.single().topicTag)
     }
 
     @Test

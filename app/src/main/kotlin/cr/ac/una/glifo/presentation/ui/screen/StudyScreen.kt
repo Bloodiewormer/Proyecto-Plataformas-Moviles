@@ -21,9 +21,9 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
-import cr.ac.una.glifo.domain.model.GlifoRole
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
+import cr.ac.una.glifo.domain.model.GlifoRole
 import cr.ac.una.glifo.presentation.viewmodel.SessionViewModel
 import cr.ac.una.glifo.presentation.viewmodel.StudyHomeViewModel
 import cr.ac.una.glifo.presentation.viewmodel.toMessage
@@ -105,10 +105,12 @@ fun StudyScreen(
             when (val state = uiState) {
                 is UiState.Loading -> GlifoLoadingBox()
                 is UiState.Empty -> GlifoLoadingBox()
-                is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = { viewModel.load(courseId) })
+                is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = { viewModel.load(courseId, force = true) })
                 is UiState.Success -> {
-                    val flashcardCount = state.data.flashcardCount
-                    val quizQuestion = state.data.quizQuestion
+                    val data = state.data
+                    val flashcardCount = data.flashcardCount
+                    val quizQuestion = data.quizQuestion
+                    val quizCount = data.quizQuestionCount
 
                     Column(
                         modifier = Modifier
@@ -117,6 +119,43 @@ fun StudyScreen(
                             .verticalScroll(rememberScrollState())
                             .padding(14.dp)
                     ) {
+                        GlifoButton(
+                            text = if (data.isGenerating) {
+                                stringResource(R.string.study_generating_ai)
+                            } else {
+                                stringResource(R.string.study_generate_button)
+                            },
+                            enabled = !data.isGenerating,
+                            onClick = { viewModel.generateStudyMaterial(courseId) },
+                            modifier = Modifier.padding(bottom = 12.dp)
+                        )
+
+                        if (data.isGenerating) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                modifier = Modifier.padding(bottom = 12.dp)
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(18.dp),
+                                    strokeWidth = 2.dp,
+                                    color = colors.accent
+                                )
+                                Text(
+                                    text = stringResource(R.string.study_generating_ai),
+                                    fontSize = 14.sp,
+                                    color = colors.textSecondary
+                                )
+                            }
+                        }
+
+                        if (data.generationError != null) {
+                            GlifoBanner(
+                                text = data.generationError.toMessage(context),
+                                modifier = Modifier.padding(bottom = 12.dp)
+                            )
+                        }
+
                         // Flashcards Entry Card
                         GlifoStaggeredEntry(index = 0) {
                             GlifoCard(
@@ -141,6 +180,12 @@ fun StudyScreen(
                             }
                         }
 
+                        val quizTitle = if (quizCount > 0) {
+                            stringResource(R.string.study_quiz_count_title, quizCount)
+                        } else {
+                            stringResource(R.string.study_quiz_title)
+                        }
+
                         // Quiz Entry Card
                         GlifoStaggeredEntry(index = 1) {
                             GlifoCard(
@@ -152,11 +197,11 @@ fun StudyScreen(
                                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                                 ) {
                                     Icon(imageVector = Icons.Default.DonutLarge, contentDescription = null, tint = colors.accentText, modifier = Modifier.size(22.dp))
-                                    Text(stringResource(R.string.study_quiz_title), fontSize = 18.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                                    Text(quizTitle, fontSize = 18.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary, modifier = Modifier.weight(1f))
                                     Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
                                 }
                                 Text(
-                                    text = stringResource(R.string.study_quiz_description, quizQuestion.topicLabel),
+                                    text = stringResource(R.string.study_quiz_description, quizQuestion?.topicLabel.orEmpty()),
                                     fontSize = 14.sp,
                                     color = colors.textSecondary,
                                     lineHeight = 20.sp,
