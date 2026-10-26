@@ -1,9 +1,11 @@
 {
   "info": {
-    "_postman_id": "c4b80199-a90c-42b3-a18d-6c2af5d9c6ca",
+    "_postman_id": "01b887f5-9610-49fb-9969-25e3e6a448d2",
     "name": "Glifo API - Lab 5 Collection",
     "description": "Colección de pruebas automatizadas del Webservice de Glifo (EIF411 - Lab 5, Issues #31 y #32). Valida el formato real de la API en main y encadena recursos dinámicamente para poder ejecutarse múltiples veces en Collection Runner / Newman.",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "56976626",
+    "_collection_link": "https://go.postman.co/collection/56976626-01b887f5-9610-49fb-9969-25e3e6a448d2?source=collection_link"
   },
   "item": [
     {
@@ -49,7 +51,8 @@
                 "health"
               ]
             }
-          }
+          },
+          "response": []
         }
       ]
     },
@@ -107,7 +110,8 @@
                 "register"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "POST Login Teacher",
@@ -162,7 +166,8 @@
                 "login"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "POST Login Student",
@@ -217,7 +222,8 @@
                 "login"
               ]
             }
-          }
+          },
+          "response": []
         }
       ]
     },
@@ -284,7 +290,8 @@
                 "courses"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "GET List Courses (Teacher)",
@@ -334,7 +341,8 @@
                 "courses"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "GET Course by ID (Teacher)",
@@ -385,7 +393,8 @@
                 "{{course_id}}"
               ]
             }
-          }
+          },
+          "response": []
         }
       ]
     },
@@ -453,7 +462,8 @@
                 "syllabus"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "POST Add Manual Topic (Teacher)",
@@ -515,7 +525,8 @@
                 "topics"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "GET Course Topics (Teacher)",
@@ -565,7 +576,8 @@
                 "topics"
               ]
             }
-          }
+          },
+          "response": []
         }
       ]
     },
@@ -630,7 +642,8 @@
                 "enrollments"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "GET List Courses (Student)",
@@ -681,7 +694,8 @@
                 "courses"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "GET Course Topics (Student)",
@@ -730,7 +744,8 @@
                 "topics"
               ]
             }
-          }
+          },
+          "response": []
         }
       ]
     },
@@ -796,7 +811,8 @@
                 "notes"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "GET List Notes by Course (Student)",
@@ -852,7 +868,8 @@
                 }
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "GET Note by ID (Student)",
@@ -901,7 +918,8 @@
                 "{{note_id}}"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "POST Upload Note Page (Student)",
@@ -964,7 +982,8 @@
                 "pages"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "GET Note Pages (Student)",
@@ -1016,7 +1035,8 @@
                 "pages"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "PATCH Update Note Status to READY (Student)",
@@ -1069,7 +1089,8 @@
                 "status"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "DELETE Note by ID (Student)",
@@ -1112,7 +1133,8 @@
                 "{{note_id}}"
               ]
             }
-          }
+          },
+          "response": []
         }
       ]
     },
@@ -1175,7 +1197,8 @@
                 "courses"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "401 Unauthorized - Request Without Authorization Header",
@@ -1216,7 +1239,8 @@
                 "courses"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "403 Forbidden - Student Publishing Syllabus",
@@ -1275,7 +1299,8 @@
                 "syllabus"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "404 Not Found - Join Course with Invalid Code",
@@ -1332,7 +1357,8 @@
                 "enrollments"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "409 Conflict - Duplicate Enrollment in Same Course",
@@ -1389,7 +1415,8 @@
                 "enrollments"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "409 Conflict - Publish Syllabus Twice for Same Course",
@@ -1448,7 +1475,655 @@
                 "syllabus"
               ]
             }
-          }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Lab 6 - Study Items (IA-02)",
+      "item": [
+        {
+          "name": "GET Course Topics for Study (Student)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('course_id')) {",
+                  "    pm.environment.set('course_id', '1');",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Course topics list is a non-empty array', function () {",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data).to.be.an('array').that.is.not.empty;",
+                  "});",
+                  "",
+                  "const preferred = jsonData.data.find(t => t.code === 'U2') || jsonData.data[0];",
+                  "pm.environment.set('studyTopicId', preferred.id);",
+                  "",
+                  "const topicIds = jsonData.data.map(t => t.id);",
+                  "const foreignTopicId = !topicIds.includes(1) ? 1 : (Math.max(...topicIds) + 1000);",
+                  "pm.environment.set('foreignTopicId', foreignTopicId);",
+                  "console.info('Saved studyTopicId:', preferred.id, 'foreignTopicId:', foreignTopicId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/courses/{{course_id}}/topics",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "courses",
+                "{{course_id}}",
+                "topics"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Generate Study Items (Student)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201 Created or 200 OK', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Response data is a non-empty array of study items with kind and payload.schemaVersion', function () {",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data).to.be.an('array').that.is.not.empty;",
+                  "    jsonData.data.forEach(item => {",
+                  "        pm.expect(item).to.have.property('id');",
+                  "        pm.expect(item).to.have.property('course_id');",
+                  "        pm.expect(item).to.have.property('syllabus_topic_id');",
+                  "        pm.expect(item).to.have.property('kind');",
+                  "        pm.expect(item).to.have.property('created_at');",
+                  "        pm.expect(item.payload).to.be.an('object');",
+                  "        pm.expect(item.payload).to.have.property('schemaVersion');",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test('Response meta includes generatedTopics, reusedTopics and generatedItems', function () {",
+                  "    pm.expect(jsonData).to.have.property('meta');",
+                  "    pm.expect(jsonData.meta).to.have.property('generatedTopics');",
+                  "    pm.expect(jsonData.meta).to.have.property('reusedTopics');",
+                  "    pm.expect(jsonData.meta).to.have.property('generatedItems');",
+                  "});",
+                  "console.info('Generate meta:', JSON.stringify(jsonData.meta));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"topic_ids\": [\n    {{studyTopicId}}\n  ],\n  \"items_per_topic\": 3\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/courses/{{course_id}}/study-items/generate",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "courses",
+                "{{course_id}}",
+                "study-items",
+                "generate"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Generate Study Items Repeated - Idempotency (Student)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK on repeated generation', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Repeated generate reuses existing items without calling AI again', function () {",
+                  "    pm.expect(jsonData.data).to.be.an('array').that.is.not.empty;",
+                  "    pm.expect(jsonData).to.have.property('meta');",
+                  "    pm.expect(jsonData.meta.reusedTopics).to.be.at.least(1);",
+                  "    pm.expect(jsonData.meta.generatedTopics).to.eql(0);",
+                  "    pm.expect(jsonData.meta.generatedItems).to.eql(0);",
+                  "});",
+                  "console.info('Idempotent meta:', JSON.stringify(jsonData.meta));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"topic_ids\": [\n    {{studyTopicId}}\n  ],\n  \"items_per_topic\": 3\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/courses/{{course_id}}/study-items/generate",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "courses",
+                "{{course_id}}",
+                "study-items",
+                "generate"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Study Items by Topic (Student)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "const expectedTopicId = Number(pm.environment.get('studyTopicId'));",
+                  "pm.test('Returns all study items for requested studyTopicId', function () {",
+                  "    pm.expect(jsonData.data).to.be.an('array').that.is.not.empty;",
+                  "    jsonData.data.forEach(item => {",
+                  "        pm.expect(item.syllabus_topic_id).to.eql(expectedTopicId);",
+                  "    });",
+                  "});",
+                  "console.info('Study items for topic', expectedTopicId, ':', jsonData.data.length);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/courses/{{course_id}}/study-items?topicId={{studyTopicId}}",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "courses",
+                "{{course_id}}",
+                "study-items"
+              ],
+              "query": [
+                {
+                  "key": "topicId",
+                  "value": "{{studyTopicId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET All Course Study Items (Student)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "const expectedCourseId = Number(pm.environment.get('course_id'));",
+                  "pm.test('Returns study items list for the course', function () {",
+                  "    pm.expect(jsonData.data).to.be.an('array').that.is.not.empty;",
+                  "    jsonData.data.forEach(item => {",
+                  "        pm.expect(item.course_id).to.eql(expectedCourseId);",
+                  "    });",
+                  "});",
+                  "console.info('Total study items in course:', jsonData.data.length);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/courses/{{course_id}}/study-items",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "courses",
+                "{{course_id}}",
+                "study-items"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "400 Bad Request - Generate with Empty topic_ids",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400 Bad Request', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Error response has VALIDATION_FAILED code', function () {",
+                  "    pm.expect(jsonData.code).to.eql('VALIDATION_FAILED');",
+                  "    pm.expect(jsonData.message).to.be.a('string').and.not.empty;",
+                  "});",
+                  "console.info('400 Empty topic_ids message:', jsonData.message);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"topic_ids\": [],\n  \"items_per_topic\": 3\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/courses/{{course_id}}/study-items/generate",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "courses",
+                "{{course_id}}",
+                "study-items",
+                "generate"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "400 Bad Request - Generate with foreignTopicId",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400 Bad Request', function () {\n    pm.response.to.have.status(400);\n});\n\nconst jsonData = pm.response.json();\npm.test('Error response has VALIDATION_FAILED code for foreign topic', function () {\n    pm.expect(jsonData.code).to.eql('VALIDATION_FAILED');\n    pm.expect(jsonData.message).to.include('no pertenece');\n});\nconsole.info('400 Foreign topic message:', jsonData.message);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"topic_ids\": [\n    {{foreignTopicId}}\n  ],\n  \"items_per_topic\": 3\n}",
+              "options": {
+                "raw": {
+                  "language": "text"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/courses/{{course_id}}/study-items/generate",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "courses",
+                "{{course_id}}",
+                "study-items",
+                "generate"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "400 Bad Request - Generate with foreignTopicId",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"topic_ids\": [\n    {{foreignTopicId}}\n  ],\n  \"items_per_topic\": 3\n}",
+                  "options": {
+                    "raw": {
+                      "language": "text"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{host}}/api/{{version}}/courses/{{course_id}}/study-items/generate",
+                  "host": [
+                    "{{host}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{version}}",
+                    "courses",
+                    "{{course_id}}",
+                    "study-items",
+                    "generate"
+                  ]
+                }
+              },
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "vary",
+                  "value": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers"
+                },
+                {
+                  "key": "x-content-type-options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "x-xss-protection",
+                  "value": "0"
+                },
+                {
+                  "key": "cache-control",
+                  "value": "no-cache, no-store, max-age=0, must-revalidate"
+                },
+                {
+                  "key": "pragma",
+                  "value": "no-cache"
+                },
+                {
+                  "key": "expires",
+                  "value": "0"
+                },
+                {
+                  "key": "x-frame-options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "content-type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "transfer-encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "date",
+                  "value": "Mon, 26 Oct 2026 09:16:01 GMT"
+                },
+                {
+                  "key": "connection",
+                  "value": "close"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": 400,\n  \"error\": \"Bad Request\",\n  \"code\": \"VALIDATION_FAILED\",\n  \"message\": \"El tema con id 1004 no pertenece a este curso\",\n  \"timestamp\": \"2026-10-26T09:16:01.266164500Z\",\n  \"path\": \"/api/v1/courses/1/study-items/generate\",\n  \"subErrors\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "404 Not Found - Generate for Non-Existent Course",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 404 Not Found', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Error response has NOT_FOUND code', function () {",
+                  "    pm.expect(jsonData.code).to.eql('NOT_FOUND');",
+                  "    pm.expect(jsonData.message).to.be.a('string').and.not.empty;",
+                  "});",
+                  "console.info('404 Course not found message:', jsonData.message);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"topic_ids\": [\n    {{studyTopicId}}\n  ],\n  \"items_per_topic\": 3\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/courses/999999/study-items/generate",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "courses",
+                "999999",
+                "study-items",
+                "generate"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "401 Unauthorized - Generate Without Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401 Unauthorized', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Error response has UNAUTHORIZED code', function () {",
+                  "    pm.expect(jsonData.code).to.eql('UNAUTHORIZED');",
+                  "    pm.expect(jsonData.message).to.be.a('string').and.not.empty;",
+                  "});",
+                  "console.info('401 Unauthorized message:', jsonData.message);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"topic_ids\": [\n    {{studyTopicId}}\n  ],\n  \"items_per_topic\": 3\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/courses/{{course_id}}/study-items/generate",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "courses",
+                "{{course_id}}",
+                "study-items",
+                "generate"
+              ]
+            }
+          },
+          "response": []
         }
       ]
     }

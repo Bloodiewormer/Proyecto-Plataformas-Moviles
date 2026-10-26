@@ -1,5 +1,6 @@
 package cr.ac.una.glifo.common.exception
 
+import cr.ac.una.glifo.ai.AiProviderException
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.ConstraintViolationException
 import org.slf4j.LoggerFactory
@@ -160,6 +161,16 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     @ExceptionHandler(BadCredentialsException::class)
     fun handleBadCredentials(ex: BadCredentialsException, request: HttpServletRequest): ResponseEntity<Any>? =
         respond(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "Credenciales inválidas", request.requestURI)
+
+    @ExceptionHandler(AiProviderException::class)
+    fun handleAiProvider(ex: AiProviderException, request: HttpServletRequest): ResponseEntity<Any>? {
+        val status = if (ex.isNotConfigured || ex.code == "AI_NOT_CONFIGURED") {
+            HttpStatus.SERVICE_UNAVAILABLE
+        } else {
+            HttpStatus.BAD_GATEWAY
+        }
+        return respond(status, ex.code, ex.message, request.requestURI)
+    }
 
     /** @PreAuthorize rechazó la operación (por ejemplo, un estudiante creando un curso). */
     @ExceptionHandler(AccessDeniedException::class)

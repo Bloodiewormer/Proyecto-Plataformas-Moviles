@@ -7,6 +7,8 @@ import cr.ac.una.glifo.glossary.dto.CreateGlossarySuggestionRequest
 import cr.ac.una.glifo.glossary.dto.GlossaryEntryResponse
 import cr.ac.una.glifo.note.dto.CreateNoteRequest
 import cr.ac.una.glifo.note.dto.NoteResponse
+import cr.ac.una.glifo.study.dto.GenerateStudyItemsRequest
+import cr.ac.una.glifo.study.dto.StudyItemResponse
 import cr.ac.una.glifo.user.dto.AuthResponse
 import cr.ac.una.glifo.user.dto.LoginRequest
 import cr.ac.una.glifo.user.dto.UserResponse
@@ -15,6 +17,7 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import tools.jackson.databind.json.JsonMapper
+import java.time.Instant
 
 /**
  * El JSON de la API tiene que coincidir con lo que lee la app Android (y con el mock de
@@ -100,5 +103,47 @@ class ApiContractJsonTest {
         )
         assertEquals("converge", request.suggestedCorrection)
         assertEquals(4L, request.noteId)
+    }
+
+    @Test
+    fun `generar items de estudio lee topic_ids e items_per_topic en snake_case`() {
+        val request = mapper.readValue(
+            """{"topic_ids":[10,11],"items_per_topic":3}""",
+            GenerateStudyItemsRequest::class.java
+        )
+        assertEquals(listOf(10L, 11L), request.topicIds)
+        assertEquals(3, request.itemsPerTopic)
+    }
+
+    @Test
+    fun `StudyItemResponse serializa campos en snake_case y payload como objeto JSON en camelCase`() {
+        val payloadNode = mapper.readTree(
+            """{"schemaVersion":1,"kind":"FLASHCARD","front":"Límite","back":"Definición ε-δ","difficulty":"MEDIUM","sourceNoteIds":[]}"""
+        )
+        val item = StudyItemResponse(
+            id = 42L,
+            courseId = 1L,
+            syllabusTopicId = 10L,
+            kind = "FLASHCARD",
+            payload = payloadNode,
+            createdAt = Instant.parse("2026-10-25T20:00:00Z")
+        )
+        val json = mapper.readTree(mapper.writeValueAsString(item))
+
+        assertEquals(42L, json["id"].asLong())
+        assertEquals(1L, json["course_id"].asLong())
+        assertEquals(10L, json["syllabus_topic_id"].asLong())
+        assertEquals("FLASHCARD", json["kind"].asString())
+        assertEquals("2026-10-25T20:00:00Z", json["created_at"].asString())
+
+        assertFalse(json.has("courseId"))
+        assertFalse(json.has("syllabusTopicId"))
+        assertFalse(json.has("createdAt"))
+
+        assertTrue(json["payload"].isObject)
+        assertFalse(json["payload"].isString)
+        assertEquals(1, json["payload"]["schemaVersion"].asInt())
+        assertEquals("FLASHCARD", json["payload"]["kind"].asString())
+        assertTrue(json["payload"].has("sourceNoteIds"))
     }
 }
