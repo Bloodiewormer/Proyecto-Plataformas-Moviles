@@ -45,6 +45,12 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
 
+    // --- Validación determinista de LaTeX (issue #39) ---
+    // Parser de JLaTeXMath: compila la fórmula que devuelve N1.5 sin red ni API keys.
+    // 1.0.7 es la última versión publicada en Maven Central; solo arrastra sus fuentes
+    // griega y cirílica (jlatexmath-font-greek/cyrillic), sin otras bibliotecas.
+    implementation("org.scilab.forge:jlatexmath:1.0.7")
+
     // Sin Flyway: igual que en clase, el esquema lo genera Hibernate a partir de las
     // entidades (spring.jpa.hibernate.ddl-auto) y import.sql carga los datos (D-27).
 
@@ -71,4 +77,7 @@ allOpen {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    // Spring Boot corre headless en el servidor; las pruebas también, para que JLaTeXMath
+    // (AWT) se pruebe igual que en producción y no dependa de tener pantalla.
+    systemProperty("java.awt.headless", "true")
 }
