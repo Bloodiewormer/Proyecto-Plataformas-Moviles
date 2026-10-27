@@ -5,6 +5,7 @@ class PromptBuilder {
     private var courseName: String? = null
     private val topics: MutableList<String> = mutableListOf()
     private val glossary: MutableList<String> = mutableListOf()
+    private val regions: MutableList<String> = mutableListOf()
     private val constraints: MutableList<String> = mutableListOf()
     private var outputSchema: String? = null
 
@@ -26,6 +27,11 @@ class PromptBuilder {
         if (!glossary.isNullOrEmpty()) {
             this.glossary.addAll(glossary.map { it.trim() }.filter { it.isNotEmpty() })
         }
+    }
+
+    fun withRegions(regions: List<String>): PromptBuilder = apply {
+        this.regions.clear()
+        this.regions.addAll(regions.map { it.trim() }.filter { it.isNotEmpty() })
     }
 
     fun withConstraints(constraints: List<String>): PromptBuilder = apply {
@@ -67,6 +73,11 @@ class PromptBuilder {
                 if (isNotEmpty()) appendLine()
                 appendLine("Glosario del curso:")
                 glossary.forEach { appendLine("- $it") }
+            }
+            if (regions.isNotEmpty()) {
+                if (isNotEmpty()) appendLine()
+                appendLine("Regiones del apunte (en orden de página y posición vertical):")
+                regions.forEach { appendLine("- $it") }
             }
         }.trim()
 

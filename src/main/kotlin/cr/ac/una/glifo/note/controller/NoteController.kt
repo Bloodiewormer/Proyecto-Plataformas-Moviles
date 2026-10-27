@@ -14,6 +14,7 @@ import jakarta.validation.constraints.Positive
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
@@ -106,4 +107,19 @@ class NoteController(
         @AuthenticationPrincipal user: GlifoUserDetails
     ): ResponseEntity<ApiResponse<List<NotePageResponse>>> =
         ResponseEntity.ok(ApiResponse(data = noteService.getPages(id, user.userId)))
+
+    @PostMapping("/{id}/reconstruct")
+    @PreAuthorize("hasAuthority('NOTE_WRITE_OWN')")
+    fun reconstructNote(
+        @PathVariable @Positive(message = "El id del apunte debe ser positivo") id: Long,
+        @AuthenticationPrincipal user: GlifoUserDetails
+    ): ResponseEntity<ApiResponse<NoteResponse>> {
+        val outcome = noteService.reconstructNote(id, user.userId)
+        return ResponseEntity.ok(
+            ApiResponse(
+                data = outcome.note,
+                meta = mapOf("reconstructed" to outcome.reconstructed)
+            )
+        )
+    }
 }

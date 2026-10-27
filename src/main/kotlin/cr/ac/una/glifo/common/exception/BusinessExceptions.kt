@@ -22,6 +22,6 @@ class BadRequestException(message: String) : BusinessException(message, "VALIDAT
  * 409. La petición es válida, pero choca con el estado actual del recurso (por ejemplo,
  * pasar un apunte de READY a DRAFT).
  */
-class ConflictException(message: String) : BusinessException(message, "CONFLICT")
+class ConflictException(message: String, code: String = "CONFLICT") : BusinessException(message, code)
 
 class UnauthorizedException(message: String = "Unauthorized") : BusinessException(message, "UNAUTHORIZED")

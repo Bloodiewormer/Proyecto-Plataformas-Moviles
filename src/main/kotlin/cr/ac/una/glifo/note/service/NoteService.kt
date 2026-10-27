@@ -1,5 +1,7 @@
 package cr.ac.una.glifo.note.service
 
+import cr.ac.una.glifo.ai.AiOrchestrator
+import cr.ac.una.glifo.ai.service.NoteReconstructionOutcome
 import cr.ac.una.glifo.common.exception.BadRequestException
 import cr.ac.una.glifo.common.exception.BusinessException
 import cr.ac.una.glifo.common.exception.ConflictException
@@ -19,6 +21,7 @@ import cr.ac.una.glifo.note.mapper.toResponse
 import cr.ac.una.glifo.note.repository.NotePageRepository
 import cr.ac.una.glifo.note.repository.NoteRepository
 import cr.ac.una.glifo.user.repository.UserRepository
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
@@ -29,13 +32,29 @@ import java.time.format.DateTimeParseException
 private val PROCESSING_LEVELS = setOf("N0", "N1", "N1_5", "N2", "N3", "UNRESOLVED")
 
 @Service
-class NoteService(
+class NoteService @Autowired constructor(
     private val noteRepository: NoteRepository,
     private val notePageRepository: NotePageRepository,
     private val userRepository: UserRepository,
     private val courseRepository: CourseRepository,
-    private val syllabusTopicRepository: SyllabusTopicRepository
+    private val syllabusTopicRepository: SyllabusTopicRepository,
+    private val aiOrchestrator: AiOrchestrator? = null
 ) {
+
+    constructor(
+        noteRepository: NoteRepository,
+        notePageRepository: NotePageRepository,
+        userRepository: UserRepository,
+        courseRepository: CourseRepository,
+        syllabusTopicRepository: SyllabusTopicRepository
+    ) : this(
+        noteRepository = noteRepository,
+        notePageRepository = notePageRepository,
+        userRepository = userRepository,
+        courseRepository = courseRepository,
+        syllabusTopicRepository = syllabusTopicRepository,
+        aiOrchestrator = null
+    )
 
     @Transactional
     fun createNote(userId: Long, request: CreateNoteRequest): NoteResponse {
@@ -167,6 +186,16 @@ class NoteService(
 
         note.status = targetStatus.name
         return noteRepository.save(note).toResponse(includeContent = true)
+    }
+
+    /**
+     * IA-01: Reconstruye el apunte a partir de las regiones de sus páginas.
+     * No abre una transacción global para no mantener conexiones durante la llamada HTTP a OpenAI.
+     */
+    fun reconstructNote(noteId: Long, userId: Long): NoteReconstructionOutcome {
+        val orchestrator = aiOrchestrator
+            ?: throw IllegalStateException("AiOrchestrator no configurado")
+        return orchestrator.reconstructNote(noteId, userId)
     }
 
     /**

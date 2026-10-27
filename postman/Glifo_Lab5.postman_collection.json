@@ -2126,6 +2126,533 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "Lab 6 - Note Reconstruction (IA-01)",
+      "item": [
+        {
+          "name": "POST Login Student",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('student_email')) {",
+                  "    pm.environment.set('student_email', 'estudiante@est.una.ac.cr');",
+                  "}",
+                  "if (!pm.environment.get('student_password')) {",
+                  "    pm.environment.set('student_password', 'Estudiante123');",
+                  "}",
+                  "if (!pm.environment.get('course_id')) {",
+                  "    pm.environment.set('course_id', '1');",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Student login returns JWT token and Student role at root', function () {",
+                  "    pm.expect(jsonData).to.have.property('token');",
+                  "    pm.expect(jsonData.token).to.be.a('string').and.not.empty;",
+                  "    pm.expect(jsonData).to.have.property('user');",
+                  "    pm.expect(jsonData.user.role).to.eql('Student');",
+                  "});",
+                  "",
+                  "pm.environment.set('jwt_token_student', jsonData.token);",
+                  "console.info('Saved jwt_token_student for user:', jsonData.user.email);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{student_email}}\",\n  \"password\": \"{{student_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/auth/login",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Notes by Course (Student)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('course_id')) {",
+                  "    pm.environment.set('course_id', '1');",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Notes list is an array', function () {",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "});",
+                  "",
+                  "const host = pm.environment.get('host') || pm.variables.get('host') || 'http://localhost:8080';",
+                  "const version = pm.environment.get('version') || pm.variables.get('version') || 'v1';",
+                  "const courseId = Number(pm.environment.get('course_id') || 1);",
+                  "const token = pm.environment.get('jwt_token_student');",
+                  "const headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token };",
+                  "",
+                  "const draftEmpty = jsonData.data.find(n => n.status === 'DRAFT');",
+                  "const ensureEmptyNote = function (cb) {",
+                  "    if (draftEmpty) {",
+                  "        pm.environment.set('emptyNoteId', draftEmpty.id);",
+                  "        console.info('Saved emptyNoteId from existing DRAFT note:', draftEmpty.id);",
+                  "        return cb();",
+                  "    }",
+                  "    pm.sendRequest({",
+                  "        url: host + '/api/' + version + '/notes',",
+                  "        method: 'POST',",
+                  "        header: headers,",
+                  "        body: { mode: 'raw', raw: JSON.stringify({ course_id: courseId, class_date: '2026-10-26', title: 'Apunte vacío sin páginas' }) }",
+                  "    }, function (err, res) {",
+                  "        if (!err && res && res.code === 201) {",
+                  "            const createdId = res.json().data.id;",
+                  "            pm.environment.set('emptyNoteId', createdId);",
+                  "            console.info('Created and saved emptyNoteId:', createdId);",
+                  "        }",
+                  "        cb();",
+                  "    });",
+                  "};",
+                  "",
+                  "const processingNote = jsonData.data.find(n => n.status === 'PROCESSING');",
+                  "ensureEmptyNote(function () {",
+                  "    if (processingNote) {",
+                  "        pm.environment.set('noteId', processingNote.id);",
+                  "        console.info('Saved noteId from existing PROCESSING note:', processingNote.id);",
+                  "        return;",
+                  "    }",
+                  "    pm.sendRequest({",
+                  "        url: host + '/api/' + version + '/notes',",
+                  "        method: 'POST',",
+                  "        header: headers,",
+                  "        body: { mode: 'raw', raw: JSON.stringify({ course_id: courseId, class_date: '2026-10-26', title: 'Apunte para reconstrucción IA-01' }) }",
+                  "    }, function (err, res) {",
+                  "        if (!err && res && res.code === 201) {",
+                  "            const createdNoteId = res.json().data.id;",
+                  "            pm.environment.set('noteId', createdNoteId);",
+                  "            const hash = Math.random().toString(16).substring(2, 10) + Math.random().toString(16).substring(2, 10);",
+                  "            pm.sendRequest({",
+                  "                url: host + '/api/' + version + '/notes/' + createdNoteId + '/pages',",
+                  "                method: 'POST',",
+                  "                header: headers,",
+                  "                body: {",
+                  "                    mode: 'raw',",
+                  "                    raw: JSON.stringify({",
+                  "                        page_index: 0,",
+                  "                        perceptual_hash: hash.padEnd(16, '0').substring(0, 16),",
+                  "                        level_reached: 'N1_5',",
+                  "                        overall_confidence: 0.85,",
+                  "                        regions: [",
+                  "                            { id: 'r1', bbox: [0.08, 0.12, 0.92, 0.19], kind: 'TEXT', resolvedAt: 'N1', confidence: 0.96, isUncertain: false, text: 'Decimos que f tiende a L cuando x tiende a a si para todo ε > 0 existe δ > 0.' },",
+                  "                            { id: 'r2', bbox: [0.14, 0.34, 0.63, 0.43], kind: 'MATH', resolvedAt: 'N1_5', confidence: 0.88, isUncertain: false, latex: '\\\\lim_{x \\\\to a} f(x) = L' },",
+                  "                            { id: 'r3', bbox: [0.12, 0.82, 0.88, 0.90], kind: 'TEXT', resolvedAt: 'UNRESOLVED', confidence: 0.21, isUncertain: true, text: '[ilegible]' }",
+                  "                        ]",
+                  "                    })",
+                  "                }",
+                  "            }, function () {",
+                  "                console.info('Created PROCESSING note with page, noteId:', createdNoteId);",
+                  "            });",
+                  "        }",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/notes?courseId={{course_id}}",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "notes"
+              ],
+              "query": [
+                {
+                  "key": "courseId",
+                  "value": "{{course_id}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Reconstruct Note (Student)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Note is reconstructed with status READY, schemaVersion 1, non-empty blocks and summary', function () {",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data.status).to.eql('READY');",
+                  "    pm.expect(jsonData.data.content).to.be.an('object');",
+                  "    pm.expect(jsonData.data.content.schemaVersion).to.eql(1);",
+                  "    pm.expect(jsonData.data.content.blocks).to.be.an('array').that.is.not.empty;",
+                  "    pm.expect(jsonData.data.content.summary).to.be.an('object');",
+                  "    pm.expect(jsonData.data.content.summary).to.have.property('verified');",
+                  "    pm.expect(jsonData.data.content.summary).to.have.property('repaired');",
+                  "    pm.expect(jsonData.data.content.summary).to.have.property('escalated');",
+                  "    pm.expect(jsonData.data.content.summary).to.have.property('uncertain');",
+                  "    pm.expect(jsonData).to.have.property('meta');",
+                  "    pm.expect(jsonData.meta.reconstructed).to.eql(true);",
+                  "});",
+                  "console.info('Reconstructed note summary:', JSON.stringify(jsonData.data.content.summary));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/notes/{{noteId}}/reconstruct",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "notes",
+                "{{noteId}}",
+                "reconstruct"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Reconstruct Note Repeated - Idempotency (Student)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK on repeated reconstruction', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Repeated reconstruct returns meta.reconstructed false without calling AI', function () {",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data.status).to.eql('READY');",
+                  "    pm.expect(jsonData.data.content).to.be.an('object');",
+                  "    pm.expect(jsonData).to.have.property('meta');",
+                  "    pm.expect(jsonData.meta.reconstructed).to.eql(false);",
+                  "});",
+                  "console.info('Idempotent reconstruct meta:', JSON.stringify(jsonData.meta));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/notes/{{noteId}}/reconstruct",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "notes",
+                "{{noteId}}",
+                "reconstruct"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Reconstructed Note by ID (Student)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('GET /notes/{noteId} returns status READY and content present', function () {",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data.status).to.eql('READY');",
+                  "    pm.expect(jsonData.data.content).to.be.an('object');",
+                  "    pm.expect(jsonData.data.content.schemaVersion).to.eql(1);",
+                  "    pm.expect(jsonData.data.content.blocks).to.be.an('array').that.is.not.empty;",
+                  "});",
+                  "console.info('Fetched reconstructed note id:', jsonData.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/notes/{{noteId}}",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "notes",
+                "{{noteId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "409 Conflict - Reconstruct Note Without Pages",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 409 Conflict', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Error response has NOTE_HAS_NO_PAGES code', function () {",
+                  "    pm.expect(jsonData.code).to.eql('NOTE_HAS_NO_PAGES');",
+                  "    pm.expect(jsonData.message).to.be.a('string').and.not.empty;",
+                  "});",
+                  "console.info('409 Empty note message:', jsonData.message);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/notes/{{emptyNoteId}}/reconstruct",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "notes",
+                "{{emptyNoteId}}",
+                "reconstruct"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "404 Not Found - Reconstruct Non-Existent Note",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 404 Not Found', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Error response has NOT_FOUND code', function () {",
+                  "    pm.expect(jsonData.code).to.eql('NOT_FOUND');",
+                  "    pm.expect(jsonData.message).to.be.a('string').and.not.empty;",
+                  "});",
+                  "console.info('404 Note not found message:', jsonData.message);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/notes/999999/reconstruct",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "notes",
+                "999999",
+                "reconstruct"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "401 Unauthorized - Reconstruct Without Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401 Unauthorized', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Error response has UNAUTHORIZED code', function () {",
+                  "    pm.expect(jsonData.code).to.eql('UNAUTHORIZED');",
+                  "    pm.expect(jsonData.message).to.be.a('string').and.not.empty;",
+                  "});",
+                  "console.info('401 Unauthorized message:', jsonData.message);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/notes/{{noteId}}/reconstruct",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "notes",
+                "{{noteId}}",
+                "reconstruct"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
     }
   ]
 }
