@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -65,6 +66,8 @@ fun HomeScreen(
     val context = LocalContext.current
     val user by sessionViewModel.currentUser.collectAsState()
     val uiState by viewModel.state.collectAsState()
+
+    LaunchedEffect(Unit) { viewModel.load() }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -391,6 +394,8 @@ fun TeacherHomeScreen(
     val user by sessionViewModel.currentUser.collectAsState()
     val uiState by viewModel.state.collectAsState()
 
+    LaunchedEffect(Unit) { viewModel.load() }
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         gesturesEnabled = true,
@@ -593,6 +598,8 @@ fun AdminHomeScreen(
     val context = LocalContext.current
     val user by sessionViewModel.currentUser.collectAsState()
     val uiState by viewModel.state.collectAsState()
+
+    LaunchedEffect(Unit) { viewModel.load() }
 
     ModalNavigationDrawer(
         drawerState = drawerState,

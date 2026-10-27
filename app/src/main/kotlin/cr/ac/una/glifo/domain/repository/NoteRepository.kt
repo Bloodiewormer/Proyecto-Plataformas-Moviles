@@ -6,6 +6,8 @@ import cr.ac.una.glifo.domain.model.Note
 import cr.ac.una.glifo.domain.model.NoteContent
 import cr.ac.una.glifo.domain.model.NoteMeta
 import cr.ac.una.glifo.domain.model.PageAnalysis
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 
 /**
  * Los ids de apunte que circulan por la app son los locales (Room). Un apunte del servidor
@@ -21,6 +23,12 @@ interface NoteRepository {
     suspend fun getNoteMeta(noteId: Long): Result<NoteMeta>
     suspend fun getChips(noteId: Long): Result<List<ConfidenceState>>
     suspend fun getNoteContent(noteId: Long): Result<NoteContent>
+
+    /**
+     * Observa cambios en Room sobre el apunte y sus operaciones de sincronización para que
+     * el detalle se actualice apenas termine el `SyncWorker`.
+     */
+    fun observeNoteContent(noteId: Long): Flow<Result<NoteContent>> = emptyFlow()
 
     /**
      * Solicita la reconstrucción IA-01 del apunte en el servidor (`POST notes/{id}/reconstruct`)

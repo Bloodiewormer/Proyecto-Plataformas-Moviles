@@ -9,6 +9,7 @@ import cr.ac.una.glifo.domain.model.NoteContent
 import cr.ac.una.glifo.domain.repository.CourseContextRepository
 import cr.ac.una.glifo.domain.repository.NoteRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -41,19 +42,41 @@ class NoteContentViewModel @Inject constructor(
     val saveError: StateFlow<AppError?> = _saveError.asStateFlow()
 
     private var loadedFor: Long? = null
+    private var observeJob: Job? = null
 
     fun load(noteId: Long, force: Boolean = false) {
         if (!force && loadedFor == noteId) return
         loadedFor = noteId
-        viewModelScope.launch {
+        observeJob?.cancel()
+        observeJob = viewModelScope.launch {
             if (!force) _state.value = UiState.Loading
-            _state.value = when (val result = noteRepository.getNoteContent(noteId)) {
-                is Result.Success -> {
-                    val glossary = courseContextRepository.getCached(result.value.note.courseId)?.glossaryTerms.orEmpty()
-                    UiState.Success(NoteContentUiData(result.value, glossary))
-                }
-                is Result.Failure -> UiState.Error(result.error)
+            applyResult(noteRepository.getNoteContent(noteId), clearReconstructError = force)
+            noteRepository.observeNoteContent(noteId).collect { result ->
+                applyResult(result, clearReconstructError = false)
             }
+        }
+    }
+
+    private suspend fun applyResult(result: Result<NoteContent>, clearReconstructError: Boolean) {
+        val current = (_state.value as? UiState.Success)?.data
+        _state.value = when (result) {
+            is Result.Success -> {
+                val glossary = courseContextRepository.getCached(result.value.note.courseId)?.glossaryTerms
+                    ?: current?.glossaryTerms.orEmpty()
+                UiState.Success(
+                    NoteContentUiData(
+                        content = result.value,
+                        glossaryTerms = glossary,
+                        isReconstructing = current?.isReconstructing ?: false,
+                        reconstructError = if (clearReconstructError || !result.value.canReconstruct) {
+                            null
+                        } else {
+                            current?.reconstructError
+                        }
+                    )
+                )
+            }
+            is Result.Failure -> UiState.Error(result.error)
         }
     }
 

@@ -9,6 +9,7 @@ import cr.ac.una.glifo.data.datasource.local.entity.FragmentCorrectionEntity
 import cr.ac.una.glifo.data.datasource.local.entity.NoteEntity
 import cr.ac.una.glifo.data.datasource.local.entity.NotePageEntity
 import cr.ac.una.glifo.data.datasource.local.entity.PageHashRow
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface NoteDao {
@@ -21,6 +22,9 @@ interface NoteDao {
 
     @Query("SELECT * FROM notes WHERE id = :id")
     suspend fun noteById(id: Long): NoteEntity?
+
+    @Query("SELECT * FROM notes WHERE id = :id")
+    fun observeNoteById(id: Long): Flow<NoteEntity?>
 
     @Query("SELECT * FROM notes WHERE server_id = :serverId")
     suspend fun noteByServerId(serverId: Long): NoteEntity?

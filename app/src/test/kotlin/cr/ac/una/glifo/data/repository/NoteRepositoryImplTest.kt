@@ -2,6 +2,7 @@ package cr.ac.una.glifo.data.repository
 
 import com.google.gson.JsonParser
 import cr.ac.una.glifo.core.common.AppError
+import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.core.sync.SyncScheduler
 import cr.ac.una.glifo.data.datasource.local.GlifoDatabase
 import cr.ac.una.glifo.data.datasource.local.dao.NoteDao
@@ -22,14 +23,26 @@ import cr.ac.una.glifo.domain.model.RecognizedRegion
 import cr.ac.una.glifo.domain.model.RegionBounds
 import cr.ac.una.glifo.domain.model.RegionInkMetrics
 import cr.ac.una.glifo.domain.model.RegionKind
+import cr.ac.una.glifo.domain.repository.CourseContextRepository
+import cr.ac.una.glifo.presentation.viewmodel.NoteContentViewModel
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import retrofit2.HttpException
@@ -242,5 +255,51 @@ class NoteRepositoryImplTest {
         val error = (result as Result.Failure).error as AppError.Server
         assertEquals("502", error.code)
         coVerify(exactly = 0) { noteDao.setServerContent(any(), any(), any()) }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `when SyncWorker finishes, NoteContentViewModel clears pendingSync and enables canReconstruct`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val noteFlow = MutableStateFlow<NoteEntity?>(localNote)
+            val pendingFlow = MutableStateFlow(2)
+
+            coEvery { noteDao.noteById(7L) } answers { noteFlow.value }
+            every { noteDao.observeNoteById(7L) } returns noteFlow
+            coEvery { syncDao.pendingForNote(7L) } answers { pendingFlow.value }
+            every { syncDao.observePendingForNote(7L) } returns pendingFlow
+            coEvery { noteDao.pagesForNote(7L) } returns listOf(page)
+            coEvery { noteDao.correctionsForNote(7L) } returns emptyList()
+
+            val viewModel = NoteContentViewModel(
+                noteRepository = repository,
+                courseContextRepository = mockk<CourseContextRepository>(relaxed = true)
+            )
+
+            // Al abrir NoteDetailScreen recién guardada la captura, el worker todavía está corriendo.
+            viewModel.load(7L, force = true)
+            advanceUntilIdle()
+
+            val initial = (viewModel.state.value as UiState.Success).data.content
+            assertTrue(initial.hasPendingSync)
+            assertNull(initial.serverId)
+            assertFalse(initial.canReconstruct)
+
+            // El SyncWorker termina CREATE_NOTE + UPLOAD_PAGE (serverId = 3) y reconstruct da 502,
+            // por lo que la nota queda en PROCESSING en Room y sin operaciones pendientes.
+            noteFlow.value = localNote.copy(serverId = 3L, status = "PROCESSING")
+            pendingFlow.value = 0
+            advanceUntilIdle()
+
+            val afterSync = (viewModel.state.value as UiState.Success).data.content
+            assertFalse(afterSync.hasPendingSync)
+            assertEquals(3L, afterSync.serverId)
+            assertEquals("PROCESSING", afterSync.status)
+            assertTrue(afterSync.canReconstruct)
+        } finally {
+            Dispatchers.resetMain()
+        }
     }
 }

@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.Query
 import cr.ac.una.glifo.data.datasource.local.entity.SyncOperationEntity
 import cr.ac.una.glifo.data.datasource.local.entity.SyncOperationRow
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface SyncOperationDao {
@@ -28,6 +29,9 @@ interface SyncOperationDao {
 
     @Query("SELECT COUNT(*) FROM sync_operations WHERE note_id = :noteId AND status != 'DONE'")
     suspend fun pendingForNote(noteId: Long): Int
+
+    @Query("SELECT COUNT(*) FROM sync_operations WHERE note_id = :noteId AND status != 'DONE'")
+    fun observePendingForNote(noteId: Long): Flow<Int>
 
     @Query(
         """

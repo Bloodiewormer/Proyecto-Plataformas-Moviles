@@ -27,6 +27,10 @@ import cr.ac.una.glifo.domain.model.NoteContent
 import cr.ac.una.glifo.domain.model.NoteMeta
 import cr.ac.una.glifo.domain.model.PageAnalysis
 import cr.ac.una.glifo.domain.repository.NoteRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import retrofit2.HttpException
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -115,6 +119,26 @@ class NoteRepositoryImpl @Inject constructor(
         }
         return Result.Success(buildServerNoteContent(current, corrections, pending))
     }
+
+    override fun observeNoteContent(noteId: Long): Flow<Result<NoteContent>> =
+        combine(
+            noteDao.observeNoteById(noteId).distinctUntilChanged(),
+            syncDao.observePendingForNote(noteId).distinctUntilChanged()
+        ) { note, pendingCount -> note to (pendingCount > 0) }
+            .map { (note, pending) ->
+                note ?: return@map notFound()
+                val corrections = noteDao.correctionsForNote(noteId)
+                val pages = noteDao.pagesForNote(noteId)
+                when {
+                    !note.contentJson.isNullOrBlank() ->
+                        Result.Success(buildServerNoteContent(note, corrections, pending, pages))
+                    pages.isNotEmpty() ->
+                        Result.Success(buildLocalNoteContent(note, pages, corrections, pending))
+                    else ->
+                        Result.Success(buildServerNoteContent(note, corrections, pending))
+                }
+            }
+            .distinctUntilChanged()
 
     override suspend fun reconstructNote(localNoteId: Long): Result<NoteContent> {
         val note = noteDao.noteById(localNoteId) ?: return notFound()
