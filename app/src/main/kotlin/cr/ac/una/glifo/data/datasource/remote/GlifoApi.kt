@@ -117,6 +117,10 @@ interface GlifoApi {
     @GET("notes/{id}")
     suspend fun getNote(@Path("id") id: Long): ApiResponse<NoteDetailResponse>
 
+    // Reconstrucción IA-01 (#42)
+    @POST("notes/{id}/reconstruct")
+    suspend fun reconstructNote(@Path("id") id: Long): ApiResponse<NoteDetailResponse>
+
     @DELETE("notes/{id}")
     suspend fun deleteNote(@Path("id") id: Long): Response<Unit>
 

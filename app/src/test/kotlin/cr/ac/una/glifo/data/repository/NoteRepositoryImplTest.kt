@@ -27,9 +27,13 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.slot
 import kotlinx.coroutines.test.runTest
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import retrofit2.HttpException
+import retrofit2.Response
 import java.io.IOException
 
 class NoteRepositoryImplTest {
@@ -191,5 +195,52 @@ class NoteRepositoryImplTest {
         val error = (repository.getNoteContent(99L) as Result.Failure).error
 
         assertEquals("404", (error as AppError.Server).code)
+    }
+
+    @Test
+    fun `reconstructNote succeeds and saves content and READY in Room`() = runTest {
+        val syncedProcessing = localNote.copy(serverId = 42L)
+        val contentJson = """{"schemaVersion":1,"blocks":[{"id":"b1","type":"HEADING","text":"Límites"},{"id":"b2","type":"PARAGRAPH","spans":[{"text":"convergencia","confidence":0.85,"resolvedAt":"N1","isUncertain":false}]}],"summary":"Resumen"}"""
+        coEvery { noteDao.noteById(7L) } returns syncedProcessing
+        coEvery { noteDao.pagesForNote(7L) } returns listOf(page)
+        coEvery { noteDao.correctionsForNote(7L) } returns emptyList()
+        coEvery { api.reconstructNote(42L) } returns ApiResponse(
+            NoteDetailResponse(42L, 1L, "Apunte 30/09", "2026-09-30", "READY", JsonParser.parseString(contentJson))
+        )
+
+        val result = repository.reconstructNote(7L)
+
+        val content = (result as Result.Success).value
+        assertEquals(NoteContentSource.ServerReconstruction, content.source)
+        assertEquals("READY", content.status)
+        assertEquals(listOf("Límites", "convergencia"), content.fragments.map { it.text })
+        coVerify(exactly = 1) { api.reconstructNote(42L) }
+        coVerify(exactly = 1) { noteDao.setServerContent(7L, match { it.contains("schemaVersion") }, "READY") }
+    }
+
+    @Test
+    fun `reconstructNote on a note without serverId returns error without calling the API`() = runTest {
+        coEvery { noteDao.noteById(7L) } returns localNote
+
+        val result = repository.reconstructNote(7L)
+
+        assertTrue((result as Result.Failure).error is AppError.Validation)
+        coVerify(exactly = 0) { api.reconstructNote(any()) }
+        coVerify(exactly = 0) { noteDao.setServerContent(any(), any(), any()) }
+    }
+
+    @Test
+    fun `reconstructNote maps 502 AI error to AppError Server`() = runTest {
+        val syncedProcessing = localNote.copy(serverId = 42L)
+        val errorBody = """{"error":{"code":"AI_PROVIDER_ERROR","message":"Error del proveedor de IA"}}"""
+            .toResponseBody("application/json".toMediaTypeOrNull())
+        coEvery { noteDao.noteById(7L) } returns syncedProcessing
+        coEvery { api.reconstructNote(42L) } throws HttpException(Response.error<Any>(502, errorBody))
+
+        val result = repository.reconstructNote(7L)
+
+        val error = (result as Result.Failure).error as AppError.Server
+        assertEquals("502", error.code)
+        coVerify(exactly = 0) { noteDao.setServerContent(any(), any(), any()) }
     }
 }

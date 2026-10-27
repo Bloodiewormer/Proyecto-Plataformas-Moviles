@@ -64,29 +64,44 @@ fun buildLocalNoteContent(
         pages = pageInfos,
         fragments = fragments,
         hasPendingSync = hasPendingSync,
-        threshold = RegionClassifier.TEXT_CONFIDENCE_GATE
+        threshold = RegionClassifier.TEXT_CONFIDENCE_GATE,
+        status = note.status,
+        serverId = note.serverId
     )
 }
 
 /**
- * Contenido de un apunte que solo existe en el servidor: la reconstrucción IA-01 guardada en
- * notes.content (Glifo_UML_Modeling.md §5.5). Sin reconstrucción, el apunte queda sin
- * contenido en vez de mostrar texto inventado.
+ * Contenido reconstruido con IA-01 desde notes.content (Glifo_UML_Modeling.md §5.5).
+ * Sin reconstrucción, el apunte queda sin contenido en vez de mostrar texto inventado.
  */
 fun buildServerNoteContent(
     note: NoteEntity,
     corrections: List<FragmentCorrectionEntity>,
-    hasPendingSync: Boolean
+    hasPendingSync: Boolean,
+    pages: List<NotePageEntity> = emptyList()
 ): NoteContent {
     val corrected = corrections.associate { it.fragmentId to it.correctedText }
     val fragments = note.contentJson?.let { parseReconstruction(it, corrected) }.orEmpty()
+    val pageInfos = pages.sortedBy { it.pageIndex }.map { page ->
+        val analysis = pageAnalysisFromSnapshotJson(page.analysisJson)
+        NotePageInfo(
+            pageIndex = page.pageIndex,
+            photoPath = page.photoPath,
+            analyzedWidth = analysis?.pageWidth ?: 0,
+            analyzedHeight = analysis?.pageHeight ?: 0,
+            levelReached = page.levelReached,
+            overallConfidence = page.overallConfidence
+        )
+    }
     return NoteContent(
         note = note.toDomain(),
         source = if (fragments.isEmpty()) NoteContentSource.Unavailable else NoteContentSource.ServerReconstruction,
-        pages = emptyList(),
+        pages = pageInfos,
         fragments = fragments,
         hasPendingSync = hasPendingSync,
-        threshold = RegionClassifier.TEXT_CONFIDENCE_GATE
+        threshold = RegionClassifier.TEXT_CONFIDENCE_GATE,
+        status = note.status,
+        serverId = note.serverId
     )
 }
 

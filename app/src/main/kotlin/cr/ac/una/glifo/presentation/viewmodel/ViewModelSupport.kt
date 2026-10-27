@@ -21,12 +21,32 @@ fun AppError.toMessage(context: Context): String = when (this) {
     is AppError.Server -> when (code) {
         "502", "503", "AI_PROVIDER_ERROR", "AI_NOT_CONFIGURED" ->
             context.getString(R.string.study_error_ai_unavailable)
+        "409", "NOTE_HAS_NO_PAGES" ->
+            context.getString(R.string.note_reconstruct_error_no_pages)
         "403" ->
             context.getString(R.string.study_error_forbidden)
         else -> message
     }
     is AppError.Database -> message
     is AppError.Unknown -> context.getString(R.string.error_unknown)
+}
+
+/** Mensajes en español específicos para la reconstrucción IA-01 de apuntes (#42). */
+fun AppError.toReconstructMessage(context: Context): String = when (this) {
+    is AppError.NoConnection -> context.getString(R.string.note_reconstruct_error_no_connection)
+    is AppError.Validation -> if (field == "serverId") {
+        context.getString(R.string.note_reconstruct_error_not_synced)
+    } else {
+        issue
+    }
+    is AppError.Server -> when (code) {
+        "502", "503", "AI_PROVIDER_ERROR", "AI_NOT_CONFIGURED" ->
+            context.getString(R.string.note_reconstruct_error_ai_unavailable)
+        "409", "NOTE_HAS_NO_PAGES" ->
+            context.getString(R.string.note_reconstruct_error_no_pages)
+        else -> toMessage(context)
+    }
+    else -> toMessage(context)
 }
 
 /** Straight [Result] → [UiState] mapping for screens that don't need a distinct Empty case. */

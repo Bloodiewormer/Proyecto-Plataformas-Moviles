@@ -75,8 +75,10 @@ class SyncRepositoryImpl @Inject constructor(
     override suspend fun syncNow(): Result<SyncRunSummary> = runLock.withLock {
         var uploaded = 0
         var failed = 0
+        val incompleteNoteIds = mutableSetOf<Long>()
+        val operations = syncDao.runnable()
 
-        for (operation in syncDao.runnable()) {
+        for ((index, operation) in operations.withIndex()) {
             syncDao.update(operation.id, STATUS_IN_PROGRESS, operation.attempts, operation.lastError, now())
 
             val step = try {
@@ -95,13 +97,26 @@ class SyncRepositoryImpl @Inject constructor(
                 Step.Done -> {
                     syncDao.update(operation.id, STATUS_DONE, operation.attempts + 1, null, now())
                     uploaded++
+                    if (operation.entityType == TYPE_UPLOAD_PAGE) {
+                        val hasMoreInBatch = operations
+                            .subList(index + 1, operations.size)
+                            .any { it.noteId == operation.noteId }
+                        if (!hasMoreInBatch && operation.noteId !in incompleteNoteIds) {
+                            reconstructAfterLastPage(operation.noteId)
+                        }
+                    }
                 }
-                Step.Waiting -> syncDao.update(operation.id, STATUS_PENDING, operation.attempts, operation.lastError, now())
+                Step.Waiting -> {
+                    incompleteNoteIds += operation.noteId
+                    syncDao.update(operation.id, STATUS_PENDING, operation.attempts, operation.lastError, now())
+                }
                 is Step.Fail -> {
+                    incompleteNoteIds += operation.noteId
                     syncDao.update(operation.id, STATUS_FAILED, operation.attempts + 1, step.reason, now())
                     failed++
                 }
                 is Step.Retry -> {
+                    incompleteNoteIds += operation.noteId
                     syncDao.update(operation.id, STATUS_PENDING, operation.attempts + 1, step.reason, now())
                     return@withLock Result.Success(summary(uploaded, failed, SyncRunOutcome.RetryLater))
                 }
@@ -134,6 +149,26 @@ class SyncRepositoryImpl @Inject constructor(
         }
     }
 
+    /**
+     * Dispara la reconstrucción IA-01 (#42) cuando se termina de subir la última página
+     * pendiente de un apunte. Si la reconstrucción falla, el sync NO falla: la nota queda
+     * en PROCESSING y el estudiante puede usar el botón "Reconstruir con IA".
+     */
+    private suspend fun reconstructAfterLastPage(noteId: Long) {
+        try {
+            if (syncDao.pendingForNote(noteId) > 0) return
+            val note = noteDao.noteById(noteId) ?: return
+            val serverId = note.serverId ?: return
+            val reconstructed = api.reconstructNote(serverId).data
+            val contentJson = reconstructed.content?.takeIf { !it.isJsonNull }?.toString()
+            noteDao.setServerContent(note.id, contentJson, reconstructed.status ?: STATUS_READY)
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (_: Exception) {
+            // La nota permanece en PROCESSING para reintento manual con "Reconstruir con IA".
+        }
+    }
+
     private fun classify(http: HttpException, operation: SyncOperationEntity): Step = when (http.code()) {
         409 -> if (operation.entityType == TYPE_UPLOAD_PAGE) Step.Done else Step.Fail("El servidor rechazó el apunte (409)")
         401 -> Step.Retry("La sesión venció; se reintenta al volver a iniciar sesión")
@@ -163,6 +198,7 @@ class SyncRepositoryImpl @Inject constructor(
     )
 
     private companion object {
+        const val STATUS_READY = "READY"
         val TIMESTAMP: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMM · HH:mm", Locale.getDefault())
     }
 }

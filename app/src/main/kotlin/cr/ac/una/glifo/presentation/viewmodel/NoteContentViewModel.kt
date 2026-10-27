@@ -18,7 +18,9 @@ import javax.inject.Inject
 /** Contenido del apunte + los términos del glosario del curso guardados en el teléfono (#27). */
 data class NoteContentUiData(
     val content: NoteContent,
-    val glossaryTerms: List<String>
+    val glossaryTerms: List<String>,
+    val isReconstructing: Boolean = false,
+    val reconstructError: AppError? = null
 )
 
 /**
@@ -51,6 +53,40 @@ class NoteContentViewModel @Inject constructor(
                     UiState.Success(NoteContentUiData(result.value, glossary))
                 }
                 is Result.Failure -> UiState.Error(result.error)
+            }
+        }
+    }
+
+    /**
+     * Solicita la reconstrucción IA-01 del apunte (#42). Mientras corre muestra estado de
+     * carga ("Reconstruyendo con IA…") y, al terminar, refresca con el documento reconstruido.
+     */
+    fun reconstructNote(noteId: Long) {
+        val current = (_state.value as? UiState.Success)?.data ?: return
+        if (current.isReconstructing) return
+
+        viewModelScope.launch {
+            _state.value = UiState.Success(
+                current.copy(isReconstructing = true, reconstructError = null)
+            )
+            when (val result = noteRepository.reconstructNote(noteId)) {
+                is Result.Success -> {
+                    val glossary = courseContextRepository.getCached(result.value.note.courseId)?.glossaryTerms
+                        ?: current.glossaryTerms
+                    _state.value = UiState.Success(
+                        NoteContentUiData(
+                            content = result.value,
+                            glossaryTerms = glossary,
+                            isReconstructing = false,
+                            reconstructError = null
+                        )
+                    )
+                }
+                is Result.Failure -> {
+                    _state.value = UiState.Success(
+                        current.copy(isReconstructing = false, reconstructError = result.error)
+                    )
+                }
             }
         }
     }

@@ -42,6 +42,7 @@ import cr.ac.una.glifo.domain.model.NoteFragment
 import cr.ac.una.glifo.domain.model.RegionKind
 import cr.ac.una.glifo.presentation.viewmodel.NoteContentViewModel
 import cr.ac.una.glifo.presentation.viewmodel.toMessage
+import cr.ac.una.glifo.presentation.viewmodel.toReconstructMessage
 
 /**
  * Resultado de una captura: cada fragmento que leyó el pipeline (o la reconstrucción del
@@ -90,12 +91,23 @@ fun NoteDetailScreen(
             is UiState.Empty -> GlifoLoadingBox()
             is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = { viewModel.load(noteId, force = true) })
             is UiState.Success -> {
-                val data = state.data.content
+                val uiData = state.data
+                val data = uiData.content
+                val errorText = uiData.reconstructError?.toReconstructMessage(context)
                 if (data.source == NoteContentSource.Unavailable) {
-                    UnavailableContent(pendingSync = data.hasPendingSync)
+                    UnavailableContent(
+                        pendingSync = data.hasPendingSync,
+                        canReconstruct = data.canReconstruct,
+                        isReconstructing = uiData.isReconstructing,
+                        reconstructError = errorText,
+                        onReconstruct = { viewModel.reconstructNote(noteId) }
+                    )
                 } else {
                     NoteContentBody(
                         content = data,
+                        isReconstructing = uiData.isReconstructing,
+                        reconstructError = errorText,
+                        onReconstruct = { viewModel.reconstructNote(noteId) },
                         onFragmentClick = { fragment ->
                             when {
                                 fragment.kind == RegionKind.Math -> onNavigateToFormula(fragment.id)
@@ -114,6 +126,9 @@ fun NoteDetailScreen(
 @Composable
 private fun ColumnScope.NoteContentBody(
     content: NoteContent,
+    isReconstructing: Boolean,
+    reconstructError: String?,
+    onReconstruct: () -> Unit,
     onFragmentClick: (NoteFragment) -> Unit,
     onReviewWeakest: () -> Unit
 ) {
@@ -170,6 +185,13 @@ private fun ColumnScope.NoteContentBody(
             }
         }
 
+        ReconstructAiControls(
+            canReconstruct = content.canReconstruct,
+            isReconstructing = isReconstructing,
+            reconstructError = reconstructError,
+            onReconstruct = onReconstruct
+        )
+
         content.fragments.forEach { fragment ->
             if (fragment.kind == RegionKind.Math) {
                 FormulaFragment(fragment, resolved = content.source == NoteContentSource.ServerReconstruction, onClick = { onFragmentClick(fragment) })
@@ -199,6 +221,54 @@ private fun ColumnScope.NoteContentBody(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ReconstructAiControls(
+    canReconstruct: Boolean,
+    isReconstructing: Boolean,
+    reconstructError: String?,
+    onReconstruct: () -> Unit
+) {
+    val colors = GlifoTheme.colors
+    if (canReconstruct || isReconstructing) {
+        GlifoButton(
+            text = if (isReconstructing) {
+                stringResource(R.string.note_detail_reconstructing_ai)
+            } else {
+                stringResource(R.string.note_detail_reconstruct_button)
+            },
+            enabled = !isReconstructing,
+            onClick = onReconstruct,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
+    }
+
+    if (isReconstructing) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier.padding(bottom = 12.dp)
+        ) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(18.dp),
+                strokeWidth = 2.dp,
+                color = colors.accent
+            )
+            Text(
+                text = stringResource(R.string.note_detail_reconstructing_ai),
+                fontSize = 14.sp,
+                color = colors.textSecondary
+            )
+        }
+    }
+
+    if (reconstructError != null) {
+        GlifoBanner(
+            text = reconstructError,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
     }
 }
 
@@ -298,7 +368,13 @@ private fun FormulaFragment(fragment: NoteFragment, resolved: Boolean, onClick: 
 }
 
 @Composable
-private fun UnavailableContent(pendingSync: Boolean) {
+private fun UnavailableContent(
+    pendingSync: Boolean,
+    canReconstruct: Boolean,
+    isReconstructing: Boolean,
+    reconstructError: String?,
+    onReconstruct: () -> Unit
+) {
     val colors = GlifoTheme.colors
     Column(
         modifier = Modifier.fillMaxSize().padding(24.dp),
@@ -311,7 +387,13 @@ private fun UnavailableContent(pendingSync: Boolean) {
             fontSize = 13.sp,
             color = colors.textSecondary,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(top = 8.dp)
+            modifier = Modifier.padding(top = 8.dp, bottom = 16.dp)
+        )
+        ReconstructAiControls(
+            canReconstruct = canReconstruct,
+            isReconstructing = isReconstructing,
+            reconstructError = reconstructError,
+            onReconstruct = onReconstruct
         )
     }
 }

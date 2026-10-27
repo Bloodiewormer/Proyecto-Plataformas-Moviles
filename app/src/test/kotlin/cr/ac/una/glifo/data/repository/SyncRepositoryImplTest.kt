@@ -1,5 +1,6 @@
 package cr.ac.una.glifo.data.repository
 
+import com.google.gson.JsonParser
 import cr.ac.una.glifo.core.sync.SyncScheduler
 import cr.ac.una.glifo.data.datasource.local.dao.NoteDao
 import cr.ac.una.glifo.data.datasource.local.dao.SyncOperationDao
@@ -8,6 +9,7 @@ import cr.ac.una.glifo.data.datasource.local.entity.NotePageEntity
 import cr.ac.una.glifo.data.datasource.local.entity.SyncOperationEntity
 import cr.ac.una.glifo.data.datasource.remote.GlifoApi
 import cr.ac.una.glifo.data.dto.ApiResponse
+import cr.ac.una.glifo.data.dto.NoteDetailResponse
 import cr.ac.una.glifo.data.dto.NotePageResponse
 import cr.ac.una.glifo.data.dto.NoteResponse
 import cr.ac.una.glifo.data.mapper.toSnapshotJson
@@ -37,6 +39,7 @@ class SyncRepositoryImplTest {
 
     private val emptyAnalysis = PageAnalysis(emptyList(), 1200, 1600, 0, 0).toSnapshotJson()
     private val page = NotePageEntity(3L, 7L, 0, "c3a1f0e98b7d6245", "/p.jpg", "N1", 0.8f, emptyAnalysis, 0L)
+    private val secondPage = NotePageEntity(4L, 7L, 1, "a1b2c3d4e5f60718", "/p2.jpg", "N1", 0.9f, emptyAnalysis, 0L)
     private val unsynced = NoteEntity(7L, null, 1L, "Apunte", "2026-09-30", "PROCESSING", null, 0L)
     private val synced = unsynced.copy(serverId = 42L)
 
@@ -46,6 +49,7 @@ class SyncRepositoryImplTest {
 
     private val createOp = op(1L, SyncOperationEntity.TYPE_CREATE_NOTE)
     private val uploadOp = op(2L, SyncOperationEntity.TYPE_UPLOAD_PAGE, pageId = 3L)
+    private val secondUploadOp = op(3L, SyncOperationEntity.TYPE_UPLOAD_PAGE, pageId = 4L)
 
     private fun httpException(code: Int) =
         HttpException(Response.error<Any>(code, "{}".toResponseBody("application/json".toMediaTypeOrNull())))
@@ -141,5 +145,51 @@ class SyncRepositoryImplTest {
 
         assertEquals(Result.Success(2), repository.retryFailed())
         coVerify { scheduler.schedule() }
+    }
+
+    @Test
+    fun `triggers reconstruction only after the last pending page of a note is uploaded`() = runTest {
+        val contentJson = """{"schemaVersion":1,"blocks":[{"id":"b1","type":"HEADING","text":"Límites"}]}"""
+        coEvery { syncDao.runnable() } returns listOf(createOp, uploadOp, secondUploadOp)
+        coEvery { syncDao.pendingForNote(7L) } returns 0
+        coEvery { noteDao.noteById(7L) } returnsMany listOf(unsynced, synced)
+        coEvery { noteDao.pageById(3L) } returns page
+        coEvery { noteDao.pageById(4L) } returns secondPage
+        coEvery { api.createNote(any()) } returns ApiResponse(NoteResponse(42L, 1L, "Apunte", "2026-09-30"))
+        coEvery { api.uploadPage(42L, any()) } returns ApiResponse(NotePageResponse(9L, 42L, 0))
+        coEvery { api.reconstructNote(42L) } returns ApiResponse(
+            NoteDetailResponse(42L, 1L, "Apunte", "2026-09-30", "READY", JsonParser.parseString(contentJson))
+        )
+
+        val summary = (repository.syncNow() as Result.Success).value
+
+        assertEquals(3, summary.uploaded)
+        assertEquals(SyncRunOutcome.Completed, summary.outcome)
+        coVerify(exactly = 1) { api.reconstructNote(42L) }
+        coVerifyOrder {
+            api.uploadPage(42L, match { it.pageIndex == 0 })
+            api.uploadPage(42L, match { it.pageIndex == 1 })
+            api.reconstructNote(42L)
+            noteDao.setServerContent(7L, match { it.contains("schemaVersion") }, "READY")
+        }
+    }
+
+    @Test
+    fun `a failure in reconstruction does not mark the sync as failed`() = runTest {
+        coEvery { syncDao.runnable() } returns listOf(uploadOp)
+        coEvery { syncDao.pendingForNote(7L) } returns 0
+        coEvery { noteDao.noteById(7L) } returns synced
+        coEvery { noteDao.pageById(3L) } returns page
+        coEvery { api.uploadPage(42L, any()) } returns ApiResponse(NotePageResponse(9L, 42L, 0))
+        coEvery { api.reconstructNote(42L) } throws httpException(502)
+
+        val summary = (repository.syncNow() as Result.Success).value
+
+        assertEquals(1, summary.uploaded)
+        assertEquals(0, summary.failed)
+        assertEquals(SyncRunOutcome.Completed, summary.outcome)
+        coVerify { syncDao.update(2L, SyncOperationEntity.STATUS_DONE, 1, null, any()) }
+        coVerify(exactly = 1) { api.reconstructNote(42L) }
+        coVerify(exactly = 0) { noteDao.setServerContent(any(), any(), any()) }
     }
 }

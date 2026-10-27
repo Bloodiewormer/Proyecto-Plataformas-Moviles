@@ -59,8 +59,16 @@ data class NoteContent(
     /** El apunte o alguna de sus páginas todavía está en la cola de sincronización. */
     val hasPendingSync: Boolean,
     /** Umbral de la compuerta de N1: bajo este valor la región escala. */
-    val threshold: Float
+    val threshold: Float,
+    /** Estado del apunte (DRAFT · PROCESSING · READY · ARCHIVED). */
+    val status: String = "READY",
+    /** Identificador en el servidor; null mientras no esté sincronizado. */
+    val serverId: Long? = null
 ) {
+    /** La nota está en PROCESSING y ya fue sincronizada con el servidor (#42). */
+    val canReconstruct: Boolean
+        get() = status == "PROCESSING" && serverId != null
+
     val verifiedCount: Int get() = fragments.count { it.state == ConfidenceState.Verified }
     val repairedCount: Int get() = fragments.count { it.state == ConfidenceState.Repaired }
     val escalatedCount: Int get() = fragments.count { it.state == ConfidenceState.Escalated }

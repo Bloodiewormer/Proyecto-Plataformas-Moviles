@@ -92,6 +92,10 @@ class NoteRepositoryImpl @Inject constructor(
         val pending = syncDao.pendingForNote(noteId) > 0
         val pages = noteDao.pagesForNote(noteId)
 
+        if (!note.contentJson.isNullOrBlank()) {
+            return Result.Success(buildServerNoteContent(note, corrections, pending, pages))
+        }
+
         if (pages.isNotEmpty()) {
             return Result.Success(buildLocalNoteContent(note, pages, corrections, pending))
         }
@@ -103,12 +107,42 @@ class NoteRepositoryImpl @Inject constructor(
         }
         val current = if (refreshed != null) {
             val contentJson = refreshed.content?.takeIf { !it.isJsonNull }?.toString()
-            noteDao.setServerContent(note.id, contentJson, refreshed.status ?: note.status)
-            note.copy(contentJson = contentJson)
+            val status = refreshed.status ?: note.status
+            noteDao.setServerContent(note.id, contentJson, status)
+            note.copy(contentJson = contentJson, status = status)
         } else {
             note
         }
         return Result.Success(buildServerNoteContent(current, corrections, pending))
+    }
+
+    override suspend fun reconstructNote(localNoteId: Long): Result<NoteContent> {
+        val note = noteDao.noteById(localNoteId) ?: return notFound()
+        val serverId = note.serverId
+            ?: return Result.Failure(
+                AppError.Validation(
+                    field = "serverId",
+                    issue = "El apunte todavía no se ha sincronizado con el servidor."
+                )
+            )
+
+        return when (val remote = ApiErrorHandler.safeApiCall(
+            apiCall = { api.reconstructNote(serverId) },
+            transform = { it.data }
+        )) {
+            is Result.Success -> {
+                val dto = remote.value
+                val contentJson = dto.content?.takeIf { !it.isJsonNull }?.toString()
+                val status = dto.status ?: STATUS_READY
+                noteDao.setServerContent(note.id, contentJson, status)
+                val updated = note.copy(contentJson = contentJson, status = status)
+                val corrections = noteDao.correctionsForNote(localNoteId)
+                val pending = syncDao.pendingForNote(localNoteId) > 0
+                val pages = noteDao.pagesForNote(localNoteId)
+                Result.Success(buildServerNoteContent(updated, corrections, pending, pages))
+            }
+            is Result.Failure -> remote
+        }
     }
 
     override suspend fun saveCorrection(noteId: Long, fragmentId: String, correctedText: String): Result<Unit> {
@@ -245,7 +279,11 @@ class NoteRepositoryImpl @Inject constructor(
 
     private suspend fun NoteEntity.toMeta(): NoteMeta {
         val pages = noteDao.pagesForNote(id)
-        val content = if (pages.isEmpty()) null else buildLocalNoteContent(this, pages, noteDao.correctionsForNote(id), false)
+        val content = when {
+            !contentJson.isNullOrBlank() -> buildServerNoteContent(this, noteDao.correctionsForNote(id), false, pages)
+            pages.isNotEmpty() -> buildLocalNoteContent(this, pages, noteDao.correctionsForNote(id), false)
+            else -> null
+        }
         return NoteMeta(
             note = toDomain(),
             chips = content?.chips().orEmpty(),

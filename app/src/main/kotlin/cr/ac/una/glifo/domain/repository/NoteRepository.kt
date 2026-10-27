@@ -21,6 +21,14 @@ interface NoteRepository {
     suspend fun getNoteMeta(noteId: Long): Result<NoteMeta>
     suspend fun getChips(noteId: Long): Result<List<ConfidenceState>>
     suspend fun getNoteContent(noteId: Long): Result<NoteContent>
+
+    /**
+     * Solicita la reconstrucción IA-01 del apunte en el servidor (`POST notes/{id}/reconstruct`)
+     * y persiste `content` y `status = READY` en Room (#42). Si el apunte todavía no tiene
+     * `serverId`, falla con un error claro sin llamar a la red.
+     */
+    suspend fun reconstructNote(localNoteId: Long): Result<NoteContent>
+
     suspend fun saveCorrection(noteId: Long, fragmentId: String, correctedText: String): Result<Unit>
     suspend fun createNote(courseId: Long, title: String, classDate: String): Result<Note>
     suspend fun deleteNote(noteId: Long): Result<Unit>

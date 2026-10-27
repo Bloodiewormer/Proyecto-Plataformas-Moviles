@@ -566,4 +566,11 @@
     <string name="study_error_ai_unavailable">El servicio de IA no está disponible en este momento. Inténtalo más tarde.</string>
     <string name="study_error_forbidden">No tienes permiso para realizar esta acción en este curso.</string>
     <string name="study_error_no_topics">Este curso todavía no tiene temas publicados en el temario.</string>
+    <!-- Lab 6: reconstrucción de nota IA-01 (#42) -->
+    <string name="note_detail_reconstruct_button">Reconstruir con IA</string>
+    <string name="note_detail_reconstructing_ai">Reconstruyendo con IA…</string>
+    <string name="note_reconstruct_error_no_connection">Sin conexión a internet. Revisá tu red e intentalo de nuevo.</string>
+    <string name="note_reconstruct_error_ai_unavailable">El servicio de IA no está disponible en este momento. Intentalo más tarde.</string>
+    <string name="note_reconstruct_error_no_pages">Esta nota todavía no tiene páginas subidas en el servidor.</string>
+    <string name="note_reconstruct_error_not_synced">El apunte todavía no se ha sincronizado con el servidor.</string>
 </resources>
