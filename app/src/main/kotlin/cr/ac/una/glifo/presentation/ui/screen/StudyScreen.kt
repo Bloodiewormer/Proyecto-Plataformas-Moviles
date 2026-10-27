@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -46,10 +47,15 @@ fun StudyScreen(
     val scope = rememberCoroutineScope()
     val colors = GlifoTheme.colors
     val context = LocalContext.current
+    val activeCourse = LocalActiveCourse.current
     val user by sessionViewModel.currentUser.collectAsState()
     val uiState by viewModel.state.collectAsState()
 
     LaunchedEffect(courseId) { viewModel.load(courseId) }
+
+    val courseTitle = activeCourse.name?.takeIf { it.isNotBlank() }
+        ?: (uiState as? UiState.Success)?.data?.course?.name?.takeIf { it.isNotBlank() }
+        ?: stringResource(R.string.capture_default_course_name)
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -97,7 +103,7 @@ fun StudyScreen(
                 .background(colors.background)
         ) {
             GlifoTopAppBar(
-                title = (uiState as? UiState.Success)?.data?.course?.name ?: stringResource(R.string.capture_default_course_name),
+                title = courseTitle,
                 subtitle = stringResource(R.string.study_subtitle),
                 onNavigationClick = { scope.launch { drawerState.open() } }
             )
@@ -109,8 +115,53 @@ fun StudyScreen(
                 is UiState.Success -> {
                     val data = state.data
                     val flashcardCount = data.flashcardCount
-                    val quizQuestion = data.quizQuestion
                     val quizCount = data.quizQuestionCount
+
+                    val flashcardTitle = pluralStringResource(
+                        R.plurals.study_flashcards_plural,
+                        flashcardCount,
+                        flashcardCount
+                    )
+                    val flashcardSubtitle = if (flashcardCount > 0) {
+                        val topicCount = data.flashcardTopicCount.coerceAtLeast(1)
+                        val topicsText = pluralStringResource(
+                            R.plurals.study_topics_plural,
+                            topicCount,
+                            topicCount
+                        )
+                        stringResource(
+                            R.string.study_flashcard_topics_summary,
+                            flashcardTitle,
+                            topicsText
+                        )
+                    } else {
+                        stringResource(R.string.study_no_material_yet)
+                    }
+
+                    val quizTitle = if (quizCount > 0) {
+                        stringResource(R.string.study_quiz_count_title, quizCount)
+                    } else {
+                        stringResource(R.string.study_quiz_title)
+                    }
+                    val quizSubtitle = if (quizCount > 0) {
+                        val questionsText = pluralStringResource(
+                            R.plurals.study_quiz_questions_plural,
+                            quizCount,
+                            quizCount
+                        )
+                        val topicsSummary = data.quizTopicsSummary
+                        if (topicsSummary.isNotBlank()) {
+                            stringResource(
+                                R.string.study_quiz_topics_summary,
+                                questionsText,
+                                topicsSummary
+                            )
+                        } else {
+                            questionsText
+                        }
+                    } else {
+                        stringResource(R.string.study_no_material_yet)
+                    }
 
                     Column(
                         modifier = Modifier
@@ -167,23 +218,17 @@ fun StudyScreen(
                                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                                 ) {
                                     Icon(imageVector = Icons.Default.Psychology, contentDescription = null, tint = colors.accentText, modifier = Modifier.size(22.dp))
-                                    Text(stringResource(R.string.study_flashcard_count, flashcardCount), fontSize = 18.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                                    Text(flashcardTitle, fontSize = 18.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary, modifier = Modifier.weight(1f))
                                     Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
                                 }
                                 Text(
-                                    text = stringResource(R.string.study_flashcard_description),
+                                    text = flashcardSubtitle,
                                     fontSize = 14.sp,
                                     color = colors.textSecondary,
                                     lineHeight = 20.sp,
                                     modifier = Modifier.padding(top = 8.dp)
                                 )
                             }
-                        }
-
-                        val quizTitle = if (quizCount > 0) {
-                            stringResource(R.string.study_quiz_count_title, quizCount)
-                        } else {
-                            stringResource(R.string.study_quiz_title)
                         }
 
                         // Quiz Entry Card
@@ -201,7 +246,7 @@ fun StudyScreen(
                                     Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
                                 }
                                 Text(
-                                    text = stringResource(R.string.study_quiz_description, quizQuestion?.topicLabel.orEmpty()),
+                                    text = quizSubtitle,
                                     fontSize = 14.sp,
                                     color = colors.textSecondary,
                                     lineHeight = 20.sp,

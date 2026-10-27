@@ -4,8 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cr.ac.una.glifo.core.common.AppError
 import cr.ac.una.glifo.core.common.UiState
+import cr.ac.una.glifo.core.datastore.ActiveCourseStore
 import cr.ac.una.glifo.domain.error.Result
 import cr.ac.una.glifo.domain.model.CourseDetail
+import cr.ac.una.glifo.domain.model.Flashcard
 import cr.ac.una.glifo.domain.model.QuizQuestion
 import cr.ac.una.glifo.domain.repository.CourseRepository
 import cr.ac.una.glifo.domain.repository.StudyRepository
@@ -20,11 +22,27 @@ import javax.inject.Inject
 data class StudyHomeUiData(
     val course: CourseDetail?,
     val flashcardCount: Int,
+    val flashcardTopicCount: Int = 0,
     val quizQuestion: QuizQuestion?,
     val quizQuestionCount: Int = 0,
+    val quizTopicCodes: List<String> = emptyList(),
     val isGenerating: Boolean = false,
     val generationError: AppError? = null
-)
+) {
+    /**
+     * Resumen de códigos de temas del quiz (máximo 3 códigos separados por ", " y "…" si hay más).
+     */
+    val quizTopicsSummary: String
+        get() = when {
+            quizTopicCodes.isEmpty() -> ""
+            quizTopicCodes.size <= MAX_SUMMARY_TOPICS -> quizTopicCodes.joinToString(", ")
+            else -> quizTopicCodes.take(MAX_SUMMARY_TOPICS).joinToString(", ") + "…"
+        }
+
+    private companion object {
+        const val MAX_SUMMARY_TOPICS = 3
+    }
+}
 
 /**
  * StudyScreen (el punto de entrada de "Estudio" — tarjetas de flashcards y quiz del curso,
@@ -33,8 +51,14 @@ data class StudyHomeUiData(
 @HiltViewModel
 class StudyHomeViewModel @Inject constructor(
     private val courseRepository: CourseRepository,
-    private val studyRepository: StudyRepository
+    private val studyRepository: StudyRepository,
+    private val activeCourseStore: ActiveCourseStore?
 ) : ViewModel() {
+
+    constructor(
+        courseRepository: CourseRepository,
+        studyRepository: StudyRepository
+    ) : this(courseRepository, studyRepository, null)
 
     private val _state = MutableStateFlow<UiState<StudyHomeUiData>>(UiState.Loading)
     val state: StateFlow<UiState<StudyHomeUiData>> = _state.asStateFlow()
@@ -51,7 +75,7 @@ class StudyHomeViewModel @Inject constructor(
         generateJob?.cancel()
         loadJob = viewModelScope.launch {
             _state.value = UiState.Loading
-            val courseResult = courseRepository.getCourseDetail(courseId)
+            val course = resolveCourse(courseId)
             val flashcardsResult = studyRepository.getFlashcards(courseId)
             val quizQuestionsResult = studyRepository.getQuizQuestions(courseId)
 
@@ -64,11 +88,10 @@ class StudyHomeViewModel @Inject constructor(
             val quizQuestions = (quizQuestionsResult as? Result.Success)?.value.orEmpty()
 
             _state.value = UiState.Success(
-                StudyHomeUiData(
-                    course = (courseResult as? Result.Success)?.value,
-                    flashcardCount = flashcards.size,
-                    quizQuestion = quizQuestions.firstOrNull(),
-                    quizQuestionCount = quizQuestions.size
+                buildUiData(
+                    course = course,
+                    flashcards = flashcards,
+                    quizQuestions = quizQuestions
                 )
             )
         }
@@ -85,10 +108,12 @@ class StudyHomeViewModel @Inject constructor(
         generateJob?.cancel()
         generateJob = viewModelScope.launch {
             val base = current ?: StudyHomeUiData(
-                course = null,
+                course = resolveCourse(courseId),
                 flashcardCount = 0,
+                flashcardTopicCount = 0,
                 quizQuestion = null,
-                quizQuestionCount = 0
+                quizQuestionCount = 0,
+                quizTopicCodes = emptyList()
             )
             _state.value = UiState.Success(base.copy(isGenerating = true, generationError = null))
 
@@ -124,12 +149,10 @@ class StudyHomeViewModel @Inject constructor(
                     val flashcards = (studyRepository.getFlashcards(courseId) as? Result.Success)?.value.orEmpty()
                     val quizQuestions = (studyRepository.getQuizQuestions(courseId) as? Result.Success)?.value.orEmpty()
                     _state.value = UiState.Success(
-                        base.copy(
-                            flashcardCount = flashcards.size,
-                            quizQuestion = quizQuestions.firstOrNull(),
-                            quizQuestionCount = quizQuestions.size,
-                            isGenerating = false,
-                            generationError = null
+                        buildUiData(
+                            course = base.course,
+                            flashcards = flashcards,
+                            quizQuestions = quizQuestions
                         )
                     )
                 }
@@ -140,6 +163,69 @@ class StudyHomeViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    private suspend fun resolveCourse(courseId: Long): CourseDetail? {
+        val detail = (courseRepository.getCourseDetail(courseId) as? Result.Success)?.value
+        if (detail != null) {
+            if (detail.name.isNotBlank()) {
+                activeCourseStore?.set(detail.id, detail.name)
+            }
+            return detail
+        }
+
+        val active = activeCourseStore?.activeCourse?.value
+        if (active != null && active.id == courseId && !active.name.isNullOrBlank()) {
+            return CourseDetail(
+                id = active.id,
+                name = active.name,
+                code = "",
+                joinCode = "",
+                syllabusStatus = null
+            )
+        }
+
+        val fromList = (courseRepository.getStudentCourses() as? Result.Success)?.value
+            ?.find { it.id == courseId }
+        if (fromList != null) {
+            activeCourseStore?.set(fromList.id, fromList.name)
+            return CourseDetail(
+                id = fromList.id,
+                name = fromList.name,
+                code = fromList.code,
+                joinCode = fromList.joinCode,
+                syllabusStatus = null
+            )
+        }
+
+        return null
+    }
+
+    private fun buildUiData(
+        course: CourseDetail?,
+        flashcards: List<Flashcard>,
+        quizQuestions: List<QuizQuestion>
+    ): StudyHomeUiData {
+        val flashcardTopicCount = flashcards
+            .map { it.source.trim() }
+            .filter { it.isNotEmpty() }
+            .distinct()
+            .size
+        val quizTopicCodes = quizQuestions
+            .map { it.topicTag.trim() }
+            .filter { it.isNotEmpty() }
+            .distinct()
+
+        return StudyHomeUiData(
+            course = course,
+            flashcardCount = flashcards.size,
+            flashcardTopicCount = flashcardTopicCount,
+            quizQuestion = quizQuestions.firstOrNull(),
+            quizQuestionCount = quizQuestions.size,
+            quizTopicCodes = quizTopicCodes,
+            isGenerating = false,
+            generationError = null
+        )
     }
 
     private companion object {

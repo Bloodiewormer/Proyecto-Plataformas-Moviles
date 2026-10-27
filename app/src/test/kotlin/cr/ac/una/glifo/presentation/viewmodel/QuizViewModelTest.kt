@@ -1,11 +1,17 @@
 package cr.ac.una.glifo.presentation.viewmodel
 
+import android.content.Context
+import cr.ac.una.glifo.R
+import cr.ac.una.glifo.core.common.AppError
 import cr.ac.una.glifo.core.common.UiState
+import cr.ac.una.glifo.core.datastore.ActiveCourse
 import cr.ac.una.glifo.core.datastore.ActiveCourseStore
 import cr.ac.una.glifo.domain.error.Result
+import cr.ac.una.glifo.domain.model.Flashcard
 import cr.ac.una.glifo.domain.model.QuizQuestion
 import cr.ac.una.glifo.domain.model.QuizResultInfo
 import cr.ac.una.glifo.domain.model.QuizResultRow
+import cr.ac.una.glifo.domain.repository.CourseRepository
 import cr.ac.una.glifo.domain.repository.StudyRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -31,8 +37,30 @@ class QuizViewModelTest {
 
     private val dispatcher = StandardTestDispatcher()
     private val activeCourseId = MutableStateFlow<Long?>(1L)
+    private val activeCourse = MutableStateFlow<ActiveCourse?>(ActiveCourse(id = 1L, name = "Cálculo I"))
     private val store = mockk<ActiveCourseStore>(relaxed = true) {
         every { activeCourseId } returns this@QuizViewModelTest.activeCourseId
+        every { activeCourse } returns this@QuizViewModelTest.activeCourse
+    }
+
+    private val context = mockk<Context> {
+        every { getString(R.string.quiz_result_all_correct_headline) } returns "¡Todo correcto!"
+        every { getString(R.string.quiz_result_review_topic_headline, *anyVararg()) } answers {
+            val args = secondArg<Array<out Any?>>()
+            "Repasá: ${args[0]}"
+        }
+        every { getString(R.string.quiz_result_failed_of_total, *anyVararg()) } answers {
+            val args = secondArg<Array<out Any?>>()
+            "Fallaste ${args[0]} de ${args[1]}."
+        }
+        every { getString(R.string.quiz_result_same_topic_failures, *anyVararg()) } answers {
+            val args = secondArg<Array<out Any?>>()
+            "Los ${args[0]} fallos son del mismo tema."
+        }
+        every { getString(R.string.quiz_result_row_label, *anyVararg()) } answers {
+            val args = secondArg<Array<out Any?>>()
+            "${args[0]} · ${args[1]}"
+        }
     }
 
     @Before
@@ -68,7 +96,7 @@ class QuizViewModelTest {
             coEvery { saveQuizResult(1L, capture(savedSlot)) } returns Unit
         }
 
-        val vm = QuizViewModel(studyRepository, store)
+        val vm = QuizViewModel(studyRepository, store, context)
         advanceUntilIdle()
 
         vm.submitAnswer(0, questionIndex = 0)
@@ -108,7 +136,7 @@ class QuizViewModelTest {
             )
         }
 
-        val vm = QuizViewModel(studyRepository, store)
+        val vm = QuizViewModel(studyRepository, store, context)
         advanceUntilIdle()
 
         // Acierto en 2.1, fallos en las dos de 3.4
@@ -138,7 +166,7 @@ class QuizViewModelTest {
             )
         }
 
-        val vm = QuizViewModel(studyRepository, store)
+        val vm = QuizViewModel(studyRepository, store, context)
         advanceUntilIdle()
 
         // Acierto en la 1 (2.1), fallo en la 2 (2.2), fallos en la 3 y 4 (ambas de 3.4)
@@ -165,5 +193,43 @@ class QuizViewModelTest {
         advanceUntilIdle()
 
         assertEquals(UiState.Empty, resultVm.state.value)
+    }
+
+    @Test
+    fun `StudyHomeViewModel computes real topic counts, truncates quiz topic codes over 3, and resolves active course name`() = runTest(dispatcher) {
+        val courseRepository = mockk<CourseRepository> {
+            coEvery { getCourseDetail(1L) } returns Result.Failure(AppError.NoConnection)
+        }
+        val studyRepository = mockk<StudyRepository> {
+            coEvery { getFlashcards(1L) } returns Result.Success(
+                listOf(
+                    Flashcard("¿Q1?", "A1", "U1.1 · Límites"),
+                    Flashcard("¿Q2?", "A2", "U1.1 · Límites"),
+                    Flashcard("¿Q3?", "A3", "U1.2 · Continuidad"),
+                    Flashcard("¿Q4?", "A4", "U2.1 · Derivadas")
+                )
+            )
+            coEvery { getQuizQuestions(1L) } returns Result.Success(
+                listOf(
+                    q("U1.1", "U1.1 · Límites"),
+                    q("U1.2", "U1.2 · Continuidad"),
+                    q("U1.2", "U1.2 · Continuidad"),
+                    q("U2.1", "U2.1 · Derivadas"),
+                    q("U3.1", "U3.1 · Integrales")
+                )
+            )
+        }
+
+        val homeVm = StudyHomeViewModel(courseRepository, studyRepository, store)
+        homeVm.load(1L)
+        advanceUntilIdle()
+
+        val data = (homeVm.state.value as UiState.Success).data
+        assertEquals("Cálculo I", data.course?.name)
+        assertEquals(4, data.flashcardCount)
+        assertEquals(3, data.flashcardTopicCount)
+        assertEquals(5, data.quizQuestionCount)
+        assertEquals(listOf("U1.1", "U1.2", "U2.1", "U3.1"), data.quizTopicCodes)
+        assertEquals("U1.1, U1.2, U2.1…", data.quizTopicsSummary)
     }
 }

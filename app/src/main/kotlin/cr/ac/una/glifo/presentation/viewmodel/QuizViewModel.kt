@@ -1,7 +1,9 @@
 package cr.ac.una.glifo.presentation.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.core.datastore.ActiveCourseStore
 import cr.ac.una.glifo.domain.model.QuizQuestion
@@ -9,6 +11,7 @@ import cr.ac.una.glifo.domain.model.QuizResultInfo
 import cr.ac.una.glifo.domain.model.QuizResultRow
 import cr.ac.una.glifo.domain.repository.StudyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,8 +25,14 @@ import javax.inject.Inject
 @HiltViewModel
 class QuizViewModel @Inject constructor(
     private val studyRepository: StudyRepository,
-    private val activeCourseStore: ActiveCourseStore
+    private val activeCourseStore: ActiveCourseStore,
+    @ApplicationContext private val context: Context?
 ) : ViewModel() {
+
+    constructor(
+        studyRepository: StudyRepository,
+        activeCourseStore: ActiveCourseStore
+    ) : this(studyRepository, activeCourseStore, null)
 
     private val _state = MutableStateFlow<UiState<List<QuizQuestion>>>(UiState.Loading)
     val state: StateFlow<UiState<List<QuizQuestion>>> = _state.asStateFlow()
@@ -87,28 +96,41 @@ class QuizViewModel @Inject constructor(
             reviewRows.add(
                 QuizResultRow(
                     correct = isCorrect,
-                    label = "${index + 1} · ${question.topicLabel}"
+                    label = context?.getString(
+                        R.string.quiz_result_row_label,
+                        index + 1,
+                        question.topicLabel
+                    ).orEmpty()
                 )
             )
         }
 
         val failedCount = total - correctCount
         val headline = if (failedQuestions.isEmpty()) {
-            "¡Todo correcto!"
+            context?.getString(R.string.quiz_result_all_correct_headline).orEmpty()
         } else {
             val worstTopic = failedQuestions
                 .groupBy { it.topicLabel }
                 .maxByOrNull { it.value.size }
                 ?.key
                 .orEmpty()
-            "Repasá: $worstTopic"
+            context?.getString(R.string.quiz_result_review_topic_headline, worstTopic).orEmpty()
         }
 
         val distinctFailedTopics = failedQuestions.map { it.topicLabel }.distinct()
+        val baseSubtext = context?.getString(
+            R.string.quiz_result_failed_of_total,
+            failedCount,
+            total
+        ).orEmpty()
         val subtext = if (failedCount > 0 && distinctFailedTopics.size == 1) {
-            "Fallaste $failedCount de $total. Los $failedCount fallos son del mismo tema."
+            val sameTopicText = context?.getString(
+                R.string.quiz_result_same_topic_failures,
+                failedCount
+            ).orEmpty()
+            "$baseSubtext $sameTopicText".trim()
         } else {
-            "Fallaste $failedCount de $total."
+            baseSubtext
         }
 
         return QuizResultInfo(

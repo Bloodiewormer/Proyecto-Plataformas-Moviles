@@ -281,10 +281,25 @@
     <string name="study_subtitle">Estudio de</string>
     <string name="study_flashcard_count">%1$d flashcards</string>
     <string name="study_flashcard_description">Generadas de los temas parciales. 4 son de la corrección de ayer.</string>
-    <string name="study_quiz_title">Quiz de 5 preguntas</string>
+    <string name="study_quiz_title">Quiz</string>
     <string name="study_quiz_description">Sobre los cinco vacíos con menos evidencia, empezando por %1$s</string>
     <string name="study_footer_note">El material de estudio sale de la cobertura, no de un temario genérico: solo pregunta lo que tus apuntes no sostienen.</string>
     <string name="study_empty_course">Todavía no hay material de estudio para este curso. Elige un curso o captura apuntes primero.</string>
+    <string name="study_no_material_yet">Todavía no hay material. Tocá Generar.</string>
+    <plurals name="study_flashcards_plural">
+        <item quantity="one">%1$d flashcard</item>
+        <item quantity="other">%1$d flashcards</item>
+    </plurals>
+    <plurals name="study_topics_plural">
+        <item quantity="one">%1$d tema</item>
+        <item quantity="other">%1$d temas</item>
+    </plurals>
+    <string name="study_flashcard_topics_summary">%1$s de %2$s</string>
+    <plurals name="study_quiz_questions_plural">
+        <item quantity="one">%1$d pregunta</item>
+        <item quantity="other">%1$d preguntas</item>
+    </plurals>
+    <string name="study_quiz_topics_summary">%1$s · %2$s</string>
 
     <!-- FlashcardScreen -->
     <string name="flashcard_progress_counter">%1$d / %2$d</string>
@@ -315,6 +330,11 @@
     <string name="quiz_result_return_in_days">Los aciertos vuelven en %1$d días.</string>
     <string name="quiz_result_view_coverage">Ver la cobertura actualizada</string>
     <string name="quiz_result_explain_convergence">Explicame el radio de convergencia</string>
+    <string name="quiz_result_all_correct_headline">¡Todo correcto!</string>
+    <string name="quiz_result_review_topic_headline">Repasá: %1$s</string>
+    <string name="quiz_result_failed_of_total">Fallaste %1$d de %2$d.</string>
+    <string name="quiz_result_same_topic_failures">Los %1$d fallos son del mismo tema.</string>
+    <string name="quiz_result_row_label">%1$d · %2$s</string>
 
     <!-- SyncQueueScreen -->
     <string name="sync_queue_title">Sincronización</string>
