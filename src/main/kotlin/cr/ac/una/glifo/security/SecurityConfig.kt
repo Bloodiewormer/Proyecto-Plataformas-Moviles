@@ -19,7 +19,7 @@ import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import org.springframework.web.cors.CorsConfigurationSource
 import cr.ac.una.glifo.common.exception.ApiError
-import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
 
 @Configuration
 @EnableWebSecurity
@@ -27,10 +27,11 @@ import tools.jackson.databind.ObjectMapper
 class SecurityConfig(
     private val jwtFilter: JwtFilter,
     private val corsConfigurationSource: CorsConfigurationSource,
-    private val objectMapper: ObjectMapper,
     @Value("\${url.auth}") private val authUrl: String,
     @Value("\${url.health}") private val healthUrl: String
 ) {
+
+    private val errorMapper: JsonMapper = JsonMapper.builder().findAndAddModules().build()
 
     @Bean
     fun passwordEncoder(): PasswordEncoder {
@@ -93,6 +94,6 @@ class SecurityConfig(
             timestamp = Instant.now(),
             path = request.requestURI
         )
-        response.writer.write(objectMapper.writeValueAsString(error))
+        response.writer.write(errorMapper.writeValueAsString(error))
     }
 }

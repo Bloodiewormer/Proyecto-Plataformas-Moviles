@@ -224,7 +224,7 @@ class WebApiStatusCodesTest {
             jsonPath("$.error") { value("Unauthorized") }
             jsonPath("$.code") { value("UNAUTHORIZED") }
             jsonPath("$.message") { value("Tu sesión expiró. Iniciá sesión de nuevo.") }
-            jsonPath("$.timestamp") { isNotEmpty() }
+            jsonPath("$.timestamp") { isString() }
             jsonPath("$.path") { value(notes) }
             jsonPath("$.subErrors") { doesNotExist() }
         }
@@ -247,7 +247,7 @@ class WebApiStatusCodesTest {
             jsonPath("$.error") { value("Unauthorized") }
             jsonPath("$.code") { value("UNAUTHORIZED") }
             jsonPath("$.message") { value("Tu sesión expiró. Iniciá sesión de nuevo.") }
-            jsonPath("$.timestamp") { isNotEmpty() }
+            jsonPath("$.timestamp") { isString() }
             jsonPath("$.path") { value(notes) }
             jsonPath("$.subErrors") { doesNotExist() }
         }
