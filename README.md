@@ -44,6 +44,12 @@ cr.ac.una.glifo
 └── common/                  respuesta estándar (ApiResponse), errores, health
 ```
 
+## Cloud deployment
+
+See [the cloud deployment runbook](docs/cloud-deployment.md) for the Docker artifact,
+required environment variables, non-destructive cloud profile and pending deployment gates.
+This preparation does not imply a live deployment.
+
 ## Cómo correrlo
 
 ### 1. Crear la base de datos (pgAdmin)
