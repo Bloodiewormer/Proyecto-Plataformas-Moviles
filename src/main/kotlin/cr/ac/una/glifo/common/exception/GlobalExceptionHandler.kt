@@ -258,6 +258,7 @@ data class ApiError(
     /** Ruta que se pidió. */
     val path: String? = null,
     /** Detalle por campo cuando el error es de validación. */
+    @get:com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
     val subErrors: List<ApiSubError>? = null
 )
 

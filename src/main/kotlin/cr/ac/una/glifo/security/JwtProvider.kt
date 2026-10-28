@@ -15,6 +15,12 @@ class JwtProvider(
     @Value("\${glifo.jwt.secret}") private val secret: String,
     @Value("\${glifo.jwt.expiration-ms}") private val expirationMs: Long,
 ) {
+    init {
+        require(secret.toByteArray(Charsets.UTF_8).size >= 32) {
+            "glifo.jwt.secret debe tener al menos 32 bytes (256 bits) para HMAC-SHA256"
+        }
+    }
+
     private val key: SecretKey by lazy {
         Keys.hmacShaKeyFor(secret.toByteArray())
     }
@@ -24,9 +30,14 @@ class JwtProvider(
         return generateToken(userDetails.username, userDetails.userId, userDetails.authorities.mapNotNull { it.authority })
     }
 
-    fun generateToken(email: String, userId: Long, authorities: List<String>): String {
+    fun generateToken(
+        email: String,
+        userId: Long,
+        authorities: List<String>,
+        expirationMsOverride: Long? = null
+    ): String {
         val now = Date()
-        val expiryDate = Date(now.time + expirationMs)
+        val expiryDate = Date(now.time + (expirationMsOverride ?: expirationMs))
 
         return Jwts.builder()
             .subject(email)

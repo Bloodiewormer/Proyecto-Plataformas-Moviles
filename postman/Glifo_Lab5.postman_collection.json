@@ -2072,6 +2072,139 @@
           "response": []
         },
         {
+          "name": "POST Login Admin",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('admin_email')) {",
+                  "    pm.environment.set('admin_email', 'admin@una.ac.cr');",
+                  "}",
+                  "if (!pm.environment.get('admin_password')) {",
+                  "    pm.environment.set('admin_password', 'Admin1234');",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Admin login returns JWT token and Admin role at root', function () {",
+                  "    pm.expect(jsonData).to.have.property('token');",
+                  "    pm.expect(jsonData.token).to.be.a('string').and.not.empty;",
+                  "    pm.expect(jsonData).to.have.property('user');",
+                  "    pm.expect(jsonData.user.role).to.eql('Admin');",
+                  "});",
+                  "",
+                  "pm.environment.set('jwt_token_admin', jsonData.token);",
+                  "console.info('Saved jwt_token_admin for user:', jsonData.user.email);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/auth/login",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "403 Forbidden - Admin Generating Study Items",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403 Forbidden', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Error response has FORBIDDEN code and no items created', function () {",
+                  "    pm.expect(jsonData.code).to.eql('FORBIDDEN');",
+                  "    pm.expect(jsonData.status).to.eql(403);",
+                  "    pm.expect(jsonData).to.not.have.property('data');",
+                  "    pm.expect(jsonData.message).to.be.a('string').and.not.empty;",
+                  "});",
+                  "console.info('403 Forbidden Admin message:', jsonData.message);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"topic_ids\": [\n    {{studyTopicId}}\n  ],\n  \"items_per_topic\": 3\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/courses/{{course_id}}/study-items/generate",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "courses",
+                "{{course_id}}",
+                "study-items",
+                "generate"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "401 Unauthorized - Generate Without Token",
           "event": [
             {

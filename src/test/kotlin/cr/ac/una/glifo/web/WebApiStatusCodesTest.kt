@@ -1,6 +1,7 @@
 package cr.ac.una.glifo.web
 
 import cr.ac.una.glifo.course.repository.CourseRepository
+import cr.ac.una.glifo.security.JwtProvider
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.endsWith
 import org.hamcrest.Matchers.hasItems
@@ -38,6 +39,7 @@ class WebApiStatusCodesTest {
 
     @Autowired lateinit var context: WebApplicationContext
     @Autowired lateinit var courseRepository: CourseRepository
+    @Autowired lateinit var jwtProvider: JwtProvider
 
     private lateinit var mvc: MockMvc
     private val json = JsonMapper.builder().findAndAddModules().build()
@@ -60,6 +62,7 @@ class WebApiStatusCodesTest {
 
     private fun student() = bearer("estudiante@est.una.ac.cr", "Estudiante123")
     private fun teacher() = bearer("docente@una.ac.cr", "Docente123")
+    private fun admin() = bearer("admin@una.ac.cr", "Admin1234")
     private fun calculusId() = courseRepository.findByJoinCode("GLF-CALC1")!!.id
 
     /** Crea un apunte válido y devuelve su id. */
@@ -218,7 +221,93 @@ class WebApiStatusCodesTest {
         mvc.get(notes).andExpect {
             status { isUnauthorized() }
             jsonPath("$.status") { value(401) }
+            jsonPath("$.error") { value("Unauthorized") }
             jsonPath("$.code") { value("UNAUTHORIZED") }
+            jsonPath("$.message") { value("Tu sesión expiró. Iniciá sesión de nuevo.") }
+            jsonPath("$.timestamp") { isNotEmpty() }
+            jsonPath("$.path") { value(notes) }
+            jsonPath("$.subErrors") { doesNotExist() }
+        }
+    }
+
+    @Test
+    fun `un token expirado responde 401 UNAUTHORIZED con ApiError`() {
+        val expiredToken = "Bearer " + jwtProvider.generateToken(
+            email = "estudiante@est.una.ac.cr",
+            userId = 1L,
+            authorities = listOf("NOTE_READ_OWN"),
+            expirationMsOverride = -60000L
+        )
+
+        mvc.get(notes) {
+            header("Authorization", expiredToken)
+        }.andExpect {
+            status { isUnauthorized() }
+            jsonPath("$.status") { value(401) }
+            jsonPath("$.error") { value("Unauthorized") }
+            jsonPath("$.code") { value("UNAUTHORIZED") }
+            jsonPath("$.message") { value("Tu sesión expiró. Iniciá sesión de nuevo.") }
+            jsonPath("$.timestamp") { isNotEmpty() }
+            jsonPath("$.path") { value(notes) }
+            jsonPath("$.subErrors") { doesNotExist() }
+        }
+    }
+
+    @Test
+    fun `un token con firma invalida responde 401 UNAUTHORIZED`() {
+        val validToken = jwtProvider.generateToken(
+            email = "estudiante@est.una.ac.cr",
+            userId = 1L,
+            authorities = listOf("NOTE_READ_OWN")
+        )
+        val tamperedToken = "Bearer " + validToken.substring(0, validToken.length - 6) + "xxxxxx"
+
+        mvc.get(notes) {
+            header("Authorization", tamperedToken)
+        }.andExpect {
+            status { isUnauthorized() }
+            jsonPath("$.status") { value(401) }
+            jsonPath("$.code") { value("UNAUTHORIZED") }
+        }
+    }
+
+    @Test
+    fun `un estudiante consultando cursos responde 200 con COURSE_READ`() {
+        mvc.get("/api/v1/courses") {
+            header("Authorization", student())
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.data") { isArray() }
+        }
+    }
+
+    @Test
+    fun `un admin intentando borrar un apunte responde 403 FORBIDDEN por falta de NOTE_DELETE_OWN`() {
+        val noteId = createNote(student())
+
+        mvc.delete("$notes/$noteId") {
+            header("Authorization", admin())
+        }.andExpect {
+            status { isForbidden() }
+            jsonPath("$.status") { value(403) }
+            jsonPath("$.error") { value("Forbidden") }
+            jsonPath("$.code") { value("FORBIDDEN") }
+            jsonPath("$.message") { value("No tenés permiso para realizar esta acción") }
+            jsonPath("$.path") { value("$notes/$noteId") }
+        }
+    }
+
+    @Test
+    fun `un admin intentando crear un apunte responde 403 FORBIDDEN por falta de NOTE_WRITE_OWN`() {
+        mvc.post(notes) {
+            header("Authorization", admin())
+            contentType = MediaType.APPLICATION_JSON
+            content = """{"course_id":${calculusId()},"title":"Admin Note","class_date":"2026-10-01"}"""
+        }.andExpect {
+            status { isForbidden() }
+            jsonPath("$.status") { value(403) }
+            jsonPath("$.code") { value("FORBIDDEN") }
+            jsonPath("$.message") { value("No tenés permiso para realizar esta acción") }
         }
     }
 

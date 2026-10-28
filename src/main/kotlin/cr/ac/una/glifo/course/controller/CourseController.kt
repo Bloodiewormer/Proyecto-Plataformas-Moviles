@@ -32,10 +32,12 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 class CourseController(private val courseService: CourseService) {
 
     @GetMapping
+    @PreAuthorize("hasAuthority('COURSE_READ')")
     fun getCourses(@AuthenticationPrincipal user: GlifoUserDetails): ResponseEntity<ApiResponse<List<CourseResponse>>> =
         ResponseEntity.ok(ApiResponse(data = courseService.getUserCourses(user.userId)))
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('COURSE_READ')")
     fun getCourse(
         @PathVariable @Positive(message = "El id del curso debe ser positivo") id: Long
     ): ResponseEntity<ApiResponse<CourseResponse>> =
@@ -66,6 +68,7 @@ class CourseController(private val courseService: CourseService) {
     }
 
     @GetMapping("/{id}/topics")
+    @PreAuthorize("hasAuthority('COURSE_READ')")
     fun getCourseTopics(@PathVariable id: Long): ResponseEntity<ApiResponse<List<SyllabusTopicResponse>>> {
         val response = courseService.getCourseTopics(id)
         return ResponseEntity.ok(ApiResponse(data = response))

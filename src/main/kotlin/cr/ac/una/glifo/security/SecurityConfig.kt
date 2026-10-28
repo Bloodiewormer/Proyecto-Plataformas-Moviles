@@ -18,6 +18,8 @@ import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import org.springframework.web.cors.CorsConfigurationSource
+import cr.ac.una.glifo.common.exception.ApiError
+import tools.jackson.databind.ObjectMapper
 
 @Configuration
 @EnableWebSecurity
@@ -25,6 +27,7 @@ import org.springframework.web.cors.CorsConfigurationSource
 class SecurityConfig(
     private val jwtFilter: JwtFilter,
     private val corsConfigurationSource: CorsConfigurationSource,
+    private val objectMapper: ObjectMapper,
     @Value("\${url.auth}") private val authUrl: String,
     @Value("\${url.health}") private val healthUrl: String
 ) {
@@ -82,9 +85,14 @@ class SecurityConfig(
     ) {
         response.status = status.value()
         response.contentType = "application/json;charset=UTF-8"
-        response.writer.write(
-            """{"status":${status.value()},"error":"${status.reasonPhrase}","code":"$code",""" +
-                """"message":"$message","timestamp":"${Instant.now()}","path":"${request.requestURI}"}"""
+        val error = ApiError(
+            status = status.value(),
+            error = status.reasonPhrase,
+            code = code,
+            message = message,
+            timestamp = Instant.now(),
+            path = request.requestURI
         )
+        response.writer.write(objectMapper.writeValueAsString(error))
     }
 }

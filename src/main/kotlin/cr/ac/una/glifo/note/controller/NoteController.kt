@@ -41,6 +41,7 @@ class NoteController(
 ) {
 
     @GetMapping
+    @PreAuthorize("hasAuthority('NOTE_READ_OWN')")
     fun getNotes(
         @RequestParam(required = false) @Positive(message = "El curso no es válido") courseId: Long?,
         @AuthenticationPrincipal user: GlifoUserDetails
@@ -48,6 +49,7 @@ class NoteController(
         ResponseEntity.ok(ApiResponse(data = noteService.getNotesByUser(user.userId, courseId)))
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('NOTE_READ_OWN')")
     fun getNote(
         @PathVariable @Positive(message = "El id del apunte debe ser positivo") id: Long,
         @AuthenticationPrincipal user: GlifoUserDetails
@@ -56,6 +58,7 @@ class NoteController(
 
     /** 201 Created con la ubicación del recurso nuevo en el encabezado Location. */
     @PostMapping(consumes = [MediaType.APPLICATION_JSON_VALUE])
+    @PreAuthorize("hasAuthority('NOTE_WRITE_OWN')")
     fun createNote(
         @Valid @RequestBody request: CreateNoteRequest,
         @AuthenticationPrincipal user: GlifoUserDetails
@@ -67,6 +70,7 @@ class NoteController(
     }
 
     @PutMapping("/{id}", consumes = [MediaType.APPLICATION_JSON_VALUE])
+    @PreAuthorize("hasAuthority('NOTE_WRITE_OWN')")
     fun updateNote(
         @PathVariable @Positive(message = "El id del apunte debe ser positivo") id: Long,
         @Valid @RequestBody request: UpdateNoteRequest,
@@ -75,6 +79,7 @@ class NoteController(
         ResponseEntity.ok(ApiResponse(data = noteService.updateNote(id, user.userId, request)))
 
     @PatchMapping("/{id}/status", consumes = [MediaType.APPLICATION_JSON_VALUE])
+    @PreAuthorize("hasAuthority('NOTE_WRITE_OWN')")
     fun updateNoteStatus(
         @PathVariable @Positive(message = "El id del apunte debe ser positivo") id: Long,
         @Valid @RequestBody request: UpdateNoteStatusRequest,
@@ -84,6 +89,7 @@ class NoteController(
 
     /** 204 No Content: se borró y no hay nada que devolver. */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('NOTE_DELETE_OWN')")
     fun deleteNote(
         @PathVariable @Positive(message = "El id del apunte debe ser positivo") id: Long,
         @AuthenticationPrincipal user: GlifoUserDetails
@@ -93,6 +99,7 @@ class NoteController(
     }
 
     @PostMapping("/{id}/pages", consumes = [MediaType.APPLICATION_JSON_VALUE])
+    @PreAuthorize("hasAuthority('NOTE_WRITE_OWN')")
     fun uploadPage(
         @PathVariable @Positive(message = "El id del apunte debe ser positivo") id: Long,
         @Valid @RequestBody request: CreateNotePageRequest,
@@ -102,6 +109,7 @@ class NoteController(
         ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse(data = noteService.addPage(id, user.userId, request)))
 
     @GetMapping("/{id}/pages")
+    @PreAuthorize("hasAuthority('NOTE_READ_OWN')")
     fun getPages(
         @PathVariable @Positive(message = "El id del apunte debe ser positivo") id: Long,
         @AuthenticationPrincipal user: GlifoUserDetails
