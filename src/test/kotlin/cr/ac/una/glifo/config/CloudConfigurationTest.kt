@@ -1,5 +1,10 @@
 package cr.ac.una.glifo.config
 
+import cr.ac.una.glifo.ops.config.FcmProperties
+import cr.ac.una.glifo.ops.fcm.FcmErrorKind
+import cr.ac.una.glifo.ops.fcm.FcmSendOutcome
+import cr.ac.una.glifo.ops.fcm.FcmTargetedMessage
+import cr.ac.una.glifo.ops.fcm.FirebaseAdminFcmClient
 import org.junit.jupiter.api.Test
 import org.springframework.boot.context.properties.bind.Bindable
 import org.springframework.boot.context.properties.bind.Binder
@@ -14,7 +19,7 @@ import kotlin.test.assertFailsWith
 
 class CloudConfigurationTest {
     private val deploymentVariables = mapOf<String, Any>(
-        "DB_JDBC_URL" to "jdbc:postgresql://database.invalid:5432/glifo?sslmode=require",
+        "DB_JDBC_URL" to "jdbc:postgresql://database.invalid:5432/glifo?sslmode=verify-full",
         "DB_USERNAME" to "cloud-user",
         "DB_PASSWORD" to "fixture-password",
         "JWT_SECRET" to "fixture-only-signing-key-never-for-deployment",
@@ -95,7 +100,7 @@ class CloudConfigurationTest {
         val sources = MutablePropertySources()
         sources.addLast(ResourcePropertySource("classpath:application.properties"))
         val development = PropertySourcesPropertyResolver(sources)
-        listOf("url.api.v1", "url.health", "url.auth", "url.courses", "url.enrollments", "url.notes")
+        listOf("url.api.v1", "url.health", "url.auth", "url.courses", "url.enrollments", "url.notes", "url.devices", "url.sync")
             .forEach { property ->
                 assertEquals(development.getRequiredProperty(property), cloud.getRequiredProperty(property), property)
             }
@@ -144,5 +149,41 @@ class CloudConfigurationTest {
         val cloudKeys = ResourcePropertySource("classpath:application-cloud.properties").propertyNames.toSet()
         val intentionallyExcluded = setOf("spring.profiles.active", "spring.config.import")
         assertEquals(emptySet(), developmentKeys - cloudKeys - intentionallyExcluded)
+    }
+
+    @Test
+    fun cloudDisablesFcmAndCredentialDiscoveryByDefault() {
+        val defaults = resolver(includeDevelopment = false)
+        assertEquals("false", defaults.getRequiredProperty("glifo.fcm.enabled"))
+        assertEquals("false", defaults.getRequiredProperty("glifo.fcm.use-application-default"))
+        assertEquals("", defaults.getRequiredProperty("glifo.fcm.credentials-path"))
+        assertEquals("", defaults.getRequiredProperty("glifo.fcm.credentials-file"))
+        val client = FirebaseAdminFcmClient(FcmProperties(
+            enabled = defaults.getRequiredProperty("glifo.fcm.enabled").toBooleanStrict(),
+            credentialsPath = "missing-fixture-credentials.json"
+        ))
+        val outcome = client.send(FcmTargetedMessage("fixture-token", "fixture-event", emptyMap()))
+        val failure = outcome as FcmSendOutcome.Failed
+        assertEquals(FcmErrorKind.NOT_CONFIGURED, failure.errorKind)
+        assertEquals("FCM_DISABLED", failure.errorCode)
+    }
+
+    @Test
+    fun cloudFcmRequiresExplicitConfiguration() {
+        val configured = resolver(mapOf(
+            "GLIFO_FCM_ENABLED" to "true",
+            "GLIFO_FCM_PROJECT_ID" to "fixture-project",
+            "GLIFO_FCM_CREDENTIALS_PATH" to "/run/secrets/fixture.json",
+            "GLIFO_FCM_CREDENTIALS_FILE" to "/run/secrets/alias.json",
+            "GLIFO_FCM_MAX_ATTEMPTS" to "2",
+            "GLIFO_FCM_RETRY_BACKOFF_MS" to "100"
+        ), includeDevelopment = false)
+        assertEquals("true", configured.getRequiredProperty("glifo.fcm.enabled"))
+        assertEquals("fixture-project", configured.getRequiredProperty("glifo.fcm.project-id"))
+        assertEquals("/run/secrets/fixture.json", configured.getRequiredProperty("glifo.fcm.credentials-path"))
+        assertEquals("/run/secrets/alias.json", configured.getRequiredProperty("glifo.fcm.credentials-file"))
+        assertEquals("false", configured.getRequiredProperty("glifo.fcm.use-application-default"))
+        assertEquals("2", configured.getRequiredProperty("glifo.fcm.max-attempts"))
+        assertEquals("100", configured.getRequiredProperty("glifo.fcm.retry-backoff-ms"))
     }
 }

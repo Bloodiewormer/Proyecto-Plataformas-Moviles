@@ -1,8 +1,8 @@
 # Cloud deployment of the monolithic backend
 
-Status: deployment preparation for issue frontend#49. Local sanitized-image checks passed. After explicit authorization, the existing Neon production database was initialized once with the reviewed SQL; read-only catalog, restricted-role and Java21 JDBC/TLS checks passed. No image has been published and no remote application deployment or HTTP end-to-end check has run. Render deployment, human review and issue completion remain pending.
+Status: the original reviewed baseline is initialized in Neon and the preparation branch is published. Upstream FCM changes are now integrated in an isolated local candidate with cloud configuration and an incremental migration; local tests and image/HTTP smoke passed. This new migration has NOT been applied to Neon and the integration has no merge commit or push. Independent/human review, exact remote authorization and Render deployment remain pending.
 
-Publication gate: upstream main has advanced to 3da8b04 with FCM schema/configuration changes. This preparation branch is still based on 6e8d5a0. Do not merge or deploy updated main using the old baseline without reviewed integration and an independently authorized incremental migration. See the publication checkpoint below.
+Publication gate: the isolated candidate incorporates main3da8b04 without changing the original checkout. Do not deploy updated code against Neon until its separately reviewed incremental migration is explicitly authorized and verified there. Previous bootstrap/push approvals do not cover this new operation.
 
 ## Artifact and configuration
 
@@ -32,6 +32,13 @@ Set these at runtime through the provider's secret controls. Never pass credenti
 | OPENAI_MODEL | AI model identifier | Optional; retains the existing application default, gpt-4o-mini |
 | OPENAI_BASE_URL | AI API endpoint | Optional; retains the existing application default. Send no credential to an unreviewed endpoint |
 | OPENAI_TIMEOUT_SECONDS | AI request timeout | Optional; default 60 |
+| GLIFO_FCM_ENABLED | Explicit FCM opt-in | Optional, default false; keep legacy FCM_ENABLED unset/false; enabling sends needs separate approval |
+| GLIFO_FCM_PROJECT_ID | Firebase project ID | Optional, upstream default glifoapp; verify against the selected private credentials before enabling |
+| GLIFO_FCM_CREDENTIALS_PATH | Private service-account file path | Empty by default; never embed JSON in the image/repository |
+| GLIFO_FCM_CREDENTIALS_FILE | Alternative private credential path | Empty by default; prefer one explicit configured path |
+| GLIFO_FCM_USE_APPLICATION_DEFAULT | Credential discovery opt-in | Optional, default false; do not enable implicitly |
+| GLIFO_FCM_MAX_ATTEMPTS | Bounded send attempts | Optional, default 3; current service clamps to 1-5 |
+| GLIFO_FCM_RETRY_BACKOFF_MS | Retry delay milliseconds | Optional, default 200 |
 
 Required means the operator must supply the variable, not that every missing variable produces the same startup error. Strict Spring property resolution rejects unresolved markers, but the actual Boot Binder preserves unresolved DB markers as literal strings. Tests verify that behavior without connecting to PostgreSQL. A missing DB setting therefore has no development fallback, but its failure may appear during driver/connection/authentication initialization rather than placeholder resolution. A successful configuration unit test is not proof of a successful application startup.
 
@@ -185,6 +192,24 @@ A read-only remote check and fetch found origin/main at 3da8b04fcab8517f0f0d68ed
 
 Before deployment from updated main, integrate the upstream changes in an isolated checkout, account for new cloud configuration/credentials without enabling unapproved external calls, prepare and test a non-destructive incremental migration from the already-applied baseline, and obtain explicit authorization for that new remote schema operation. Do not rerun or silently regenerate the applied bootstrap, use Hibernate update/create, or discard protected local changes. No such migration, merge, commit, push or deployment was performed at this checkpoint.
 
+## Isolated FCM integration candidate: 2026-10-28
+
+A separate local worktree, C:/Users/Bloodie/.t3/worktrees/glifo49-fcm-integration on chore/49-cloud-fcm-integration, combines published preparation 0cba94b with upstream main 3da8b04 using a conflict-free, uncommitted merge. The original checkout and its protected user changes were not modified. No merge commit, new push, PR or remote migration was created for this integration.
+
+The cloud profile now provides url.devices/url.sync and all new FCM keys. FCM and application-default credential discovery are disabled by default, with empty credential paths; actual sends remain out of scope. The candidate [incremental migration](db/049-fcm-incremental.md) adds only the mapped Device/Notification columns, constraints and indexes after the existing baseline. It rejects populated target tables, wrong database/user, missing baseline ownership/role, unexpected original token type, partial migration and replay. Exclusive table locks protect the emptiness check; no historical data is rewritten. Runtime grants and reference catalogs are unchanged. The applied bootstrap remains the original published LF blob SHA256 9b0306e216ed6beea0f6fa2de3c441c763f81f9e4c814ff58f4039971d7baf82; it must not be rerun. The two psql files have scoped eol=lf attributes for deterministic future checkouts.
+
+Candidate docs/db/049-fcm-incremental.psql SHA256: 769c237a84b9f936eb191106f88e9ee428d6e6db51ac3788bb2fed4eb7a7dd96. It has only run in disposable local fixtures. No additional Neon schema/data changes have been made. A separate exact-destination/hash/effects authorization is required before applying it remotely.
+
+The full safe filtered gate completed BUILD SUCCESSFUL in 59 seconds: CloudConfigurationTest 12, CloudFcmMigrationTest 8, ApiContractJsonTest 11, LatexValidatorTest 53 and FirebaseAdminFcmClientUnitTest 3; total 87 tests, zero failures/errors/skips. Migration tests are explicitly opt-in and create only random-name PostgreSQL18 containers with no network/ports and tmpfs data, through a NOSUPERUSER owner. One initial replay-test timeout was caused by waiting for a process before draining its long stdout; concurrent output capture fixed it. The focused eight migration cases and then the full gate passed. Neither existing glifo nor glifo_test was used.
+
+Docker build completed successfully. The inspected updated image is sha256:18ca1ab8a3aa7e797825d9c4ea0b6657c021f31d606ce5a7950bf021f9944848. Packaged base/cloud properties match, Hibernate is validate, SQL init is never, FCM defaults to disabled, and neither import.sql nor a Firebase credential JSON is present. Firebase Admin 9.4.3 is packaged from upstream. The regular host bootJar remains unsuitable for publication because it is not the sanitized artifact.
+
+A separate internal-network PostgreSQL18 fixture received the exact original LF baseline and new migration, then the actual updated image authenticated as glifo_runtime and started with Hibernate validate. At 512MiB/2CPU, application startup was 18.94 seconds, measured cgroup memory peak was 463699968 bytes and OOMKilled=false. There were no ERROR-level startup/smoke logs. This short local test is not Render0.1CPU hardware, a cold-start guarantee, load testing or evidence of stable memory headroom. The internal network exposed no public port; an attempted host-port query was not used for testing. The HTTP client ran inside the same internal network.
+
+All 13 HTTP checks passed: health, anonymous devices401, fixture registration/login/JWT/courses, device registration with a token longer than255 characters, token-safe response, persisted device list, sync completion, explicit non-success while FCM is disabled, idempotent replay preserving notification identity, and unlink204 with nullable token. Read-only local postchecks found one fixture user/device/sync-entry/notification, notification FAILED_PERMANENT with FCM_DISABLED and one attempt, and inactive device with null token. These are disposable fixture rows, not production data. No real Firebase delivery or Android end-to-end test was performed; external egress was unavailable.
+
+Sanitized evidence: C:/Users/Bloodie/AppData/Local/Temp/glifo49-fcm-validation-PrhmB7/validation-report.json, SHA256 585eda54cde19e9b6ac18c0bf2660925299ebea4f05eaeb9646223c5b74febc9, with application-sanitized.log, http-smoke.log and the temporary Java client source. Application/database containers, artifact reader and internal network were removed; all fixture data was tmpfs-only and fixture credential variables cleared. Existing user containers were not touched. The original checkout still contains only its prior protected changes. Independent reviews and human review remain pending. Five trailing-whitespace warnings in inherited upstream docs/db/schema.sql were left unchanged; the integration does not execute that demo seed.
+
 ## Sources checked on 2026-10-28
 
 - Spring Boot database initialization: https://docs.spring.io/spring-boot/how-to/data-initialization.html
@@ -192,3 +217,24 @@ Before deployment from updated main, integrate the upstream changes in an isolat
 - Render Docker deployments: https://render.com/docs/docker
 - Render ports and service setup: https://render.com/docs/web-services
 - Render health checks: https://render.com/docs/health-checks
+# Independent acceptance review of the local FCM candidate
+
+The independent SQL/configuration review found no required correction in its bounded scope. The acceptance review corroborated the five JUnit XML reports (87 tests, no failures, errors or skips), the migration hash and the recorded local HTTP results. Neither review executed the validation again or substitutes for human review.
+
+The acceptance review identified a weak assertion in the temporary HTTP client: two missing notification identifiers could compare equal after numeric conversion. The client now requires integral, positive identifiers in both responses before comparing them. This strengthened client has not been rerun; the existing validation report and client hash describe the earlier run, not the revised client. The earlier replay assertion therefore remains subject to that coverage limitation. The single-account smoke test also does not establish cross-owner isolation.
+
+Remote schema migration, deployment, remote HTTP writes and enabling FCM remain pending and require their own explicit authorization. Local acceptance does not close frontend issue 49.
+
+## Neon FCM incremental migration applied: 2026-10-28
+
+The user explicitly authorized only this migration after receiving the project, branch, database, command, script hash, effects and risk. Destination was revalidated immediately before execution with authenticated read-only Neon checks: project patient-boat-45032812 (glifo-app), organization org-lucky-paper-59961031, default production branch br-plain-leaf-b5041ubn, single read_write direct endpoint ep-broad-glitter-b5crra22, database neondb owned by neondb_owner, roles neondb_owner and glifo_runtime. A read-only transaction confirmed PostgreSQL 18.6, 21 public tables, the original 5 device and 6 notification columns and zero rows in both tables.
+
+The executable file SHA256 was rechecked as 769c237a84b9f936eb191106f88e9ee428d6e6db51ac3788bb2fed4eb7a7dd96 immediately before a single psql 18 execution from 18:48:25 to 18:48:29 UTC. It exited 0 and returned COMMIT. It was not retried. The client used verify-full with sslrootcert=system and the previously recorded public CA bundle mounted read-only; owner credentials were supplied through a private temporary env file that was deleted afterwards and never printed.
+
+Read-only postchecks confirmed 8 device columns, 13 notification columns, nullable varchar(512) fcm_token, the new uq_devices_user_installation, uq_notifications_idempotency, ck_notifications_status and fk_notifications_device constraints, idx_devices_user_active and idx_notifications_device_status, zero rows in devices, notifications and users, 21 public tables, 3 application roles, 16 privileges, and 75 glifo_runtime table grants including DML on both affected tables.
+
+Sanitized local evidence: migration.log SHA256 8af0db42d15fe791f0dd277010c1844825027877be333fac8cbc521c55427b6a and postcheck.log SHA256 4327dfb838731b42cc1a9bcd6e997ecd3b9563426891c93b6f0084ce15589ee8 in the glifo49-neon-mig-EdOe6E temporary directory; not versioned. The preexisting glifo-postgres container was not touched. The application was not started against Neon. Remote HTTP writes, enabling FCM, deployment, commit, push and GitHub mutations remain separately gated, and human review is pending.
+
+## Application validation against Neon: 2026-10-28
+
+After the migration, image glifo-api:issue49-fcm-local (sha256:18ca1ab8a3aa7e797825d9c4ea0b6657c021f31d606ce5a7950bf021f9944848) started locally against the Neon direct endpoint as glifo_runtime with JDBC verify-full, the cloud profile, Hibernate validate, SQL initialization disabled, FCM disabled, 512 MiB and port published only on 127.0.0.1. Schema validation passed and the application started in 20.06 seconds without OOM. GET /api/v1/health returned 200 UP; anonymous GET /api/v1/courses and /api/v1/devices returned 401. No HTTP writes were made. The container, temporary env file and private password file were removed; the JWT secret was random and discarded. This is not a Render deployment.

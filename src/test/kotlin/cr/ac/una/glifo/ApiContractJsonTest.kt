@@ -7,6 +7,11 @@ import cr.ac.una.glifo.glossary.dto.CreateGlossarySuggestionRequest
 import cr.ac.una.glifo.glossary.dto.GlossaryEntryResponse
 import cr.ac.una.glifo.note.dto.CreateNoteRequest
 import cr.ac.una.glifo.note.dto.NoteResponse
+import cr.ac.una.glifo.ops.dto.DeviceResponse
+import cr.ac.una.glifo.ops.dto.RegisterDeviceRequest
+import cr.ac.una.glifo.ops.dto.SyncCompleteRequest
+import cr.ac.una.glifo.ops.dto.SyncCompleteResponse
+import cr.ac.una.glifo.ops.dto.UpdateDeviceTokenRequest
 import cr.ac.una.glifo.study.dto.GenerateStudyItemsRequest
 import cr.ac.una.glifo.study.dto.StudyItemResponse
 import cr.ac.una.glifo.user.dto.AuthResponse
@@ -145,5 +150,70 @@ class ApiContractJsonTest {
         assertEquals(1, json["payload"]["schemaVersion"].asInt())
         assertEquals("FLASHCARD", json["payload"]["kind"].asString())
         assertTrue(json["payload"].has("sourceNoteIds"))
+    }
+
+    @Test
+    fun `contratos de registro de dispositivo y cierre de cola usan snake_case y nunca exponen fcm_token`() {
+        val registerReq = mapper.readValue(
+            """{"installation_id":"inst-12345678","fcm_token":"token-abcdef123456","platform":"ANDROID"}""",
+            RegisterDeviceRequest::class.java,
+        )
+        assertEquals("inst-12345678", registerReq.installationId)
+        assertEquals("token-abcdef123456", registerReq.fcmToken)
+        assertEquals("ANDROID", registerReq.platform)
+        assertFalse(registerReq.toString().contains("token-abcdef123456"))
+
+        val rotateReq = mapper.readValue(
+            """{"fcm_token":"token-rotated-9876543210"}""",
+            UpdateDeviceTokenRequest::class.java,
+        )
+        assertEquals("token-rotated-9876543210", rotateReq.fcmToken)
+        assertFalse(rotateReq.toString().contains("token-rotated-9876543210"))
+
+        val deviceResp = DeviceResponse(
+            id = 7L,
+            userId = 1L,
+            installationId = "inst-12345678",
+            platform = "ANDROID",
+            active = true,
+            tokenRegistered = true,
+            registeredAt = "2026-10-27T20:00:00Z",
+            updatedAt = "2026-10-27T20:05:00Z",
+        )
+        val deviceJson = mapper.readTree(mapper.writeValueAsString(deviceResp))
+        assertEquals(7L, deviceJson["id"].asLong())
+        assertEquals(1L, deviceJson["user_id"].asLong())
+        assertEquals("inst-12345678", deviceJson["installation_id"].asString())
+        assertTrue(deviceJson["is_active"].asBoolean())
+        assertTrue(deviceJson["token_registered"].asBoolean())
+        assertFalse(deviceJson.has("fcm_token"))
+        assertFalse(deviceJson.has("fcmToken"))
+
+        val syncReq = mapper.readValue(
+            """{"device_id":7,"idempotency_key":"550e8400-e29b-41d4-a716-446655440000","uploaded_count":3,"pending_count":0,"failed_count":0,"note_ids":[10,11]}""",
+            SyncCompleteRequest::class.java,
+        )
+        assertEquals(7L, syncReq.deviceId)
+        assertEquals("550e8400-e29b-41d4-a716-446655440000", syncReq.idempotencyKey)
+        assertEquals(3, syncReq.uploadedCount)
+        assertEquals(listOf(10L, 11L), syncReq.noteIds)
+
+        val syncResp = SyncCompleteResponse(
+            syncEntryId = 15L,
+            notificationId = 22L,
+            deviceId = 7L,
+            idempotencyKey = "550e8400-e29b-41d4-a716-446655440000",
+            queueStatus = "DONE",
+            notificationStatus = "ACCEPTED",
+            duplicate = false,
+            uploadedCount = 3,
+            completedAt = "2026-10-27T20:06:00Z",
+        )
+        val syncJson = mapper.readTree(mapper.writeValueAsString(syncResp))
+        assertEquals(15L, syncJson["sync_entry_id"].asLong())
+        assertEquals(22L, syncJson["notification_id"].asLong())
+        assertEquals(7L, syncJson["device_id"].asLong())
+        assertEquals("ACCEPTED", syncJson["notification_status"].asString())
+        assertEquals(3, syncJson["uploaded_count"].asInt())
     }
 }

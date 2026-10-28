@@ -11,4 +11,6 @@ interface SyncQueueRepository : JpaRepository<SyncQueueEntry, Long> {
     fun findByIdempotencyKey(key: UUID): SyncQueueEntry?
     fun findByUserIdAndStatus(userId: Long, status: String): List<SyncQueueEntry>
     fun existsByIdempotencyKey(key: UUID): Boolean
+    fun existsByUserIdAndDeviceIdAndStatusIn(userId: Long, deviceId: Long, statuses: Collection<String>): Boolean
+    fun findByUserIdAndDeviceIdOrderByCreatedAtDesc(userId: Long, deviceId: Long): List<SyncQueueEntry>
 }

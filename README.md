@@ -37,7 +37,7 @@ cr.ac.una.glifo
 ├── note/                    apuntes y sus páginas
 ├── study/                   ítems de estudio, intentos, repaso
 ├── glossary/                sugerencias de glosario
-├── ops/                     dispositivos, cola de sync, notificaciones, costos de IA
+├── ops/                     dispositivos, cola de sync, notificaciones push FCM, costos de IA
 ├── ai/                      orquestación de IA (pendiente de labs posteriores)
 ├── security/                JWT + Spring Security
 ├── config/                  CORS
@@ -95,7 +95,7 @@ datos JSONB).
 > La base tiene que estar en **UTF-8** (lo normal al instalar PostgreSQL en Windows): el
 > curso demo usa acentos y símbolos como `ε` y `δ`.
 
-> ⚠️ `spring.jpa.hibernate.ddl-auto=create` **borra y recrea las tablas en cada arranque**.
+> `spring.jpa.hibernate.ddl-auto=create` **borra y recrea las tablas en cada arranque**.
 > Es lo recomendado mientras se modifican las entidades; cuando haya datos que conservar,
 > cambiarlo a `update` en `application.properties`.
 
@@ -137,8 +137,8 @@ CREATE DATABASE glifo_test OWNER glifo;
 - `WebApiStatusCodesTest`: hace peticiones HTTP reales (MockMvc + login JWT) y verifica el
   código semántico de cada caso: 200, 201 con `Location`, 204, 400 con `subErrors`, 401,
   403, 404, 405, 409 y 415.
-- `GlifoApplicationTests`: levanta toda la aplicación, así que necesita la base `glifo`.
-- `DatabaseSchemaTest`: contra la base `glifo`, verifica las 21 tablas, las 7 columnas
+- `GlifoApplicationTests`: levanta toda la aplicación, así que necesita la base `glifo_test`.
+- `DatabaseSchemaTest`: contra la base `glifo_test`, verifica las 21 tablas, las 7 columnas
   JSONB, que los `CHECK`/`UNIQUE` rechacen datos inválidos, el borrado en cascada y
   consultas con operadores JSONB sobre el curso demo.
 
@@ -166,6 +166,11 @@ este backend sin modificar sus DTOs. Desde el emulador, la URL es
 | DELETE | `/api/v1/notes/{id}` | JWT | 204 sin cuerpo | 400, 404 |
 | POST | `/api/v1/notes/{id}/pages` | JWT | 201 `{data: página}` | 400, 404, 409 (ese `page_index` ya existe: la cola offline lo toma como "ya estaba") |
 | GET | `/api/v1/notes/{id}/pages` | JWT | 200 `{data: [página]}` con `regions` y `quality_metrics` JSONB | 400, 404 |
+| GET | `/api/v1/devices` | JWT | 200 `{data: [dispositivo]}` | 401 |
+| POST | `/api/v1/devices` | JWT | 201 / 200 `{data: dispositivo}` (registra o reconcilia por `installation_id`) | 400, 401, 415 |
+| PUT | `/api/v1/devices/{id}/token` | JWT | 200 `{data: dispositivo}` (rota `fcm_token` conservando `device_id`) | 400, 401, 403, 404 |
+| DELETE | `/api/v1/devices/{id}` | JWT | 204 sin cuerpo (desvincula `fcm_token` al cerrar sesión sin borrar la fila) | 400, 401, 403, 404 |
+| POST | `/api/v1/sync/complete` | JWT | 201 / 200 `{data: resultado}` (cierra cola offline y envía push FCM al `device_id`) | 400, 401, 403, 404, 409 (cola incompleta) |
 
 Además, para cualquier ruta: **404** si no existe, **405** si el método no está permitido,
 **415** si el `Content-Type` no es `application/json`, y **500** ante un error inesperado
@@ -255,6 +260,47 @@ backend. No se ejecuta. Si se cambian las entidades, se regenera con:
 
 ```bash
 ./gradlew bootRun --args="--server.port=18080 --spring.jpa.properties.jakarta.persistence.schema-generation.scripts.action=create --spring.jpa.properties.jakarta.persistence.schema-generation.scripts.create-target=docs/db/schema.sql --spring.jpa.properties.hibernate.hbm2ddl.delimiter=; --spring.jpa.properties.hibernate.format_sql=true"
+```
+
+### Adaptación no destructiva de una base existente (Issue #48)
+
+Si se cuenta con una base PostgreSQL existente en modo `update` o `validate` con registros previos en `devices` y `notifications`, se puede adaptar sin perder filas ejecutando:
+
+```sql
+ALTER TABLE devices
+    ADD COLUMN IF NOT EXISTS installation_id VARCHAR(64),
+    ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+
+UPDATE devices
+SET installation_id = 'legacy-device-' || id
+WHERE installation_id IS NULL;
+
+ALTER TABLE devices
+    ALTER COLUMN installation_id SET NOT NULL,
+    ALTER COLUMN fcm_token TYPE VARCHAR(512),
+    ALTER COLUMN fcm_token DROP NOT NULL;
+
+ALTER TABLE devices
+    DROP CONSTRAINT IF EXISTS uq_devices_user_installation,
+    ADD CONSTRAINT uq_devices_user_installation UNIQUE (user_id, installation_id);
+
+CREATE INDEX IF NOT EXISTS idx_devices_user_active ON devices (user_id, is_active);
+
+ALTER TABLE notifications
+    ADD COLUMN IF NOT EXISTS device_id BIGINT REFERENCES devices(id),
+    ADD COLUMN IF NOT EXISTS idempotency_key UUID UNIQUE,
+    ADD COLUMN IF NOT EXISTS status VARCHAR(24) NOT NULL DEFAULT 'PENDING',
+    ADD COLUMN IF NOT EXISTS attempts INTEGER NOT NULL DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS fcm_message_id VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS last_error VARCHAR(500),
+    ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now();
+
+ALTER TABLE notifications
+    DROP CONSTRAINT IF EXISTS ck_notifications_status,
+    ADD CONSTRAINT ck_notifications_status CHECK (status IN ('PENDING', 'ACCEPTED', 'FAILED_RETRYABLE', 'FAILED_PERMANENT'));
+
+CREATE INDEX IF NOT EXISTS idx_notifications_device_status ON notifications (device_id, status);
 ```
 
 ## Pendiente para otros issues

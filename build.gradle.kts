@@ -51,6 +51,9 @@ dependencies {
     // griega y cirílica (jlatexmath-font-greek/cyrillic), sin otras bibliotecas.
     implementation("org.scilab.forge:jlatexmath:1.0.7")
 
+    // --- Notificaciones push reales con Firebase Cloud Messaging (issue #48) ---
+    implementation("com.google.firebase:firebase-admin:9.4.3")
+
     // Sin Flyway: igual que en clase, el esquema lo genera Hibernate a partir de las
     // entidades (spring.jpa.hibernate.ddl-auto) y import.sql carga los datos (D-27).
 

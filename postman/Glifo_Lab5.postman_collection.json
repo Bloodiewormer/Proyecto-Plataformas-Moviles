@@ -2786,6 +2786,504 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "9. Dispositivos y Sincronización Push (FCM — Issue #48)",
+      "description": "Pruebas HTTP de contrato, autorización, idempotencia y ciclo de vida de dispositivos y cierre de cola offline (Issue #48). Nota: Postman valida el contrato HTTP, la persistencia e idempotencia en el servidor; la recepción visual de la notificación push requiere un dispositivo/emulador Android con Google Play Services y credenciales de Firebase Admin configuradas en el backend.",
+      "item": [
+        {
+          "name": "POST Register Device (Student)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201 Created or 200 OK', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Device registered with stable id and masked token', function () {",
+                  "    pm.expect(jsonData.data).to.be.an('object');",
+                  "    pm.expect(jsonData.data.id).to.be.a('number');",
+                  "    pm.expect(jsonData.data.token_registered).to.eql(true);",
+                  "    pm.expect(jsonData.data.fcm_token).to.be.undefined;",
+                  "    pm.environment.set('device_id', String(jsonData.data.id));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"installation_id\": \"{{installation_id}}\",\n  \"fcm_token\": \"{{fcm_token_placeholder}}\",\n  \"platform\": \"ANDROID\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/devices",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "devices"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PUT Rotate FCM Token (Student)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Preserves device_id after token rotation', function () {",
+                  "    pm.expect(String(jsonData.data.id)).to.eql(pm.environment.get('device_id'));",
+                  "    pm.expect(jsonData.data.is_active).to.eql(true);",
+                  "    pm.expect(jsonData.data.token_registered).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fcm_token\": \"fcm-placeholder-token-rotated-do-not-use-real-secret-0002\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/devices/{{device_id}}/token",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "devices",
+                "{{device_id}}",
+                "token"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Complete Offline Sync Queue (Student)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201 Created or 200 OK', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Returns sync completion and targeted device_id', function () {",
+                  "    pm.expect(String(jsonData.data.device_id)).to.eql(pm.environment.get('device_id'));",
+                  "    pm.expect(jsonData.data.queue_status).to.eql('DONE');",
+                  "    pm.expect(jsonData.data.notification_status).to.be.oneOf(['ACCEPTED', 'FAILED_RETRYABLE', 'FAILED_PERMANENT']);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": {{device_id}},\n  \"idempotency_key\": \"{{sync_idempotency_key}}\",\n  \"uploaded_count\": 2,\n  \"pending_count\": 0,\n  \"failed_count\": 0,\n  \"note_ids\": []\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/sync/complete",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "sync",
+                "complete"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Complete Offline Sync Queue - Idempotent Retry (Student)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Marks retry as duplicate without creating second entry', function () {",
+                  "    pm.expect(jsonData.data.duplicate).to.eql(true);",
+                  "    pm.expect(jsonData.data.idempotency_key).to.eql(pm.environment.get('sync_idempotency_key'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": {{device_id}},\n  \"idempotency_key\": \"{{sync_idempotency_key}}\",\n  \"uploaded_count\": 2,\n  \"pending_count\": 0,\n  \"failed_count\": 0,\n  \"note_ids\": []\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/sync/complete",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "sync",
+                "complete"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "409 Conflict - Complete Sync While Queue Has Pending Items",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 409 Conflict', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Error code is SYNC_QUEUE_INCOMPLETE', function () {",
+                  "    pm.expect(jsonData.code).to.eql('SYNC_QUEUE_INCOMPLETE');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": {{device_id}},\n  \"idempotency_key\": \"550e8400-e29b-41d4-a716-446655440099\",\n  \"uploaded_count\": 1,\n  \"pending_count\": 1,\n  \"failed_count\": 0,\n  \"note_ids\": []\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/sync/complete",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "sync",
+                "complete"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "403 Forbidden - Teacher Cannot Notify Student Device",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403 Forbidden', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Error code is FORBIDDEN', function () {",
+                  "    pm.expect(jsonData.code).to.eql('FORBIDDEN');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_teacher}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": {{device_id}},\n  \"idempotency_key\": \"550e8400-e29b-41d4-a716-446655440077\",\n  \"uploaded_count\": 1,\n  \"pending_count\": 0,\n  \"failed_count\": 0,\n  \"note_ids\": []\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/sync/complete",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "sync",
+                "complete"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "400 Bad Request - Register Device With Invalid Payload",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400 Bad Request', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Error code is VALIDATION_FAILED', function () {",
+                  "    pm.expect(jsonData.code).to.eql('VALIDATION_FAILED');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"installation_id\": \"short\",\n  \"fcm_token\": \"bad\",\n  \"platform\": \"DESKTOP\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/devices",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "devices"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "401 Unauthorized - Complete Sync Without Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401 Unauthorized', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Error code is UNAUTHORIZED', function () {",
+                  "    pm.expect(jsonData.code).to.eql('UNAUTHORIZED');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": {{device_id}},\n  \"idempotency_key\": \"{{sync_idempotency_key}}\",\n  \"uploaded_count\": 1,\n  \"pending_count\": 0,\n  \"failed_count\": 0,\n  \"note_ids\": []\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/sync/complete",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "sync",
+                "complete"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Unlink Device on Logout (Student)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 204 No Content', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/devices/{{device_id}}",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "devices",
+                "{{device_id}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
     }
   ]
 }
