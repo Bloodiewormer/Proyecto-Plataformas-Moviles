@@ -3,6 +3,7 @@ package cr.ac.una.glifo.security
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import org.springframework.security.authentication.AccountStatusUserDetailsChecker
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UserDetailsService
@@ -16,6 +17,8 @@ class JwtFilter(
     private val userDetailsService: UserDetailsService
 ) : OncePerRequestFilter() {
 
+    private val userDetailsChecker = AccountStatusUserDetailsChecker()
+
     override fun doFilterInternal(
         request: HttpServletRequest,
         response: HttpServletResponse,
@@ -27,6 +30,7 @@ class JwtFilter(
             if (jwt != null && jwtProvider.validateToken(jwt)) {
                 val username = jwtProvider.getUsernameFromToken(jwt)
                 val userDetails = userDetailsService.loadUserByUsername(username)
+                userDetailsChecker.check(userDetails)
 
                 val authentication = UsernamePasswordAuthenticationToken(
                     userDetails, null, userDetails.authorities
