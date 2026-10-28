@@ -11,7 +11,9 @@ import org.springframework.http.HttpStatusCode
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.security.access.AccessDeniedException
+import org.springframework.security.authentication.AccountStatusException
 import org.springframework.security.authentication.BadCredentialsException
+import org.springframework.security.core.AuthenticationException
 import org.springframework.web.HttpMediaTypeNotAcceptableException
 import org.springframework.web.HttpMediaTypeNotSupportedException
 import org.springframework.web.HttpRequestMethodNotSupportedException
@@ -157,8 +159,8 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     fun handleIllegalArgument(ex: IllegalArgumentException, request: HttpServletRequest): ResponseEntity<Any>? =
         respond(HttpStatus.BAD_REQUEST, "BAD_REQUEST", ex.message ?: "Solicitud inválida", request.requestURI)
 
-    @ExceptionHandler(BadCredentialsException::class)
-    fun handleBadCredentials(ex: BadCredentialsException, request: HttpServletRequest): ResponseEntity<Any>? =
+    @ExceptionHandler(BadCredentialsException::class, AccountStatusException::class)
+    fun handleAuthenticationFailure(ex: AuthenticationException, request: HttpServletRequest): ResponseEntity<Any>? =
         respond(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "Credenciales inválidas", request.requestURI)
 
     /** @PreAuthorize rechazó la operación (por ejemplo, un estudiante creando un curso). */
