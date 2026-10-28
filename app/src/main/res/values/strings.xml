@@ -574,4 +574,12 @@
     <string name="note_reconstruct_error_ai_unavailable">El servicio de IA no está disponible en este momento. Intentalo más tarde.</string>
     <string name="note_reconstruct_error_no_pages">Esta nota todavía no tiene páginas subidas en el servidor.</string>
     <string name="note_reconstruct_error_not_synced">El apunte todavía no se ha sincronizado con el servidor.</string>
+    <!-- Lab 6: notificaciones push FCM dirigidas por device_id (#48) -->
+    <string name="sync_notification_channel_name">Offline queue sync</string>
+    <string name="sync_notification_channel_description">Notifications when this device finishes uploading its offline queue.</string>
+    <string name="sync_notification_title">Sync completed</string>
+    <string name="sync_notification_body_single">1 item from the offline queue was uploaded from this device.</string>
+    <string name="sync_notification_body_plural">%1$d items from the offline queue were uploaded from this device.</string>
+    <string name="sync_notification_permission_banner">Enable notification permission to receive an alert when the offline queue finishes uploading.</string>
+    <string name="sync_notification_permission_action">Allow</string>
 </resources>

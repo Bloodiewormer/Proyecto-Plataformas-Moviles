@@ -2,16 +2,16 @@
 
 The mobile application for **Glifo**, a resilient ingestion engine for handwritten notes, built with Kotlin and Jetpack Compose.
 
-##  Architecture
+## Architecture
 
 Following the **Screaming Architecture** principle, the project is organized by domain and capability:
 
 - `cr.ac.una.glifo.pipeline`: The core ingestion engine (N0–N3 escalation).
 - `cr.ac.una.glifo.feature`: Functional capabilities (auth, capture, note, coverage, study, course, admin).
-- `cr.ac.una.glifo.core`: Cross-cutting concerns (network, database, sync, UI theme).
+- `cr.ac.una.glifo.core`: Cross-cutting concerns (network, database, sync, push notifications, UI theme).
 - `cr.ac.una.glifo.di`: Hilt dependency injection modules.
 
-##  Tech Stack
+## Tech Stack
 
 - **UI:** Jetpack Compose (MVVM)
 - **Dependency Injection:** Hilt
@@ -21,6 +21,7 @@ Following the **Screaming Architecture** principle, the project is organized by 
 - **Image Processing:** OpenCV Android SDK
 - **OCR:** ML Kit Text Recognition
 - **Camera:** CameraX
+- **Push Notifications:** Firebase Cloud Messaging (`firebase-messaging` via Firebase BoM `33.10.0`)
 
 ## Mock API (Lab 3)
 
@@ -50,6 +51,29 @@ Deterministic error triggers for exercising `AppError` mapping:
 | `DELETE notes/{id}` | `id = 999` | `404` |
 
 Anything else on those routes falls through to the happy-path response.
+
+## Notificaciones Push FCM Dirigidas por `device_id` (Lab 6 — Issue #48)
+
+### Identidad de instalación, `device_id` y token FCM
+- `TokenManager` genera y conserva un `installation_id` estable (UUID de instalación de la app en `DataStore`, sin leer identificadores físicos sensibles del dispositivo).
+- Cuando `GlifoFirebaseMessagingService.onNewToken` recibe un token antes de iniciar sesión, se guarda localmente en `TokenManager`.
+- Al iniciar sesión (`AuthRepositoryImpl`) o al arrancar la app con sesión activa (`GlifoApplication`), `DevicePushManager.reconcileDeviceOnSessionStart()` invoca `POST /api/v1/devices` enviando `installation_id`, `platform = "ANDROID"` y el `fcm_token` actual. El servidor devuelve el `device_id` perteneciente a `(user_id, installation_id)`.
+- Si el token rota durante una sesión activa, `onNewToken` invoca `PUT /api/v1/devices/{id}/token`.
+- Al cerrar sesión (`SessionViewModel.logout()`), `DevicePushManager.unlinkDeviceOnLogoutAsync()` invoca `DELETE /api/v1/devices/{id}` y limpia las claves de sesión en `TokenManager` (preservando `installation_id` y `fcm_token` para el próximo login).
+
+### Detección del fin de la cola offline
+- En `SyncRepositoryImpl.syncNow()`, tras procesar las operaciones ejecutables en `sync_operations`, si `pendingCount() == 0` y `failed == 0`, se delega en `DevicePushManager.reportQueueCompletionIfNeeded(uploaded)`.
+- Solo se informa al servidor (`POST /api/v1/sync/complete`) cuando el mayor `id` con `status = 'DONE'` supera el último `id` ya reportado para ese usuario (`last_reported_sync_op_<userId>`).
+- La solicitud envía una clave de idempotencia determinista calculada sobre `(userId, installationId, fromOpId, toOpId)`. Si la llamada a `completeSync` falla por red o `5xx`, el worker devuelve `RetryLater` y reintenta con la misma `idempotency_key` sin volver a subir las páginas que ya están en `DONE`.
+
+### Recepción, canal y limitaciones del sistema operativo
+- El backend envía un mensaje FCM **data-only** (`kind = "SYNC_COMPLETE"`, `event_id`, `device_id`, `user_id`, `uploaded_count`), lo que garantiza que `GlifoFirebaseMessagingService.onMessageReceived` se ejecute de forma consistente tanto en **foreground** como en **background** sin que el sistema operativo duplique la notificación.
+- `SyncNotificationPresenter` valida que la preferencia `"Avisar cuando termine la cola"` esté activa, que `user_id` y `device_id` coincidan con la sesión activa, y deduplica por `event_id` en `TokenManager`.
+- El texto mostrado indica exclusivamente que terminó la subida de la cola sin conexión desde ese dispositivo, sin afirmar que haya finalizado la reconstrucción o generación por IA.
+- **Limitaciones del sistema operativo Android:**
+  - En Android 13+ (API 33+) el usuario debe conceder `android.permission.POST_NOTIFICATIONS` (solicitable desde Ajustes o desde la pantalla de Sincronización). Si el permiso es denegado o el canal `glifo_sync_channel` es silenciado, la app omite mostrar la notificación sin fallar.
+  - Se requiere un dispositivo o emulador con **Google Play Services** configurado y conectado a internet para recibir mensajes de FCM.
+  - Si el usuario fuerza la detención de la aplicación (*Force Stop*) desde los ajustes del sistema o si el fabricante aplica restricciones agresivas de segundo plano (*Doze* / *App Standby*), el sistema operativo retendrá o descartará la entrega hasta que el usuario vuelva a abrir la aplicación.
 
 ## Documentation
 

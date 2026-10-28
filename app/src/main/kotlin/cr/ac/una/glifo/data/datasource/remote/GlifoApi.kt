@@ -10,6 +10,7 @@ import cr.ac.una.glifo.data.dto.CreateGlossaryEntryRequest
 import cr.ac.una.glifo.data.dto.CreateNotePageRequest
 import cr.ac.una.glifo.data.dto.CreateNoteRequest
 import cr.ac.una.glifo.data.dto.CreateSyllabusTopicRequest
+import cr.ac.una.glifo.data.dto.DeviceResponse
 import cr.ac.una.glifo.data.dto.EnrollmentResponse
 import cr.ac.una.glifo.data.dto.GenerateStudyItemsRequest
 import cr.ac.una.glifo.data.dto.GlossaryEntryResponse
@@ -20,16 +21,21 @@ import cr.ac.una.glifo.data.dto.NoteDetailResponse
 import cr.ac.una.glifo.data.dto.NotePageResponse
 import cr.ac.una.glifo.data.dto.NoteResponse
 import cr.ac.una.glifo.data.dto.PublishSyllabusRequest
+import cr.ac.una.glifo.data.dto.RegisterDeviceRequest
 import cr.ac.una.glifo.data.dto.RegisterRequest
 import cr.ac.una.glifo.data.dto.ResolveGlossarySuggestionRequest
 import cr.ac.una.glifo.data.dto.StudyItemResponse
 import cr.ac.una.glifo.data.dto.SyllabusTopicResponse
+import cr.ac.una.glifo.data.dto.SyncCompleteRequest
+import cr.ac.una.glifo.data.dto.SyncCompleteResponse
+import cr.ac.una.glifo.data.dto.UpdateDeviceTokenRequest
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.PATCH
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -140,4 +146,23 @@ interface GlifoApi {
         @Path("courseId") courseId: Long,
         @Query("topicId") topicId: Long? = null
     ): ApiResponse<List<StudyItemResponse>>
+
+    // Registro de dispositivos y notificación de fin de cola offline (#48)
+    @GET("devices")
+    suspend fun listDevices(): ApiResponse<List<DeviceResponse>>
+
+    @POST("devices")
+    suspend fun registerDevice(@Body request: RegisterDeviceRequest): ApiResponse<DeviceResponse>
+
+    @PUT("devices/{id}/token")
+    suspend fun updateDeviceToken(
+        @Path("id") deviceId: Long,
+        @Body request: UpdateDeviceTokenRequest
+    ): ApiResponse<DeviceResponse>
+
+    @DELETE("devices/{id}")
+    suspend fun unlinkDevice(@Path("id") deviceId: Long): Response<Unit>
+
+    @POST("sync/complete")
+    suspend fun completeSync(@Body request: SyncCompleteRequest): ApiResponse<SyncCompleteResponse>
 }

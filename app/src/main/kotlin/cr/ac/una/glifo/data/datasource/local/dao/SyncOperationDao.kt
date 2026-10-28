@@ -33,6 +33,25 @@ interface SyncOperationDao {
     @Query("SELECT COUNT(*) FROM sync_operations WHERE note_id = :noteId AND status != 'DONE'")
     fun observePendingForNote(noteId: Long): Flow<Int>
 
+    /** Mayor ID de operación completada en la cola local, para detectar trabajo nuevo en #48. */
+    @Query("SELECT MAX(id) FROM sync_operations WHERE status = 'DONE'")
+    suspend fun maxDoneId(): Long?
+
+    /** Cantidad de operaciones completadas desde la última marca reportada al servidor (#48). */
+    @Query("SELECT COUNT(*) FROM sync_operations WHERE status = 'DONE' AND id > :afterId")
+    suspend fun countDoneAfter(afterId: Long): Int
+
+    /** IDs remotos de los apuntes involucrados en el tramo de sincronización completado (#48). */
+    @Query(
+        """
+        SELECT DISTINCT n.server_id
+        FROM sync_operations o
+        JOIN notes n ON n.id = o.note_id
+        WHERE o.status = 'DONE' AND o.id > :afterId AND n.server_id IS NOT NULL
+        """
+    )
+    suspend fun syncedServerNoteIdsAfter(afterId: Long): List<Long>
+
     @Query(
         """
         SELECT o.id, o.entity_type, o.note_id, n.title AS note_title, p.page_index,

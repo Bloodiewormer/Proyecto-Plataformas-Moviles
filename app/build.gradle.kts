@@ -94,10 +94,11 @@ dependencies {
 
     // OpenCV
     implementation(libs.opencv)
-    // Firebase Crashlytics & Analytics
+    // Firebase Crashlytics, Analytics & Cloud Messaging (#48)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.crashlytics)
     implementation(libs.firebase.analytics)
+    implementation(libs.firebase.messaging)
 
     // ML Kit — Pipeline N1: OCR local con el modelo latino empaquetado (sin llamadas de red)
     implementation(libs.mlkit.text.recognition)

@@ -1,5 +1,7 @@
 package cr.ac.una.glifo.data.repository
 
+import cr.ac.una.glifo.core.push.DevicePushManager
+import cr.ac.una.glifo.core.push.QueueCompletionReportOutcome
 import cr.ac.una.glifo.core.sync.SyncScheduler
 import cr.ac.una.glifo.data.datasource.local.dao.NoteDao
 import cr.ac.una.glifo.data.datasource.local.dao.SyncOperationDao
@@ -42,14 +44,32 @@ import javax.inject.Singleton
  * - **fallida**: otro 4xx que reintentar no arregla → queda FAILED hasta que el estudiante
  *   la reencole;
  * - **en espera**: una página cuyo apunte todavía no existe en el servidor.
+ *
+ * Cuando la cola queda efectivamente vacía (`pendingCount == 0` y sin fallos) y se subieron
+ * operaciones nuevas en este dispositivo, se informa el cierre del lote a `/api/v1/sync/complete`
+ * para disparar la notificación push FCM dirigida a este `device_id` (#48).
  */
 @Singleton
 class SyncRepositoryImpl @Inject constructor(
     private val api: GlifoApi,
     private val syncDao: SyncOperationDao,
     private val noteDao: NoteDao,
-    private val scheduler: SyncScheduler
+    private val scheduler: SyncScheduler,
+    private val devicePushManager: DevicePushManager?
 ) : SyncRepository {
+
+    constructor(
+        api: GlifoApi,
+        syncDao: SyncOperationDao,
+        noteDao: NoteDao,
+        scheduler: SyncScheduler
+    ) : this(
+        api = api,
+        syncDao = syncDao,
+        noteDao = noteDao,
+        scheduler = scheduler,
+        devicePushManager = null
+    )
 
     // Un solo vaciado a la vez: el worker y el botón "sincronizar ahora" podrían coincidir.
     private val runLock = Mutex()
@@ -122,7 +142,30 @@ class SyncRepositoryImpl @Inject constructor(
                 }
             }
         }
-        Result.Success(summary(uploaded, failed, SyncRunOutcome.Completed))
+
+        val remaining = syncDao.pendingCount()
+        if (remaining == 0 && failed == 0 && devicePushManager != null) {
+            val reportOutcome = devicePushManager.reportQueueCompletionIfNeeded(uploaded)
+            if (reportOutcome == QueueCompletionReportOutcome.RetryLater) {
+                return@withLock Result.Success(
+                    SyncRunSummary(
+                        uploaded = uploaded,
+                        failed = failed,
+                        remaining = remaining,
+                        outcome = SyncRunOutcome.RetryLater
+                    )
+                )
+            }
+        }
+
+        Result.Success(
+            SyncRunSummary(
+                uploaded = uploaded,
+                failed = failed,
+                remaining = remaining,
+                outcome = SyncRunOutcome.Completed
+            )
+        )
     }
 
     private suspend fun process(operation: SyncOperationEntity): Step {

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import cr.ac.una.glifo.core.datastore.ActiveCourseStore
 import cr.ac.una.glifo.core.network.SessionEvent
 import cr.ac.una.glifo.core.network.SessionEventBus
+import cr.ac.una.glifo.core.push.DevicePushManager
 import cr.ac.una.glifo.domain.model.User
 import cr.ac.una.glifo.domain.repository.SessionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -23,8 +24,20 @@ import javax.inject.Inject
 class SessionViewModel @Inject constructor(
     private val sessionRepository: SessionRepository,
     private val activeCourseStore: ActiveCourseStore,
-    private val sessionEventBus: SessionEventBus
+    private val sessionEventBus: SessionEventBus,
+    private val devicePushManager: DevicePushManager?
 ) : ViewModel() {
+
+    constructor(
+        sessionRepository: SessionRepository,
+        activeCourseStore: ActiveCourseStore,
+        sessionEventBus: SessionEventBus
+    ) : this(
+        sessionRepository = sessionRepository,
+        activeCourseStore = activeCourseStore,
+        sessionEventBus = sessionEventBus,
+        devicePushManager = null
+    )
 
     val currentUser: StateFlow<User?> = sessionRepository.currentUser
     val profilePhotoUri: StateFlow<String?> = sessionRepository.profilePhotoUri
@@ -35,6 +48,7 @@ class SessionViewModel @Inject constructor(
     fun logout() {
         activeCourseStore.clear()
         viewModelScope.launch {
+            devicePushManager?.unlinkDeviceOnLogout()
             sessionRepository.logout()
         }
     }

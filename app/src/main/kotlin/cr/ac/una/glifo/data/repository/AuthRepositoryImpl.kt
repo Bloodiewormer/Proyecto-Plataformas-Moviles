@@ -2,6 +2,7 @@ package cr.ac.una.glifo.data.repository
 
 import cr.ac.una.glifo.core.common.AppError
 import cr.ac.una.glifo.core.datastore.TokenManager
+import cr.ac.una.glifo.core.push.DevicePushManager
 import cr.ac.una.glifo.data.datasource.dummy.DummyAuthProvider
 import cr.ac.una.glifo.data.datasource.remote.GlifoApi
 import cr.ac.una.glifo.data.dto.AuthResponse
@@ -13,7 +14,6 @@ import cr.ac.una.glifo.domain.model.DemoAccountHint
 import cr.ac.una.glifo.domain.model.GlifoRole
 import cr.ac.una.glifo.domain.model.User
 import cr.ac.una.glifo.domain.repository.AuthRepository
-import okhttp3.ResponseBody
 import retrofit2.HttpException
 import java.io.IOException
 import javax.inject.Inject
@@ -33,8 +33,18 @@ import javax.inject.Inject
  */
 class AuthRepositoryImpl @Inject constructor(
     private val api: GlifoApi,
-    private val tokenManager: TokenManager
+    private val tokenManager: TokenManager,
+    private val devicePushManager: DevicePushManager?
 ) : AuthRepository {
+
+    constructor(
+        api: GlifoApi,
+        tokenManager: TokenManager
+    ) : this(
+        api = api,
+        tokenManager = tokenManager,
+        devicePushManager = null
+    )
 
     override suspend fun login(email: String, password: String): Result<User> =
         callApi { api.login(LoginRequest(email = email.trim(), password = password)) }
@@ -49,7 +59,7 @@ class AuthRepositoryImpl @Inject constructor(
         )
         return callApi { api.register(request) }
     }
-
+
     override suspend fun getDemoAccountHints(): Result<List<DemoAccountHint>> =
         Result.Success(DummyAuthProvider.demoAccounts.map { DemoAccountHint(it.email, it.password, it.role) })
 
@@ -62,7 +72,8 @@ class AuthRepositoryImpl @Inject constructor(
      *  - Any other HTTP status                 → [AppError.Server]
      *  - Anything unexpected                   → [AppError.Unknown]
      * On success, the JWT + user id/email are persisted via [TokenManager] so
-     * `AuthInterceptor` can attach it to every later call.
+     * `AuthInterceptor` can attach it to every later call, and the device + FCM token
+     * are registered/reconciled for push targeting (#48).
      */
     private suspend fun callApi(block: suspend () -> AuthResponse): Result<User> {
         return try {
@@ -72,6 +83,7 @@ class AuthRepositoryImpl @Inject constructor(
                 userId = response.user.id,
                 userEmail = response.user.email
             )
+            devicePushManager?.reconcileDeviceOnSessionStart()
             Result.Success(response.user.toDomain())
         } catch (e: IOException) {
             Result.Failure(AppError.NoConnection)

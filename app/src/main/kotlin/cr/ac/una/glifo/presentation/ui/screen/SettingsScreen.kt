@@ -1,5 +1,10 @@
 package cr.ac.una.glifo.presentation.ui.screen
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -24,6 +29,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
@@ -50,10 +56,16 @@ fun SettingsScreen(
     var allowN2 by remember { mutableStateOf(true) }
     var confirmN3 by remember { mutableStateOf(true) }
     var wifiOnly by remember { mutableStateOf(false) }
-    var notifyDone by remember { mutableStateOf(true) }
+    val notifyDone by viewModel.notifySyncDone.collectAsState()
     var confidenceThreshold by remember { mutableStateOf(0.70f) }
     val pendingCountState by viewModel.pendingCount.collectAsState()
     val pendingCount = (pendingCountState as? UiState.Success)?.data ?: 0
+
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        viewModel.setNotifySyncDone(granted)
+    }
 
     @Composable
     fun GlifoSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
@@ -251,7 +263,21 @@ fun SettingsScreen(
                 }
                 GlifoItem(compact = true, showBottomBorder = false) {
                     Text(stringResource(R.string.settings_notify_queue_done), fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                    GlifoSwitch(notifyDone) { notifyDone = it }
+                    GlifoSwitch(notifyDone) { enabled ->
+                        if (enabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            val granted = ContextCompat.checkSelfPermission(
+                                context,
+                                Manifest.permission.POST_NOTIFICATIONS
+                            ) == PackageManager.PERMISSION_GRANTED
+                            if (!granted) {
+                                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                            } else {
+                                viewModel.setNotifySyncDone(true)
+                            }
+                        } else {
+                            viewModel.setNotifySyncDone(enabled)
+                        }
+                    }
                 }
             }
 
