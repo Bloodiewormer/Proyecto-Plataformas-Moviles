@@ -9,6 +9,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.LaunchedEffect
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
@@ -17,6 +21,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import cr.ac.una.glifo.core.network.SessionEvent
 import cr.ac.una.glifo.core.ui.component.ActiveCourseUi
 import cr.ac.una.glifo.core.ui.component.COURSE_SWITCHER_ROUTE
 import cr.ac.una.glifo.core.ui.component.LocalActiveCourse
@@ -95,6 +100,21 @@ fun GlifoNavHost(
     // @Singleton, so every route below shares the same session state without
     // threading it through nav arguments.
     val sessionViewModel: SessionViewModel = hiltViewModel()
+    var sessionExpiredMessage by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(Unit) {
+        sessionViewModel.sessionEvents.collect { event ->
+            when (event) {
+                is SessionEvent.SessionExpired -> {
+                    sessionExpiredMessage = event.message
+                    sessionViewModel.logout()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            }
+        }
+    }
     val activeCourseViewModel: ActiveCourseViewModel = hiltViewModel()
     val activeCourseId by activeCourseViewModel.activeCourseId.collectAsState()
 
@@ -133,13 +153,17 @@ fun GlifoNavHost(
 
         composable(Screen.Login.route) {
             LoginScreen(
+                sessionExpiredMessage = sessionExpiredMessage,
                 onNavigateToRegister = {
+                    sessionExpiredMessage = null
                     navController.navigate(Screen.Register.route)
                 },
                 onNavigateToForgotPassword = {
+                    sessionExpiredMessage = null
                     navController.navigate(Screen.ForgotPassword.route)
                 },
                 onLoginSuccess = { role ->
+                    sessionExpiredMessage = null
                     val homeRoute = when (role) {
                         GlifoRole.Student -> Screen.Home.route
                         GlifoRole.Teacher -> Screen.HomeTeacher.route

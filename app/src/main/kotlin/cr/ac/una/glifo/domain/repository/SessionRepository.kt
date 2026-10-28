@@ -16,6 +16,6 @@ interface SessionRepository {
     val profilePhotoUri: StateFlow<String?>
 
     fun login(user: User)
-    fun logout()
+    suspend fun logout()
     fun setProfilePhotoUri(uri: String?)
 }

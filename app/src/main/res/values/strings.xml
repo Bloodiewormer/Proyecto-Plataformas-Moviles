@@ -33,6 +33,7 @@
     <string name="login_email_label">Email</string>
     <string name="login_password_label">Password</string>
     <string name="login_error_empty_fields">Fill in all the fields</string>
+    <string name="login_error_invalid_credentials">Incorrect email or password.</string>
     <string name="login_button_submit">Sign in</string>
     <string name="login_forgot_password">I forgot my password</string>
     <string name="login_no_account">Don\'t have an account yet?</string>

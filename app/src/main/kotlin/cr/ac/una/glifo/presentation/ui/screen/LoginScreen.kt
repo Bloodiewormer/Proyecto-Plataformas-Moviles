@@ -31,7 +31,7 @@ import cr.ac.una.glifo.core.ui.component.GlifoButton
 import cr.ac.una.glifo.core.ui.component.GlifoTextField
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
 import cr.ac.una.glifo.presentation.viewmodel.LoginViewModel
-import cr.ac.una.glifo.presentation.viewmodel.toMessage
+import cr.ac.una.glifo.presentation.viewmodel.toLoginMessage
 import kotlinx.coroutines.launch
 
 @Composable
@@ -39,12 +39,13 @@ fun LoginScreen(
     onNavigateToRegister: () -> Unit,
     onNavigateToForgotPassword: () -> Unit,
     onLoginSuccess: (GlifoRole) -> Unit,
+    sessionExpiredMessage: String? = null,
     viewModel: LoginViewModel = hiltViewModel()
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
-    var error by remember { mutableStateOf<String?>(null) }
+    var error by remember(sessionExpiredMessage) { mutableStateOf(sessionExpiredMessage) }
     var visible by remember { mutableStateOf(false) }
 
     val demoAccountHints by viewModel.demoAccountHints.collectAsState()
@@ -69,7 +70,7 @@ fun LoginScreen(
                         }
                         is Result.Failure -> {
                             isLoading = false
-                            error = result.error.toMessage(context)
+                            error = result.error.toLoginMessage(context)
                         }
                     }
                 }

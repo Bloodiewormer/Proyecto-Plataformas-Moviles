@@ -31,6 +31,12 @@ fun AppError.toMessage(context: Context): String = when (this) {
     is AppError.Unknown -> context.getString(R.string.error_unknown)
 }
 
+/** Mensajes de error específicos para el flujo de autenticación/login. */
+fun AppError.toLoginMessage(context: Context): String = when (this) {
+    is AppError.Unauthorized -> context.getString(R.string.login_error_invalid_credentials)
+    else -> toMessage(context)
+}
+
 /** Mensajes en español específicos para la reconstrucción IA-01 de apuntes (#42). */
 fun AppError.toReconstructMessage(context: Context): String = when (this) {
     is AppError.NoConnection -> context.getString(R.string.note_reconstruct_error_no_connection)
