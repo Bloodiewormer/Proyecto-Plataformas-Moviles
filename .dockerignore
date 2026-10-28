@@ -1,0 +1,13 @@
+**
+!gradlew
+!build.gradle.kts
+!settings.gradle.kts
+!gradle/
+!gradle/wrapper/
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+!src/
+!src/main/
+!src/main/**
+src/main/resources/application.properties
+src/main/resources/import.sql
