@@ -1,5 +1,13 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
+// Firma de release: se lee de gradle.properties del usuario o de variables de entorno, nunca del repo.
+val releaseSigning = listOf(
+    "GLIFO_RELEASE_STORE_FILE",
+    "GLIFO_RELEASE_STORE_PASSWORD",
+    "GLIFO_RELEASE_KEY_ALIAS",
+    "GLIFO_RELEASE_KEY_PASSWORD",
+).associateWith { providers.gradleProperty(it).orElse(providers.environmentVariable(it)).orNull }
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
@@ -21,10 +29,25 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Debug: backend local visto desde el emulador. Release: backend desplegado en Render.
+        buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:8080/api/v1/\"")
+    }
+
+    signingConfigs {
+        if (releaseSigning.values.none { it.isNullOrBlank() }) {
+            create("release") {
+                storeFile = file(releaseSigning.getValue("GLIFO_RELEASE_STORE_FILE")!!)
+                storePassword = releaseSigning.getValue("GLIFO_RELEASE_STORE_PASSWORD")
+                keyAlias = releaseSigning.getValue("GLIFO_RELEASE_KEY_ALIAS")
+                keyPassword = releaseSigning.getValue("GLIFO_RELEASE_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
         release {
+            signingConfig = signingConfigs.findByName("release")
+            buildConfigField("String", "API_BASE_URL", "\"https://glifo-api.onrender.com/api/v1/\"")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
