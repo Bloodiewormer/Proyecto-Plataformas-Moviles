@@ -21,7 +21,7 @@ import kotlin.math.roundToInt
 private val COVERAGE_STATES = listOf("SOLID", "PARTIAL", "ABSENT", "UNCERTAIN")
 
 /**
- * Cobertura del temario de un estudiante en un curso. Solo lee: la escribe IA-04 en el Lab 6.
+ * Cobertura del temario de un estudiante en un curso. Solo lee: la escribe CoverageEvaluationService.
  *
  * Reglas:
  * - Un tema sin fila en topic_coverage cuenta como ABSENT con score 0 (todavía no hay apuntes).
@@ -102,7 +102,8 @@ class CoverageService(
         )
     }
 
-    private fun findAccessibleCourse(courseId: Long, userId: Long): Course {
+    @Transactional(readOnly = true)
+    fun findAccessibleCourse(courseId: Long, userId: Long): Course {
         val course = courseRepository.findById(courseId).orElseThrow { ResourceNotFoundException("Curso no encontrado") }
         val isOwner = course.owner?.id == userId
         if (!isOwner && !enrollmentRepository.existsByUserIdAndCourseId(userId, courseId)) {
