@@ -1,5 +1,8 @@
 package cr.ac.una.glifo.note.controller
 
+import cr.ac.una.glifo.ai.engine.RegionCrop
+import cr.ac.una.glifo.ai.service.MathOcrResponse
+import cr.ac.una.glifo.ai.service.MathOcrService
 import cr.ac.una.glifo.common.dto.ApiResponse
 import cr.ac.una.glifo.note.dto.CreateNotePageRequest
 import cr.ac.una.glifo.note.dto.CreateNoteRequest
@@ -11,12 +14,15 @@ import cr.ac.una.glifo.note.service.NoteService
 import cr.ac.una.glifo.security.GlifoUserDetails
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Positive
+import jakarta.validation.constraints.PositiveOrZero
+import jakarta.validation.constraints.Size
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 
 /**
@@ -33,11 +39,13 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder
  * | DELETE | /notes/{id}           | 204   | 400, 404                    |
  * | POST   | /notes/{id}/pages     | 201   | 400, 404, 409 (duplicada)   |
  * | GET    | /notes/{id}/pages     | 200   | 400, 404                    |
+ * | POST   | /notes/{id}/pages/{pageIndex}/regions/{regionId}/math | 200 | 400, 404, 413, 502, 503 |
  */
 @RestController
 @RequestMapping("\${url.notes}", produces = [MediaType.APPLICATION_JSON_VALUE])
 class NoteController(
-    private val noteService: NoteService
+    private val noteService: NoteService,
+    private val mathOcrService: MathOcrService
 ) {
 
     @GetMapping
@@ -115,6 +123,28 @@ class NoteController(
         @AuthenticationPrincipal user: GlifoUserDetails
     ): ResponseEntity<ApiResponse<List<NotePageResponse>>> =
         ResponseEntity.ok(ApiResponse(data = noteService.getPages(id, user.userId)))
+
+    /** N1.5: el recorte de una región MATH se transcribe a LaTeX y se guarda en la región. */
+    @PostMapping("/{id}/pages/{pageIndex}/regions/{regionId}/math", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    @PreAuthorize("hasAuthority('NOTE_WRITE_OWN')")
+    fun transcribeMathRegion(
+        @PathVariable @Positive(message = "El id del apunte debe ser positivo") id: Long,
+        @PathVariable @PositiveOrZero(message = "El índice de página no es válido") pageIndex: Int,
+        @PathVariable @Size(max = 64, message = "El id de la región no es válido") regionId: String,
+        @RequestPart("crop") crop: MultipartFile,
+        @AuthenticationPrincipal user: GlifoUserDetails
+    ): ResponseEntity<ApiResponse<MathOcrResponse>> =
+        ResponseEntity.ok(
+            ApiResponse(
+                data = mathOcrService.transcribeRegion(
+                    noteId = id,
+                    userId = user.userId,
+                    pageIndex = pageIndex,
+                    regionId = regionId,
+                    crop = RegionCrop(crop.bytes, crop.contentType.orEmpty())
+                )
+            )
+        )
 
     @PostMapping("/{id}/reconstruct")
     @PreAuthorize("hasAuthority('NOTE_WRITE_OWN')")

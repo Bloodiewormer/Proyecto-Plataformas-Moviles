@@ -11,4 +11,5 @@ interface NotePageRepository : JpaRepository<NotePage, Long> {
     fun existsByNoteIdAndPerceptualHash(noteId: Long, perceptualHash: String): Boolean
     fun countByNoteId(noteId: Long): Long
     fun existsByNoteIdAndPageIndex(noteId: Long, pageIndex: Int): Boolean
+    fun findByNoteIdAndPageIndex(noteId: Long, pageIndex: Int): NotePage?
 }

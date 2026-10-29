@@ -101,12 +101,20 @@ class OpenAiLlmClient @Autowired constructor(
         val inputTokens = usageNode.path("prompt_tokens").asInt(0)
         val outputTokens = usageNode.path("completion_tokens").asInt(0)
 
+        val logprobsNode = root.path("choices").path(0).path("logprobs").path("content")
+        val tokenLogprobs = if (logprobsNode.isArray) {
+            logprobsNode.mapNotNull { node -> node.get("logprob")?.takeIf { it.isNumber }?.asDouble() }
+        } else {
+            emptyList()
+        }
+
         return LlmResult(
             content = content,
             model = model,
             inputTokens = inputTokens,
             outputTokens = outputTokens,
-            latencyMs = latencyMs
+            latencyMs = latencyMs,
+            tokenLogprobs = tokenLogprobs
         )
     }
 
@@ -120,7 +128,10 @@ class OpenAiLlmClient @Autowired constructor(
                     add(
                         mapOf(
                             "type" to "image_url",
-                            "image_url" to mapOf("url" to imageUrl)
+                            "image_url" to buildMap {
+                                put("url", imageUrl)
+                                if (request.imageDetail != null) put("detail", request.imageDetail)
+                            }
                         )
                     )
                 }
@@ -135,8 +146,13 @@ class OpenAiLlmClient @Autowired constructor(
         return buildMap {
             put("model", properties.model)
             put("messages", messages)
-            put("response_format", mapOf("type" to "json_object"))
+            if (request.jsonResponse) {
+                put("response_format", mapOf("type" to "json_object"))
+            }
             put("temperature", request.temperature)
+            if (request.logprobs) {
+                put("logprobs", true)
+            }
             if (request.maxOutputTokens != null) {
                 put("max_tokens", request.maxOutputTokens)
             }
