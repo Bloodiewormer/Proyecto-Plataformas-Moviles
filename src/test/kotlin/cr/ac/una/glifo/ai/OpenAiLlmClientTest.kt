@@ -118,8 +118,8 @@ class OpenAiLlmClientTest {
         server.createContext("/v1/chat/completions") { exchange ->
             val response = """
                 {"model": "gpt-4o-mini-2024-07-18",
-                 "choices": [{"message": {"content": "x^2"},
-                   "logprobs": {"content": [{"token": "x", "logprob": -0.01}, {"token": "^", "logprob": -0.2}, {"token": "2", "logprob": 0}]}}],
+                 "choices": [{"message": {"content": "x^2"}, "finish_reason": "stop",
+                   "logprobs": {"content": [{"token": "x", "logprob": -0.01, "bytes": [120]}, {"token": "^", "logprob": -0.2}, {"token": "2", "logprob": 0}]}}],
                  "usage": {"prompt_tokens": 2900, "completion_tokens": 3}}
             """.trimIndent().toByteArray()
             exchange.responseHeaders.add("Content-Type", "application/json")
@@ -135,8 +135,9 @@ class OpenAiLlmClientTest {
             val result = client.completeJson(LlmRequest(systemPrompt = "OCR", userPrompt = "x", jsonResponse = false, logprobs = true))
 
             assertEquals("x^2", result.content)
-            assertEquals(listOf(-0.01, -0.2, 0.0), result.tokenLogprobs)
+            assertEquals(listOf(TokenLogprob("x", -0.01, listOf(120)), TokenLogprob("^", -0.2), TokenLogprob("2", 0.0)), result.tokenLogprobs)
             assertEquals(2900, result.inputTokens)
+            assertEquals("stop", result.finishReason)
         } finally {
             server.stop(0)
         }

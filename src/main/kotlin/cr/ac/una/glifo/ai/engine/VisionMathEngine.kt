@@ -32,7 +32,7 @@ class VisionMathEngine(
     override fun isAvailable(): Boolean = properties.apiKey.isNotBlank()
 
     override fun recognize(crop: RegionCrop): MathResult {
-        val dataUrl = "data:${crop.mediaType};base64," + Base64.getEncoder().encodeToString(crop.bytes)
+        val dataUrl = "data:${crop.normalizedMediaType()};base64," + Base64.getEncoder().encodeToString(crop.bytes)
         val result = llmClient.completeJson(
             LlmRequest(
                 systemPrompt = SYSTEM_PROMPT,
@@ -47,10 +47,10 @@ class VisionMathEngine(
         )
 
         val latex = cleanLatex(result.content)
-        val confidence = if (latex.isEmpty() || result.tokenLogprobs.isEmpty()) {
+        val confidence = if (latex.isEmpty() || result.tokenLogprobs.isEmpty() || result.finishReason == "length") {
             0f
         } else {
-            exp(result.tokenLogprobs.average()).toFloat().coerceIn(0f, 1f)
+            exp(result.tokenLogprobs.map { it.logprob }.average()).toFloat().coerceIn(0f, 1f)
         }
 
         return MathResult(
@@ -64,17 +64,20 @@ class VisionMathEngine(
         )
     }
 
-    internal fun cleanLatex(raw: String): String {
-        var text = raw.trim()
-        if (text.startsWith("```")) {
-            text = text.removePrefix("```").substringAfter('\n', "").substringBeforeLast("```").trim()
-        }
-        for ((open, close) in listOf("$$" to "$$", "$" to "$", "\\[" to "\\]", "\\(" to "\\)")) {
-            if (text.length >= open.length + close.length && text.startsWith(open) && text.endsWith(close)) {
-                text = text.substring(open.length, text.length - close.length).trim()
-                break
-            }
-        }
-        return if (text == NO_MATH) "" else text
+    internal fun cleanLatex(raw: String): String = stripLatexDelimiters(raw).let { if (it == NO_MATH) "" else it }
+}
+
+/** Quita un bloque de código y un par externo de delimitadores ($$, $, \[ \], \( \)) de un LaTeX. */
+fun stripLatexDelimiters(raw: String): String {
+    var text = raw.trim()
+    if (text.startsWith("```")) {
+        text = text.removePrefix("```").substringAfter('\n', "").substringBeforeLast("```").trim()
     }
+    for ((open, close) in listOf("$$" to "$$", "$" to "$", "\\[" to "\\]", "\\(" to "\\)")) {
+        if (text.length >= open.length + close.length && text.startsWith(open) && text.endsWith(close)) {
+            text = text.substring(open.length, text.length - close.length).trim()
+            break
+        }
+    }
+    return text
 }

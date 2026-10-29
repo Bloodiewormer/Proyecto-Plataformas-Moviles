@@ -1,8 +1,12 @@
 package cr.ac.una.glifo.note.controller
 
+import cr.ac.una.glifo.ai.AiOrchestrator
 import cr.ac.una.glifo.ai.engine.RegionCrop
 import cr.ac.una.glifo.ai.service.MathOcrResponse
 import cr.ac.una.glifo.ai.service.MathOcrService
+import cr.ac.una.glifo.ai.service.PageRepairResponse
+import cr.ac.una.glifo.ai.service.VisionRepairService
+import cr.ac.una.glifo.common.exception.BadRequestException
 import cr.ac.una.glifo.common.dto.ApiResponse
 import cr.ac.una.glifo.note.dto.CreateNotePageRequest
 import cr.ac.una.glifo.note.dto.CreateNoteRequest
@@ -23,6 +27,7 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
+import org.springframework.web.multipart.MultipartHttpServletRequest
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 
 /**
@@ -39,13 +44,15 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder
  * | DELETE | /notes/{id}           | 204   | 400, 404                    |
  * | POST   | /notes/{id}/pages     | 201   | 400, 404, 409 (duplicada)   |
  * | GET    | /notes/{id}/pages     | 200   | 400, 404                    |
- * | POST   | /notes/{id}/pages/{pageIndex}/regions/{regionId}/math | 200 | 400, 404, 413, 502, 503 |
+ * | POST   | /notes/{id}/pages/{pageIndex}/regions/{regionId}/math | 200 | 400, 404, 409, 413, 502, 503 |
+ * | POST   | /notes/{id}/pages/{pageIndex}/repair  | 200   | 400, 404, 409, 413, 502, 503 |
  */
 @RestController
 @RequestMapping("\${url.notes}", produces = [MediaType.APPLICATION_JSON_VALUE])
 class NoteController(
     private val noteService: NoteService,
-    private val mathOcrService: MathOcrService
+    private val mathOcrService: MathOcrService,
+    private val aiOrchestrator: AiOrchestrator
 ) {
 
     @GetMapping
@@ -126,7 +133,7 @@ class NoteController(
 
     /** N1.5: el recorte de una región MATH se transcribe a LaTeX y se guarda en la región. */
     @PostMapping("/{id}/pages/{pageIndex}/regions/{regionId}/math", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
-    @PreAuthorize("hasAuthority('NOTE_WRITE_OWN')")
+    @PreAuthorize("hasAuthority('NOTE_WRITE_OWN') and hasAuthority('AI_VISION_INVOKE')")
     fun transcribeMathRegion(
         @PathVariable @Positive(message = "El id del apunte debe ser positivo") id: Long,
         @PathVariable @PositiveOrZero(message = "El índice de página no es válido") pageIndex: Int,
@@ -145,6 +152,26 @@ class NoteController(
                 )
             )
         )
+
+    /** N2: una parte multipart por región sin resolver, con el regionId como nombre; una sola llamada a la IA. */
+    @PostMapping("/{id}/pages/{pageIndex}/repair", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    @PreAuthorize("hasAuthority('NOTE_WRITE_OWN') and hasAuthority('AI_VISION_INVOKE')")
+    fun repairPage(
+        @PathVariable @Positive(message = "El id del apunte debe ser positivo") id: Long,
+        @PathVariable @PositiveOrZero(message = "El índice de página no es válido") pageIndex: Int,
+        request: MultipartHttpServletRequest,
+        @AuthenticationPrincipal user: GlifoUserDetails
+    ): ResponseEntity<ApiResponse<PageRepairResponse>> {
+        val files = request.multiFileMap
+        if (files.isEmpty()) throw BadRequestException("Enviá al menos un recorte")
+        if (files.size > VisionRepairService.MAX_CROPS) {
+            throw BadRequestException("Se pueden reparar como máximo ${VisionRepairService.MAX_CROPS} regiones por llamada")
+        }
+        if (files.values.any { it.size > 1 }) throw BadRequestException("Cada región debe enviarse una sola vez")
+        if (files.keys.any { it.length > 64 }) throw BadRequestException("El id de la región no es válido")
+        val crops = files.mapValues { (_, parts) -> RegionCrop(parts.single().bytes, parts.single().contentType.orEmpty()) }
+        return ResponseEntity.ok(ApiResponse(data = aiOrchestrator.repairPage(id, user.userId, pageIndex, crops)))
+    }
 
     @PostMapping("/{id}/reconstruct")
     @PreAuthorize("hasAuthority('NOTE_WRITE_OWN')")

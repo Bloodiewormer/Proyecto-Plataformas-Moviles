@@ -483,4 +483,18 @@ class ReconstructionServiceTest {
         assertTrue(idxR1 in 0..<idxR2)
         assertTrue(idxR2 < idxR3)
     }
+
+    @Test
+    fun `j - en un DRAWING la descripcion de N2 tiene prioridad sobre el texto suelto de N1`() {
+        val page = defaultPage(
+            processingNote(),
+            regionsJson = """[{"id": "r1", "kind": "DRAWING", "resolvedAt": "N2", "confidence": 0.9, "text": "x 0", "caption": "Una parábola"},
+                              {"id": "r2", "kind": "TEXT", "resolvedAt": "N1", "confidence": 0.9, "text": "hola", "caption": "otra"}]"""
+        )
+
+        val regions = service.extractOrderedRegions(listOf(page)).associateBy { it.id }
+
+        assertEquals("Una parábola", regions.getValue("r1").text)
+        assertEquals("hola", regions.getValue("r2").text)
+    }
 }

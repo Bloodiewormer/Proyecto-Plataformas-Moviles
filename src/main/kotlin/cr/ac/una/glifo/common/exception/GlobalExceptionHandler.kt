@@ -6,6 +6,7 @@ import jakarta.validation.ConstraintViolationException
 import org.slf4j.LoggerFactory
 import org.springframework.beans.TypeMismatchException
 import org.springframework.dao.DataIntegrityViolationException
+import org.springframework.dao.PessimisticLockingFailureException
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatusCode
@@ -163,6 +164,11 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     @ExceptionHandler(BadCredentialsException::class, AccountStatusException::class)
     fun handleAuthenticationFailure(ex: AuthenticationException, request: HttpServletRequest): ResponseEntity<Any>? =
         respond(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "Credenciales inválidas", request.requestURI)
+
+    /** Otra petición tiene bloqueada la misma página; el cliente puede reintentar. */
+    @ExceptionHandler(PessimisticLockingFailureException::class)
+    fun handleLockFailure(ex: PessimisticLockingFailureException, request: HttpServletRequest): ResponseEntity<Any>? =
+        respond(HttpStatus.CONFLICT, "RESOURCE_LOCKED", "El recurso está siendo modificado. Intentá de nuevo.", request.requestURI)
 
     @ExceptionHandler(AiProviderException::class)
     fun handleAiProvider(ex: AiProviderException, request: HttpServletRequest): ResponseEntity<Any>? {

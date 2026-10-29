@@ -7,12 +7,10 @@ import cr.ac.una.glifo.ai.validation.FormulaEscalationPolicy
 import cr.ac.una.glifo.ai.validation.FormulaStatus
 import cr.ac.una.glifo.ai.validation.MathTranscription
 import cr.ac.una.glifo.ai.validation.mathRegions
-import cr.ac.una.glifo.common.exception.BadRequestException
+import cr.ac.una.glifo.common.exception.ConflictException
 import cr.ac.una.glifo.common.exception.ResourceNotFoundException
-import cr.ac.una.glifo.note.repository.NotePageRepository
-import cr.ac.una.glifo.note.repository.NoteRepository
 import org.springframework.stereotype.Service
-import tools.jackson.databind.json.JsonMapper
+import tools.jackson.databind.JsonNode
 import tools.jackson.databind.node.ObjectNode
 
 data class MathOcrResponse(
@@ -29,7 +27,7 @@ data class MathOcrResponse(
     val cached: Boolean
 )
 
-private val ALLOWED_MEDIA_TYPES = setOf("image/png", "image/jpeg", "image/webp")
+private const val ATTEMPTS_FIELD = "mathOcrAttempts"
 
 /**
  * N1.5 (issue #38): transcribe a LaTeX el recorte de una región MATH de una página propia,
@@ -38,24 +36,21 @@ private val ALLOWED_MEDIA_TYPES = setOf("image/png", "image/jpeg", "image/webp")
  */
 @Service
 class MathOcrService(
-    private val noteRepository: NoteRepository,
-    private val notePageRepository: NotePageRepository,
+    private val store: PageRegionStore,
     private val engine: MathOcrEngine,
-    private val policy: FormulaEscalationPolicy,
-    private val jsonMapper: JsonMapper
+    private val policy: FormulaEscalationPolicy
 ) {
 
     fun transcribeRegion(noteId: Long, userId: Long, pageIndex: Int, regionId: String, crop: RegionCrop): MathOcrResponse {
-        val note = noteRepository.findById(noteId).orElseThrow { ResourceNotFoundException("Apunte no encontrado") }
-        if (note.user.id != userId) throw ResourceNotFoundException("Apunte no encontrado")
-        val page = notePageRepository.findByNoteIdAndPageIndex(noteId, pageIndex)
-            ?: throw ResourceNotFoundException("Página no encontrada")
+        val page = store.ownedPage(noteId, userId, pageIndex)
+        val node = mathNode(store.regions(page.regions), regionId)
         val region = page.mathRegions().firstOrNull { it.regionId == regionId }
             ?: throw ResourceNotFoundException("Región MATH no encontrada")
 
-        storedResult(page.regions, pageIndex, regionId)?.let { return it }
-
-        validateCrop(crop)
+        storedResult(node, pageIndex, regionId)?.let { return it }
+        requirePending(node)
+        store.requireAttemptsLeft(node, ATTEMPTS_FIELD)
+        crop.requireValidImage()
         if (!engine.isAvailable()) {
             throw AiProviderException.notConfigured("El OCR matemático no está configurado en el servidor")
         }
@@ -75,35 +70,37 @@ class MathOcrService(
             cached = false
         )
 
-        val freshPage = notePageRepository.findByNoteIdAndPageIndex(noteId, pageIndex)
-            ?: throw ResourceNotFoundException("Página no encontrada")
-        freshPage.regions = updatedRegions(freshPage.regions, regionId, response)
-        notePageRepository.save(freshPage)
-        return response
-    }
-
-    private fun validateCrop(crop: RegionCrop) {
-        if (crop.bytes.isEmpty()) throw BadRequestException("El recorte está vacío")
-        val mediaType = crop.mediaType.substringBefore(';').trim().lowercase()
-        if (mediaType !in ALLOWED_MEDIA_TYPES || !matchesSignature(mediaType, crop.bytes)) {
-            throw BadRequestException("El recorte debe ser una imagen PNG, JPEG o WEBP")
+        return store.update(noteId, pageIndex) { regions, freshPage ->
+            val current = mathNode(regions, regionId)
+            storedResult(current, pageIndex, regionId)?.let { return@update it to false }
+            requirePending(current)
+            current.put(ATTEMPTS_FIELD, store.attempts(current, ATTEMPTS_FIELD) + 1)
+            val accepted = response.status == FormulaStatus.KEEP_N1_5.name
+            if (accepted) {
+                current.put("latex", response.latex)
+                current.put("confidence", response.confidence.toDouble())
+                current.put("resolvedAt", response.resolvedAt)
+                current.put("isUncertain", false)
+                current.put("latexCompiles", true)
+                current.put("engine", response.engine)
+                PageRegionStore.raiseLevel(freshPage, "N1_5")
+            }
+            response to accepted
         }
     }
 
-    private fun matchesSignature(mediaType: String, bytes: ByteArray): Boolean {
-        fun startsWith(vararg signature: Int) =
-            bytes.size >= signature.size && signature.indices.all { bytes[it] == signature[it].toByte() }
-        return when (mediaType) {
-            "image/png" -> startsWith(0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A)
-            "image/jpeg" -> startsWith(0xFF, 0xD8, 0xFF)
-            "image/webp" -> bytes.size >= 12 && startsWith(0x52, 0x49, 0x46, 0x46) &&
-                String(bytes, 8, 4, Charsets.US_ASCII) == "WEBP"
-            else -> false
+    private fun requirePending(node: JsonNode) {
+        if (node.path("resolvedAt").asString("").uppercase() != "UNRESOLVED") {
+            throw ConflictException("La región ya fue resuelta en otro nivel", "REGION_ALREADY_RESOLVED")
         }
     }
 
-    private fun storedResult(regionsJson: String?, pageIndex: Int, regionId: String): MathOcrResponse? {
-        val node = regionNode(regionsJson, regionId) ?: return null
+    private fun mathNode(regions: List<ObjectNode>, regionId: String) =
+        store.uniqueRegion(regions, regionId)
+            ?.takeIf { it.path("kind").asString("") == "MATH" }
+            ?: throw ResourceNotFoundException("Región MATH no encontrada")
+
+    private fun storedResult(node: JsonNode, pageIndex: Int, regionId: String): MathOcrResponse? {
         if (node.path("resolvedAt").asString("") != FormulaStatus.KEEP_N1_5.resolvedAt) return null
         val latex = node.path("latex").asString("").trim()
         if (latex.isEmpty()) return null
@@ -119,24 +116,5 @@ class MathOcrService(
             engine = node.path("engine").takeIf { it.isString }?.asString(),
             cached = true
         )
-    }
-
-    private fun regionNode(regionsJson: String?, regionId: String): ObjectNode? {
-        val root = jsonMapper.readTree(regionsJson ?: return null)
-        if (!root.isArray) return null
-        return root.firstOrNull { it.isObject && it.path("id").asString("") == regionId } as ObjectNode?
-    }
-
-    private fun updatedRegions(regionsJson: String?, regionId: String, response: MathOcrResponse): String {
-        val root = jsonMapper.readTree(regionsJson ?: "[]")
-        val node = (if (root.isArray) root.firstOrNull { it.isObject && it.path("id").asString("") == regionId } else null) as ObjectNode?
-            ?: throw ResourceNotFoundException("Región MATH no encontrada")
-        node.put("latex", response.latex)
-        node.put("confidence", response.confidence.toDouble())
-        node.put("resolvedAt", response.resolvedAt)
-        node.put("isUncertain", response.status != FormulaStatus.KEEP_N1_5.name)
-        node.put("latexCompiles", response.latexCompiles)
-        node.put("engine", response.engine)
-        return jsonMapper.writeValueAsString(root)
     }
 }
