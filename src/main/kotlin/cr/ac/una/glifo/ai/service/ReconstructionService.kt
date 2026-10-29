@@ -336,7 +336,11 @@ class ReconstructionService @Autowired constructor(
                 val resolvedAt = rawResolvedAt ?: if (!rawUncertain && confidence >= 0.75) "N1" else "UNRESOLVED"
                 val isUncertain = rawUncertain || resolvedAt == "UNRESOLVED"
 
-                val text = regionNode.textOrNull("text") ?: regionNode.textOrNull("caption")
+                val text = if (kind == "DRAWING") {
+                    regionNode.textOrNull("caption") ?: regionNode.textOrNull("text")
+                } else {
+                    regionNode.textOrNull("text") ?: regionNode.textOrNull("caption")
+                }
                 val latex = regionNode.textOrNull("latex")
 
                 extracted.add(

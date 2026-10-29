@@ -4,6 +4,7 @@ import cr.ac.una.glifo.ai.AiProviderException
 import cr.ac.una.glifo.ai.LlmClient
 import cr.ac.una.glifo.ai.LlmRequest
 import cr.ac.una.glifo.ai.LlmResult
+import cr.ac.una.glifo.ai.TokenLogprob
 import cr.ac.una.glifo.ai.config.OpenAiProperties
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -103,7 +104,12 @@ class OpenAiLlmClient @Autowired constructor(
 
         val logprobsNode = root.path("choices").path(0).path("logprobs").path("content")
         val tokenLogprobs = if (logprobsNode.isArray) {
-            logprobsNode.mapNotNull { node -> node.get("logprob")?.takeIf { it.isNumber }?.asDouble() }
+            logprobsNode.mapNotNull { node ->
+                val logprob = node.get("logprob")?.takeIf { it.isNumber }?.asDouble() ?: return@mapNotNull null
+                val bytesNode = node.path("bytes")
+                val bytes = if (bytesNode.isArray) (0 until bytesNode.size()).map { bytesNode[it].asInt() } else emptyList()
+                TokenLogprob(node.path("token").asString(""), logprob, bytes)
+            }
         } else {
             emptyList()
         }
@@ -114,7 +120,8 @@ class OpenAiLlmClient @Autowired constructor(
             inputTokens = inputTokens,
             outputTokens = outputTokens,
             latencyMs = latencyMs,
-            tokenLogprobs = tokenLogprobs
+            tokenLogprobs = tokenLogprobs,
+            finishReason = root.path("choices").path(0).path("finish_reason").takeIf { it.isString }?.asString()
         )
     }
 

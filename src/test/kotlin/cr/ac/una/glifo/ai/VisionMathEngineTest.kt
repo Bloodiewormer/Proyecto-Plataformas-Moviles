@@ -15,11 +15,15 @@ import kotlin.test.assertTrue
  */
 class VisionMathEngineTest {
 
-    private class FakeLlmClient(private val content: String, private val logprobs: List<Double>) : LlmClient {
+    private class FakeLlmClient(
+        private val content: String,
+        private val logprobs: List<Double>,
+        private val finishReason: String = "stop"
+    ) : LlmClient {
         var lastRequest: LlmRequest? = null
         override fun completeJson(request: LlmRequest): LlmResult {
             lastRequest = request
-            return LlmResult(content, "gpt-4o-mini", 2900, logprobs.size, 120, logprobs)
+            return LlmResult(content, "gpt-4o-mini", 2900, logprobs.size, 120, logprobs.map { TokenLogprob("t", it) }, finishReason)
         }
     }
 
@@ -53,6 +57,14 @@ class VisionMathEngineTest {
     @Test
     fun `sin logprobs la confianza es cero para que la region escale`() {
         assertEquals(0f, engine(FakeLlmClient("x", emptyList())).recognize(png).confidence)
+    }
+
+    @Test
+    fun `una salida truncada por limite de tokens tiene confianza cero aunque compile`() {
+        val result = engine(FakeLlmClient("x^2 + y^2", listOf(-0.01, -0.01), finishReason = "length")).recognize(png)
+
+        assertEquals("x^2 + y^2", result.latex)
+        assertEquals(0f, result.confidence)
     }
 
     @Test

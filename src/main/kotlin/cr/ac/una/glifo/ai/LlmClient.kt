@@ -25,6 +25,14 @@ data class LlmResult(
     val inputTokens: Int,
     val outputTokens: Int,
     val latencyMs: Long,
-    /** Log-probabilidad de cada token de salida; vacía si no se pidió o el proveedor no la dio. */
-    val tokenLogprobs: List<Double> = emptyList()
+    /** Cada token de salida con su log-probabilidad; vacía si no se pidió o el proveedor no la dio. */
+    val tokenLogprobs: List<TokenLogprob> = emptyList(),
+    /** finish_reason del proveedor ("stop", "length"...); "length" indica una salida truncada. */
+    val finishReason: String? = null
 )
+
+/** [bytes]: UTF-8 exacto del token; un carácter multibyte puede quedar repartido entre tokens. */
+data class TokenLogprob(val token: String, val logprob: Double, val bytes: List<Int> = emptyList()) {
+    fun utf8(): ByteArray =
+        if (bytes.isNotEmpty()) ByteArray(bytes.size) { bytes[it].toByte() } else token.toByteArray(Charsets.UTF_8)
+}
