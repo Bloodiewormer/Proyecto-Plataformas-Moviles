@@ -3,6 +3,7 @@ package cr.ac.una.glifo.coverage.controller
 import cr.ac.una.glifo.common.dto.ApiResponse
 import cr.ac.una.glifo.coverage.dto.CoverageDeltaResponse
 import cr.ac.una.glifo.coverage.dto.CoverageResponse
+import cr.ac.una.glifo.coverage.service.CoverageEvaluationService
 import cr.ac.una.glifo.coverage.service.CoverageService
 import cr.ac.una.glifo.security.GlifoUserDetails
 import jakarta.validation.constraints.Positive
@@ -13,6 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -25,11 +27,15 @@ import java.time.Instant
  * |--------|---------------------------------------|-------|-------------------------------------------|
  * | GET    | /courses/{id}/coverage                | 200   | 400, 403 (sin COVERAGE_READ_OWN), 404     |
  * | GET    | /courses/{id}/coverage/delta?since=   | 200   | 400 (fecha inválida o futura), 403, 404   |
+ * | POST   | /courses/{id}/coverage/evaluate       | 200   | 400, 401, 403, 404, 409 (en curso o espera), 502 |
  */
 @RestController
 @RequestMapping("\${url.courses}/{courseId}/coverage", produces = [MediaType.APPLICATION_JSON_VALUE])
 @PreAuthorize("hasAuthority('COVERAGE_READ_OWN')")
-class CoverageController(private val coverageService: CoverageService) {
+class CoverageController(
+    private val coverageService: CoverageService,
+    private val coverageEvaluationService: CoverageEvaluationService
+) {
 
     @GetMapping
     fun getCoverage(
@@ -46,4 +52,24 @@ class CoverageController(private val coverageService: CoverageService) {
         @AuthenticationPrincipal user: GlifoUserDetails
     ): ResponseEntity<ApiResponse<CoverageDeltaResponse>> =
         ResponseEntity.ok(ApiResponse(data = coverageService.getCoverageDelta(courseId, user.userId, since)))
+
+    /** IA-04: recalcula la cobertura; en meta va cuántos temas resolvió el pre-filtro y cuántos la IA. */
+    @PostMapping("/evaluate")
+    fun evaluate(
+        @PathVariable @Positive(message = "El id del curso debe ser positivo") courseId: Long,
+        @AuthenticationPrincipal user: GlifoUserDetails
+    ): ResponseEntity<ApiResponse<CoverageResponse>> {
+        val result = coverageEvaluationService.evaluate(courseId, user.userId)
+        return ResponseEntity.ok(
+            ApiResponse(
+                data = result.coverage,
+                meta = mapOf(
+                    "prefilter_resolved" to result.prefilterResolved,
+                    "ai_adjudicated" to result.adjudicated,
+                    "uncertain" to result.uncertain,
+                    "ai_called" to result.aiCalled
+                )
+            )
+        )
+    }
 }
