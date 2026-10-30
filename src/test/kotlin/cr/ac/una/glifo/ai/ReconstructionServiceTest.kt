@@ -1,5 +1,9 @@
 package cr.ac.una.glifo.ai
 
+import cr.ac.una.glifo.ai.config.AiPricingProperties
+import cr.ac.una.glifo.ai.ledger.AiCallRecorder
+import cr.ac.una.glifo.ai.ledger.CostCalculator
+import cr.ac.una.glifo.ai.ledger.CostLedgerService
 import cr.ac.una.glifo.ai.service.ReconstructionService
 import cr.ac.una.glifo.ai.validation.LatexValidator
 import cr.ac.una.glifo.common.exception.ConflictException
@@ -80,7 +84,9 @@ class ReconstructionServiceTest {
             courseGlossaryRepository = courseGlossaryRepository,
             llmClient = llmClient,
             latexValidator = latexValidator,
-            jsonMapper = jsonMapper
+            jsonMapper = jsonMapper,
+            // El registro en ai_calls se prueba en AiCallAuditTest; acá solo se simula el guardado.
+            costLedgerService = CostLedgerService(mock(AiCallRecorder::class.java), CostCalculator(AiPricingProperties()), System::nanoTime)
         )
 
         `when`(noteRepository.save(any(Note::class.java))).thenAnswer { it.arguments[0] }

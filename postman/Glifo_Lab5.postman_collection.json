@@ -3284,6 +3284,568 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "Lab 6 - AI Usage (#46)",
+      "description": "Uso y costo de IA registrado en ai_calls, más las llamadas evitadas por reutilizar un resultado guardado (avoided_calls, de ai_avoided_calls) (#46). Solo totales agregados. GET /ai-usage/me (USAGE_READ_OWN) y GET /courses/{id}/ai-usage (USAGE_READ_COURSE, solo el docente dueño). Correr antes los logins de esta carpeta.",
+      "item": [
+        {
+          "name": "POST Login Student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Student login returns JWT token and Student role at root', function () {",
+                  "    pm.expect(jsonData).to.have.property('token');",
+                  "    pm.expect(jsonData.token).to.be.a('string').and.not.empty;",
+                  "    pm.expect(jsonData).to.have.property('user');",
+                  "    pm.expect(jsonData.user.role).to.eql('Student');",
+                  "});",
+                  "",
+                  "pm.environment.set('jwt_token_student', jsonData.token);",
+                  "console.info('Saved jwt_token_student for user:', jsonData.user.email);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{student_email}}\",\n  \"password\": \"{{student_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/auth/login",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Login Teacher",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Teacher login returns JWT token and Teacher role at root', function () {",
+                  "    pm.expect(jsonData).to.have.property('token');",
+                  "    pm.expect(jsonData.token).to.be.a('string').and.not.empty;",
+                  "    pm.expect(jsonData).to.have.property('user');",
+                  "    pm.expect(jsonData.user.role).to.eql('Teacher');",
+                  "});",
+                  "",
+                  "pm.environment.set('jwt_token_teacher', jsonData.token);",
+                  "console.info('Saved jwt_token_teacher for user:', jsonData.user.email);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{teacher_email}}\",\n  \"password\": \"{{teacher_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/auth/login",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Own AI Usage (Student)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Usage response has scope USER, USD and aggregated totals', function () {",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data.scope).to.eql('USER');",
+                  "    pm.expect(jsonData.data.currency).to.eql('USD');",
+                  "    const t = jsonData.data.totals;",
+                  "    ['total_calls', 'successful_calls', 'failed_calls', 'rejected_outputs', 'unknown_token_calls', 'unknown_cost_calls', 'avoided_calls']",
+                  "        .forEach(k => pm.expect(t[k], k).to.be.a('number'));",
+                  "    pm.expect(t.successful_calls + t.failed_calls).to.be.at.most(t.total_calls);",
+                  "    // Costo desconocido es null, nunca 0 inventado; si se conoce va como texto decimal.",
+                  "    pm.expect(t.estimated_cost_usd === null || typeof t.estimated_cost_usd === 'string').to.be.true;",
+                  "    pm.expect(jsonData.data.by_call_type).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Only aggregates are returned, never individual ai_calls rows', function () {",
+                  "    jsonData.data.by_call_type.forEach(row => {",
+                  "        pm.expect(row).to.have.all.keys('call_type', 'usage');",
+                  "        pm.expect(['OCR_M', 'IA_00', 'IA_01', 'IA_02', 'IA_03', 'IA_04']).to.include(row.call_type);",
+                  "    });",
+                  "});",
+                  "console.info('AI usage totals:', JSON.stringify(jsonData.data.totals));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/ai-usage/me",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "ai-usage",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Own AI Usage Filtered by Course (Student)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('course_id')) {",
+                  "    pm.environment.set('course_id', '1');",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Usage response has scope USER, USD and aggregated totals', function () {",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data.scope).to.eql('USER');",
+                  "    pm.expect(jsonData.data.currency).to.eql('USD');",
+                  "    const t = jsonData.data.totals;",
+                  "    ['total_calls', 'successful_calls', 'failed_calls', 'rejected_outputs', 'unknown_token_calls', 'unknown_cost_calls', 'avoided_calls']",
+                  "        .forEach(k => pm.expect(t[k], k).to.be.a('number'));",
+                  "    pm.expect(t.successful_calls + t.failed_calls).to.be.at.most(t.total_calls);",
+                  "    // Costo desconocido es null, nunca 0 inventado; si se conoce va como texto decimal.",
+                  "    pm.expect(t.estimated_cost_usd === null || typeof t.estimated_cost_usd === 'string').to.be.true;",
+                  "    pm.expect(jsonData.data.by_call_type).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Only aggregates are returned, never individual ai_calls rows', function () {",
+                  "    jsonData.data.by_call_type.forEach(row => {",
+                  "        pm.expect(row).to.have.all.keys('call_type', 'usage');",
+                  "        pm.expect(['OCR_M', 'IA_00', 'IA_01', 'IA_02', 'IA_03', 'IA_04']).to.include(row.call_type);",
+                  "    });",
+                  "});",
+                  "console.info('AI usage totals:', JSON.stringify(jsonData.data.totals));",
+                  "",
+                  "pm.test('course_id echoes the filter', function () {",
+                  "    pm.expect(jsonData.data.course_id).to.eql(Number(pm.environment.get('course_id')));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/ai-usage/me?courseId={{course_id}}",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "ai-usage",
+                "me"
+              ],
+              "query": [
+                {
+                  "key": "courseId",
+                  "value": "{{course_id}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Course AI Usage (Teacher Owner)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('course_id')) {",
+                  "    pm.environment.set('course_id', '1');",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Usage response has scope COURSE, USD and aggregated totals', function () {",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data.scope).to.eql('COURSE');",
+                  "    pm.expect(jsonData.data.currency).to.eql('USD');",
+                  "    const t = jsonData.data.totals;",
+                  "    ['total_calls', 'successful_calls', 'failed_calls', 'rejected_outputs', 'unknown_token_calls', 'unknown_cost_calls', 'avoided_calls']",
+                  "        .forEach(k => pm.expect(t[k], k).to.be.a('number'));",
+                  "    pm.expect(t.successful_calls + t.failed_calls).to.be.at.most(t.total_calls);",
+                  "    // Costo desconocido es null, nunca 0 inventado; si se conoce va como texto decimal.",
+                  "    pm.expect(t.estimated_cost_usd === null || typeof t.estimated_cost_usd === 'string').to.be.true;",
+                  "    pm.expect(jsonData.data.by_call_type).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Only aggregates are returned, never individual ai_calls rows', function () {",
+                  "    jsonData.data.by_call_type.forEach(row => {",
+                  "        pm.expect(row).to.have.all.keys('call_type', 'usage');",
+                  "        pm.expect(['OCR_M', 'IA_00', 'IA_01', 'IA_02', 'IA_03', 'IA_04']).to.include(row.call_type);",
+                  "    });",
+                  "});",
+                  "console.info('AI usage totals:', JSON.stringify(jsonData.data.totals));",
+                  "",
+                  "pm.test('course_id is the requested course', function () {",
+                  "    pm.expect(jsonData.data.course_id).to.eql(Number(pm.environment.get('course_id')));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_teacher}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/courses/{{course_id}}/ai-usage",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "courses",
+                "{{course_id}}",
+                "ai-usage"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "403 Forbidden - Student Reading Course AI Usage",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('course_id')) {",
+                  "    pm.environment.set('course_id', '1');",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403 Forbidden', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Error response has FORBIDDEN code', function () {",
+                  "    pm.expect(jsonData.code).to.eql('FORBIDDEN');",
+                  "    pm.expect(jsonData.message).to.be.a('string').and.not.empty;",
+                  "});",
+                  "console.info('403 message:', jsonData.message);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/courses/{{course_id}}/ai-usage",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "courses",
+                "{{course_id}}",
+                "ai-usage"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "404 Not Found - Course AI Usage for Non-Existent Course",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 404 Not Found', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Error response has NOT_FOUND code', function () {",
+                  "    pm.expect(jsonData.code).to.eql('NOT_FOUND');",
+                  "    pm.expect(jsonData.message).to.be.a('string').and.not.empty;",
+                  "});",
+                  "console.info('404 message:', jsonData.message);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_teacher}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/courses/999999/ai-usage",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "courses",
+                "999999",
+                "ai-usage"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "400 Bad Request - Own AI Usage with Invalid courseId",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400 Bad Request', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Error response has VALIDATION_FAILED code', function () {",
+                  "    pm.expect(jsonData.code).to.eql('VALIDATION_FAILED');",
+                  "    pm.expect(jsonData.message).to.be.a('string').and.not.empty;",
+                  "});",
+                  "console.info('400 message:', jsonData.message);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/ai-usage/me?courseId=0",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "ai-usage",
+                "me"
+              ],
+              "query": [
+                {
+                  "key": "courseId",
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "401 Unauthorized - Own AI Usage Without Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401 Unauthorized', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Error response has UNAUTHORIZED code', function () {",
+                  "    pm.expect(jsonData.code).to.eql('UNAUTHORIZED');",
+                  "    pm.expect(jsonData.message).to.be.a('string').and.not.empty;",
+                  "});",
+                  "console.info('401 message:', jsonData.message);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/ai-usage/me",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "ai-usage",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
     }
   ]
 }

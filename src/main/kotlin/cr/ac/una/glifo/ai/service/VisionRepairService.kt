@@ -3,10 +3,15 @@ package cr.ac.una.glifo.ai.service
 import cr.ac.una.glifo.ai.AiProviderException
 import cr.ac.una.glifo.ai.LlmClient
 import cr.ac.una.glifo.ai.LlmRequest
+import cr.ac.una.glifo.ai.LlmResult
 import cr.ac.una.glifo.ai.TokenLogprob
 import cr.ac.una.glifo.ai.config.OpenAiProperties
 import cr.ac.una.glifo.ai.engine.RegionCrop
 import cr.ac.una.glifo.ai.engine.stripLatexDelimiters
+import cr.ac.una.glifo.ai.ledger.AiCallContext
+import cr.ac.una.glifo.ai.ledger.AiCallOrigin
+import cr.ac.una.glifo.ai.ledger.AiCallType
+import cr.ac.una.glifo.ai.ledger.CostLedgerService
 import cr.ac.una.glifo.ai.validation.FormulaEscalationPolicy
 import cr.ac.una.glifo.ai.validation.LatexValidator
 import cr.ac.una.glifo.common.exception.BadRequestException
@@ -61,7 +66,8 @@ class VisionRepairService(
     private val store: PageRegionStore,
     private val llmClient: LlmClient,
     private val properties: OpenAiProperties,
-    private val latexValidator: LatexValidator
+    private val latexValidator: LatexValidator,
+    private val costLedgerService: CostLedgerService
 ) {
 
     fun repairPage(noteId: Long, userId: Long, pageIndex: Int, crops: Map<String, RegionCrop>): PageRepairResponse {
@@ -73,7 +79,10 @@ class VisionRepairService(
             .filterValues { it != null && isPending(it) }
             .mapValues { it.value!! }
         val notPending = crops.keys - unresolved.keys
+        val context = AiCallContext(AiCallOrigin(userId, page.note.course.id), AiCallType.IA_00, level = "N2")
         if (unresolved.isEmpty() && notPending.all { store.uniqueRegion(pageRegions, it) != null }) {
+            // Todas las regiones pedidas ya estaban resueltas: la página no se envía a N2.
+            costLedgerService.avoided(context)
             return PageRepairResponse(
                 pageIndex = pageIndex,
                 levelReached = page.levelReached,
@@ -93,41 +102,33 @@ class VisionRepairService(
 
         val ordered = crops.keys.toList()
         val kinds = ordered.associateWith { unresolved.getValue(it).path("kind").asString("TEXT").uppercase() }
-        val result = llmClient.completeJson(
-            LlmRequest(
-                systemPrompt = SYSTEM_PROMPT,
-                userPrompt = ordered.mapIndexed { i, id -> "Imagen ${i + 1}: regionId=$id, tipo=${kinds.getValue(id)}" }
-                    .joinToString("\n"),
-                images = ordered.map { id ->
-                    val crop = crops.getValue(id)
-                    "data:${crop.normalizedMediaType()};base64," + Base64.getEncoder().encodeToString(crop.bytes)
-                },
-                temperature = 0.0,
-                maxOutputTokens = 150 * ordered.size,
-                jsonResponse = false,
-                logprobs = true,
-                imageDetail = "low"
-            )
+        // Una fila de ai_calls (#46) por página: es una sola llamada con todos los recortes. Si
+        // ninguna región supera la compuerta, el contenido queda registrado como no aceptado.
+        val outcomes = costLedgerService.track(
+            context = context,
+            call = {
+                llmClient.completeJson(
+                    LlmRequest(
+                        systemPrompt = SYSTEM_PROMPT,
+                        userPrompt = ordered.mapIndexed { i, id -> "Imagen ${i + 1}: regionId=$id, tipo=${kinds.getValue(id)}" }
+                            .joinToString("\n"),
+                        images = ordered.map { id ->
+                            val crop = crops.getValue(id)
+                            "data:${crop.normalizedMediaType()};base64," + Base64.getEncoder().encodeToString(crop.bytes)
+                        },
+                        temperature = 0.0,
+                        maxOutputTokens = 150 * ordered.size,
+                        jsonResponse = false,
+                        logprobs = true,
+                        imageDetail = "low"
+                    )
+                )
+            },
+            accept = { result -> judgeLines(result, ordered, kinds) },
+            rejection = { outcomes ->
+                if (outcomes.any { it.value != null }) null else "Ninguna región superó la compuerta de N2"
+            }
         )
-        val truncated = result.finishReason == "length"
-        val lines = parseLines(result.content, result.tokenLogprobs).groupBy { it.regionId }.mapValues { it.value.first() }
-
-        val outcomes = ordered.map { id ->
-            val kind = kinds.getValue(id)
-            val line = lines[id]
-            val value = line?.value?.let { if (kind == "MATH") stripLatexDelimiters(it) else it }.orEmpty()
-            val legible = value.isNotEmpty() && !value.equals(ILLEGIBLE, ignoreCase = true)
-            val accepted = legible && !truncated && line!!.confidence >= FormulaEscalationPolicy.CONFIDENCE_GATE &&
-                (kind != "MATH" || latexValidator.compiles(value))
-            RepairedRegion(
-                regionId = id,
-                kind = kind,
-                value = if (accepted) value else null,
-                confidence = line?.confidence ?: 0f,
-                resolvedAt = if (accepted) "N2" else "UNRESOLVED",
-                isUncertain = !accepted
-            )
-        }
 
         return store.update(noteId, pageIndex) { regions, freshPage ->
             var written = 0
@@ -161,6 +162,28 @@ class VisionRepairService(
                 uncertain = final.count { it.isUncertain },
                 regions = final
             ) to (written > 0)
+        }
+    }
+
+    /** Decide cada región con su línea de la respuesta: solo se acepta lo que supera la compuerta. */
+    private fun judgeLines(result: LlmResult, ordered: List<String>, kinds: Map<String, String>): List<RepairedRegion> {
+        val truncated = result.finishReason == "length"
+        val lines = parseLines(result.content, result.tokenLogprobs).groupBy { it.regionId }.mapValues { it.value.first() }
+        return ordered.map { id ->
+            val kind = kinds.getValue(id)
+            val line = lines[id]
+            val value = line?.value?.let { if (kind == "MATH") stripLatexDelimiters(it) else it }.orEmpty()
+            val legible = value.isNotEmpty() && !value.equals(ILLEGIBLE, ignoreCase = true)
+            val accepted = legible && !truncated && line!!.confidence >= FormulaEscalationPolicy.CONFIDENCE_GATE &&
+                (kind != "MATH" || latexValidator.compiles(value))
+            RepairedRegion(
+                regionId = id,
+                kind = kind,
+                value = if (accepted) value else null,
+                confidence = line?.confidence ?: 0f,
+                resolvedAt = if (accepted) "N2" else "UNRESOLVED",
+                isUncertain = !accepted
+            )
         }
     }
 

@@ -2,7 +2,12 @@ package cr.ac.una.glifo.ai.service
 
 import cr.ac.una.glifo.ai.LlmClient
 import cr.ac.una.glifo.ai.LlmRequest
+import cr.ac.una.glifo.ai.LlmResult
 import cr.ac.una.glifo.ai.config.OpenAiProperties
+import cr.ac.una.glifo.ai.ledger.AiCallContext
+import cr.ac.una.glifo.ai.ledger.AiCallOrigin
+import cr.ac.una.glifo.ai.ledger.AiCallType
+import cr.ac.una.glifo.ai.ledger.CostLedgerService
 import cr.ac.una.glifo.ai.prompt.PromptBuilder
 import org.springframework.stereotype.Service
 import tools.jackson.databind.json.JsonMapper
@@ -33,12 +38,14 @@ private val VERDICT_SCHEMA_EXAMPLE = """
 class SemanticJudgeService(
     private val llmClient: LlmClient,
     private val properties: OpenAiProperties,
-    private val jsonMapper: JsonMapper
+    private val jsonMapper: JsonMapper,
+    private val costLedgerService: CostLedgerService
 ) {
 
     fun isAvailable(): Boolean = properties.apiKey.isNotBlank()
 
-    fun judge(courseName: String, topics: List<AmbiguousTopic>): Map<Long, CoverageVerdict> {
+    /** [origin]: a nombre de quién y de qué curso queda la llamada en ai_calls. */
+    fun judge(courseName: String, topics: List<AmbiguousTopic>, origin: AiCallOrigin): Map<Long, CoverageVerdict> {
         if (topics.isEmpty()) return emptyMap()
         val (systemPrompt, userPrompt) = PromptBuilder()
             .withRole("Sos un evaluador académico que decide si los apuntes de un estudiante cubren cada tema del sílabo.")
@@ -62,9 +69,21 @@ class SemanticJudgeService(
             .withOutputSchema(VERDICT_SCHEMA_EXAMPLE)
             .build()
 
-        val result = llmClient.completeJson(
-            LlmRequest(systemPrompt = systemPrompt, userPrompt = userPrompt, temperature = 0.1, maxOutputTokens = 40 * topics.size + 50)
+        // Una fila de ai_calls (#46) por lote. IA-04 no es un nivel de la escalera de percepción,
+        // así que va sin nivel. Si no queda ningún veredicto válido, el contenido no se aceptó.
+        return costLedgerService.track(
+            context = AiCallContext(origin, AiCallType.IA_04, level = null),
+            call = {
+                llmClient.completeJson(
+                    LlmRequest(systemPrompt = systemPrompt, userPrompt = userPrompt, temperature = 0.1, maxOutputTokens = 40 * topics.size + 50)
+                )
+            },
+            accept = { result -> parseVerdicts(result, topics) },
+            rejection = { if (it.isEmpty()) "IA-04 no devolvió ningún veredicto válido" else null }
         )
+    }
+
+    private fun parseVerdicts(result: LlmResult, topics: List<AmbiguousTopic>): Map<Long, CoverageVerdict> {
         if (result.finishReason == "length") return emptyMap()
 
         val requested = topics.map { it.topicId }.toSet()

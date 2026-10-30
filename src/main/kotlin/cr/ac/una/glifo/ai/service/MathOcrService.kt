@@ -3,6 +3,11 @@ package cr.ac.una.glifo.ai.service
 import cr.ac.una.glifo.ai.AiProviderException
 import cr.ac.una.glifo.ai.engine.MathOcrEngine
 import cr.ac.una.glifo.ai.engine.RegionCrop
+import cr.ac.una.glifo.ai.ledger.AiCallContext
+import cr.ac.una.glifo.ai.ledger.AiCallOrigin
+import cr.ac.una.glifo.ai.ledger.AiCallType
+import cr.ac.una.glifo.ai.ledger.CostLedgerService
+import cr.ac.una.glifo.ai.ledger.ProviderUsage
 import cr.ac.una.glifo.ai.validation.FormulaEscalationPolicy
 import cr.ac.una.glifo.ai.validation.FormulaStatus
 import cr.ac.una.glifo.ai.validation.MathTranscription
@@ -38,7 +43,8 @@ private const val ATTEMPTS_FIELD = "mathOcrAttempts"
 class MathOcrService(
     private val store: PageRegionStore,
     private val engine: MathOcrEngine,
-    private val policy: FormulaEscalationPolicy
+    private val policy: FormulaEscalationPolicy,
+    private val costLedgerService: CostLedgerService
 ) {
 
     fun transcribeRegion(noteId: Long, userId: Long, pageIndex: Int, regionId: String, crop: RegionCrop): MathOcrResponse {
@@ -47,7 +53,11 @@ class MathOcrService(
         val region = page.mathRegions().firstOrNull { it.regionId == regionId }
             ?: throw ResourceNotFoundException("Región MATH no encontrada")
 
-        storedResult(node, pageIndex, regionId)?.let { return it }
+        val context = AiCallContext(AiCallOrigin(userId, page.note.course.id), AiCallType.OCR_M, level = "N1_5")
+        storedResult(node, pageIndex, regionId)?.let {
+            costLedgerService.avoided(context)
+            return it
+        }
         requirePending(node)
         store.requireAttemptsLeft(node, ATTEMPTS_FIELD)
         crop.requireValidImage()
@@ -55,19 +65,28 @@ class MathOcrService(
             throw AiProviderException.notConfigured("El OCR matemático no está configurado en el servidor")
         }
 
-        val result = engine.recognize(crop)
-        val decision = policy.decide(region, MathTranscription(result.latex, result.confidence))
-        val response = MathOcrResponse(
-            pageIndex = pageIndex,
-            regionId = regionId,
-            latex = result.latex,
-            confidence = result.confidence,
-            latexCompiles = decision.latexCompiles == true,
-            status = decision.status.name,
-            resolvedAt = decision.status.resolvedAt,
-            escalationReasons = decision.escalationReasons.map { it.name }.sorted(),
-            engine = result.engine,
-            cached = false
+        // Una fila de ai_calls (#46) por recorte enviado al motor. Una fórmula que escala a N2
+        // queda como contenido no aceptado; la validación de JLaTeXMath no es otra llamada.
+        val response = costLedgerService.track(
+            context = context,
+            call = { engine.recognize(crop) },
+            usage = { ProviderUsage(it.model, it.inputTokens, it.outputTokens, it.latencyMs) },
+            accept = { result ->
+                val decision = policy.decide(region, MathTranscription(result.latex, result.confidence))
+                MathOcrResponse(
+                    pageIndex = pageIndex,
+                    regionId = regionId,
+                    latex = result.latex,
+                    confidence = result.confidence,
+                    latexCompiles = decision.latexCompiles == true,
+                    status = decision.status.name,
+                    resolvedAt = decision.status.resolvedAt,
+                    escalationReasons = decision.escalationReasons.map { it.name }.sorted(),
+                    engine = result.engine,
+                    cached = false
+                )
+            },
+            rejection = { if (it.status == FormulaStatus.KEEP_N1_5.name) null else "Escala a N2: ${it.escalationReasons.joinToString()}" }
         )
 
         return store.update(noteId, pageIndex) { regions, freshPage ->

@@ -20,7 +20,7 @@ import kotlin.test.assertTrue
 
 /**
  * Issue #23: verifica contra PostgreSQL real que el esquema que genera Hibernate es el del
- * modelo (21 tablas, 7 columnas JSONB, CHECK y UNIQUE) y que import.sql lo deja con datos.
+ * modelo (22 tablas, 7 columnas JSONB, CHECK y UNIQUE) y que import.sql lo deja con datos.
  * Usa la base "glifo_test" (perfil test), igual que los demás tests de integración. Cada test corre dentro de una
  * transacción que se revierte, así que no ensucia los datos de import.sql.
  */
@@ -42,10 +42,10 @@ class DatabaseSchemaTest {
         "notes", "note_pages",
         "topic_coverage", "study_items", "attempts", "review_schedule",
     )
-    private val operationsTables = listOf("ai_calls", "sync_queue", "devices", "notifications", "coverage_snapshots")
+    private val operationsTables = listOf("ai_calls", "ai_avoided_calls", "sync_queue", "devices", "notifications", "coverage_snapshots")
 
     @Test
-    fun `el esquema tiene las 16 tablas core y las 5 de operaciones`() {
+    fun `el esquema tiene las 16 tablas core y las 6 de operaciones`() {
         val tables = jdbc.queryForList(
             "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'",
             String::class.java,

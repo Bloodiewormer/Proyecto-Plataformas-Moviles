@@ -1,5 +1,10 @@
 package cr.ac.una.glifo.ai
 
+import cr.ac.una.glifo.ai.config.AiPricingProperties
+import cr.ac.una.glifo.ai.ledger.AiCallOrigin
+import cr.ac.una.glifo.ai.ledger.AiCallRecorder
+import cr.ac.una.glifo.ai.ledger.CostCalculator
+import cr.ac.una.glifo.ai.ledger.CostLedgerService
 import cr.ac.una.glifo.ai.service.GenerationService
 import cr.ac.una.glifo.ai.service.TopicInput
 import org.junit.jupiter.api.BeforeEach
@@ -19,6 +24,7 @@ class GenerationServiceTest {
     private lateinit var llmClient: LlmClient
     private lateinit var service: GenerationService
     private val jsonMapper = JsonMapper.builder().findAndAddModules().build()
+    private val origin = AiCallOrigin(userId = 1L, courseId = 10L)
 
     private val topic101 = TopicInput(id = 101L, code = "U1.1", title = "Definición de límite")
     private val topic102 = TopicInput(id = 102L, code = "U1.2", title = "Continuidad")
@@ -26,7 +32,9 @@ class GenerationServiceTest {
     @BeforeEach
     fun setUp() {
         llmClient = mock(LlmClient::class.java)
-        service = GenerationService(llmClient, jsonMapper)
+        // El registro en ai_calls se prueba en AiCallAuditTest; acá solo se simula el guardado.
+        val ledger = CostLedgerService(mock(AiCallRecorder::class.java), CostCalculator(AiPricingProperties()), System::nanoTime)
+        service = GenerationService(llmClient, jsonMapper, ledger)
     }
 
     private fun stubLlmContent(jsonContent: String) {
@@ -78,7 +86,7 @@ class GenerationServiceTest {
         """.trimIndent()
         stubLlmContent(validJson)
 
-        val batch = service.generateStudyItems("Cálculo I", listOf(topic101), itemsPerTopic = 3)
+        val batch = service.generateStudyItems("Cálculo I", listOf(topic101), itemsPerTopic = 3, origin = origin)
 
         assertEquals(3, batch.items.size)
         assertEquals(0, batch.discardedCount)
@@ -137,7 +145,7 @@ class GenerationServiceTest {
         """.trimIndent()
         stubLlmContent(json)
 
-        val batch = service.generateStudyItems("Cálculo I", listOf(topic101), itemsPerTopic = 3)
+        val batch = service.generateStudyItems("Cálculo I", listOf(topic101), itemsPerTopic = 3, origin = origin)
 
         assertEquals(1, batch.items.size)
         assertEquals("FLASHCARD", batch.items[0].kind)
@@ -173,7 +181,7 @@ class GenerationServiceTest {
         """.trimIndent()
         stubLlmContent(json)
 
-        val batch = service.generateStudyItems("Cálculo I", listOf(topic101), itemsPerTopic = 3)
+        val batch = service.generateStudyItems("Cálculo I", listOf(topic101), itemsPerTopic = 3, origin = origin)
 
         assertEquals(1, batch.items.size)
         assertEquals("TRUE_FALSE", batch.items[0].kind)
@@ -203,7 +211,7 @@ class GenerationServiceTest {
         stubLlmContent(allInvalidJson)
 
         assertThrows<AiProviderException> {
-            service.generateStudyItems("Cálculo I", listOf(topic101), itemsPerTopic = 2)
+            service.generateStudyItems("Cálculo I", listOf(topic101), itemsPerTopic = 2, origin = origin)
         }
     }
 
@@ -238,7 +246,7 @@ class GenerationServiceTest {
             )
         )
 
-        val batch = service.generateStudyItems("Cálculo I", listOf(topic101, topic102), itemsPerTopic = 1)
+        val batch = service.generateStudyItems("Cálculo I", listOf(topic101, topic102), itemsPerTopic = 1, origin = origin)
 
         assertEquals(2, batch.items.size)
         verify(llmClient, times(1)).completeJson(captor.value)

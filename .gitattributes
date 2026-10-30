@@ -1,2 +1,3 @@
 docs/db/cloud-bootstrap.psql text eol=lf
 docs/db/049-fcm-incremental.psql text eol=lf
+docs/db/046-ai-calls-incremental.psql text eol=lf

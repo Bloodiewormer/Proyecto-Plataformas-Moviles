@@ -4,6 +4,10 @@ import cr.ac.una.glifo.ai.AiProviderException
 import cr.ac.una.glifo.ai.LlmClient
 import cr.ac.una.glifo.ai.LlmRequest
 import cr.ac.una.glifo.ai.LlmResult
+import cr.ac.una.glifo.ai.ledger.AiCallContext
+import cr.ac.una.glifo.ai.ledger.AiCallOrigin
+import cr.ac.una.glifo.ai.ledger.AiCallType
+import cr.ac.una.glifo.ai.ledger.CostLedgerService
 import cr.ac.una.glifo.ai.prompt.PromptBuilder
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -71,24 +75,37 @@ private val OUTPUT_SCHEMA_EXAMPLE = """
 @Service
 class GenerationService @Autowired constructor(
     private val llmClient: LlmClient,
-    private val jsonMapper: JsonMapper
+    private val jsonMapper: JsonMapper,
+    private val costLedgerService: CostLedgerService
 ) {
 
-    constructor(llmClient: LlmClient) : this(
+    constructor(llmClient: LlmClient, costLedgerService: CostLedgerService) : this(
         llmClient = llmClient,
-        jsonMapper = JsonMapper.builder().findAndAddModules().build()
+        jsonMapper = JsonMapper.builder().findAndAddModules().build(),
+        costLedgerService = costLedgerService
     )
 
     private val log = LoggerFactory.getLogger(GenerationService::class.java)
 
     /**
+     * Todos los temas del lote ya tenían ítems y no se llamó a IA-02: queda en
+     * ai_avoided_calls a nombre de [origin] (#46). Un lote reutilizado en parte no cuenta,
+     * porque la llamada igual se hace.
+     */
+    fun recordReusedBatch(origin: AiCallOrigin) =
+        costLedgerService.avoided(AiCallContext(origin, AiCallType.IA_02, level = null))
+
+    /**
      * IA-02: Generación por lotes de flashcards y preguntas de práctica.
-     * Realiza una única llamada a [LlmClient] para todos los temas del lote.
+     * Realiza una única llamada a [LlmClient] para todos los temas del lote y la registra en
+     * ai_calls a nombre de [origin]. IA-02 no es un nivel de la escalera de percepción, así
+     * que el registro va sin nivel (level = NULL).
      */
     fun generateStudyItems(
         courseName: String,
         topics: List<TopicInput>,
-        itemsPerTopic: Int
+        itemsPerTopic: Int,
+        origin: AiCallOrigin
     ): GeneratedBatch {
         if (topics.isEmpty()) {
             throw IllegalArgumentException("La lista de temas no puede estar vacía")
@@ -111,23 +128,28 @@ class GenerationService @Autowired constructor(
             .withOutputSchema(OUTPUT_SCHEMA_EXAMPLE)
             .build()
 
-        val llmResult = try {
-            val result = llmClient.completeJson(
-                LlmRequest(
-                    systemPrompt = systemPrompt,
-                    userPrompt = userPrompt,
-                    temperature = 0.4
-                )
-            )
-            // TODO(#46): Registrar llamada exitosa en CostLedgerService con call_type = 'IA_02',
-            // usando result.model, result.inputTokens, result.outputTokens, result.latencyMs y success = true.
-            result
-        } catch (ex: Exception) {
-            // TODO(#46): Registrar llamada fallida en CostLedgerService con call_type = 'IA_02' y success = false.
-            if (ex is AiProviderException) throw ex
-            throw AiProviderException("Error al generar ítems de estudio con la IA", cause = ex)
-        }
+        return costLedgerService.track(
+            context = AiCallContext(origin, AiCallType.IA_02, level = null),
+            call = {
+                try {
+                    llmClient.completeJson(
+                        LlmRequest(
+                            systemPrompt = systemPrompt,
+                            userPrompt = userPrompt,
+                            temperature = 0.4
+                        )
+                    )
+                } catch (ex: Exception) {
+                    if (ex is AiProviderException) throw ex
+                    throw AiProviderException("Error al generar ítems de estudio con la IA", cause = ex)
+                }
+            },
+            accept = { llmResult -> parseBatch(llmResult, topics, courseName) }
+        )
+    }
 
+    /** Interpreta y valida la respuesta de IA-02; lanza AiProviderException si no sirve. */
+    private fun parseBatch(llmResult: LlmResult, topics: List<TopicInput>, courseName: String): GeneratedBatch {
         val root = try {
             jsonMapper.readTree(llmResult.content)
         } catch (ex: Exception) {

@@ -21,9 +21,11 @@ data class LlmRequest(
 
 data class LlmResult(
     val content: String,
+    /** Modelo que reportó el proveedor en la respuesta. */
     val model: String,
-    val inputTokens: Int,
-    val outputTokens: Int,
+    /** Tokens del `usage` del proveedor; null si no los informó (no es lo mismo que 0). */
+    val inputTokens: Int?,
+    val outputTokens: Int?,
     val latencyMs: Long,
     /** Cada token de salida con su log-probabilidad; vacía si no se pidió o el proveedor no la dio. */
     val tokenLogprobs: List<TokenLogprob> = emptyList(),

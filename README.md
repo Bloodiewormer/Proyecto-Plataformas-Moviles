@@ -138,7 +138,7 @@ CREATE DATABASE glifo_test OWNER glifo;
   código semántico de cada caso: 200, 201 con `Location`, 204, 400 con `subErrors`, 401,
   403, 404, 405, 409 y 415.
 - `GlifoApplicationTests`: levanta toda la aplicación, así que necesita la base `glifo_test`.
-- `DatabaseSchemaTest`: contra la base `glifo_test`, verifica las 21 tablas, las 7 columnas
+- `DatabaseSchemaTest`: contra la base `glifo_test`, verifica las 22 tablas, las 7 columnas
   JSONB, que los `CHECK`/`UNIQUE` rechacen datos inválidos, el borrado en cascada y
   consultas con operadores JSONB sobre el curso demo.
 
@@ -223,8 +223,9 @@ decida qué hacer sin depender del texto.
 
 ## Base de datos (PostgreSQL + JSONB)
 
-21 tablas: 16 del núcleo (acceso, cursos, apuntes, estudio) y 5 de operaciones
-(`ai_calls`, `sync_queue`, `devices`, `notifications`, `coverage_snapshots`). El detalle
+22 tablas: 16 del núcleo (acceso, cursos, apuntes, estudio) y 6 de operaciones
+(`ai_calls`, `ai_avoided_calls`, `sync_queue`, `devices`, `notifications`,
+`coverage_snapshots`). El detalle
 del modelo está en `Glifo_UML_Modeling.md` §4–§5 de la documentación del equipo.
 
 - **El esquema sale de las entidades.** Igual que en clase, no hay scripts de migración:

@@ -71,4 +71,4 @@ INSERT INTO topic_coverage (user_id, syllabus_topic_id, state, score, updated_at
 INSERT INTO topic_coverage (user_id, syllabus_topic_id, state, score, updated_at) SELECT u.id, t.id, 'ABSENT', 0.0, now() FROM users u, syllabus_topics t WHERE u.email = 'estudiante@est.una.ac.cr' AND t.code = 'U2';
 
 -- Telemetría de IA: la reparación N2 de la página demo
-INSERT INTO ai_calls (user_id, course_id, call_type, level, input_tokens, output_tokens, estimated_cost, latency_ms, created_at) SELECT u.id, c.id, 'IA_00', 'N2', 1850, 120, 0.000350, 2140, now() FROM users u, courses c WHERE u.email = 'estudiante@est.una.ac.cr' AND c.join_code = 'GLF-CALC1';
+INSERT INTO ai_calls (user_id, course_id, call_type, level, input_tokens, output_tokens, estimated_cost, latency_ms, success, output_accepted, created_at) SELECT u.id, c.id, 'IA_00', 'N2', 1850, 120, 0.000350, 2140, true, true, now() FROM users u, courses c WHERE u.email = 'estudiante@est.una.ac.cr' AND c.join_code = 'GLF-CALC1';

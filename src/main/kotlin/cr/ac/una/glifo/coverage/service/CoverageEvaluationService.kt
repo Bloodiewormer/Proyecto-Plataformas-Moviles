@@ -1,5 +1,6 @@
 package cr.ac.una.glifo.coverage.service
 
+import cr.ac.una.glifo.ai.ledger.AiCallOrigin
 import cr.ac.una.glifo.ai.service.AmbiguousTopic
 import cr.ac.una.glifo.ai.service.SemanticJudgeService
 import cr.ac.una.glifo.common.exception.ConflictException
@@ -80,7 +81,11 @@ class CoverageEvaluationService(
         val aiCalled = toJudge.isNotEmpty() && judge.isAvailable()
         val verdicts = if (aiCalled) {
             requireCooldownElapsed(key)
-            judge.judge(snapshot.courseName, toJudge.map { AmbiguousTopic(it.topic.topicId, it.topic.code, it.topic.title, it.excerpts) })
+            judge.judge(
+                snapshot.courseName,
+                toJudge.map { AmbiguousTopic(it.topic.topicId, it.topic.code, it.topic.title, it.excerpts) },
+                AiCallOrigin(userId = userId, courseId = courseId)
+            )
                 .also { recordAiCall(key) }
         } else {
             emptyMap()

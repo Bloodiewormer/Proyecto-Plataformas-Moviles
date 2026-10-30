@@ -12,6 +12,11 @@ import java.time.Instant
 
 // Relacional a propósito: se agrega por tipo, nivel y periodo, que es el argumento de
 // ahorro del proyecto (Glifo_UML_Modeling.md §5.1).
+//
+// Una fila = una solicitud que de verdad salió hacia un proveedor de IA (issue #46). Lo
+// que no llegó a enviarse (IA sin configurar, material reutilizado, validación local de
+// JLaTeXMath) no se registra acá; el material reutilizado se cuenta en ai_avoided_calls. NULL significa "desconocido", nunca cero: tokens que el
+// proveedor no informó, costo sin tarifa configurada, nivel que no aplica.
 @Entity
 @Table(
     name = "ai_calls",
@@ -26,6 +31,11 @@ import java.time.Instant
         CheckConstraint(
             name = "ck_ai_calls_level",
             constraint = "level IN ('N0', 'N1', 'N1_5', 'N2', 'N3', 'UNRESOLVED')",
+        ),
+        // Si el proveedor falló no hubo salida que aceptar, y el fallo lleva código.
+        CheckConstraint(
+            name = "ck_ai_calls_outcome",
+            constraint = "success = true OR (output_accepted IS NULL AND error_code IS NOT NULL)",
         ),
     ],
 )
@@ -46,20 +56,47 @@ class AiCall {
     @Column(name = "call_type", nullable = false, length = 16)
     var callType: String = ""
 
-    @Column(nullable = false, length = 12)
-    var level: String = ""
+    // Nivel de la escalera de percepción (N0…N3) que originó la llamada. NULL para las
+    // funciones IA-0x que no pertenecen a esa escalera, como IA-01 e IA-02.
+    @Column(length = 12)
+    var level: String? = null
 
-    @Column(name = "input_tokens", nullable = false)
-    var inputTokens: Int = 0
+    // Modelo que reportó el proveedor en la respuesta. NULL si la llamada falló sin respuesta.
+    @Column(length = 100)
+    var model: String? = null
 
-    @Column(name = "output_tokens", nullable = false)
-    var outputTokens: Int = 0
+    // Tokens que informó el proveedor (usage); NULL si no los informó.
+    @Column(name = "input_tokens")
+    var inputTokens: Int? = null
 
-    @Column(name = "estimated_cost", nullable = false, precision = 10, scale = 6)
-    var estimatedCost: BigDecimal = BigDecimal.ZERO
+    @Column(name = "output_tokens")
+    var outputTokens: Int? = null
 
+    // Costo estimado en USD con 8 decimales, calculado al registrar con la tarifa vigente
+    // (glifo.ai.pricing). NULL si faltan tokens o tarifa. Cambiar una tarifa no lo reescribe.
+    @Column(name = "estimated_cost", precision = 12, scale = 8)
+    var estimatedCost: BigDecimal? = null
+
+    // Desde que empezó la llamada hasta que el proveedor respondió o falló.
     @Column(name = "latency_ms", nullable = false)
     var latencyMs: Int = 0
+
+    // Resultado de la llamada AL PROVEEDOR: true si devolvió una respuesta utilizable. No
+    // dice si el contenido cumplió el esquema de negocio; eso es outputAccepted.
+    @Column(nullable = false)
+    var success: Boolean? = null
+
+    // Solo con success = true: si el servicio aceptó el contenido (esquema IA-01/IA-02).
+    @Column(name = "output_accepted")
+    var outputAccepted: Boolean? = null
+
+    // Código estable del fallo del proveedor o del rechazo del contenido (PROVIDER_HTTP_429…).
+    @Column(name = "error_code", length = 64)
+    var errorCode: String? = null
+
+    // Resumen técnico saneado y recortado; nunca el cuerpo de la respuesta ni secretos.
+    @Column(name = "error_message", length = 255)
+    var errorMessage: String? = null
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -73,5 +110,5 @@ class AiCall {
     }
 
     override fun hashCode(): Int = Hibernate.getClass(this).hashCode()
-    override fun toString(): String = "AiCall(id=$id, callType='$callType', level='$level', latencyMs=$latencyMs)"
+    override fun toString(): String = "AiCall(id=$id, callType='$callType', level=$level, model=$model, success=$success, latencyMs=$latencyMs)"
 }

@@ -117,7 +117,7 @@ class CoverageEvaluationServiceTest {
         service = CoverageEvaluationService(
             CoverageService(courses, enrollments, topicsRepo, coverageRows),
             topicsRepo, notes, coverageRows, users, CoveragePrefilter(),
-            SemanticJudgeService(llm, OpenAiProperties(apiKey = apiKey), json),
+            SemanticJudgeService(llm, OpenAiProperties(apiKey = apiKey), json, cr.ac.una.glifo.ai.discardingLedger()),
             TransactionOperations.withoutTransaction(), json
         )
     }

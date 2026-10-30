@@ -1,6 +1,7 @@
 package cr.ac.una.glifo.study.service
 
 import cr.ac.una.glifo.ai.AiOrchestrator
+import cr.ac.una.glifo.ai.ledger.AiCallOrigin
 import cr.ac.una.glifo.ai.service.GenerationService
 import cr.ac.una.glifo.ai.service.TopicInput
 import cr.ac.una.glifo.common.exception.BadRequestException
@@ -85,6 +86,8 @@ class StudyItemService @Autowired constructor(
         }
 
         if (topicsToGenerate.isEmpty()) {
+            // Nada que generar: la llamada IA-02 queda como evitada en ai_avoided_calls (#46).
+            aiOrchestrator.recordReusedStudyItems(AiCallOrigin(userId = userId, courseId = courseId))
             return StudyGenerationOutcome(
                 items = reusedItems.map { it.toResponse() },
                 generatedTopics = 0,
@@ -97,7 +100,9 @@ class StudyItemService @Autowired constructor(
         val generatedBatch = aiOrchestrator.generateStudyItems(
             courseName = course.name,
             topics = topicsToGenerate.map { TopicInput(id = it.id, code = it.code, title = it.title) },
-            itemsPerTopic = request.itemsPerTopic
+            itemsPerTopic = request.itemsPerTopic,
+            // El registro de ai_calls (#46) queda a nombre de quien pidió el material.
+            origin = AiCallOrigin(userId = userId, courseId = courseId)
         )
 
         val entitiesToSave = generatedBatch.items.map { gen ->

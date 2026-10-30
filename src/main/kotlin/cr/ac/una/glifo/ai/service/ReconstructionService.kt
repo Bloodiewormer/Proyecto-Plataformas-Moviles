@@ -3,6 +3,11 @@ package cr.ac.una.glifo.ai.service
 import cr.ac.una.glifo.ai.AiProviderException
 import cr.ac.una.glifo.ai.LlmClient
 import cr.ac.una.glifo.ai.LlmRequest
+import cr.ac.una.glifo.ai.LlmResult
+import cr.ac.una.glifo.ai.ledger.AiCallContext
+import cr.ac.una.glifo.ai.ledger.AiCallOrigin
+import cr.ac.una.glifo.ai.ledger.AiCallType
+import cr.ac.una.glifo.ai.ledger.CostLedgerService
 import cr.ac.una.glifo.ai.prompt.PromptBuilder
 import cr.ac.una.glifo.ai.validation.LatexValidator
 import cr.ac.una.glifo.common.exception.ConflictException
@@ -117,7 +122,8 @@ class ReconstructionService @Autowired constructor(
     private val courseGlossaryRepository: CourseGlossaryRepository,
     private val llmClient: LlmClient,
     private val latexValidator: LatexValidator,
-    private val jsonMapper: JsonMapper
+    private val jsonMapper: JsonMapper,
+    private val costLedgerService: CostLedgerService
 ) {
 
     constructor(
@@ -126,6 +132,7 @@ class ReconstructionService @Autowired constructor(
         syllabusTopicRepository: SyllabusTopicRepository,
         courseGlossaryRepository: CourseGlossaryRepository,
         llmClient: LlmClient,
+        costLedgerService: CostLedgerService,
         latexValidator: LatexValidator = LatexValidator()
     ) : this(
         noteRepository = noteRepository,
@@ -134,7 +141,8 @@ class ReconstructionService @Autowired constructor(
         courseGlossaryRepository = courseGlossaryRepository,
         llmClient = llmClient,
         latexValidator = latexValidator,
-        jsonMapper = JsonMapper.builder().findAndAddModules().build()
+        jsonMapper = JsonMapper.builder().findAndAddModules().build(),
+        costLedgerService = costLedgerService
     )
 
     private val log = LoggerFactory.getLogger(ReconstructionService::class.java)
@@ -152,6 +160,10 @@ class ReconstructionService @Autowired constructor(
         }
 
         if (note.status == NoteStatus.READY.name && !note.content.isNullOrBlank()) {
+            // Apunte ya reconstruido: se reutiliza y la llamada IA-01 queda como evitada (#46).
+            costLedgerService.avoided(
+                AiCallContext(AiCallOrigin(userId = userId, courseId = note.course.id), AiCallType.IA_01, level = null)
+            )
             return NoteReconstructionOutcome(
                 note = note.toResponse(includeContent = true),
                 reconstructed = false
@@ -193,56 +205,27 @@ class ReconstructionService @Autowired constructor(
             .withOutputSchema(RECONSTRUCTION_SCHEMA_EXAMPLE)
             .build()
 
-        // Llamada HTTP a OpenAI fuera de una transacción de base de datos.
-        val llmResult = try {
-            val result = llmClient.completeJson(
-                LlmRequest(
-                    systemPrompt = systemPrompt,
-                    userPrompt = userPrompt,
-                    temperature = 0.2
-                )
-            )
-            // TODO(#46): Registrar llamada exitosa en CostLedgerService con call_type = 'IA_01',
-            // usando result.model, result.inputTokens, result.outputTokens, result.latencyMs y success = true.
-            result
-        } catch (ex: Exception) {
-            // TODO(#46): Registrar llamada fallida en CostLedgerService con call_type = 'IA_01' y success = false.
-            if (ex is AiProviderException) throw ex
-            throw AiProviderException("Error al reconstruir el apunte con la IA", cause = ex)
-        }
-
-        val root = try {
-            jsonMapper.readTree(llmResult.content)
-        } catch (ex: Exception) {
-            throw AiProviderException("La IA devolvió un JSON mal formado al reconstruir el apunte", cause = ex)
-        }
-
-        val blocksNode = root.path("blocks")
-        if (!blocksNode.isArray) {
-            throw AiProviderException("El JSON devuelto por la IA no contiene el arreglo 'blocks'")
-        }
-
-        val regionsById = orderedRegions.associateBy { it.id }
-        val validBlocks = mutableListOf<Map<String, Any?>>()
-        var discardedCount = 0
-
-        for (blockNode in blocksNode) {
-            val blockId = "b${validBlocks.size + 1}"
-            val normalizedBlock = validateAndNormalizeBlock(blockNode, blockId, regionsById)
-            if (normalizedBlock != null) {
-                validBlocks.add(normalizedBlock)
-            } else {
-                discardedCount++
-            }
-        }
-
-        if (discardedCount > 0) {
-            log.warn("IA-01 descartó {} bloques inválidos al reconstruir el apunte {}", discardedCount, noteId)
-        }
-
-        if (validBlocks.isEmpty()) {
-            throw AiProviderException("La IA no produjo ningún bloque válido para reconstruir el apunte")
-        }
+        // Llamada HTTP a OpenAI fuera de una transacción de base de datos. Queda en ai_calls a
+        // nombre del dueño del apunte; IA-01 no es un nivel de la escalera de percepción, así
+        // que va sin nivel (level = NULL). Guardar el apunte queda fuera de track().
+        val (root, validBlocks) = costLedgerService.track(
+            context = AiCallContext(AiCallOrigin(userId = userId, courseId = courseId), AiCallType.IA_01, level = null),
+            call = {
+                try {
+                    llmClient.completeJson(
+                        LlmRequest(
+                            systemPrompt = systemPrompt,
+                            userPrompt = userPrompt,
+                            temperature = 0.2
+                        )
+                    )
+                } catch (ex: Exception) {
+                    if (ex is AiProviderException) throw ex
+                    throw AiProviderException("Error al reconstruir el apunte con la IA", cause = ex)
+                }
+            },
+            accept = { llmResult -> parseReconstruction(llmResult, noteId, orderedRegions) }
+        )
 
         val summary = computeSummary(orderedRegions)
         val contentMap = linkedMapOf<String, Any>(
@@ -283,6 +266,53 @@ class ReconstructionService @Autowired constructor(
             note = savedNote.toResponse(includeContent = true),
             reconstructed = true
         )
+    }
+
+    /** Respuesta de IA-01 ya interpretada: el JSON raíz y los bloques que pasaron la validación. */
+    private data class ParsedReconstruction(
+        val root: JsonNode,
+        val validBlocks: List<Map<String, Any?>>
+    )
+
+    /** Interpreta y valida la respuesta de IA-01; lanza AiProviderException si no sirve. */
+    private fun parseReconstruction(
+        llmResult: LlmResult,
+        noteId: Long,
+        orderedRegions: List<RegionInput>
+    ): ParsedReconstruction {
+        val root = try {
+            jsonMapper.readTree(llmResult.content)
+        } catch (ex: Exception) {
+            throw AiProviderException("La IA devolvió un JSON mal formado al reconstruir el apunte", cause = ex)
+        }
+
+        val blocksNode = root.path("blocks")
+        if (!blocksNode.isArray) {
+            throw AiProviderException("El JSON devuelto por la IA no contiene el arreglo 'blocks'")
+        }
+
+        val regionsById = orderedRegions.associateBy { it.id }
+        val validBlocks = mutableListOf<Map<String, Any?>>()
+        var discardedCount = 0
+
+        for (blockNode in blocksNode) {
+            val blockId = "b${validBlocks.size + 1}"
+            val normalizedBlock = validateAndNormalizeBlock(blockNode, blockId, regionsById)
+            if (normalizedBlock != null) {
+                validBlocks.add(normalizedBlock)
+            } else {
+                discardedCount++
+            }
+        }
+
+        if (discardedCount > 0) {
+            log.warn("IA-01 descartó {} bloques inválidos al reconstruir el apunte {}", discardedCount, noteId)
+        }
+
+        if (validBlocks.isEmpty()) {
+            throw AiProviderException("La IA no produjo ningún bloque válido para reconstruir el apunte")
+        }
+        return ParsedReconstruction(root, validBlocks)
     }
 
     internal fun extractOrderedRegions(pages: List<NotePage>): List<RegionInput> {

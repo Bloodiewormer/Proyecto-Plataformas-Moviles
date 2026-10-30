@@ -43,8 +43,9 @@ data class MathResult(
     val confidence: Float,
     val engine: String,
     val model: String,
-    val inputTokens: Int,
-    val outputTokens: Int,
+    /** Tokens que informó el proveedor; null si no los informó (ai_calls, #46). */
+    val inputTokens: Int?,
+    val outputTokens: Int?,
     val latencyMs: Long
 )
 

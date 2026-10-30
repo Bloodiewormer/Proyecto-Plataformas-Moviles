@@ -57,7 +57,7 @@ class MathOcrServiceTest {
     private lateinit var service: MathOcrService
 
     private val owner = User().apply { id = 1L }
-    private val note = Note().apply { id = 7L; user = owner }
+    private val note = Note().apply { id = 7L; user = owner; course = cr.ac.una.glifo.course.entity.Course().apply { id = 10L } }
     private val png = RegionCrop(byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00), "image/png")
 
     private fun page(regions: String) = NotePage().apply {
@@ -82,7 +82,7 @@ class MathOcrServiceTest {
         pageRepository = mock(NotePageRepository::class.java)
         engine = FakeEngine(result("\\lim_{x \\to a} f(x) = L", 0.92f))
         val store = PageRegionStore(noteRepository, pageRepository, TransactionOperations.withoutTransaction(), json, mock(EntityManager::class.java))
-        service = MathOcrService(store, engine, FormulaEscalationPolicy(LatexValidator()))
+        service = MathOcrService(store, engine, FormulaEscalationPolicy(LatexValidator()), discardingLedger())
         `when`(noteRepository.findById(7L)).thenReturn(Optional.of(note))
         `when`(pageRepository.save(any(NotePage::class.java))).thenAnswer { it.arguments[0] }
     }

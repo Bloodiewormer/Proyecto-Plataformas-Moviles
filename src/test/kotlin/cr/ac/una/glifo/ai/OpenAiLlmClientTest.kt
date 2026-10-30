@@ -9,6 +9,7 @@ import java.net.InetAddress
 import java.net.InetSocketAddress
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class OpenAiLlmClientTest {
@@ -141,5 +142,22 @@ class OpenAiLlmClientTest {
         } finally {
             server.stop(0)
         }
+    }
+
+    @Test
+    fun `c - usage informado se lee y usage ausente queda null, no 0`() {
+        val client = OpenAiLlmClient(OpenAiProperties(apiKey = "test-key", model = "gpt-4o-mini"))
+
+        val withUsage = client.parseCompletion(
+            """{"model": "gpt-4o-mini-2024-07-18", "choices": [{"message": {"content": "{}"}}], "usage": {"prompt_tokens": 120, "completion_tokens": 0}}""",
+            latencyMs = 300L
+        )
+        assertEquals("gpt-4o-mini-2024-07-18", withUsage.model)
+        assertEquals(120, withUsage.inputTokens)
+        assertEquals(0, withUsage.outputTokens)
+
+        val withoutUsage = client.parseCompletion("""{"choices": [{"message": {"content": "{}"}}]}""", latencyMs = 300L)
+        assertNull(withoutUsage.inputTokens)
+        assertNull(withoutUsage.outputTokens)
     }
 }

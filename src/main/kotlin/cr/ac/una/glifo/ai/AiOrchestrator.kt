@@ -1,6 +1,7 @@
 package cr.ac.una.glifo.ai
 
 import cr.ac.una.glifo.ai.engine.RegionCrop
+import cr.ac.una.glifo.ai.ledger.AiCallOrigin
 import cr.ac.una.glifo.ai.service.GeneratedBatch
 import cr.ac.una.glifo.ai.service.GenerationService
 import cr.ac.una.glifo.ai.service.NoteReconstructionOutcome
@@ -24,8 +25,11 @@ class AiOrchestrator @Autowired constructor(
     fun generateStudyItems(
         courseName: String,
         topics: List<TopicInput>,
-        itemsPerTopic: Int
-    ): GeneratedBatch = generationService.generateStudyItems(courseName, topics, itemsPerTopic)
+        itemsPerTopic: Int,
+        origin: AiCallOrigin
+    ): GeneratedBatch = generationService.generateStudyItems(courseName, topics, itemsPerTopic, origin)
+
+    fun recordReusedStudyItems(origin: AiCallOrigin) = generationService.recordReusedBatch(origin)
 
     fun reconstructNote(
         noteId: Long,

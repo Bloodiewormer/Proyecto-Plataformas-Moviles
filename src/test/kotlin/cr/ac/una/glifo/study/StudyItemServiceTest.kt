@@ -1,6 +1,7 @@
 package cr.ac.una.glifo.study
 
 import cr.ac.una.glifo.ai.LlmResult
+import cr.ac.una.glifo.ai.ledger.AiCallOrigin
 import cr.ac.una.glifo.ai.service.GeneratedBatch
 import cr.ac.una.glifo.ai.service.GeneratedStudyItem
 import cr.ac.una.glifo.ai.service.GenerationService
@@ -135,6 +136,9 @@ class StudyItemServiceTest {
         }
     }
 
+    /** any() de Mockito devuelve null; en Kotlin hace falta un valor no nulo de relleno. */
+    private fun anyOrigin(): AiCallOrigin = org.mockito.ArgumentMatchers.any(AiCallOrigin::class.java) ?: AiCallOrigin(0L, null)
+
     @Test
     fun `d - tema que ya tiene items no llama a la IA`() {
         `when`(studyItemRepository.findByCourseIdAndSyllabusTopicId(10L, 101L))
@@ -154,7 +158,8 @@ class StudyItemServiceTest {
         verify(generationService, never()).generateStudyItems(
             anyString() ?: "",
             anyList() ?: emptyList(),
-            anyInt()
+            anyInt(),
+            anyOrigin()
         )
     }
 
@@ -169,13 +174,15 @@ class StudyItemServiceTest {
         val topicsCaptor = ArgumentCaptor.forClass(List::class.java) as ArgumentCaptor<List<TopicInput>>
         val courseNameCaptor = ArgumentCaptor.forClass(String::class.java)
         val countCaptor = ArgumentCaptor.forClass(Int::class.java)
+        val originCaptor = ArgumentCaptor.forClass(AiCallOrigin::class.java)
 
         val generatedPayload = """{"schemaVersion":1,"kind":"TRUE_FALSE","statement":"S","answer":true,"explanation":"E","difficulty":"EASY","sourceNoteIds":[]}"""
         `when`(
             generationService.generateStudyItems(
                 courseNameCaptor.capture() ?: "",
                 topicsCaptor.capture() ?: emptyList(),
-                countCaptor.capture() ?: 3
+                countCaptor.capture() ?: 3,
+                originCaptor.capture() ?: AiCallOrigin(0L, null)
             )
         ).thenReturn(
             GeneratedBatch(
@@ -193,9 +200,12 @@ class StudyItemServiceTest {
         verify(generationService, times(1)).generateStudyItems(
             courseNameCaptor.value,
             topicsCaptor.value,
-            countCaptor.value
+            countCaptor.value,
+            originCaptor.value
         )
         assertEquals(listOf(102L), topicsCaptor.value.map { it.id })
+        // ai_calls (#46): la llamada queda a nombre de quien la pidió y del curso.
+        assertEquals(AiCallOrigin(userId = 1L, courseId = 10L), originCaptor.value)
         assertEquals(2, outcome.items.size)
         assertEquals(1, outcome.generatedTopics)
         assertEquals(1, outcome.reusedTopics)

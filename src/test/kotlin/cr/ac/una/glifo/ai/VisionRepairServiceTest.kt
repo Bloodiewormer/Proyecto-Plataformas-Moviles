@@ -57,7 +57,7 @@ class VisionRepairServiceTest {
     private lateinit var service: VisionRepairService
 
     private val owner = User().apply { id = 1L }
-    private val note = Note().apply { id = 7L; user = owner }
+    private val note = Note().apply { id = 7L; user = owner; course = cr.ac.una.glifo.course.entity.Course().apply { id = 10L } }
     private val png = RegionCrop(byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00), "image/png")
 
     private var regions = """
@@ -85,7 +85,7 @@ class VisionRepairServiceTest {
         pageRepository = mock(NotePageRepository::class.java)
         llm = FakeLlmClient()
         store = PageRegionStore(noteRepository, pageRepository, TransactionOperations.withoutTransaction(), json, mock(EntityManager::class.java))
-        service = VisionRepairService(store, llm, OpenAiProperties(apiKey = "key"), LatexValidator())
+        service = VisionRepairService(store, llm, OpenAiProperties(apiKey = "key"), LatexValidator(), discardingLedger())
         `when`(noteRepository.findById(7L)).thenReturn(Optional.of(note))
         `when`(pageRepository.findByNoteIdAndPageIndex(7L, 0)).thenAnswer { page() }
         `when`(pageRepository.findForUpdate(7L, 0)).thenAnswer { page() }
@@ -290,7 +290,7 @@ class VisionRepairServiceTest {
 
     @Test
     fun `sin api key responde AI_NOT_CONFIGURED`() {
-        val unconfigured = VisionRepairService(store, llm, OpenAiProperties(apiKey = ""), LatexValidator())
+        val unconfigured = VisionRepairService(store, llm, OpenAiProperties(apiKey = ""), LatexValidator(), discardingLedger())
 
         val ex = assertThrows<AiProviderException> { unconfigured.repairPage(7L, 1L, 0, mapOf("r1" to png)) }
 

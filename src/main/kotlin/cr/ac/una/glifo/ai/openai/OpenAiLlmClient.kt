@@ -74,7 +74,11 @@ class OpenAiLlmClient @Autowired constructor(
         }
 
         val latencyMs = ((System.nanoTime() - startNanos) / 1_000_000L).coerceAtLeast(0L)
+        return parseCompletion(rawResponse, latencyMs)
+    }
 
+    /** Interpreta el cuerpo de chat/completions ya recibido. */
+    internal fun parseCompletion(rawResponse: String?, latencyMs: Long): LlmResult {
         if (rawResponse.isNullOrBlank()) {
             throw AiProviderException("El proveedor de IA devolvió una respuesta vacía")
         }
@@ -98,9 +102,10 @@ class OpenAiLlmClient @Autowired constructor(
             modelNode.asString(properties.model).ifBlank { properties.model }
         }
 
+        // Sin `usage` el consumo es desconocido: queda null en vez de un 0 que parezca medido.
         val usageNode = root.path("usage")
-        val inputTokens = usageNode.path("prompt_tokens").asInt(0)
-        val outputTokens = usageNode.path("completion_tokens").asInt(0)
+        val inputTokens = usageNode.path("prompt_tokens").takeIf { it.isNumber && it.asInt() >= 0 }?.asInt()
+        val outputTokens = usageNode.path("completion_tokens").takeIf { it.isNumber && it.asInt() >= 0 }?.asInt()
 
         val logprobsNode = root.path("choices").path(0).path("logprobs").path("content")
         val tokenLogprobs = if (logprobsNode.isArray) {
