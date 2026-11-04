@@ -3847,5 +3847,764 @@
         }
       ]
     }
+    ,
+    {
+      "name": "Coverage (IA-04 #43)",
+      "description": "Cobertura del temario (Issue #43 — IA-04): consulta de cobertura actual (GET /courses/{id}/coverage), evaluación con pre-filtro determinista e IA en lote para zona gris (POST /courses/{id}/coverage/evaluate), idempotencia sin notas nuevas, consulta de delta temporal (GET /courses/{id}/coverage/delta?since=) y validaciones de error (400 fecha futura, 404 curso ajeno/inexistente, 401 sin token).",
+      "item": [
+        {
+          "name": "GET Course Coverage (Student)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('course_id')) {",
+                  "    pm.environment.set('course_id', '1');",
+                  "}",
+                  "if (!pm.environment.get('coverage_since')) {",
+                  "    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();",
+                  "    pm.environment.set('coverage_since', sevenDaysAgo);",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Coverage response returns course_id, coverage_pct, state_counts and topics array', function () {",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data.course_id).to.eql(Number(pm.environment.get('course_id')));",
+                  "    pm.expect(jsonData.data.coverage_pct).to.be.a('number').within(0, 100);",
+                  "    pm.expect(jsonData.data.state_counts).to.be.an('object');",
+                  "    ['SOLID', 'PARTIAL', 'ABSENT', 'UNCERTAIN'].forEach(state => {",
+                  "        pm.expect(jsonData.data.state_counts).to.have.property(state);",
+                  "        pm.expect(jsonData.data.state_counts[state]).to.be.a('number');",
+                  "    });",
+                  "    pm.expect(jsonData.data.topics).to.be.an('array');",
+                  "});",
+                  "console.info('Coverage pct:', jsonData.data.coverage_pct, 'counts:', JSON.stringify(jsonData.data.state_counts));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/courses/{{course_id}}/coverage",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "courses",
+                "{{course_id}}",
+                "coverage"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Evaluate Course Coverage (Student)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('course_id')) {",
+                  "    pm.environment.set('course_id', '1');",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Evaluate returns coverage data and meta with prefilter_resolved, ai_adjudicated, uncertain and ai_called', function () {",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData).to.have.property('meta');",
+                  "    pm.expect(jsonData.meta.prefilter_resolved).to.be.a('number');",
+                  "    pm.expect(jsonData.meta.ai_adjudicated).to.be.a('number');",
+                  "    pm.expect(jsonData.meta.uncertain).to.be.a('number');",
+                  "    pm.expect(jsonData.meta.ai_called).to.be.a('boolean');",
+                  "    ['SOLID', 'PARTIAL', 'ABSENT', 'UNCERTAIN'].forEach(state => {",
+                  "        pm.expect(jsonData.data.state_counts).to.have.property(state);",
+                  "    });",
+                  "    jsonData.data.topics.forEach(t => {",
+                  "        if (t.state !== null) {",
+                  "            pm.expect(['SOLID', 'PARTIAL', 'ABSENT', 'UNCERTAIN']).to.include(t.state);",
+                  "        }",
+                  "    });",
+                  "});",
+                  "pm.environment.set('last_coverage_topics_snapshot', JSON.stringify(jsonData.data.topics));",
+                  "console.info('Coverage evaluate meta:', JSON.stringify(jsonData.meta));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/courses/{{course_id}}/coverage/evaluate",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "courses",
+                "{{course_id}}",
+                "coverage",
+                "evaluate"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Evaluate Course Coverage Repeated - Without New Notes (Student)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK (no recalculation) or 409 Conflict (cooldown active)', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 409]);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test('Repeated evaluation without new notes preserves topic states and updated_at timestamps', function () {",
+                  "        const prev = JSON.parse(pm.environment.get('last_coverage_topics_snapshot') || '[]');",
+                  "        if (prev.length > 0 && !jsonData.meta.ai_called) {",
+                  "            pm.expect(jsonData.data.topics).to.deep.equal(prev);",
+                  "        }",
+                  "    });",
+                  "} else {",
+                  "    pm.test('Cooldown prevents repeated AI invocation within 1 minute', function () {",
+                  "        pm.expect(jsonData.code).to.eql('COVERAGE_EVALUATION_COOLDOWN');",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/courses/{{course_id}}/coverage/evaluate",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "courses",
+                "{{course_id}}",
+                "coverage",
+                "evaluate"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Course Coverage Delta (Student)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('coverage_since')) {",
+                  "    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();",
+                  "    pm.environment.set('coverage_since', sevenDaysAgo);",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Delta response returns course_id, since, changed_counts and changed_topics', function () {",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data.course_id).to.eql(Number(pm.environment.get('course_id')));",
+                  "    pm.expect(jsonData.data.since).to.be.a('string').and.not.empty;",
+                  "    pm.expect(jsonData.data.changed_counts).to.be.an('object');",
+                  "    ['SOLID', 'PARTIAL', 'ABSENT', 'UNCERTAIN'].forEach(state => {",
+                  "        pm.expect(jsonData.data.changed_counts).to.have.property(state);",
+                  "    });",
+                  "    pm.expect(jsonData.data.changed_topics).to.be.an('array');",
+                  "});",
+                  "console.info('Delta changed_counts:', JSON.stringify(jsonData.data.changed_counts));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/courses/{{course_id}}/coverage/delta?since={{coverage_since}}",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "courses",
+                "{{course_id}}",
+                "coverage",
+                "delta"
+              ],
+              "query": [
+                {
+                  "key": "since",
+                  "value": "{{coverage_since}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "400 Bad Request - Coverage Delta with Future Date",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400 Bad Request', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Error response rejects future since date', function () {",
+                  "    pm.expect(jsonData.status).to.eql(400);",
+                  "    pm.expect(jsonData.code).to.be.a('string').and.not.empty;",
+                  "    pm.expect(jsonData.message).to.include('futuro');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/courses/{{course_id}}/coverage/delta?since=2099-01-01T00:00:00Z",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "courses",
+                "{{course_id}}",
+                "coverage",
+                "delta"
+              ],
+              "query": [
+                {
+                  "key": "since",
+                  "value": "2099-01-01T00:00:00Z"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "404 Not Found - Coverage for Foreign or Non-Existent Course",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 404 Not Found', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Error response has NOT_FOUND code', function () {",
+                  "    pm.expect(jsonData.code).to.eql('NOT_FOUND');",
+                  "    pm.expect(jsonData.message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/courses/999999/coverage",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "courses",
+                "999999",
+                "coverage"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "401 Unauthorized - Coverage Without Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401 Unauthorized', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Error response has UNAUTHORIZED code', function () {",
+                  "    pm.expect(jsonData.code).to.eql('UNAUTHORIZED');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/courses/{{course_id}}/coverage",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "courses",
+                "{{course_id}}",
+                "coverage"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Math OCR & Vision Repair (#38 #41)",
+      "description": "Pruebas de transcripción de fórmulas N1.5 (POST /notes/{id}/pages/{pageIndex}/regions/{regionId}/math) y reparación selectiva en lote N2 (POST /notes/{id}/pages/{pageIndex}/repair) mediante multipart/form-data (usando postman/test-crop.png), más controles de privilegio AI_VISION_INVOKE (403 con Admin) y autenticación (401 sin token).",
+      "item": [
+        {
+          "name": "POST Transcribe Math Region N1.5 (Student)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const host = pm.environment.get('host') || pm.variables.get('host') || 'http://localhost:8080';",
+                  "const version = pm.environment.get('version') || pm.variables.get('version') || 'v1';",
+                  "const courseId = Number(pm.environment.get('course_id') || 1);",
+                  "const token = pm.environment.get('jwt_token_student');",
+                  "const headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token };",
+                  "",
+                  "// Crea un apunte con página 0 y regiones r_math (N1_5 cacheada) y r_repair (pendiente) para prueba reproducible",
+                  "pm.sendRequest({",
+                  "    url: host + '/api/' + version + '/notes',",
+                  "    method: 'POST',",
+                  "    header: headers,",
+                  "    body: { mode: 'raw', raw: JSON.stringify({ course_id: courseId, class_date: '2026-10-28', title: 'Apunte N1.5 y N2 Postman' }) }",
+                  "}, function (err, res) {",
+                  "    if (!err && res && res.code === 201) {",
+                  "        const nid = res.json().data.id;",
+                  "        pm.environment.set('visionNoteId', String(nid));",
+                  "        const hash = Math.random().toString(16).substring(2, 10) + Math.random().toString(16).substring(2, 10);",
+                  "        pm.sendRequest({",
+                  "            url: host + '/api/' + version + '/notes/' + nid + '/pages',",
+                  "            method: 'POST',",
+                  "            header: headers,",
+                  "            body: {",
+                  "                mode: 'raw',",
+                  "                raw: JSON.stringify({",
+                  "                    page_index: 0,",
+                  "                    perceptual_hash: hash.padEnd(16, '0').substring(0, 16),",
+                  "                    level_reached: 'N1',",
+                  "                    overall_confidence: 0.72,",
+                  "                    regions: [",
+                  "                        { id: 'r1', bbox: [0.1, 0.2, 0.8, 0.3], kind: 'MATH', resolvedAt: 'N1_5', confidence: 0.91, isUncertain: false, latex: '\\\\lim_{x \\\\to a} f(x) = L', latexCompiles: true, engine: 'VisionMath' },",
+                  "                        { id: 'r2', bbox: [0.1, 0.4, 0.8, 0.5], kind: 'TEXT', resolvedAt: 'N1', confidence: 0.92, isUncertain: false, text: 'Definición de límite' }",
+                  "                    ]",
+                  "                })",
+                  "            }",
+                  "        });",
+                  "    }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Math OCR response returns pageIndex, regionId, latex, confidence, latexCompiles and status', function () {",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data.pageIndex).to.eql(0);",
+                  "    pm.expect(jsonData.data.regionId).to.eql('r1');",
+                  "    pm.expect(jsonData.data.latex).to.be.a('string');",
+                  "    pm.expect(jsonData.data.confidence).to.be.a('number');",
+                  "    pm.expect(jsonData.data.latexCompiles).to.be.a('boolean');",
+                  "    pm.expect(['KEEP_N1_5', 'NEEDS_N2']).to.include(jsonData.data.status);",
+                  "    pm.expect(jsonData.data.cached).to.be.a('boolean');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "crop",
+                  "type": "file",
+                  "src": "postman/test-crop.png",
+                  "contentType": "image/png"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/notes/{{visionNoteId}}/pages/0/regions/r1/math",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "notes",
+                "{{visionNoteId}}",
+                "pages",
+                "0",
+                "regions",
+                "r1",
+                "math"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Selective Vision Repair N2 (Student)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Page repair response returns pageIndex, levelReached, repaired, uncertain and regions list', function () {",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data.pageIndex).to.eql(0);",
+                  "    pm.expect(jsonData.data.levelReached).to.be.a('string');",
+                  "    pm.expect(jsonData.data.repaired).to.be.a('number');",
+                  "    pm.expect(jsonData.data.uncertain).to.be.a('number');",
+                  "    pm.expect(jsonData.data.regions).to.be.an('array').that.is.not.empty;",
+                  "    jsonData.data.regions.forEach(r => {",
+                  "        pm.expect(r).to.have.property('regionId');",
+                  "        pm.expect(r).to.have.property('kind');",
+                  "        pm.expect(r).to.have.property('confidence');",
+                  "        pm.expect(r).to.have.property('resolvedAt');",
+                  "        pm.expect(r).to.have.property('isUncertain');",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "r2",
+                  "type": "file",
+                  "src": "postman/test-crop.png",
+                  "contentType": "image/png"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/notes/{{visionNoteId}}/pages/0/repair",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "notes",
+                "{{visionNoteId}}",
+                "pages",
+                "0",
+                "repair"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "403 Forbidden - Math OCR Without AI_VISION_INVOKE (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403 Forbidden', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Error response has FORBIDDEN code', function () {",
+                  "    pm.expect(jsonData.code).to.eql('FORBIDDEN');",
+                  "    pm.expect(jsonData.status).to.eql(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "crop",
+                  "type": "file",
+                  "src": "postman/test-crop.png",
+                  "contentType": "image/png"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/notes/{{visionNoteId}}/pages/0/regions/r1/math",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "notes",
+                "{{visionNoteId}}",
+                "pages",
+                "0",
+                "regions",
+                "r1",
+                "math"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "401 Unauthorized - Math OCR Without Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401 Unauthorized', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Error response has UNAUTHORIZED code', function () {",
+                  "    pm.expect(jsonData.code).to.eql('UNAUTHORIZED');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "crop",
+                  "type": "file",
+                  "src": "postman/test-crop.png",
+                  "contentType": "image/png"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{host}}/api/{{version}}/notes/{{visionNoteId}}/pages/0/regions/r1/math",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "notes",
+                "{{visionNoteId}}",
+                "pages",
+                "0",
+                "regions",
+                "r1",
+                "math"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
   ]
 }

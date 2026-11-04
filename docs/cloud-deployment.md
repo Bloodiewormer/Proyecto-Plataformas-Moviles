@@ -238,3 +238,11 @@ Sanitized local evidence: migration.log SHA256 8af0db42d15fe791f0dd277010c184482
 ## Application validation against Neon: 2026-10-28
 
 After the migration, image glifo-api:issue49-fcm-local (sha256:18ca1ab8a3aa7e797825d9c4ea0b6657c021f31d606ce5a7950bf021f9944848) started locally against the Neon direct endpoint as glifo_runtime with JDBC verify-full, the cloud profile, Hibernate validate, SQL initialization disabled, FCM disabled, 512 MiB and port published only on 127.0.0.1. Schema validation passed and the application started in 20.06 seconds without OOM. GET /api/v1/health returned 200 UP; anonymous GET /api/v1/courses and /api/v1/devices returned 401. No HTTP writes were made. The container, temporary env file and private password file were removed; the JWT secret was random and discarded. This is not a Render deployment.
+
+
+## Pending Neon incremental migrations before starting Render (#46 and #43)
+
+Since `docs/db/cloud-bootstrap.psql` and `docs/db/049-fcm-incremental.psql` are already applied in Neon (`neondb`), David must apply the remaining incremental migrations as `neondb_owner` in the following exact order **before** starting the service on Render (so `spring.jpa.hibernate.ddl-auto=validate` and runtime `UNCERTAIN` coverage writes succeed):
+
+1. **`docs/db/046-ai-calls-incremental.psql`** — Updates `public.ai_calls` (nullable `level`, `input_tokens`, `output_tokens`, `estimated_cost numeric(12,8)`, plus `model`, `success`, `output_accepted`, `error_code`, `error_message` and `ck_ai_calls_outcome`), creates `public.ai_avoided_calls` (`idx_ai_avoided_calls_user_created`) and grants DML/sequence privileges to `glifo_runtime`.
+2. **`docs/db/043-topic-coverage-uncertain.psql`** — Replaces constraint `ck_topic_coverage_state` on `public.topic_coverage` to include `'UNCERTAIN'` (`CHECK (state IN ('SOLID', 'PARTIAL', 'ABSENT', 'UNCERTAIN'))`).
