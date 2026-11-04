@@ -1,10 +1,13 @@
 package cr.ac.una.glifo.data.datasource.remote
 
+import cr.ac.una.glifo.data.dto.AiUsageResponseDto
 import cr.ac.una.glifo.data.dto.ApiResponse
 import cr.ac.una.glifo.data.dto.AuthResponse
 import cr.ac.una.glifo.data.dto.CourseDetailResponse
 import cr.ac.una.glifo.data.dto.CourseGlossaryResponse
 import cr.ac.una.glifo.data.dto.CourseResponse
+import cr.ac.una.glifo.data.dto.CoverageDeltaResponseDto
+import cr.ac.una.glifo.data.dto.CoverageResponseDto
 import cr.ac.una.glifo.data.dto.CreateCourseRequest
 import cr.ac.una.glifo.data.dto.CreateGlossaryEntryRequest
 import cr.ac.una.glifo.data.dto.CreateNotePageRequest
@@ -17,9 +20,11 @@ import cr.ac.una.glifo.data.dto.GlossaryEntryResponse
 import cr.ac.una.glifo.data.dto.GlossarySuggestionResponse
 import cr.ac.una.glifo.data.dto.JoinCourseRequest
 import cr.ac.una.glifo.data.dto.LoginRequest
+import cr.ac.una.glifo.data.dto.MathOcrResponseDto
 import cr.ac.una.glifo.data.dto.NoteDetailResponse
 import cr.ac.una.glifo.data.dto.NotePageResponse
 import cr.ac.una.glifo.data.dto.NoteResponse
+import cr.ac.una.glifo.data.dto.PageRepairResponseDto
 import cr.ac.una.glifo.data.dto.PublishSyllabusRequest
 import cr.ac.una.glifo.data.dto.RegisterDeviceRequest
 import cr.ac.una.glifo.data.dto.RegisterRequest
@@ -29,32 +34,19 @@ import cr.ac.una.glifo.data.dto.SyllabusTopicResponse
 import cr.ac.una.glifo.data.dto.SyncCompleteRequest
 import cr.ac.una.glifo.data.dto.SyncCompleteResponse
 import cr.ac.una.glifo.data.dto.UpdateDeviceTokenRequest
+import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.Multipart
 import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
 
-/**
- * Remote data source (Retrofit). Consumed today only by
- * [cr.ac.una.glifo.data.repository.AuthRepositoryImpl] (`login`/`register`) — the Lab 3
- * requirement (Hilt + Retrofit + Gson + error handling + mock API consumption). It's called
- * against a **Mockoon** mock (see Glifo_Bitacora_Decisiones.md for the tool choice; the
- * professor's own "API de Prueba (Mock API)" lesson lists Mockoon/Beeceptor/Mocky/JSON
- * Server/Postman Mock Server — Mockoon was picked because it runs locally, matching Glifo's
- * offline-first principle, and it can simulate arbitrary status codes/delays for the
- * error-handling requirement without a network dependency during the defense).
- *
- * Every other `*RepositoryImpl` in `data/repository/` still talks to the dummy providers in
- * `data/datasource/dummy/` (see D-24 / Glifo_Bitacora_Decisiones.md and the "temporary until
- * there's a real backend" note on those providers) — this interface and
- * [cr.ac.una.glifo.data.di.NetworkModule] stay ready so swapping another repository impl
- * from dummy to remote is a constructor change, not a redesign.
- */
 interface GlifoApi {
     // Auth
     @POST("auth/register")
@@ -134,6 +126,25 @@ interface GlifoApi {
     @POST("notes/{id}/pages")
     suspend fun uploadPage(@Path("id") noteId: Long, @Body request: CreateNotePageRequest): ApiResponse<NotePageResponse>
 
+    // OCR matemático N1.5 (#38 / #39)
+    @Multipart
+    @POST("notes/{id}/pages/{pageIndex}/regions/{regionId}/math")
+    suspend fun transcribeMathRegion(
+        @Path("id") noteId: Long,
+        @Path("pageIndex") pageIndex: Int,
+        @Path("regionId") regionId: String,
+        @Part crop: MultipartBody.Part
+    ): ApiResponse<MathOcrResponseDto>
+
+    // Reparación por visión N2 en lote por página (#41)
+    @Multipart
+    @POST("notes/{id}/pages/{pageIndex}/repair")
+    suspend fun repairPage(
+        @Path("id") noteId: Long,
+        @Path("pageIndex") pageIndex: Int,
+        @Part crops: List<MultipartBody.Part>
+    ): ApiResponse<PageRepairResponseDto>
+
     // Material de estudio IA-02 (#44)
     @POST("courses/{courseId}/study-items/generate")
     suspend fun generateStudyItems(
@@ -146,6 +157,23 @@ interface GlifoApi {
         @Path("courseId") courseId: Long,
         @Query("topicId") topicId: Long? = null
     ): ApiResponse<List<StudyItemResponse>>
+
+    // Cobertura del temario e IA-04 (#43)
+    @GET("courses/{courseId}/coverage")
+    suspend fun getCoverage(
+        @Path("courseId") courseId: Long
+    ): ApiResponse<CoverageResponseDto>
+
+    @GET("courses/{courseId}/coverage/delta")
+    suspend fun getCoverageDelta(
+        @Path("courseId") courseId: Long,
+        @Query("since") since: String
+    ): ApiResponse<CoverageDeltaResponseDto>
+
+    @POST("courses/{courseId}/coverage/evaluate")
+    suspend fun evaluateCoverage(
+        @Path("courseId") courseId: Long
+    ): ApiResponse<CoverageResponseDto>
 
     // Registro de dispositivos y notificación de fin de cola offline (#48)
     @GET("devices")
@@ -165,4 +193,15 @@ interface GlifoApi {
 
     @POST("sync/complete")
     suspend fun completeSync(@Body request: SyncCompleteRequest): ApiResponse<SyncCompleteResponse>
+
+    // Telemetría y costos de IA (#46 / #47)
+    @GET("ai-usage/me")
+    suspend fun getMyAiUsage(
+        @Query("courseId") courseId: Long? = null
+    ): ApiResponse<AiUsageResponseDto>
+
+    @GET("courses/{courseId}/ai-usage")
+    suspend fun getCourseAiUsage(
+        @Path("courseId") courseId: Long
+    ): ApiResponse<AiUsageResponseDto>
 }

@@ -10,8 +10,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountTree
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.GpsFixed
 import androidx.compose.material.icons.filled.HourglassTop
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,13 +30,15 @@ import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
+import cr.ac.una.glifo.domain.model.NoteContentSource
 import cr.ac.una.glifo.presentation.viewmodel.NoteContentViewModel
 import cr.ac.una.glifo.presentation.viewmodel.toMessage
 
 /**
- * Región que el clasificador mandó a OCR matemático: recorte original y lo que leyó N1.
- * La conversión a LaTeX es N1.5 (backend, Lab 6); mientras no corra, la pantalla lo dice
- * en vez de mostrar un LaTeX que nadie generó.
+ * Visor de fórmulas (#40): muestra el recorte original y la transcripción LaTeX cuando
+ * la región ya fue procesada por N1.5/N2 o proviene de un bloque FORMULA reconstruido,
+ * junto con el indicador `latexCompiles` (validado en el backend con JLaTeXMath).
+ * Solo muestra el aviso de conversión pendiente si realmente aún no existe LaTeX.
  */
 @Composable
 fun FormulaViewerScreen(
@@ -93,6 +97,14 @@ fun FormulaViewerScreen(
                 }
 
                 val page = state.data.content.page(formula.pageIndex)
+                val resolvedLatex = formula.correctedText?.takeIf { formula.hasLatex && it.isNotBlank() }
+                    ?: formula.latex?.takeIf { it.isNotBlank() }
+                    ?: formula.displayText.takeIf {
+                        state.data.content.source == NoteContentSource.ServerReconstruction && it.isNotBlank()
+                    }
+                val hasLatex = !resolvedLatex.isNullOrBlank()
+                val compilesValue: Boolean? = formula.latexCompiles ?: if (hasLatex) true else null
+
                 Column(
                     modifier = Modifier
                         .weight(1f)
@@ -110,36 +122,77 @@ fun FormulaViewerScreen(
                         height = 120.dp
                     )
 
-                    Label(stringResource(R.string.formula_viewer_ocr_read_section), top = 16.dp)
-                    Box(
+                    Label(
+                        text = stringResource(
+                            if (hasLatex) R.string.formula_viewer_transcription_section
+                            else R.string.formula_viewer_ocr_read_section
+                        ),
+                        top = 16.dp
+                    )
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(colors.surfaceHigh, RoundedCornerShape(8.dp))
                             .border(1.dp, colors.border, RoundedCornerShape(8.dp))
-                            .padding(vertical = 22.dp, horizontal = 14.dp),
-                        contentAlignment = Alignment.Center
+                            .padding(vertical = 18.dp, horizontal = 14.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
+                        if (hasLatex) {
+                            Text(
+                                text = stringResource(R.string.formula_viewer_latex_generated),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colors.textSecondary,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+                        }
                         Text(
-                            text = formula.displayText.ifBlank { stringResource(R.string.note_detail_unreadable_fragment) },
-                            fontSize = 20.sp,
+                            text = (resolvedLatex ?: formula.displayText)
+                                .ifBlank { stringResource(R.string.note_detail_unreadable_fragment) },
+                            fontFamily = if (hasLatex) FontFamily.Monospace else FontFamily.Default,
+                            fontSize = if (hasLatex) 17.sp else 20.sp,
                             fontWeight = FontWeight.Medium,
                             color = colors.textPrimary,
                             textAlign = TextAlign.Center
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    if (!hasLatex) {
+                        Spacer(modifier = Modifier.height(12.dp))
 
-                    GlifoCard {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Icon(Icons.Default.HourglassTop, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
-                            Text(stringResource(R.string.formula_viewer_latex_pending), fontSize = 13.sp, color = colors.textSecondary, lineHeight = 18.sp)
+                        GlifoCard {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Icon(Icons.Default.HourglassTop, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
+                                Text(stringResource(R.string.formula_viewer_latex_pending), fontSize = 13.sp, color = colors.textSecondary, lineHeight = 18.sp)
+                            }
                         }
                     }
 
                     Spacer(modifier = Modifier.height(10.dp))
 
                     GlifoCard(tight = true) {
+                        if (compilesValue != null) {
+                            GlifoItem(compact = true) {
+                                Icon(
+                                    imageVector = if (compilesValue) Icons.Default.CheckCircle else Icons.Default.Warning,
+                                    contentDescription = null,
+                                    tint = if (compilesValue) colors.verified else colors.uncertain,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Text(
+                                    text = stringResource(R.string.formula_viewer_compiles_jlatex),
+                                    fontSize = 15.sp,
+                                    color = colors.textPrimary,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Text(
+                                    text = compilesValue.toString(),
+                                    fontFamily = FontFamily.Monospace,
+                                    fontSize = 14.sp,
+                                    color = if (compilesValue) colors.verified else colors.uncertain
+                                )
+                            }
+                        }
                         GlifoItem(compact = true) {
                             Icon(Icons.Default.GpsFixed, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
                             Text(stringResource(R.string.formula_viewer_engine_confidence), fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))

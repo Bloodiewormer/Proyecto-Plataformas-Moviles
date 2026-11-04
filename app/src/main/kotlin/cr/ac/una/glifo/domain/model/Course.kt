@@ -26,10 +26,7 @@ data class SyllabusTopic(
 )
 
 /**
- * Extra, UI-facing stats for a course (coverage breakdown, roster size, etc.) that a real
- * backend would likely compute server-side. Kept as its own model — rather than folded
- * into [CourseDetail] — so the DTO-backed course shape stays a clean mirror of the future
- * API contract while this stays free to evolve with the dummy data source.
+ * Métricas de cobertura de un curso obtenidas del backend (`GET /courses/{id}/coverage`, #43).
  */
 data class CourseStats(
     val courseId: Long,
@@ -44,5 +41,9 @@ data class CourseStats(
     val topicCount: Int,
     val pendingCount: Int,
     val weeklyDeltaPoints: Int,
-    val hasSyllabus: Boolean
+    val hasSyllabus: Boolean,
+    val solidCount: Int = 0,
+    val partialCount: Int = 0,
+    val absentCount: Int = 0,
+    val uncertainCount: Int = 0
 )

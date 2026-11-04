@@ -2,11 +2,11 @@ package cr.ac.una.glifo.data.repository
 
 import cr.ac.una.glifo.core.common.AppError
 import cr.ac.una.glifo.core.datastore.ActiveCourseStore
-import cr.ac.una.glifo.data.datasource.dummy.DummyCourseProvider
 import cr.ac.una.glifo.data.datasource.remote.ApiErrorHandler
 import cr.ac.una.glifo.data.datasource.remote.GlifoApi
 import cr.ac.una.glifo.data.dto.CreateCourseRequest
 import cr.ac.una.glifo.data.dto.JoinCourseRequest
+import cr.ac.una.glifo.data.mapper.toCourseStats
 import cr.ac.una.glifo.data.mapper.toDomain
 import cr.ac.una.glifo.domain.error.Result
 import cr.ac.una.glifo.domain.model.Course
@@ -55,7 +55,10 @@ class CourseRepositoryImpl : CourseRepository {
         )
 
     override suspend fun getCourseStats(courseId: Long): Result<CourseStats> =
-        Result.Success(DummyCourseProvider.getStats(courseId))
+        ApiErrorHandler.safeApiCall(
+            apiCall = { api.getCoverage(courseId) },
+            transform = { it.data.toCourseStats() }
+        )
 
     override suspend fun getCourseTopics(courseId: Long): Result<List<SyllabusTopic>> =
         ApiErrorHandler.safeApiCall(

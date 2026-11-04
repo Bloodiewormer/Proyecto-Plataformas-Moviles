@@ -50,7 +50,15 @@ data class RecognizedRegion(
     /** Destino al que el enrutador manda esta región ("N1.5 · OCR matemático", …). */
     val route: String,
     val confidenceState: ConfidenceState,
-    val metrics: RegionInkMetrics
+    val metrics: RegionInkMetrics,
+    /** Ruta opcional a un recorte guardado; si es null se recorta desde la foto de la página usando [bounds]. */
+    val cropPath: String? = null,
+    /** LaTeX generado por N1.5 (#38) o N2 (#41) para regiones matemáticas. */
+    val latex: String? = null,
+    /** Si el LaTeX compila según el validador JLaTeXMath del servidor (#39 / #40). */
+    val latexCompiles: Boolean? = null,
+    /** Nivel que resolvió la región ("N1", "N1_5", "N2", "UNRESOLVED"). */
+    val resolvedAt: String? = null
 )
 
 /** De qué página ya procesada salió un análisis reutilizado, y qué tan parecidas eran. */

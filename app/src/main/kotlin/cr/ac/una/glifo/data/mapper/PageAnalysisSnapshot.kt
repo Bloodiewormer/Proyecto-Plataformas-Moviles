@@ -31,7 +31,11 @@ private data class RegionSnapshot(
     val kindConfidence: Float,
     val route: String,
     val confidenceState: String,
-    val metrics: RegionInkMetrics
+    val metrics: RegionInkMetrics,
+    val cropPath: String? = null,
+    val latex: String? = null,
+    val latexCompiles: Boolean? = null,
+    val resolvedAt: String? = null
 )
 
 private val gson = Gson()
@@ -49,7 +53,11 @@ fun PageAnalysis.toSnapshotJson(): String = gson.toJson(
                 kindConfidence = it.kindConfidence,
                 route = it.route,
                 confidenceState = it.confidenceState.name(),
-                metrics = it.metrics
+                metrics = it.metrics,
+                cropPath = it.cropPath,
+                latex = it.latex,
+                latexCompiles = it.latexCompiles,
+                resolvedAt = it.resolvedAt
             )
         },
         pageWidth = pageWidth,
@@ -74,7 +82,11 @@ fun pageAnalysisFromSnapshotJson(json: String): PageAnalysis? = runCatching {
                 kindConfidence = it.kindConfidence,
                 route = it.route,
                 confidenceState = confidenceStateOf(it.confidenceState),
-                metrics = it.metrics
+                metrics = it.metrics,
+                cropPath = it.cropPath,
+                latex = it.latex,
+                latexCompiles = it.latexCompiles,
+                resolvedAt = it.resolvedAt
             )
         },
         pageWidth = snapshot.pageWidth,

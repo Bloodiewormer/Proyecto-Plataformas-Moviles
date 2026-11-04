@@ -1,6 +1,11 @@
 package cr.ac.una.glifo.data.repository
 
+import cr.ac.una.glifo.core.common.AppError
+import cr.ac.una.glifo.core.datastore.ActiveCourseStore
 import cr.ac.una.glifo.data.datasource.local.dao.ProcessedPageDao
+import cr.ac.una.glifo.data.datasource.remote.ApiErrorHandler
+import cr.ac.una.glifo.data.datasource.remote.GlifoApi
+import cr.ac.una.glifo.data.mapper.AiUsageMapper
 import cr.ac.una.glifo.data.mapper.pageAnalysisFromSnapshotJson
 import cr.ac.una.glifo.domain.error.Result
 import cr.ac.una.glifo.domain.model.AiCostBreakdownRow
@@ -11,19 +16,41 @@ import cr.ac.una.glifo.domain.repository.AiCostRepository
 import javax.inject.Inject
 
 /**
- * Uso de IA medido con lo que de verdad pasó en este teléfono: cada página que corrió el
- * pipeline queda en Room (#28) con sus regiones y a qué nivel las mandó el enrutador.
+ * Combina las métricas locales de páginas/regiones procesadas en el teléfono (`ProcessedPageDao`, #28)
+ * con las métricas reales del backend (`ai_calls` / `ai_avoided_calls`, #46 / #47):
+ * llamadas pagadas por función (`IA_01`, `IA_02`, `IA_04`, `OCR_M`/N1.5, `IA_00`/N2),
+ * tokens, costo estimado y llamadas evitadas con su motivo.
  *
- * Todavía no existe ninguna llamada pagada: N1.5, N2 y las funciones IA-0x son del Lab 6
- * (#38, #41–#44) y su registro es `ai_calls` en el backend (#46). Hasta entonces la cifra
- * honesta de llamadas pagadas es 0, y lo que se puede mostrar es cuánto resolvió el
- * teléfono solo y cuánto quedó en cola para los niveles pagados.
+ * Si no hay red (`AppError.NoConnection`), devuelve las métricas locales junto con el aviso
+ * de que los datos del servidor no están disponibles, sin inventar ceros.
  */
-class AiCostRepositoryImpl @Inject constructor(
-    private val processedPageDao: ProcessedPageDao
-) : AiCostRepository {
+class AiCostRepositoryImpl : AiCostRepository {
 
-    override suspend fun getStats(role: GlifoRole): Result<AiCostStats> {
+    private val processedPageDao: ProcessedPageDao
+    private val api: GlifoApi
+    private val activeCourseStore: ActiveCourseStore?
+
+    @Inject
+    constructor(
+        processedPageDao: ProcessedPageDao,
+        api: GlifoApi,
+        activeCourseStore: ActiveCourseStore
+    ) {
+        this.processedPageDao = processedPageDao
+        this.api = api
+        this.activeCourseStore = activeCourseStore
+    }
+
+    constructor(
+        processedPageDao: ProcessedPageDao,
+        api: GlifoApi
+    ) {
+        this.processedPageDao = processedPageDao
+        this.api = api
+        this.activeCourseStore = null
+    }
+
+    override suspend fun getStats(role: GlifoRole, courseId: Long?): Result<AiCostStats> {
         val analyses = processedPageDao.all().mapNotNull { pageAnalysisFromSnapshotJson(it.analysisJson) }
         val regions = analyses.flatMap { it.regions }
         val total = regions.size
@@ -41,21 +68,48 @@ class AiCostRepositoryImpl @Inject constructor(
             row(ConfidenceState.Uncertain, "Bajo la compuerta de N1")
         )
         val resolvedLocally = regions.count { it.confidenceState == ConfidenceState.Verified }
+        val headlinePercent = if (total == 0) 0 else resolvedLocally * 100 / total
 
-        return Result.Success(
-            AiCostStats(
-                periodLabel = "Este teléfono · ${analyses.size} página(s) · $total regiones",
-                headlinePercent = if (total == 0) 0 else resolvedLocally * 100 / total,
-                isSystemWide = false,
-                breakdown = breakdown,
-                paidCalls = emptyList(),
-                footerNote = if (analyses.isEmpty()) {
-                    "Todavía no hay capturas procesadas en este teléfono."
+        val resolvedCourseId = courseId ?: activeCourseStore?.activeCourseId?.value
+        val remote = ApiErrorHandler.safeApiCall(
+            apiCall = {
+                if (role == GlifoRole.Teacher && resolvedCourseId != null) {
+                    api.getCourseAiUsage(resolvedCourseId)
                 } else {
-                    "Las ${analyses.size} página(s) se procesaron sin ninguna llamada pagada. " +
-                        "N1.5 y N2 todavía no llaman a ningún modelo, así que lo enrutado ahí queda pendiente."
+                    api.getMyAiUsage(courseId)
                 }
-            )
+            },
+            transform = { it.data }
         )
+
+        return when (remote) {
+            is Result.Success -> Result.Success(
+                AiUsageMapper.toAiCostStats(
+                    dto = remote.value,
+                    localPagesCount = analyses.size,
+                    localRegionsCount = total,
+                    headlinePercent = headlinePercent,
+                    breakdown = breakdown,
+                    isSystemWide = role == GlifoRole.Admin
+                )
+            )
+            is Result.Failure -> {
+                if (remote.error is AppError.NoConnection) {
+                    Result.Success(
+                        AiCostStats(
+                            periodLabel = "Este teléfono · ${analyses.size} página(s) · $total regiones",
+                            headlinePercent = headlinePercent,
+                            isSystemWide = role == GlifoRole.Admin,
+                            breakdown = breakdown,
+                            paidCalls = emptyList(),
+                            footerNote = "Sin conexión al servidor: los datos de llamadas pagadas, tokens y costos del servidor no están disponibles. Mostrando únicamente métricas locales.",
+                            serverDataAvailable = false
+                        )
+                    )
+                } else {
+                    remote
+                }
+            }
+        }
     }
 }

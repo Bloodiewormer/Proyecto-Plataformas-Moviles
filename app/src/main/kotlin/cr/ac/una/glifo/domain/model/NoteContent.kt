@@ -33,10 +33,17 @@ data class NoteFragment(
     val kindConfidence: Float? = null,
     val metrics: RegionInkMetrics? = null,
     /** Texto que puso el estudiante al corregir; reemplaza a [text] al mostrarse. */
-    val correctedText: String? = null
+    val correctedText: String? = null,
+    /** LaTeX generado por N1.5/N2 o por el bloque FORMULA de la reconstrucción IA-01 (#40). */
+    val latex: String? = null,
+    /** Si el LaTeX compila según el validador JLaTeXMath del servidor (#39 / #40). */
+    val latexCompiles: Boolean? = null,
+    /** Nivel que resolvió el fragmento ("N1", "N1_5", "N2", "UNRESOLVED"). */
+    val resolvedAt: String? = null
 ) {
-    val displayText: String get() = correctedText ?: text
+    val displayText: String get() = correctedText ?: latex?.takeIf { it.isNotBlank() } ?: text
     val isCorrected: Boolean get() = correctedText != null
+    val hasLatex: Boolean get() = !latex.isNullOrBlank()
 }
 
 /** Página del apunte con lo necesario para mostrar el recorte original de cada región. */

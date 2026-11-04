@@ -2,45 +2,32 @@ package cr.ac.una.glifo.data.dto
 
 import com.google.gson.annotations.SerializedName
 
-data class CoverageSummaryResponse(
-    @SerializedName("topic_count") val topicCount: Int,
-    @SerializedName("coverage_percent") val coveragePercent: Int,
-    @SerializedName("v") val v: Float,
-    @SerializedName("r") val r: Float,
-    @SerializedName("e") val e: Float,
-    @SerializedName("u") val u: Float,
-    @SerializedName("solid_count") val solidCount: Int,
-    @SerializedName("partial_count") val partialCount: Int,
-    @SerializedName("absent_count") val absentCount: Int,
-    @SerializedName("doubtful_count") val doubtfulCount: Int,
-    @SerializedName("unit_label") val unitLabel: String,
-    @SerializedName("delta_label") val deltaLabel: String
+/**
+ * DTOs para los endpoints reales de cobertura del temario (#43):
+ * - `GET /api/v1/courses/{courseId}/coverage`
+ * - `POST /api/v1/courses/{courseId}/coverage/evaluate`
+ * - `GET /api/v1/courses/{courseId}/coverage/delta?since=`
+ */
+data class CoverageResponseDto(
+    @SerializedName("course_id") val courseId: Long,
+    @SerializedName("coverage_pct") val coveragePct: Float = 0f,
+    @SerializedName("state_counts") val stateCounts: Map<String, Int> = emptyMap(),
+    @SerializedName("topics") val topics: List<TopicCoverageResponseDto> = emptyList()
 )
 
-data class CoverageTopicResponse(
-    @SerializedName("state") val state: String,
-    @SerializedName("name") val name: String,
-    @SerializedName("note") val note: String?,
-    @SerializedName("score") val score: String
-)
-
-data class TopicDetailResponse(
-    @SerializedName("name") val name: String,
-    @SerializedName("state") val state: String,
-    @SerializedName("state_label") val stateLabel: String,
-    @SerializedName("confidence") val confidence: String,
-    @SerializedName("checklist") val checklist: List<TopicChecklistItemDto> = emptyList(),
-    @SerializedName("note_refs") val noteRefs: List<TopicNoteRefDto> = emptyList()
-)
-
-data class TopicChecklistItemDto(
-    @SerializedName("ok") val ok: Boolean,
-    @SerializedName("label") val label: String,
-    @SerializedName("meta") val meta: String
-)
-
-data class TopicNoteRefDto(
-    @SerializedName("note_id") val noteId: Long,
+data class TopicCoverageResponseDto(
+    @SerializedName("topic_id") val topicId: Long,
+    @SerializedName("parent_id") val parentId: Long? = null,
+    @SerializedName("code") val code: String,
     @SerializedName("title") val title: String,
-    @SerializedName("meta") val meta: String
+    @SerializedName("state") val state: String? = null,
+    @SerializedName("score") val score: Float = 0f,
+    @SerializedName("updated_at") val updatedAt: String? = null
+)
+
+data class CoverageDeltaResponseDto(
+    @SerializedName("course_id") val courseId: Long,
+    @SerializedName("since") val since: String,
+    @SerializedName("changed_counts") val changedCounts: Map<String, Int> = emptyMap(),
+    @SerializedName("changed_topics") val changedTopics: List<TopicCoverageResponseDto> = emptyList()
 )

@@ -194,7 +194,11 @@ private fun ColumnScope.NoteContentBody(
 
         content.fragments.forEach { fragment ->
             if (fragment.kind == RegionKind.Math) {
-                FormulaFragment(fragment, resolved = content.source == NoteContentSource.ServerReconstruction, onClick = { onFragmentClick(fragment) })
+                FormulaFragment(
+                    fragment = fragment,
+                    resolved = content.source == NoteContentSource.ServerReconstruction || fragment.hasLatex,
+                    onClick = { onFragmentClick(fragment) }
+                )
             } else {
                 TextFragment(fragment, onClick = { onFragmentClick(fragment) })
             }

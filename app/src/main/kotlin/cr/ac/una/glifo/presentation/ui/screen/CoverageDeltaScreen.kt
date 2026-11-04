@@ -1,7 +1,5 @@
 package cr.ac.una.glifo.presentation.ui.screen
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -11,16 +9,13 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -29,6 +24,7 @@ import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
+import cr.ac.una.glifo.domain.model.ConfidenceState
 import cr.ac.una.glifo.presentation.viewmodel.CoverageDeltaViewModel
 import cr.ac.una.glifo.presentation.viewmodel.toMessage
 
@@ -59,104 +55,109 @@ fun CoverageDeltaScreen(
             is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
             is UiState.Success -> {
                 val delta = state.data
+                val solidCount = delta.changedCounts["SOLID"] ?: 0
+                val partialCount = delta.changedCounts["PARTIAL"] ?: 0
+                val absentCount = delta.changedCounts["ABSENT"] ?: 0
+                val uncertainCount = delta.changedCounts["UNCERTAIN"] ?: 0
 
-                // Animate the "current" bar growing in from the "previous" state on entry.
-                var animateToCurrent by remember { mutableStateOf(false) }
-                LaunchedEffect(delta) { animateToCurrent = true }
-                val vAnim by animateFloatAsState(if (animateToCurrent) delta.toBar.v else delta.fromBar.v, tween(600), label = "delta-v")
-                val rAnim by animateFloatAsState(if (animateToCurrent) delta.toBar.r else delta.fromBar.r, tween(600), label = "delta-r")
-                val eAnim by animateFloatAsState(if (animateToCurrent) delta.toBar.e else delta.fromBar.e, tween(600), label = "delta-e")
-                val uAnim by animateFloatAsState(if (animateToCurrent) delta.toBar.u else delta.fromBar.u, tween(600), label = "delta-u")
-
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .navigationBarsPadding()
-                .verticalScroll(rememberScrollState())
-                .padding(14.dp)
-        ) {
-            GlifoCard {
-                Text(delta.dateRange, fontSize = 12.sp, color = colors.textSecondary)
-
-                Row(
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 14.dp, bottom = 4.dp),
-                    verticalAlignment = Alignment.Bottom,
-                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                        .weight(1f)
+                        .navigationBarsPadding()
+                        .verticalScroll(rememberScrollState())
+                        .padding(14.dp)
                 ) {
-                    Text("${delta.fromPercent}%", fontSize = 26.sp, fontWeight = FontWeight.SemiBold, color = colors.textSecondary)
-                    Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(20.dp))
-                    Text("${delta.toPercent}%", fontSize = 32.sp, fontWeight = FontWeight.SemiBold, color = colors.accentText)
-                    Spacer(modifier = Modifier.weight(1f))
-                    GlifoBadge(text = stringResource(R.string.coverage_delta_points_badge, delta.deltaPoints), backgroundColor = colors.verifiedSoft, textColor = colors.verified)
-                }
+                    GlifoCard {
+                        Text(delta.dateRange, fontSize = 12.sp, color = colors.textSecondary)
 
-                // Bar animates from the previous state to the current one on entry.
-                CovBar(v = vAnim, r = rAnim, e = eAnim, u = uAnim, height = 8.dp)
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                Text(
-                    stringResource(R.string.coverage_delta_new_notes_pages, delta.newNotesCount, delta.newPagesCount),
-                    fontSize = 12.sp,
-                    color = colors.textSecondary,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-            }
+                        Text(
+                            text = stringResource(R.string.coverage_delta_changed_count, delta.changedTopics.size),
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = colors.textPrimary
+                        )
 
-            Text(
-                text = stringResource(R.string.coverage_delta_improved_section),
-                fontSize = 11.sp,
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = 0.6.sp,
-                color = colors.textSecondary,
-                modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
-            )
+                        if (delta.changedTopics.isNotEmpty()) {
+                            CovBar(
+                                v = delta.toBar.v,
+                                r = delta.toBar.r,
+                                e = delta.toBar.e,
+                                u = delta.toBar.u,
+                                height = 8.dp,
+                                modifier = Modifier.padding(vertical = 10.dp)
+                            )
 
-            GlifoCard(tight = true) {
-                delta.improved.forEachIndexed { i, item ->
-                    GlifoItem(compact = true, showBottomBorder = i < delta.improved.size - 1) {
-                        Text(text = item.label, fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                            GlifoConfidenceChip(state = item.from)
-                            Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(16.dp))
-                            GlifoConfidenceChip(state = item.to)
+                            Row(modifier = Modifier.fillMaxWidth()) {
+                                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        GlifoConfidenceChip(state = ConfidenceState.Verified)
+                                        Text(stringResource(R.string.coverage_solid_count, solidCount), fontSize = 12.sp, color = colors.textSecondary)
+                                    }
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        GlifoConfidenceChip(state = ConfidenceState.Escalated)
+                                        Text(stringResource(R.string.coverage_absent_count, absentCount), fontSize = 12.sp, color = colors.textSecondary)
+                                    }
+                                }
+                                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        GlifoConfidenceChip(state = ConfidenceState.Repaired)
+                                        Text(stringResource(R.string.coverage_partial_count, partialCount), fontSize = 12.sp, color = colors.textSecondary)
+                                    }
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        GlifoConfidenceChip(state = ConfidenceState.Uncertain)
+                                        Text(stringResource(R.string.coverage_doubtful_count, uncertainCount), fontSize = 12.sp, color = colors.textSecondary)
+                                    }
+                                }
+                            }
                         }
                     }
-                }
-            }
 
-            Text(
-                text = stringResource(R.string.coverage_delta_still_missing_section),
-                fontSize = 11.sp,
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = 0.6.sp,
-                color = colors.textSecondary,
-                modifier = Modifier.padding(top = 18.dp, bottom = 8.dp)
-            )
+                    if (delta.changedTopics.isEmpty()) {
+                        Spacer(modifier = Modifier.height(14.dp))
+                        GlifoBanner(
+                            text = stringResource(R.string.coverage_delta_empty_since, delta.sinceDisplay)
+                        )
+                    } else {
+                        Text(
+                            text = stringResource(R.string.coverage_delta_changed_topics_section),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            letterSpacing = 0.6.sp,
+                            color = colors.textSecondary,
+                            modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                        )
 
-            GlifoCard(tight = true) {
-                delta.stillMissing.forEachIndexed { i, item ->
-                    GlifoItem(compact = true, showBottomBorder = i < delta.stillMissing.size - 1) {
-                        GlifoConfidenceChip(state = item.state)
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(item.label, fontSize = 15.sp, color = colors.textPrimary)
-                            Text(item.meta, fontSize = 12.sp, color = colors.textSecondary)
-                        }
-                        if (item.needsReview) {
-                            GlifoBadge(text = stringResource(R.string.coverage_delta_needs_review_badge), backgroundColor = colors.uncertainSoft, textColor = colors.uncertain)
+                        GlifoCard(tight = true) {
+                            delta.changedTopics.forEachIndexed { i, topic ->
+                                GlifoItem(compact = true, showBottomBorder = i < delta.changedTopics.size - 1) {
+                                    GlifoConfidenceChip(state = topic.state)
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(text = topic.name, fontSize = 14.sp, color = colors.textPrimary)
+                                        if (topic.note != null) {
+                                            Text(text = topic.note, fontSize = 12.sp, color = colors.textSecondary)
+                                        }
+                                    }
+                                    Text(
+                                        text = topic.score,
+                                        fontFamily = FontFamily.Monospace,
+                                        fontSize = 12.sp,
+                                        color = colors.textSecondary
+                                    )
+                                }
+                            }
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    GlifoButton(
+                        text = stringResource(R.string.course_detail_my_notes),
+                        variant = GlifoButtonVariant.Secondary,
+                        onClick = onNavigateToNotes
+                    )
                 }
-            }
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            GlifoButton(
-                text = stringResource(R.string.coverage_delta_view_illegible_note),
-                variant = GlifoButtonVariant.Secondary,
-                onClick = onNavigateToNotes
-            )
-        }
             }
         }
     }

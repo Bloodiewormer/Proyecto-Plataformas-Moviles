@@ -582,4 +582,20 @@
     <string name="sync_notification_body_plural">%1$d items from the offline queue were uploaded from this device.</string>
     <string name="sync_notification_permission_banner">Enable notification permission to receive an alert when the offline queue finishes uploading.</string>
     <string name="sync_notification_permission_action">Allow</string>
+    <!-- Lab 6: pantalla de uso de IA (#47) -->
+    <string name="ai_cost_tokens_label">Tokens (in / out)</string>
+    <string name="ai_cost_tokens_value">%1$d (%2$d / %3$d)</string>
+    <string name="ai_cost_estimated_cost_label">Estimated cost</string>
+    <string name="ai_cost_not_configured">Cost not configured</string>
+    <string name="ai_cost_avoided_calls_section">AVOIDED CALLS</string>
+    <string name="ai_cost_avoided_total_label">Total avoided</string>
+    <string name="ai_cost_server_unavailable">Server data is not available offline. Showing on-device metrics only.</string>
+    <string name="ai_cost_call_tokens_subtitle">%1$d tokens · %2$s</string>
+    <!-- Lab 6: cobertura con datos reales e IA-04 (#43) -->
+    <string name="coverage_evaluate_button">Evaluate coverage</string>
+    <string name="coverage_evaluating_ai">Evaluating with AI…</string>
+    <string name="coverage_delta_changed_count">%1$d topics updated</string>
+    <string name="coverage_delta_changed_topics_section">UPDATED TOPICS</string>
+    <string name="coverage_delta_empty_since">No changes since %1$s</string>
+    <string name="home_coverage_breakdown_format">%1$d solid · %2$d partial · %3$d absent</string>
 </resources>

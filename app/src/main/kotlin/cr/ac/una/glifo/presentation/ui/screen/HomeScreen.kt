@@ -211,7 +211,7 @@ fun HomeScreen(
                                         horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
                                         Text(
-                                            text = stringResource(R.string.home_coverage_breakdown),
+                                            text = stringResource(R.string.home_coverage_breakdown_format, stats.solidCount, stats.partialCount, stats.absentCount),
                                             fontSize = 12.sp,
                                             color = colors.textSecondary
                                         )

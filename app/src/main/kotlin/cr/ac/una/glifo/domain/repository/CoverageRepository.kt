@@ -9,6 +9,7 @@ import cr.ac.una.glifo.domain.model.TopicDetail
 interface CoverageRepository {
     suspend fun getSummary(courseId: Long): Result<CoverageSummary>
     suspend fun getTopics(courseId: Long): Result<List<CoverageTopic>>
+    suspend fun evaluateCoverage(courseId: Long): Result<CoverageSummary>
     suspend fun getTopicDetail(name: String): Result<TopicDetail>
-    suspend fun getDelta(): Result<CoverageDeltaInfo>
+    suspend fun getDelta(courseId: Long? = null, since: String? = null): Result<CoverageDeltaInfo>
 }

@@ -53,7 +53,10 @@ fun buildLocalNoteContent(
                 bounds = region.bounds,
                 kindConfidence = region.kindConfidence,
                 metrics = region.metrics,
-                correctedText = corrected[id]
+                correctedText = corrected[id],
+                latex = region.latex,
+                latexCompiles = region.latexCompiles,
+                resolvedAt = region.resolvedAt
             )
         }
     }
@@ -131,11 +134,24 @@ internal fun parseReconstruction(json: String, corrected: Map<String, String> = 
                     corrected = corrected
                 )
             }
-            "FORMULA" -> fragments += serverFragment(
-                id = blockId, text = block.string("latex").orEmpty(), kind = RegionKind.Math,
-                resolvedAt = block.string("resolvedAt") ?: "N1_5",
-                confidence = block.float("confidence") ?: 0f, uncertain = false, corrected = corrected
-            )
+            "FORMULA" -> {
+                val latexText = block.string("latex").orEmpty()
+                val resolvedAt = block.string("resolvedAt") ?: "N1_5"
+                val uncertain = block.get("isUncertain")?.asBoolean ?: false
+                val compiles = block.get("latexCompiles")?.takeIf { !it.isJsonNull }?.asBoolean
+                    ?: (!uncertain && resolvedAt != "UNRESOLVED")
+                fragments += serverFragment(
+                    id = blockId,
+                    text = latexText,
+                    kind = RegionKind.Math,
+                    resolvedAt = resolvedAt,
+                    confidence = block.float("confidence") ?: 0f,
+                    uncertain = uncertain,
+                    corrected = corrected,
+                    latex = latexText.takeIf { it.isNotBlank() },
+                    latexCompiles = if (latexText.isNotBlank()) compiles else null
+                )
+            }
             "FIGURE" -> fragments += serverFragment(
                 id = blockId, text = block.string("caption").orEmpty(), kind = RegionKind.Drawing,
                 resolvedAt = block.string("resolvedAt") ?: "N2",
@@ -153,7 +169,9 @@ private fun serverFragment(
     resolvedAt: String,
     confidence: Float,
     uncertain: Boolean,
-    corrected: Map<String, String>
+    corrected: Map<String, String>,
+    latex: String? = null,
+    latexCompiles: Boolean? = null
 ): NoteFragment {
     // resolvedAt dice qué nivel resolvió el fragmento; se traduce a la escala de la UI (§1).
     val state = when {
@@ -171,7 +189,10 @@ private fun serverFragment(
         state = state,
         confidence = confidence,
         route = "$resolvedAt · reconstrucción del servidor",
-        correctedText = corrected[id]
+        correctedText = corrected[id],
+        latex = latex,
+        latexCompiles = latexCompiles,
+        resolvedAt = resolvedAt
     )
 }
 

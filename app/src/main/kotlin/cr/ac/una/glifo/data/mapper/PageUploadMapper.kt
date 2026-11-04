@@ -34,11 +34,14 @@ fun NotePageEntity.toUploadRequest(): CreateNotePageRequest? {
                 add(region.bounds.bottom / height)
             })
             addProperty("kind", region.kind.apiName())
-            addProperty("resolvedAt", if (region.kind == RegionKind.Text && region.confidenceState != ConfidenceState.Uncertain) "N1" else "UNRESOLVED")
+            val defaultResolvedAt = if (region.kind == RegionKind.Text && region.confidenceState != ConfidenceState.Uncertain) "N1" else "UNRESOLVED"
+            addProperty("resolvedAt", region.resolvedAt ?: defaultResolvedAt)
             addProperty("confidence", region.ocrConfidence)
             addProperty("isUncertain", region.confidenceState == ConfidenceState.Uncertain)
             addProperty("route", region.route)
             addProperty("text", region.text)
+            region.latex?.let { addProperty("latex", it) }
+            region.latexCompiles?.let { addProperty("latexCompiles", it) }
         })
     }
 

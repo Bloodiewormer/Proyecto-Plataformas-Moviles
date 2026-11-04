@@ -132,159 +132,246 @@ fun AiCostScreen(
                         label = "quota"
                     )
 
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .navigationBarsPadding()
-                    .verticalScroll(rememberScrollState())
-                    .padding(14.dp)
-            ) {
-                // Main Highlight Card
-                GlifoCard(
-                    borderColor = colors.verifiedLine
-                ) {
-                    Text(
-                        text = stats.periodLabel,
-                        fontSize = 12.sp,
-                        color = colors.textSecondary
-                    )
-
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    Row(
-                        verticalAlignment = Alignment.Bottom,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .navigationBarsPadding()
+                            .verticalScroll(rememberScrollState())
+                            .padding(14.dp)
                     ) {
-                        Text(
-                            text = "${stats.headlinePercent}%",
-                            fontSize = 34.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = if (stats.isSystemWide) colors.accentText else colors.verified
-                        )
-                        Text(
-                            text = stringResource(R.string.ai_cost_headline_description),
-                            fontSize = 14.sp,
-                            lineHeight = 18.sp,
-                            color = colors.textPrimary
-                        )
-                    }
-
-                    if (stats.quotaUsed != null && stats.quotaTotal != null) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(8.dp)
-                                .padding(top = 12.dp)
-                                .clip(RoundedCornerShape(999.dp))
-                                .background(colors.surfaceHigh)
+                        // Main Highlight Card
+                        GlifoCard(
+                            borderColor = colors.verifiedLine
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxHeight()
-                                    .fillMaxWidth(quotaAnim)
-                                    .background(colors.accent)
+                            Text(
+                                text = stats.periodLabel,
+                                fontSize = 12.sp,
+                                color = colors.textSecondary
                             )
-                        }
-                        Text(
-                            text = stringResource(R.string.ai_cost_quota_label, stats.quotaUsed, stats.quotaTotal, stats.quotaPercent ?: 0),
-                            fontSize = 12.sp,
-                            color = colors.textSecondary,
-                            modifier = Modifier.padding(top = 8.dp)
-                        )
-                    }
-                }
 
-                Text(
-                    text = stringResource(R.string.ai_cost_breakdown_section),
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    letterSpacing = 0.6.sp,
-                    color = colors.textSecondary,
-                    modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
-                )
+                            Spacer(modifier = Modifier.height(6.dp))
 
-                GlifoCard {
-                    stats.breakdown.forEach { row ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            GlifoConfidenceChip(state = row.state)
-                            Text(text = row.label, fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                            Box(
-                                modifier = Modifier
-                                    .width(64.dp)
-                                    .height(6.dp)
-                                    .clip(RoundedCornerShape(999.dp))
-                                    .background(colors.surfaceHigh)
+                            Row(
+                                verticalAlignment = Alignment.Bottom,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxHeight()
-                                        .fillMaxWidth(row.percent / 100f)
-                                        .background(
-                                            when (row.state) {
-                                                ConfidenceState.Verified -> colors.verified
-                                                ConfidenceState.Repaired -> colors.repaired
-                                                ConfidenceState.Escalated -> colors.escalated
-                                                ConfidenceState.Uncertain -> colors.uncertain
-                                            }
-                                        )
+                                Text(
+                                    text = "${stats.headlinePercent}%",
+                                    fontSize = 34.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (stats.isSystemWide) colors.accentText else colors.verified
+                                )
+                                Text(
+                                    text = stringResource(R.string.ai_cost_headline_description),
+                                    fontSize = 14.sp,
+                                    lineHeight = 18.sp,
+                                    color = colors.textPrimary
                                 )
                             }
+
+                            if (stats.quotaUsed != null && stats.quotaTotal != null) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(8.dp)
+                                        .padding(top = 12.dp)
+                                        .clip(RoundedCornerShape(999.dp))
+                                        .background(colors.surfaceHigh)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxHeight()
+                                            .fillMaxWidth(quotaAnim)
+                                            .background(colors.accent)
+                                    )
+                                }
+                                Text(
+                                    text = stringResource(R.string.ai_cost_quota_label, stats.quotaUsed, stats.quotaTotal, stats.quotaPercent ?: 0),
+                                    fontSize = 12.sp,
+                                    color = colors.textSecondary,
+                                    modifier = Modifier.padding(top = 8.dp)
+                                )
+                            }
+                        }
+
+                        Text(
+                            text = stringResource(R.string.ai_cost_breakdown_section),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            letterSpacing = 0.6.sp,
+                            color = colors.textSecondary,
+                            modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                        )
+
+                        GlifoCard {
+                            stats.breakdown.forEach { row ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    GlifoConfidenceChip(state = row.state)
+                                    Text(text = row.label, fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                                    Box(
+                                        modifier = Modifier
+                                            .width(64.dp)
+                                            .height(6.dp)
+                                            .clip(RoundedCornerShape(999.dp))
+                                            .background(colors.surfaceHigh)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxHeight()
+                                                .fillMaxWidth(row.percent / 100f)
+                                                .background(
+                                                    when (row.state) {
+                                                        ConfidenceState.Verified -> colors.verified
+                                                        ConfidenceState.Repaired -> colors.repaired
+                                                        ConfidenceState.Escalated -> colors.escalated
+                                                        ConfidenceState.Uncertain -> colors.uncertain
+                                                    }
+                                                )
+                                        )
+                                    }
+                                    Text(
+                                        text = row.count,
+                                        fontFamily = FontFamily.Monospace,
+                                        fontSize = 12.sp,
+                                        color = colors.textSecondary,
+                                        modifier = Modifier.width(34.dp),
+                                        textAlign = androidx.compose.ui.text.style.TextAlign.Right
+                                    )
+                                }
+                            }
+                        }
+
+                        Text(
+                            text = stringResource(R.string.ai_cost_paid_calls_section),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            letterSpacing = 0.6.sp,
+                            color = colors.textSecondary,
+                            modifier = Modifier.padding(top = 18.dp, bottom = 8.dp)
+                        )
+
+                        if (!stats.serverDataAvailable) {
+                            GlifoCard {
+                                Text(
+                                    text = stringResource(R.string.ai_cost_server_unavailable),
+                                    fontSize = 13.sp,
+                                    color = colors.textSecondary,
+                                    lineHeight = 18.sp
+                                )
+                            }
+                        } else {
+                            GlifoCard(tight = true) {
+                                stats.paidCalls.forEach { call ->
+                                    GlifoItem(compact = true) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(text = call.label, fontSize = 15.sp, color = colors.textPrimary)
+                                            if (call.totalTokens > 0L) {
+                                                val callCost = if (call.isCostConfigured) call.estimatedCostLabel else stringResource(R.string.ai_cost_not_configured)
+                                                Text(
+                                                    text = stringResource(R.string.ai_cost_call_tokens_subtitle, call.totalTokens, callCost),
+                                                    fontSize = 12.sp,
+                                                    color = colors.textSecondary
+                                                )
+                                            }
+                                        }
+                                        Text(text = call.count, fontFamily = FontFamily.Monospace, fontSize = 14.sp, color = colors.textSecondary)
+                                    }
+                                }
+                                GlifoItem(compact = true, backgroundColor = colors.surfaceHigh) {
+                                    Text(text = stringResource(R.string.ai_cost_total_label), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                                    Text(text = "${stats.totalPaidCalls}", fontFamily = FontFamily.Monospace, fontSize = 16.sp, color = colors.accentText)
+                                }
+                                GlifoItem(compact = true, backgroundColor = colors.surfaceHigh) {
+                                    Text(text = stringResource(R.string.ai_cost_tokens_label), fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                                    Text(
+                                        text = stringResource(R.string.ai_cost_tokens_value, stats.totalTokens, stats.inputTokens, stats.outputTokens),
+                                        fontFamily = FontFamily.Monospace,
+                                        fontSize = 13.sp,
+                                        color = colors.textSecondary
+                                    )
+                                }
+                                GlifoItem(compact = true, showBottomBorder = false, backgroundColor = colors.surfaceHigh) {
+                                    Text(text = stringResource(R.string.ai_cost_estimated_cost_label), fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                                    val costText = if (stats.isCostConfigured) {
+                                        stats.estimatedCostLabel
+                                    } else {
+                                        stringResource(R.string.ai_cost_not_configured)
+                                    }
+                                    Text(
+                                        text = costText,
+                                        fontFamily = FontFamily.Monospace,
+                                        fontSize = 13.sp,
+                                        color = if (stats.isCostConfigured) colors.accentText else colors.textSecondary
+                                    )
+                                }
+                            }
+
                             Text(
-                                text = row.count,
-                                fontFamily = FontFamily.Monospace,
+                                text = stringResource(R.string.ai_cost_avoided_calls_section),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                letterSpacing = 0.6.sp,
+                                color = colors.textSecondary,
+                                modifier = Modifier.padding(top = 18.dp, bottom = 8.dp)
+                            )
+
+                            GlifoCard(tight = true) {
+                                stats.avoidedCalls.forEach { avoided ->
+                                    GlifoItem(compact = true) {
+                                        Text(
+                                            text = "${avoided.callType} · ${avoided.reason}",
+                                            fontSize = 14.sp,
+                                            color = colors.textPrimary,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        Text(
+                                            text = avoided.count.toString(),
+                                            fontFamily = FontFamily.Monospace,
+                                            fontSize = 14.sp,
+                                            color = colors.verified
+                                        )
+                                    }
+                                }
+                                GlifoItem(compact = true, showBottomBorder = false, backgroundColor = colors.surfaceHigh) {
+                                    Text(
+                                        text = stringResource(R.string.ai_cost_avoided_total_label),
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = colors.textPrimary,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    Text(
+                                        text = "${stats.avoidedCallsCount}",
+                                        fontFamily = FontFamily.Monospace,
+                                        fontSize = 16.sp,
+                                        color = colors.verified
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Icon(imageVector = Icons.Default.GpsFixed, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp).padding(top = 1.dp))
+                            Text(
+                                text = stats.footerNote,
                                 fontSize = 12.sp,
                                 color = colors.textSecondary,
-                                modifier = Modifier.width(34.dp),
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Right
+                                lineHeight = 18.sp
                             )
                         }
                     }
-                }
-
-                Text(
-                    text = stringResource(R.string.ai_cost_paid_calls_section),
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    letterSpacing = 0.6.sp,
-                    color = colors.textSecondary,
-                    modifier = Modifier.padding(top = 18.dp, bottom = 8.dp)
-                )
-
-                GlifoCard(tight = true) {
-                    stats.paidCalls.forEach { call ->
-                        GlifoItem(compact = true) {
-                            Text(text = call.label, fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                            Text(text = call.count, fontFamily = FontFamily.Monospace, fontSize = 14.sp, color = colors.textSecondary)
-                        }
-                    }
-                    GlifoItem(compact = true, showBottomBorder = false, backgroundColor = colors.surfaceHigh) {
-                        Text(text = stringResource(R.string.ai_cost_total_label), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                        Text(text = "${stats.totalPaidCalls}", fontFamily = FontFamily.Monospace, fontSize = 16.sp, color = colors.accentText)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalAlignment = Alignment.Top
-                ) {
-                    Icon(imageVector = Icons.Default.GpsFixed, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp).padding(top = 1.dp))
-                    Text(
-                        text = stats.footerNote,
-                        fontSize = 12.sp,
-                        color = colors.textSecondary,
-                        lineHeight = 18.sp
-                    )
-                }
-            }
                 }
             }
         }

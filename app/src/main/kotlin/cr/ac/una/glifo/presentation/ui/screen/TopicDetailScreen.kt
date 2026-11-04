@@ -91,32 +91,35 @@ fun TopicDetailScreen(
                         )
                     }
 
-                    Text(
-                        text = stringResource(R.string.topic_detail_why_section),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        letterSpacing = 0.6.sp,
-                        color = colors.textSecondary,
-                        modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
-                    )
+                    // La sección de checklist por subcriterio se muestra solo si el backend provee ítems reales.
+                    if (detail.checklist.isNotEmpty()) {
+                        Text(
+                            text = stringResource(R.string.topic_detail_why_section),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            letterSpacing = 0.6.sp,
+                            color = colors.textSecondary,
+                            modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                        )
 
-                    GlifoCard {
-                        detail.checklist.forEach { item ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 9.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                Icon(
-                                    imageVector = if (item.ok) Icons.Default.Check else Icons.Default.Close,
-                                    contentDescription = null,
-                                    tint = if (item.ok) colors.verified else colors.escalated,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Text(text = item.label, fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                                Text(text = item.meta, fontSize = 12.sp, color = colors.textSecondary)
+                        GlifoCard {
+                            detail.checklist.forEach { item ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 9.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = if (item.ok) Icons.Default.Check else Icons.Default.Close,
+                                        contentDescription = null,
+                                        tint = if (item.ok) colors.verified else colors.escalated,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Text(text = item.label, fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                                    Text(text = item.meta, fontSize = 12.sp, color = colors.textSecondary)
+                                }
                             }
                         }
                     }
@@ -159,14 +162,6 @@ fun TopicDetailScreen(
                         text = stringResource(R.string.topic_detail_generate_reinforcement),
                         icon = Icons.Default.Psychology,
                         onClick = onNavigateToStudy
-                    )
-
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    GlifoButton(
-                        text = stringResource(R.string.topic_detail_mark_mastered),
-                        variant = GlifoButtonVariant.Text,
-                        onClick = onNavigateBack
                     )
                 }
             }

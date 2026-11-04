@@ -5,5 +5,5 @@ import cr.ac.una.glifo.domain.model.AiCostStats
 import cr.ac.una.glifo.domain.model.GlifoRole
 
 interface AiCostRepository {
-    suspend fun getStats(role: GlifoRole): Result<AiCostStats>
+    suspend fun getStats(role: GlifoRole, courseId: Long? = null): Result<AiCostStats>
 }

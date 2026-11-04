@@ -582,4 +582,20 @@
     <string name="sync_notification_body_plural">Se subieron %1$d elementos de la cola sin conexión desde este dispositivo.</string>
     <string name="sync_notification_permission_banner">Activá el permiso de notificaciones para recibir el aviso cuando termine la subida.</string>
     <string name="sync_notification_permission_action">Permitir</string>
+    <!-- Lab 6: pantalla de uso de IA (#47) -->
+    <string name="ai_cost_tokens_label">Tokens (entrada / salida)</string>
+    <string name="ai_cost_tokens_value">%1$d (%2$d / %3$d)</string>
+    <string name="ai_cost_estimated_cost_label">Costo estimado</string>
+    <string name="ai_cost_not_configured">Costo no configurado</string>
+    <string name="ai_cost_avoided_calls_section">LLAMADAS EVITADAS</string>
+    <string name="ai_cost_avoided_total_label">Total evitadas</string>
+    <string name="ai_cost_server_unavailable">Los datos del servidor no están disponibles sin conexión. Mostrando únicamente métricas locales.</string>
+    <string name="ai_cost_call_tokens_subtitle">%1$d tokens · %2$s</string>
+    <!-- Lab 6: cobertura con datos reales e IA-04 (#43) -->
+    <string name="coverage_evaluate_button">Evaluar cobertura</string>
+    <string name="coverage_evaluating_ai">Evaluando con IA…</string>
+    <string name="coverage_delta_changed_count">%1$d temas actualizados</string>
+    <string name="coverage_delta_changed_topics_section">TEMAS QUE CAMBIARON</string>
+    <string name="coverage_delta_empty_since">Sin cambios desde %1$s</string>
+    <string name="home_coverage_breakdown_format">%1$d sólidos · %2$d parciales · %3$d ausentes</string>
 </resources>

@@ -113,10 +113,11 @@ fun CoverageScreen(
             when (val state = uiState) {
                 is UiState.Loading -> GlifoLoadingBox()
                 is UiState.Empty -> GlifoLoadingBox()
-                is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = { viewModel.load(courseId) })
+                is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = { viewModel.load(courseId, force = true) })
                 is UiState.Success -> {
-                    val summary = state.data.summary
-                    val topics = state.data.topics
+                    val data = state.data
+                    val summary = data.summary
+                    val topics = data.topics
 
                     // Banner delta
                     GlifoBanner(
@@ -136,6 +137,43 @@ fun CoverageScreen(
                             .verticalScroll(rememberScrollState())
                             .padding(14.dp)
                     ) {
+                        GlifoButton(
+                            text = if (data.isEvaluating) {
+                                stringResource(R.string.coverage_evaluating_ai)
+                            } else {
+                                stringResource(R.string.coverage_evaluate_button)
+                            },
+                            enabled = !data.isEvaluating,
+                            onClick = { viewModel.evaluateCoverage(courseId) },
+                            modifier = Modifier.padding(bottom = 12.dp)
+                        )
+
+                        if (data.isEvaluating) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                modifier = Modifier.padding(bottom = 12.dp)
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(18.dp),
+                                    strokeWidth = 2.dp,
+                                    color = colors.accent
+                                )
+                                Text(
+                                    text = stringResource(R.string.coverage_evaluating_ai),
+                                    fontSize = 14.sp,
+                                    color = colors.textSecondary
+                                )
+                            }
+                        }
+
+                        if (data.evaluationError != null) {
+                            GlifoBanner(
+                                text = data.evaluationError.toMessage(context),
+                                modifier = Modifier.padding(bottom = 12.dp)
+                            )
+                        }
+
                         GlifoStaggeredEntry(index = 0) {
                             GlifoCard {
                                 Row(

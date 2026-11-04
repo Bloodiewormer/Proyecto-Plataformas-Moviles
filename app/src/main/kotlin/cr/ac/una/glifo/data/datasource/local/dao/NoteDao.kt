@@ -63,6 +63,9 @@ interface NoteDao {
     @Query("SELECT * FROM note_pages WHERE id = :id")
     suspend fun pageById(id: Long): NotePageEntity?
 
+    @Query("UPDATE note_pages SET analysis_json = :analysisJson, level_reached = :levelReached WHERE id = :id")
+    suspend fun updatePageAnalysis(id: Long, analysisJson: String, levelReached: String)
+
     @Query("SELECT COUNT(*) FROM note_pages WHERE note_id = :noteId")
     suspend fun pageCount(noteId: Long): Int
 
