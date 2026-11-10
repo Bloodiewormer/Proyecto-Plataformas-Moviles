@@ -3,6 +3,7 @@ package cr.ac.una.glifo.data.repository
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Build
+import cr.ac.una.glifo.core.datastore.AppPreferences
 import cr.ac.una.glifo.core.push.DevicePushManager
 import cr.ac.una.glifo.core.push.QueueCompletionReportOutcome
 import cr.ac.una.glifo.core.sync.SyncScheduler
@@ -71,7 +72,9 @@ class SyncRepositoryImpl @Inject constructor(
     private val syncDao: SyncOperationDao,
     private val noteDao: NoteDao,
     private val scheduler: SyncScheduler,
-    private val devicePushManager: DevicePushManager?
+    private val devicePushManager: DevicePushManager?,
+    // null en las pruebas: se comporta como si N2 estuviera permitido.
+    private val appPreferences: AppPreferences? = null
 ) : SyncRepository {
 
     constructor(
@@ -318,7 +321,9 @@ class SyncRepositoryImpl @Inject constructor(
                 .take(MAX_REPAIR_PARTS_PER_PAGE)
                 .map { it.second }
 
-            if (repairParts.isNotEmpty()) {
+            // Ajustes → "Permitir escalar a visión (N2)": apagado, no se gasta en /repair.
+            val visionAllowed = appPreferences?.isAllowVisionEscalation() ?: true
+            if (repairParts.isNotEmpty() && visionAllowed) {
                 try {
                     val repairDto = api.repairPage(
                         noteId = serverId,

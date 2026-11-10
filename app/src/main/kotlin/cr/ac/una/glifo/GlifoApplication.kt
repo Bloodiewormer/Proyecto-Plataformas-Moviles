@@ -18,7 +18,8 @@ class GlifoApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        if (!OpenCVLoader.initDebug()) {
+        // initLocal() carga las .so que vienen dentro del APK (el SDK oficial deprecó initDebug()).
+        if (!OpenCVLoader.initLocal()) {
             Log.e("OpenCV", "Unable to load OpenCV!")
         } else {
             Log.i("OpenCV", "OpenCV loaded successfully!")

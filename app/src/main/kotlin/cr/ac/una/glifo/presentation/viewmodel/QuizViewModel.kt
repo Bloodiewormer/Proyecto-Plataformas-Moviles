@@ -123,7 +123,8 @@ class QuizViewModel @Inject constructor(
             failedCount,
             total
         ).orEmpty()
-        val subtext = if (failedCount > 0 && distinctFailedTopics.size == 1) {
+        // Con un solo fallo "los 1 fallos son del mismo tema" no dice nada: solo se agrega desde 2.
+        val subtext = if (failedCount > 1 && distinctFailedTopics.size == 1) {
             val sameTopicText = context?.getString(
                 R.string.quiz_result_same_topic_failures,
                 failedCount

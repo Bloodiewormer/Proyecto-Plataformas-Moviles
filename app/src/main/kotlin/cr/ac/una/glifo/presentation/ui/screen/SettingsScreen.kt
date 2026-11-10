@@ -51,13 +51,14 @@ fun SettingsScreen(
     val colors = GlifoTheme.colors
     val context = LocalContext.current
 
-    var savePhoto by remember { mutableStateOf(true) }
-    var rejectLow by remember { mutableStateOf(true) }
-    var allowN2 by remember { mutableStateOf(true) }
-    var confirmN3 by remember { mutableStateOf(true) }
-    var wifiOnly by remember { mutableStateOf(false) }
+    // Antes eran estados locales que no se guardaban ni se usaban. Ahora salen de AppPreferences
+    // y los usan la captura (rechazar baja calidad), el sync (N2) y WorkManager (solo Wi-Fi).
+    val rejectLow by viewModel.rejectLowQuality.collectAsState()
+    val allowN2 by viewModel.allowVisionEscalation.collectAsState()
+    val wifiOnly by viewModel.syncWifiOnly.collectAsState()
     val notifyDone by viewModel.notifySyncDone.collectAsState()
-    var confidenceThreshold by remember { mutableStateOf(0.70f) }
+    // Umbral real del pipeline (ConfidenceScorer / RegionClassifier); se muestra, no se edita.
+    val confidenceThreshold = cr.ac.una.glifo.core.confidence.ConfidenceScorer.DEFAULT_THRESHOLD
     val pendingCountState by viewModel.pendingCount.collectAsState()
     val pendingCount = (pendingCountState as? UiState.Success)?.data ?: 0
 
@@ -188,14 +189,14 @@ fun SettingsScreen(
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
+            // "Guardar la foto original" se quitó: la foto se necesita para mostrar y enviar los recortes.
             GlifoCard(tight = true) {
-                GlifoItem(compact = true) {
-                    Text(stringResource(R.string.settings_save_original_photo), fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                    GlifoSwitch(savePhoto) { savePhoto = it }
-                }
                 GlifoItem(compact = true, showBottomBorder = false) {
-                    Text(stringResource(R.string.settings_reject_low_quality), fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                    GlifoSwitch(rejectLow) { rejectLow = it }
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.settings_reject_low_quality), fontSize = 15.sp, color = colors.textPrimary)
+                        Text(stringResource(R.string.settings_reject_low_quality_description), fontSize = 12.sp, color = colors.textSecondary, lineHeight = 16.sp)
+                    }
+                    GlifoSwitch(rejectLow) { viewModel.setRejectLowQuality(it) }
                 }
             }
 
@@ -236,14 +237,14 @@ fun SettingsScreen(
                 )
             }
 
+            // "Pedir confirmación antes de N3" se quitó: la escalera termina en N2, no existe N3.
             GlifoCard(tight = true) {
-                GlifoItem(compact = true) {
-                    Text(stringResource(R.string.settings_allow_vision_escalation), fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                    GlifoSwitch(allowN2) { allowN2 = it }
-                }
                 GlifoItem(compact = true, showBottomBorder = false) {
-                    Text(stringResource(R.string.settings_confirm_before_n3), fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                    GlifoSwitch(confirmN3) { confirmN3 = it }
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.settings_allow_vision_escalation), fontSize = 15.sp, color = colors.textPrimary)
+                        Text(stringResource(R.string.settings_allow_vision_escalation_description), fontSize = 12.sp, color = colors.textSecondary, lineHeight = 16.sp)
+                    }
+                    GlifoSwitch(allowN2) { viewModel.setAllowVisionEscalation(it) }
                 }
             }
 
@@ -259,7 +260,7 @@ fun SettingsScreen(
             GlifoCard(tight = true) {
                 GlifoItem(compact = true) {
                     Text(stringResource(R.string.settings_sync_wifi_only), fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                    GlifoSwitch(wifiOnly) { wifiOnly = it }
+                    GlifoSwitch(wifiOnly) { viewModel.setSyncWifiOnly(it) }
                 }
                 GlifoItem(compact = true, showBottomBorder = false) {
                     Text(stringResource(R.string.settings_notify_queue_done), fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))

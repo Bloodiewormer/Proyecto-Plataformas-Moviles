@@ -46,7 +46,8 @@ import cr.ac.una.glifo.presentation.viewmodel.toMessage
 fun QuizResultScreen(
     onNavigateBack: () -> Unit,
     onNavigateToCoverage: () -> Unit,
-    onNavigateToGlossary: () -> Unit,
+    // Antes este botón abría el glosario del docente y dejaba al estudiante en el menú de docente.
+    onNavigateToStudy: () -> Unit,
     viewModel: QuizResultViewModel = hiltViewModel()
 ) {
     val colors = GlifoTheme.colors
@@ -57,7 +58,7 @@ fun QuizResultScreen(
         is UiState.Loading -> GlifoLoadingBox()
         is UiState.Empty -> GlifoBanner(text = stringResource(R.string.study_empty_course))
         is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
-        is UiState.Success -> QuizResultContent(state.data, colors, onNavigateBack, onNavigateToCoverage, onNavigateToGlossary)
+        is UiState.Success -> QuizResultContent(state.data, colors, onNavigateBack, onNavigateToCoverage, onNavigateToStudy)
     }
 }
 
@@ -67,7 +68,7 @@ private fun QuizResultContent(
     colors: cr.ac.una.glifo.core.ui.theme.GlifoColorScheme,
     onNavigateBack: () -> Unit,
     onNavigateToCoverage: () -> Unit,
-    onNavigateToGlossary: () -> Unit
+    onNavigateToStudy: () -> Unit
 ) {
     val targetFraction = if (result.total > 0) {
         result.score.toFloat() / result.total.toFloat()
@@ -227,10 +228,11 @@ private fun QuizResultContent(
             Spacer(modifier = Modifier.height(6.dp))
 
             GlifoButton(
-                text = stringResource(R.string.quiz_result_explain_convergence),
+                // Lleva a Estudio para repasar con flashcards (IA-03, explicación a pedido, no está implementada).
+                text = stringResource(R.string.quiz_result_review_flashcards),
                 variant = GlifoButtonVariant.Secondary,
                 icon = Icons.Default.MenuBook,
-                onClick = onNavigateToGlossary
+                onClick = onNavigateToStudy
             )
         }
     }

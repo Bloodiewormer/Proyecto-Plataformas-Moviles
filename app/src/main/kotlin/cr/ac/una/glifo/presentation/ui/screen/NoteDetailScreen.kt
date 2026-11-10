@@ -192,6 +192,15 @@ private fun ColumnScope.NoteContentBody(
             onReconstruct = onReconstruct
         )
 
+        // Si ninguna región tiene texto, la lista de "[no se reconoció texto]" no dice qué hacer.
+        if (content.fragments.isNotEmpty() && content.fragments.all { it.displayText.isBlank() }) {
+            GlifoBanner(
+                text = stringResource(R.string.note_detail_all_unreadable_hint),
+                isWarning = true,
+                modifier = Modifier.padding(bottom = 10.dp)
+            )
+        }
+
         content.fragments.forEach { fragment ->
             if (fragment.kind == RegionKind.Math) {
                 FormulaFragment(

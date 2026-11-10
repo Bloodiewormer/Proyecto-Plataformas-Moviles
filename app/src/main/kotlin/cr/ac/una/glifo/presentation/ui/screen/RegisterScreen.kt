@@ -147,7 +147,8 @@ fun RegisterScreen(
                 value = password,
                 placeholder = stringResource(R.string.register_field_password_placeholder),
                 onValueChange = { password = it; passwordError = null; confirmError = null },
-                isError = passwordError != null
+                isError = passwordError != null,
+                isPassword = true
             )
             FieldError(passwordError)
 
@@ -158,7 +159,8 @@ fun RegisterScreen(
                 value = confirmPassword,
                 placeholder = stringResource(R.string.register_field_confirm_placeholder),
                 onValueChange = { confirmPassword = it; confirmError = null },
-                isError = confirmError != null
+                isError = confirmError != null,
+                isPassword = true
             )
             FieldError(confirmError, paddingBottom = 4.dp)
 

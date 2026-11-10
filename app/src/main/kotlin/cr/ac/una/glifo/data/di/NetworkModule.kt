@@ -22,9 +22,9 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    // 10.0.2.2 es la máquina anfitriona vista desde el emulador: llega al backend (o a Mockoon)
-    // sin `adb reverse`. En un teléfono físico hay que poner la IP de la PC en la red local.
-    private const val BASE_URL = "http://10.0.2.2:8080/api/v1/"
+    // Debug: 10.0.2.2 es la máquina anfitriona vista desde el emulador (backend local o Mockoon).
+    // Release: la URL de Render que se configura en local.properties (ver app/build.gradle.kts).
+    private val BASE_URL = cr.ac.una.glifo.BuildConfig.BASE_URL
 
     @Provides
     @Singleton
@@ -38,7 +38,8 @@ object NetworkModule {
             }
         }
         return OkHttpClient.Builder()
-            .connectTimeout(15, TimeUnit.SECONDS)
+            // Render (plan gratis) duerme el servicio: la primera conexión puede tardar ~30-50 s.
+            .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(60, TimeUnit.SECONDS)
             .writeTimeout(60, TimeUnit.SECONDS)
             .addInterceptor(authInterceptor)

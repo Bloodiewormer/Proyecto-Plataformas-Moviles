@@ -44,10 +44,10 @@ class TeacherGapsViewModel @Inject constructor(
             when (val statsResult = courseRepository.getCourseStats(courseId)) {
                 is Result.Failure -> _state.value = UiState.Error(statsResult.error)
                 is Result.Success -> {
-                    when (val gapsResult = teacherRepository.getGaps()) {
-                        is Result.Failure -> _state.value = UiState.Error(gapsResult.error)
+                    when (val groupResult = teacherRepository.getGroupCoverage()) {
+                        is Result.Failure -> _state.value = UiState.Error(groupResult.error)
                         is Result.Success -> _state.value = UiState.Success(
-                            TeacherGapsUiData(statsResult.value, gapsResult.value)
+                            TeacherGapsUiData(statsResult.value.withGroup(groupResult.value), groupResult.value.topics)
                         )
                     }
                 }
@@ -55,3 +55,15 @@ class TeacherGapsViewModel @Inject constructor(
         }
     }
 }
+
+/** Reemplaza en las estadísticas del curso lo que es del grupo (inscritos, % y barra). */
+internal fun cr.ac.una.glifo.domain.model.CourseStats.withGroup(
+    group: cr.ac.una.glifo.domain.model.TeacherGroupCoverage
+): cr.ac.una.glifo.domain.model.CourseStats = copy(
+    coveragePercent = group.coveragePercent,
+    studentCount = group.enrolledStudents,
+    verified = group.solidShare,
+    repaired = group.partialShare,
+    escalated = group.absentShare,
+    uncertain = group.uncertainShare
+)

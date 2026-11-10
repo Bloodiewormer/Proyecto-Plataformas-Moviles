@@ -150,7 +150,9 @@ fun CoursesScreen(
                                         if (course.id == activeCourseId) GlifoBadge(text = stringResource(R.string.courses_active_badge))
                                     }
                                     Text(
-                                        text = stringResource(R.string.courses_code_instructor, course.code, stats.instructorName),
+                                        // El backend no manda el nombre del docente: sin él se muestra solo el código (antes quedaba "MAT-101 ·").
+                                        text = if (stats.instructorName.isBlank()) course.code
+                                        else stringResource(R.string.courses_code_instructor, course.code, stats.instructorName),
                                         fontFamily = FontFamily.Monospace,
                                         fontSize = 11.sp,
                                         color = colors.textSecondary,
