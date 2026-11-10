@@ -4605,6 +4605,566 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "Lab 6 - Change Password & Group Gaps",
+      "description": "Cambio de contraseña del usuario autenticado (POST /auth/change-password → 204) y brechas del grupo para el docente dueño (GET /courses/{id}/coverage/gaps). Las contraseñas se generan al azar en cada corrida.",
+      "item": [
+        {
+          "name": "POST Register User for Password Change",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Contraseñas aleatorias de esta corrida: no se guarda ninguna real en la colección.",
+                  "const rnd = () => Math.random().toString(36).slice(2, 10);",
+                  "pm.environment.set('cp_email', 'cp.' + Date.now() + '@est.una.ac.cr');",
+                  "pm.environment.set('cp_password_old', 'Old' + rnd() + '1');",
+                  "pm.environment.set('cp_password_new', 'New' + rnd() + '2');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "pm.environment.set('jwt_token_cp', pm.response.json().token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/auth/register",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "auth",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{cp_email}}\",\n  \"password\": \"{{cp_password_old}}\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Change Password (Authenticated)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 204 No Content', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_cp}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/auth/change-password",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "auth",
+                "change-password"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"{{cp_password_old}}\",\n  \"newPassword\": \"{{cp_password_new}}\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Login With New Password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Login returns a token', function () {",
+                  "    pm.expect(pm.response.json().token).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/auth/login",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{cp_email}}\",\n  \"password\": \"{{cp_password_new}}\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "401 Unauthorized - Login With Old Password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Old password no longer works', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([400, 401]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/auth/login",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{cp_email}}\",\n  \"password\": \"{{cp_password_old}}\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "400 Bad Request - Change Password With Wrong Current",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400 Bad Request', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test('Error explains the current password is wrong', function () {",
+                  "    pm.expect(pm.response.json().message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_cp}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/auth/change-password",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "auth",
+                "change-password"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"{{cp_password_old}}\",\n  \"newPassword\": \"{{cp_password_old}}x\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "400 Bad Request - Change Password Too Short",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400 Bad Request', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test('Error code is VALIDATION_FAILED', function () {",
+                  "    pm.expect(pm.response.json().code).to.eql('VALIDATION_FAILED');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_cp}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/auth/change-password",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "auth",
+                "change-password"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"{{cp_password_new}}\",\n  \"newPassword\": \"abc\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "401 Unauthorized - Change Password Without Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401 Unauthorized', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/auth/change-password",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "auth",
+                "change-password"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"x\",\n  \"newPassword\": \"y12345678\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Course Gaps (Teacher Owner)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('course_id')) {",
+                  "    pm.environment.set('course_id', '1');",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const data = pm.response.json().data;",
+                  "pm.test('Gaps response has enrolled_students, coverage_pct and topics', function () {",
+                  "    pm.expect(data.course_id).to.eql(Number(pm.environment.get('course_id')));",
+                  "    pm.expect(data.enrolled_students).to.be.a('number');",
+                  "    pm.expect(data.coverage_pct).to.be.a('number').within(0, 100);",
+                  "    pm.expect(data.topics).to.be.an('array');",
+                  "});",
+                  "pm.test('Topics are sorted by students_with_gap descending', function () {",
+                  "    const gaps = data.topics.map(t => t.students_with_gap);",
+                  "    pm.expect(gaps).to.eql([...gaps].sort((a, b) => b - a));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_teacher}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/courses/{{course_id}}/coverage/gaps",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "courses",
+                "{{course_id}}",
+                "coverage",
+                "gaps"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "403 Forbidden - Student Reading Course Gaps",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403 Forbidden', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_student}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/courses/{{course_id}}/coverage/gaps",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "courses",
+                "{{course_id}}",
+                "coverage",
+                "gaps"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "404 Not Found - Gaps for Non-Existent Course",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 404 Not Found', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token_teacher}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/courses/999999/coverage/gaps",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "courses",
+                "999999",
+                "coverage",
+                "gaps"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "401 Unauthorized - Gaps Without Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401 Unauthorized', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/api/{{version}}/courses/{{course_id}}/coverage/gaps",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "{{version}}",
+                "courses",
+                "{{course_id}}",
+                "coverage",
+                "gaps"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
     }
   ]
 }

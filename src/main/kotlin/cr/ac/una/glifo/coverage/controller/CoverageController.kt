@@ -1,6 +1,7 @@
 package cr.ac.una.glifo.coverage.controller
 
 import cr.ac.una.glifo.common.dto.ApiResponse
+import cr.ac.una.glifo.coverage.dto.CourseGapsResponse
 import cr.ac.una.glifo.coverage.dto.CoverageDeltaResponse
 import cr.ac.una.glifo.coverage.dto.CoverageResponse
 import cr.ac.una.glifo.coverage.service.CoverageEvaluationService
@@ -28,6 +29,9 @@ import java.time.Instant
  * | GET    | /courses/{id}/coverage                | 200   | 400, 403 (sin COVERAGE_READ_OWN), 404     |
  * | GET    | /courses/{id}/coverage/delta?since=   | 200   | 400 (fecha inválida o futura), 403, 404   |
  * | POST   | /courses/{id}/coverage/evaluate       | 200   | 400, 401, 403, 404, 409 (en curso o espera), 502 |
+ * | GET    | /courses/{id}/coverage/gaps           | 200   | 400, 401, 403 (sin COVERAGE_READ_COURSE), 404 (no es el dueño) |
+ *
+ * /gaps es del docente: su @PreAuthorize de método reemplaza al de la clase.
  */
 @RestController
 @RequestMapping("\${url.courses}/{courseId}/coverage", produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -52,6 +56,17 @@ class CoverageController(
         @AuthenticationPrincipal user: GlifoUserDetails
     ): ResponseEntity<ApiResponse<CoverageDeltaResponse>> =
         ResponseEntity.ok(ApiResponse(data = coverageService.getCoverageDelta(courseId, user.userId, since)))
+
+    /** Brechas del grupo (docente dueño o admin): por tema, cuántos estudiantes no lo tienen SOLID. */
+    @GetMapping("/gaps")
+    @PreAuthorize("hasAuthority('COVERAGE_READ_COURSE')")
+    fun getCourseGaps(
+        @PathVariable @Positive(message = "El id del curso debe ser positivo") courseId: Long,
+        @AuthenticationPrincipal user: GlifoUserDetails
+    ): ResponseEntity<ApiResponse<CourseGapsResponse>> {
+        val isAdmin = user.authorities.any { it.authority == "ROLE_ADMIN" || it.authority == "USER_MANAGE" }
+        return ResponseEntity.ok(ApiResponse(data = coverageService.getCourseGaps(courseId, user.userId, isAdmin)))
+    }
 
     /** IA-04: recalcula la cobertura; en meta va cuántos temas resolvió el pre-filtro y cuántos la IA. */
     @PostMapping("/evaluate")
