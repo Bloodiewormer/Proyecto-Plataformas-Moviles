@@ -250,8 +250,8 @@
 
     <!-- TopicDetailScreen -->
     <string name="topic_detail_why_section">POR QUÉ ESTÁ EN ESTE ESTADO</string>
-    <string name="topic_detail_appears_in_section">DÓNDE APARECE EN TUS APUNTES</string>
-    <string name="topic_detail_no_notes">Todavía no hay apuntes que mencionen este tema.</string>
+    <string name="topic_detail_appears_in_section">APUNTES VINCULADOS</string>
+    <string name="topic_detail_no_notes">Todavía no hay apuntes vinculados a este tema.</string>
     <string name="topic_detail_generate_reinforcement">Generar refuerzo de este tema</string>
 
     <!-- StudyScreen -->

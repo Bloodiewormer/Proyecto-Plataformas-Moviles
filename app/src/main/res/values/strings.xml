@@ -250,8 +250,8 @@
 
     <!-- TopicDetailScreen -->
     <string name="topic_detail_why_section">WHY IT\'S IN THIS STATE</string>
-    <string name="topic_detail_appears_in_section">WHERE IT APPEARS IN YOUR NOTES</string>
-    <string name="topic_detail_no_notes">No notes mention this topic yet.</string>
+    <string name="topic_detail_appears_in_section">LINKED NOTES</string>
+    <string name="topic_detail_no_notes">No notes are linked to this topic yet.</string>
     <string name="topic_detail_generate_reinforcement">Generate reinforcement for this topic</string>
 
     <!-- StudyScreen -->
