@@ -300,4 +300,46 @@ class CoverageEvaluationServiceTest {
         assertTrue(llm.requests.isEmpty())
         verify(coverageRows, never()).findByUserIdAndSyllabusTopicIdIn(anyLong(), anyList())
     }
+
+    @Test
+    fun `un apunte READY sin tema asignado con formulas de limites e integrales dispara IA-04`() {
+        val defIntegral = topic(104L, "U3.1", "Integral definida", unit)
+        build(topics = listOf(unit, limits, defIntegral, integrals, series))
+        val agnesiContent = """
+            {
+              "schemaVersion": 1,
+              "blocks": [
+                {"type": "PARAGRAPH", "spans": [{"text": "Hallar el área de la región comprendida entre la curva de Agnesi y el volumen al girar.", "isUncertain": false}]},
+                {"type": "FORMULA", "latex": "\\lim_{x \\to \\infty} \\frac{a^3}{x^2 + a^2} = 0", "isUncertain": false},
+                {"type": "FORMULA", "latex": "\\int_{-\\infty}^{\\infty} \\frac{a^3}{x^2 + a^2} dx", "isUncertain": false}
+              ]
+            }
+        """.trimIndent()
+        `when`(notes.findByUserIdAndCourseId(1L, 10L)).thenReturn(listOf(note(null, agnesiContent)))
+        llm.content = """
+            {
+              "verdicts": [
+                {"topicId": 101, "state": "PARTIAL", "score": 0.5},
+                {"topicId": 104, "state": "SOLID", "score": 0.85},
+                {"topicId": 102, "state": "PARTIAL", "score": 0.6}
+              ]
+            }
+        """.trimIndent()
+
+        val result = service.evaluate(10L, 1L)
+
+        assertTrue(result.aiCalled)
+        assertEquals(1, llm.requests.size)
+        assertEquals(3, result.adjudicated)
+        val prompt = llm.requests.single().userPrompt
+        assertTrue(prompt.contains("\"topicId\":101"))
+        assertTrue(prompt.contains("\"topicId\":104"))
+        assertTrue(prompt.contains("\"topicId\":102"))
+        assertFalse(prompt.contains("\"topicId\":103"))
+        val saved = savedByTopic()
+        assertEquals("PARTIAL", saved.getValue(101L).state)
+        assertEquals("SOLID", saved.getValue(104L).state)
+        assertEquals("PARTIAL", saved.getValue(102L).state)
+        assertFalse(103L in saved.keys)
+    }
 }
