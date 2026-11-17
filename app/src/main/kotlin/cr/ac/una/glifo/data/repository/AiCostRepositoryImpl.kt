@@ -54,7 +54,14 @@ class AiCostRepositoryImpl : AiCostRepository {
     }
 
     override suspend fun getStats(role: GlifoRole, courseId: Long?): Result<AiCostStats> {
-        val analyses = processedPageDao.all().mapNotNull { pageAnalysisFromSnapshotJson(it.analysisJson) }
+        val resolvedCourseId = courseId ?: activeCourseStore?.activeCourseId?.value
+        val scopedCourseId = if (role == GlifoRole.Teacher) resolvedCourseId else courseId
+        val localPages = if (scopedCourseId != null) {
+            processedPageDao.forCourse(scopedCourseId)
+        } else {
+            processedPageDao.all()
+        }
+        val analyses = localPages.mapNotNull { pageAnalysisFromSnapshotJson(it.analysisJson) }
         val regions = analyses.flatMap { it.regions }
         val total = regions.size
 
@@ -79,7 +86,6 @@ class AiCostRepositoryImpl : AiCostRepository {
         val resolvedLocally = regions.count { it.confidenceState == ConfidenceState.Verified }
         val headlinePercent = if (total == 0) 0 else resolvedLocally * 100 / total
 
-        val resolvedCourseId = courseId ?: activeCourseStore?.activeCourseId?.value
         val remote = ApiErrorHandler.safeApiCall(
             apiCall = {
                 if (role == GlifoRole.Teacher && resolvedCourseId != null) {

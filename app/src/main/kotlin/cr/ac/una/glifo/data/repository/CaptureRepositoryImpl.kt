@@ -32,17 +32,29 @@ class CaptureRepositoryImpl @Inject constructor(
     @ApplicationContext private val appContext: Context,
     private val courseContextRepository: CourseContextRepository,
     private val pageDeduplicator: PageDeduplicator,
-    private val noteRepository: NoteRepository
+    private val noteRepository: NoteRepository,
+    sessionCacheRegistry: SessionCacheRegistry
 ) : CaptureRepository {
 
     // La pantalla de procesamiento pide el analisis y los pasos por separado, y volver a
     // correr N0+N1 sobre la misma foto cuesta segundos. Se guarda el ultimo resultado y el
     // mutex evita que dos llamadas concurrentes arranquen el pipeline dos veces.
     private val pipelineLock = Mutex()
-    private var lastKey: Pair<String, Long?>? = null
-    private var lastAnalysis: PageAnalysis? = null
-    private var lastContext: LocalCourseContext? = null
-    private var lastHash: String? = null
+    @Volatile private var lastKey: Pair<String, Long?>? = null
+    @Volatile private var lastAnalysis: PageAnalysis? = null
+    @Volatile private var lastContext: LocalCourseContext? = null
+    @Volatile private var lastHash: String? = null
+
+    init {
+        sessionCacheRegistry.register(::clearCache)
+    }
+
+    fun clearCache() {
+        lastKey = null
+        lastAnalysis = null
+        lastContext = null
+        lastHash = null
+    }
 
     override suspend fun saveAsNote(photoPath: String, courseId: Long): Result<Long> {
         val analysis = when (val analyzed = analyzePage(photoPath, courseId)) {

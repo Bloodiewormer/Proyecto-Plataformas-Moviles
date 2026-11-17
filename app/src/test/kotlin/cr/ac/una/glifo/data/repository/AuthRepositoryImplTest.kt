@@ -32,10 +32,13 @@ class AuthRepositoryImplTest {
 
     private val api = mockk<GlifoApi>()
     private val tokenManager = mockk<TokenManager>()
-    private val repository = AuthRepositoryImpl(api, tokenManager)
+    private val localUserDataCleaner = mockk<LocalUserDataCleaner>(relaxed = true)
+    private val repository = AuthRepositoryImpl(api, tokenManager, devicePushManager = null, localUserDataCleaner = localUserDataCleaner)
 
     @Before
     fun setUp() {
+        coEvery { tokenManager.getUserId() } returns null
+        coEvery { tokenManager.clearAll() } returns Unit
         coEvery { tokenManager.saveToken(any(), any(), any()) } returns Unit
     }
 
@@ -172,5 +175,39 @@ class AuthRepositoryImplTest {
             hints.map { it.role }
         )
         assertTrue(hints.none { it.role == GlifoRole.Admin })
+    }
+
+    @Test
+    fun `should clear previous user local data and tokens when a different user logs in`() = runTest {
+        coEvery { tokenManager.getUserId() } returns 1L
+        coEvery { api.login(any()) } returns AuthResponse(
+            token = "jwt-user-2",
+            user = UserDto(id = 2L, email = "other@una.ac.cr", firstName = "Luis", lastName = "Mora", role = "Student")
+        )
+
+        val result = repository.login("other@una.ac.cr", "password")
+
+        assertTrue(result is Result.Success)
+        io.mockk.coVerifyOrder {
+            tokenManager.clearAll()
+            localUserDataCleaner.clearUserData()
+            tokenManager.saveToken(token = "jwt-user-2", userId = 2L, userEmail = "other@una.ac.cr")
+        }
+    }
+
+    @Test
+    fun `should not clear local user data when the same user logs in again`() = runTest {
+        coEvery { tokenManager.getUserId() } returns 1L
+        coEvery { api.login(any()) } returns AuthResponse(
+            token = "jwt-user-1",
+            user = UserDto(id = 1L, email = "est@una.ac.cr", firstName = "Ana", lastName = "Pérez", role = "Student")
+        )
+
+        val result = repository.login("est@una.ac.cr", "password")
+
+        assertTrue(result is Result.Success)
+        coVerify(exactly = 0) { tokenManager.clearAll() }
+        coVerify(exactly = 0) { localUserDataCleaner.clearUserData() }
+        coVerify(exactly = 1) { tokenManager.saveToken(token = "jwt-user-1", userId = 1L, userEmail = "est@una.ac.cr") }
     }
 }

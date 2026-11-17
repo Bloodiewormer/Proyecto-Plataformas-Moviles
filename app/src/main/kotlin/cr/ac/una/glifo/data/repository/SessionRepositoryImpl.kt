@@ -15,8 +15,14 @@ import javax.inject.Singleton
  */
 @Singleton
 class SessionRepositoryImpl @Inject constructor(
-    private val tokenManager: TokenManager
+    private val tokenManager: TokenManager,
+    private val localUserDataCleaner: LocalUserDataCleaner?
 ) : SessionRepository {
+
+    constructor(tokenManager: TokenManager) : this(
+        tokenManager = tokenManager,
+        localUserDataCleaner = null
+    )
 
     private val _currentUser = MutableStateFlow<User?>(null)
     override val currentUser: StateFlow<User?> = _currentUser.asStateFlow()
@@ -33,6 +39,7 @@ class SessionRepositoryImpl @Inject constructor(
         _currentUser.value = null
         _profilePhotoUri.value = null
         tokenManager.clearAll()
+        localUserDataCleaner?.clearUserData()
     }
 
     override fun setProfilePhotoUri(uri: String?) {
