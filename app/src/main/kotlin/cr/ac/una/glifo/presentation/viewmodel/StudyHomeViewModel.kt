@@ -1,7 +1,9 @@
 package cr.ac.una.glifo.presentation.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.AppError
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.core.datastore.ActiveCourseStore
@@ -12,6 +14,7 @@ import cr.ac.una.glifo.domain.model.QuizQuestion
 import cr.ac.una.glifo.domain.repository.CourseRepository
 import cr.ac.una.glifo.domain.repository.StudyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -52,13 +55,20 @@ data class StudyHomeUiData(
 class StudyHomeViewModel @Inject constructor(
     private val courseRepository: CourseRepository,
     private val studyRepository: StudyRepository,
-    private val activeCourseStore: ActiveCourseStore?
+    private val activeCourseStore: ActiveCourseStore?,
+    @ApplicationContext private val appContext: Context?
 ) : ViewModel() {
 
     constructor(
         courseRepository: CourseRepository,
+        studyRepository: StudyRepository,
+        activeCourseStore: ActiveCourseStore?
+    ) : this(courseRepository, studyRepository, activeCourseStore, null)
+
+    constructor(
+        courseRepository: CourseRepository,
         studyRepository: StudyRepository
-    ) : this(courseRepository, studyRepository, null)
+    ) : this(courseRepository, studyRepository, null, null)
 
     private val _state = MutableStateFlow<UiState<StudyHomeUiData>>(UiState.Loading)
     val state: StateFlow<UiState<StudyHomeUiData>> = _state.asStateFlow()
@@ -137,7 +147,8 @@ class StudyHomeViewModel @Inject constructor(
                         isGenerating = false,
                         generationError = AppError.Validation(
                             field = "topics",
-                            issue = "Este curso todavía no tiene temas publicados en el temario."
+                            issue = appContext?.getString(R.string.study_error_no_topics)
+                                ?: "Este curso todavía no tiene temas publicados en el temario."
                         )
                     )
                 )

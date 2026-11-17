@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cr.ac.una.glifo.core.common.AppError
 import cr.ac.una.glifo.core.common.UiState
-import cr.ac.una.glifo.data.mapper.SyllabusMapper
 import cr.ac.una.glifo.domain.error.Result
 import cr.ac.una.glifo.domain.model.SyllabusTopicRow
 import cr.ac.una.glifo.domain.model.SyllabusUnitRow
@@ -29,6 +28,9 @@ data class TeacherSyllabusUiData(
         get() = units.isNotEmpty()
 
     val canUploadPdf: Boolean
+        get() = !isPublished
+
+    val canPublish: Boolean
         get() = !isPublished
 }
 
@@ -104,7 +106,6 @@ class TeacherSyllabusViewModel @Inject constructor(
                 is Result.Success -> {
                     val doc = result.value
                     val resolvedFileName = doc.fileName ?: fileName.trim().ifEmpty { null }
-                    val resolvedSize = doc.formattedSize ?: SyllabusMapper.formatFileSize(pdfBytes.size.toLong())
                     pendingTopics.clear()
                     currentCourseId = doc.courseId
                     currentFileName = resolvedFileName
@@ -112,7 +113,7 @@ class TeacherSyllabusViewModel @Inject constructor(
                     _state.value = UiState.Success(
                         TeacherSyllabusUiData(
                             fileName = resolvedFileName,
-                            formattedSize = resolvedSize,
+                            formattedSize = doc.formattedSize,
                             parsedAtDisplay = doc.parsedAtDisplay,
                             units = doc.units,
                             isPublished = true,

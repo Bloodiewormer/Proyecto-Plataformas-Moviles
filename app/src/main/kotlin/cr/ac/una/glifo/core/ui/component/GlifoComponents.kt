@@ -479,7 +479,8 @@ fun GlifoButton(
     variant: GlifoButtonVariant = GlifoButtonVariant.Primary,
     small: Boolean = false,
     icon: ImageVector? = null,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    fillMaxWidth: Boolean = true
 ) {
     val colors = GlifoTheme.colors
     val height = if (small) 36.dp else 44.dp
@@ -493,10 +494,17 @@ fun GlifoButton(
         GlifoButtonVariant.Danger -> Triple(Color.Transparent, colors.alert, BorderStroke(1.dp, colors.alert))
     }
 
+    val widthModifier = if (fillMaxWidth) Modifier.fillMaxWidth() else Modifier
+    val contentModifier = if (fillMaxWidth) {
+        Modifier.fillMaxSize()
+    } else {
+        Modifier.fillMaxHeight().padding(horizontal = if (small) 12.dp else 16.dp)
+    }
+
     Surface(
         onClick = onClick,
         modifier = modifier
-            .fillMaxWidth()
+            .then(widthModifier)
             .height(height)
             // Deshabilitado se veía igual que habilitado (por ejemplo "Responder" sin opción elegida).
             .alpha(if (enabled) 1f else 0.45f),
@@ -507,7 +515,7 @@ fun GlifoButton(
         border = border
     ) {
         Row(
-            modifier = Modifier.fillMaxSize(),
+            modifier = contentModifier,
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -525,7 +533,9 @@ fun GlifoButton(
                 text = text,
                 fontSize = fontSize,
                 fontWeight = FontWeight.Medium,
-                color = contentColor
+                color = contentColor,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }

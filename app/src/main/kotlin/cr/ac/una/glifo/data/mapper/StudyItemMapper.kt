@@ -1,8 +1,10 @@
 package cr.ac.una.glifo.data.mapper
 
+import android.content.Context
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.data.datasource.local.entity.StudyItemEntity
 import cr.ac.una.glifo.data.dto.StudyItemResponse
 import cr.ac.una.glifo.domain.model.Flashcard
@@ -49,52 +51,59 @@ object StudyItemMapper {
 
     fun toFlashcards(
         items: List<StudyItemResponse>,
-        topics: List<SyllabusTopic> = emptyList()
+        topics: List<SyllabusTopic> = emptyList(),
+        context: Context? = null
     ): List<Flashcard> {
         val topicsById = topics.associateBy { it.id }
         return items.mapNotNull { item ->
-            toFlashcardOrNull(item, topicsById[item.syllabusTopicId])
+            toFlashcardOrNull(item, topicsById[item.syllabusTopicId], context)
         }
     }
 
     fun entitiesToFlashcards(
         entities: List<StudyItemEntity>,
-        topics: List<SyllabusTopic> = emptyList()
+        topics: List<SyllabusTopic> = emptyList(),
+        context: Context? = null
     ): List<Flashcard> = toFlashcards(
         items = entities.mapNotNull(::toResponseOrNull),
-        topics = topics
+        topics = topics,
+        context = context
     )
 
     fun toQuizQuestions(
         items: List<StudyItemResponse>,
         topics: List<SyllabusTopic> = emptyList(),
-        random: Random = Random.Default
+        random: Random = Random.Default,
+        context: Context? = null
     ): List<QuizQuestion> {
         val topicsById = topics.associateBy { it.id }
         return items.mapNotNull { item ->
-            toQuizQuestionOrNull(item, topicsById[item.syllabusTopicId], random)
+            toQuizQuestionOrNull(item, topicsById[item.syllabusTopicId], random, context)
         }
     }
 
     fun entitiesToQuizQuestions(
         entities: List<StudyItemEntity>,
         topics: List<SyllabusTopic> = emptyList(),
-        random: Random = Random.Default
+        random: Random = Random.Default,
+        context: Context? = null
     ): List<QuizQuestion> = toQuizQuestions(
         items = entities.mapNotNull(::toResponseOrNull),
         topics = topics,
-        random = random
+        random = random,
+        context = context
     )
 
     fun toFlashcardOrNull(
         item: StudyItemResponse,
-        topic: SyllabusTopic? = null
+        topic: SyllabusTopic? = null,
+        context: Context? = null
     ): Flashcard? {
         if (item.kind.trim().uppercase() != KIND_FLASHCARD) return null
         val payload = item.payload
         val front = payload.nonBlankString("front") ?: return null
         val back = payload.nonBlankString("back") ?: return null
-        val (_, topicLabel) = resolveTopicLabels(item.syllabusTopicId, topic)
+        val (_, topicLabel) = resolveTopicLabels(item.syllabusTopicId, topic, context)
 
         return Flashcard(
             question = front,
@@ -106,14 +115,15 @@ object StudyItemMapper {
     fun toQuizQuestionOrNull(
         item: StudyItemResponse,
         topic: SyllabusTopic? = null,
-        random: Random = Random.Default
+        random: Random = Random.Default,
+        context: Context? = null
     ): QuizQuestion? {
         val normalizedKind = item.kind.trim().uppercase()
-        val (topicTag, topicLabel) = resolveTopicLabels(item.syllabusTopicId, topic)
+        val (topicTag, topicLabel) = resolveTopicLabels(item.syllabusTopicId, topic, context)
 
         return when (normalizedKind) {
             KIND_MULTIPLE_CHOICE -> parseMultipleChoice(item.payload, topicTag, topicLabel, random)
-            KIND_TRUE_FALSE -> parseTrueFalse(item.payload, topicTag, topicLabel)
+            KIND_TRUE_FALSE -> parseTrueFalse(item.payload, topicTag, topicLabel, context)
             else -> null
         }
     }
@@ -161,17 +171,20 @@ object StudyItemMapper {
     private fun parseTrueFalse(
         payload: JsonObject,
         topicTag: String,
-        topicLabel: String
+        topicLabel: String,
+        context: Context?
     ): QuizQuestion? {
         val statement = payload.nonBlankString("statement") ?: return null
         val answer = payload.booleanOrNull("answer") ?: return null
         val explanation = payload.nonBlankString("explanation") ?: return null
+        val trueOption = context?.getString(R.string.study_tf_true) ?: "Verdadero"
+        val falseOption = context?.getString(R.string.study_tf_false) ?: "Falso"
 
         return QuizQuestion(
             topicTag = topicTag,
             topicLabel = topicLabel,
             prompt = statement,
-            options = listOf("Verdadero", "Falso"),
+            options = listOf(trueOption, falseOption),
             correctIndex = if (answer) 0 else 1,
             explanation = explanation
         )
@@ -179,9 +192,10 @@ object StudyItemMapper {
 
     private fun resolveTopicLabels(
         syllabusTopicId: Long,
-        topic: SyllabusTopic?
+        topic: SyllabusTopic?,
+        context: Context?
     ): Pair<String, String> {
-        val fallback = "Tema $syllabusTopicId"
+        val fallback = context?.getString(R.string.study_topic_fallback, syllabusTopicId) ?: "Tema $syllabusTopicId"
         if (topic == null) return fallback to fallback
 
         val code = topic.code.trim()
@@ -217,9 +231,12 @@ object StudyItemMapper {
 }
 
 fun StudyItemResponse.toEntity(): StudyItemEntity = StudyItemMapper.toEntity(this)
-fun List<StudyItemResponse>.toFlashcards(topics: List<SyllabusTopic> = emptyList()): List<Flashcard> =
-    StudyItemMapper.toFlashcards(this, topics)
+fun List<StudyItemResponse>.toFlashcards(
+    topics: List<SyllabusTopic> = emptyList(),
+    context: Context? = null
+): List<Flashcard> = StudyItemMapper.toFlashcards(this, topics, context)
 fun List<StudyItemResponse>.toQuizQuestions(
     topics: List<SyllabusTopic> = emptyList(),
-    random: Random = Random.Default
-): List<QuizQuestion> = StudyItemMapper.toQuizQuestions(this, topics, random)
+    random: Random = Random.Default,
+    context: Context? = null
+): List<QuizQuestion> = StudyItemMapper.toQuizQuestions(this, topics, random, context)

@@ -1,5 +1,7 @@
 package cr.ac.una.glifo.data.repository
 
+import android.content.Context
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.AppError
 import cr.ac.una.glifo.data.datasource.local.dao.StudyItemDao
 import cr.ac.una.glifo.data.datasource.remote.ApiErrorHandler
@@ -15,6 +17,7 @@ import cr.ac.una.glifo.domain.model.QuizResultInfo
 import cr.ac.una.glifo.domain.model.SyllabusTopic
 import cr.ac.una.glifo.domain.repository.CourseRepository
 import cr.ac.una.glifo.domain.repository.StudyRepository
+import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 
@@ -31,9 +34,22 @@ class StudyRepositoryImpl : StudyRepository {
     private val api: GlifoApi
     private val studyItemDao: StudyItemDao
     private val courseRepository: CourseRepository
+    private val appContext: Context?
     private val quizResultsByCourse = ConcurrentHashMap<Long, QuizResultInfo>()
 
     @Inject
+    constructor(
+        api: GlifoApi,
+        studyItemDao: StudyItemDao,
+        courseRepository: CourseRepository,
+        @ApplicationContext appContext: Context
+    ) {
+        this.api = api
+        this.studyItemDao = studyItemDao
+        this.courseRepository = courseRepository
+        this.appContext = appContext
+    }
+
     constructor(
         api: GlifoApi,
         studyItemDao: StudyItemDao,
@@ -42,6 +58,7 @@ class StudyRepositoryImpl : StudyRepository {
         this.api = api
         this.studyItemDao = studyItemDao
         this.courseRepository = courseRepository
+        this.appContext = null
     }
 
     constructor(
@@ -61,7 +78,11 @@ class StudyRepositoryImpl : StudyRepository {
         val sanitizedTopics = topicIds.distinct().take(MAX_TOPICS_PER_BATCH)
         if (sanitizedTopics.isEmpty()) {
             return Result.Failure(
-                AppError.Validation("topicIds", "Selecciona al menos un tema del curso")
+                AppError.Validation(
+                    "topicIds",
+                    appContext?.getString(R.string.study_error_select_topic)
+                        ?: "Selecciona al menos un tema del curso"
+                )
             )
         }
         val remote = ApiErrorHandler.safeApiCall(
@@ -89,12 +110,12 @@ class StudyRepositoryImpl : StudyRepository {
         val remote = fetchAndCacheCourseItems(courseId)
         val topics = fetchTopicsOrEmpty(courseId)
         return when (remote) {
-            is Result.Success -> Result.Success(StudyItemMapper.toFlashcards(remote.value, topics))
+            is Result.Success -> Result.Success(StudyItemMapper.toFlashcards(remote.value, topics, appContext))
             is Result.Failure -> {
                 if (remote.error is AppError.NoConnection) {
                     val cached = studyItemDao.itemsForCourse(courseId)
                     if (cached.isNotEmpty()) {
-                        Result.Success(StudyItemMapper.entitiesToFlashcards(cached, topics))
+                        Result.Success(StudyItemMapper.entitiesToFlashcards(cached, topics, appContext))
                     } else {
                         remote
                     }
@@ -109,12 +130,12 @@ class StudyRepositoryImpl : StudyRepository {
         val remote = fetchAndCacheCourseItems(courseId)
         val topics = fetchTopicsOrEmpty(courseId)
         return when (remote) {
-            is Result.Success -> Result.Success(StudyItemMapper.toQuizQuestions(remote.value, topics))
+            is Result.Success -> Result.Success(StudyItemMapper.toQuizQuestions(remote.value, topics, context = appContext))
             is Result.Failure -> {
                 if (remote.error is AppError.NoConnection) {
                     val cached = studyItemDao.itemsForCourse(courseId)
                     if (cached.isNotEmpty()) {
-                        Result.Success(StudyItemMapper.entitiesToQuizQuestions(cached, topics))
+                        Result.Success(StudyItemMapper.entitiesToQuizQuestions(cached, topics, context = appContext))
                     } else {
                         remote
                     }
@@ -132,7 +153,13 @@ class StudyRepositoryImpl : StudyRepository {
                 if (first != null) {
                     Result.Success(first)
                 } else {
-                    Result.Failure(AppError.Validation("quiz", "No hay preguntas de quiz disponibles"))
+                    Result.Failure(
+                        AppError.Validation(
+                            "quiz",
+                            appContext?.getString(R.string.study_error_no_quiz)
+                                ?: "No hay preguntas de quiz disponibles"
+                        )
+                    )
                 }
             }
             is Result.Failure -> result

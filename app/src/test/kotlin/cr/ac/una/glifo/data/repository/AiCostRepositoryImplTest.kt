@@ -140,6 +140,23 @@ class AiCostRepositoryImplTest {
         assertFalse(stats.serverDataAvailable)
         assertEquals(100, stats.headlinePercent)
         assertTrue(stats.paidCalls.isEmpty())
+        assertEquals(
+            listOf(
+                cr.ac.una.glifo.core.common.UiText.Resource(cr.ac.una.glifo.R.string.ai_cost_breakdown_n1),
+                cr.ac.una.glifo.core.common.UiText.Resource(cr.ac.una.glifo.R.string.ai_cost_breakdown_n15),
+                cr.ac.una.glifo.core.common.UiText.Resource(cr.ac.una.glifo.R.string.ai_cost_breakdown_n2),
+                cr.ac.una.glifo.core.common.UiText.Resource(cr.ac.una.glifo.R.string.ai_cost_breakdown_uncertain)
+            ),
+            stats.breakdown.map { it.labelText }
+        )
+        assertEquals(
+            cr.ac.una.glifo.core.common.UiText.Resource(cr.ac.una.glifo.R.string.ai_cost_period_this_phone, 1, 1),
+            stats.periodText
+        )
+        assertEquals(
+            cr.ac.una.glifo.core.common.UiText.Resource(cr.ac.una.glifo.R.string.ai_cost_offline_footer),
+            stats.footerText
+        )
     }
 
     @Test

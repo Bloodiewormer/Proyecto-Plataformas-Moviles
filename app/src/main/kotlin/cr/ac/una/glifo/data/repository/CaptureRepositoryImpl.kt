@@ -3,9 +3,11 @@ package cr.ac.una.glifo.data.repository
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.AppError
 import cr.ac.una.glifo.core.opencv.ImageQualityAnalyzer
 import cr.ac.una.glifo.core.pipeline.CapturePipeline
+import cr.ac.una.glifo.core.pipeline.CapturePipeline.CaptureStepId
 import cr.ac.una.glifo.core.pipeline.PerceptualHasher
 import cr.ac.una.glifo.domain.error.Result
 import cr.ac.una.glifo.domain.model.CaptureQualityCheck
@@ -48,7 +50,9 @@ class CaptureRepositoryImpl @Inject constructor(
             is Result.Failure -> return analyzed
         }
         val hash = lastHash
-            ?: return Result.Failure(AppError.Validation("photo", "No se pudo calcular la huella de la página."))
+            ?: return Result.Failure(
+                AppError.Validation("photo", appContext.getString(R.string.capture_error_hash_failed))
+            )
 
         // La galería y la cámara dejan la foto en cacheDir, que el sistema puede vaciar; el
         // apunte necesita la foto para mostrar el recorte original de cada región.
@@ -65,7 +69,7 @@ class CaptureRepositoryImpl @Inject constructor(
     override suspend fun getQualityChecks(photoPath: String?): Result<List<CaptureQualityCheck>> {
         val bitmap = decode(photoPath)
         if (bitmap != null) {
-            return Result.Success(ImageQualityAnalyzer.analyzeQuality(bitmap))
+            return Result.Success(ImageQualityAnalyzer.analyzeQuality(bitmap, appContext))
         }
         return noPhoto()
     }
@@ -73,14 +77,14 @@ class CaptureRepositoryImpl @Inject constructor(
     override suspend fun hasQualityWarning(photoPath: String?): Result<Boolean> {
         val bitmap = decode(photoPath)
         if (bitmap != null) {
-            return Result.Success(ImageQualityAnalyzer.analyzeQuality(bitmap).any { it.isWarning })
+            return Result.Success(ImageQualityAnalyzer.analyzeQuality(bitmap, appContext).any { it.isWarning })
         }
         return noPhoto()
     }
 
     override suspend fun analyzePage(photoPath: String?, courseId: Long?): Result<PageAnalysis> {
         if (photoPath == null) {
-            return Result.Failure(AppError.Validation("photo", "No hay ninguna foto para analizar."))
+            return noPhoto()
         }
 
         return pipelineLock.withLock {
@@ -89,7 +93,7 @@ class CaptureRepositoryImpl @Inject constructor(
 
             val bitmap = decode(photoPath)
                 ?: return@withLock Result.Failure(
-                    AppError.Validation("photo", "No se pudo leer la foto capturada.")
+                    AppError.Validation("photo", appContext.getString(R.string.capture_error_unreadable_photo))
                 )
 
             try {
@@ -128,7 +132,7 @@ class CaptureRepositoryImpl @Inject constructor(
                 Result.Failure(
                     AppError.Server(
                         code = "pipeline_local",
-                        message = error.message ?: "El procesamiento local falló."
+                        message = error.message ?: appContext.getString(R.string.capture_error_local_pipeline_failed)
                     )
                 )
             }
@@ -151,24 +155,30 @@ class CaptureRepositoryImpl @Inject constructor(
      */
     private fun stepsWithOfflineContext(analysis: PageAnalysis, courseId: Long?): List<CaptureStep> {
         val reuse = analysis.reusedFrom
-        val pipelineSteps = CapturePipeline.stepsFor(analysis).map { step ->
-            when {
-                reuse != null && (step.name.startsWith("N0") || step.name.startsWith("N1 ")) ->
-                    step.copy(description = "Omitido: resultado reutilizado de la página ya procesada.")
-                step.name.startsWith("Clasificador") ->
-                    step.copy(description = "${step.description} - ${glossaryDescription(courseId)}")
-                else -> step
+        val pipelineSteps = CapturePipeline.stepSpecsFor(analysis).map { spec ->
+            val baseName = appContext.getString(spec.nameRes)
+            val baseDescription = if (spec.descriptionArgs.isEmpty()) {
+                appContext.getString(spec.descriptionRes)
+            } else {
+                appContext.getString(spec.descriptionRes, *spec.descriptionArgs.toTypedArray())
             }
+            val finalDescription = when {
+                reuse != null && (spec.id == CaptureStepId.N0 || spec.id == CaptureStepId.N1) ->
+                    appContext.getString(R.string.capture_step_reused_skipped)
+                spec.id == CaptureStepId.Classifier ->
+                    "$baseDescription - ${glossaryDescription(courseId)}"
+                else -> baseDescription
+            }
+            CaptureStep(state = spec.state, name = baseName, description = finalDescription)
         }
 
         val dedupStep = CaptureStep(
             state = "done",
-            name = "Deduplicación (pHash)",
+            name = appContext.getString(R.string.capture_step_dedup_name),
             description = when {
-                courseId == null -> "Sin curso asociado: no se compara contra páginas anteriores."
-                reuse != null -> "Página ya procesada (${reuse.hammingDistance}/64 bits distintos) - " +
-                    "se reutiliza el resultado - 0 llamadas"
-                else -> "Página nueva - hash guardado para detectar repeticiones."
+                courseId == null -> appContext.getString(R.string.capture_step_dedup_no_course)
+                reuse != null -> appContext.getString(R.string.capture_step_dedup_reused, reuse.hammingDistance)
+                else -> appContext.getString(R.string.capture_step_dedup_new)
             }
         )
 
@@ -178,14 +188,18 @@ class CaptureRepositoryImpl @Inject constructor(
     private fun glossaryDescription(courseId: Long?): String {
         val context = lastContext
         return when {
-            courseId == null -> "sin glosario del curso"
-            context == null -> "sin glosario en el dispositivo (se descarga al abrir la cámara con conexión)"
-            else -> "glosario v${context.glossaryVersion} (${context.entries.size} términos, copia local)"
+            courseId == null -> appContext.getString(R.string.capture_step_glossary_no_course)
+            context == null -> appContext.getString(R.string.capture_step_glossary_not_cached)
+            else -> appContext.getString(
+                R.string.capture_step_glossary_cached,
+                context.glossaryVersion,
+                context.entries.size
+            )
         }
     }
 
     private fun <T> noPhoto(): Result<T> =
-        Result.Failure(AppError.Validation("photo", "No hay ninguna foto para analizar."))
+        Result.Failure(AppError.Validation("photo", appContext.getString(R.string.capture_error_no_photo)))
 
     private suspend fun decode(photoPath: String?): Bitmap? {
         if (photoPath == null) return null

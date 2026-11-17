@@ -1,5 +1,7 @@
 package cr.ac.una.glifo.domain.model
 
+import cr.ac.una.glifo.core.common.UiText
+
 data class CoverageTopic(
     val state: ConfidenceState,
     val name: String,
@@ -8,7 +10,8 @@ data class CoverageTopic(
     val topicId: Long = 0L,
     val code: String = "",
     val title: String = name,
-    val updatedAt: String? = null
+    val updatedAt: String? = null,
+    val noteText: UiText? = note?.let(UiText::Plain)
 )
 
 data class CoverageSummary(
@@ -23,7 +26,9 @@ data class CoverageSummary(
     val absentCount: Int,
     val doubtfulCount: Int,
     val unitLabel: String,
-    val deltaLabel: String
+    val deltaLabel: String,
+    val unitText: UiText = UiText.Plain(unitLabel),
+    val deltaText: UiText = UiText.Plain(deltaLabel)
 )
 
 data class TopicChecklistItem(val ok: Boolean, val label: String, val meta: String)
@@ -35,7 +40,8 @@ data class TopicDetail(
     val stateLabel: String,
     val confidence: String,
     val checklist: List<TopicChecklistItem>,
-    val noteRefs: List<TopicNoteRef>
+    val noteRefs: List<TopicNoteRef>,
+    val stateLabelText: UiText = UiText.Plain(stateLabel)
 )
 
 data class CovBarValues(val v: Float, val r: Float, val e: Float, val u: Float)
@@ -56,5 +62,6 @@ data class CoverageDeltaInfo(
     val sinceIso: String = "",
     val sinceDisplay: String = dateRange,
     val changedCounts: Map<String, Int> = emptyMap(),
-    val changedTopics: List<CoverageTopic> = emptyList()
+    val changedTopics: List<CoverageTopic> = emptyList(),
+    val dateRangeText: UiText = UiText.Plain(dateRange)
 )

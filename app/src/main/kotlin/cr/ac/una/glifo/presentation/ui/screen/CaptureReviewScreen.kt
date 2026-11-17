@@ -31,6 +31,7 @@ import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
+import cr.ac.una.glifo.presentation.viewmodel.CaptureQualityWarning
 import cr.ac.una.glifo.presentation.viewmodel.CaptureReviewViewModel
 import cr.ac.una.glifo.presentation.viewmodel.toMessage
 
@@ -110,9 +111,21 @@ fun CaptureReviewScreen(
                 is UiState.Success -> {
                     val checks = state.data.checks
                     val hasWarning = state.data.hasWarning
+                    val warning = state.data.warning
 
-                    if (hasWarning) {
-                        // Warning Card
+                    if (hasWarning && warning != null) {
+                        val (warningTitleRes, warningDescriptionRes) = when (warning) {
+                            CaptureQualityWarning.Blurry ->
+                                R.string.capture_review_blur_warning_title to R.string.capture_review_blur_warning_description
+                            CaptureQualityWarning.Overexposed ->
+                                R.string.capture_review_overexposed_warning_title to R.string.capture_review_overexposed_warning_description
+                            CaptureQualityWarning.Underexposed ->
+                                R.string.capture_review_underexposed_warning_title to R.string.capture_review_underexposed_warning_description
+                            CaptureQualityWarning.Multiple ->
+                                R.string.capture_review_multiple_warning_title to R.string.capture_review_multiple_warning_description
+                            CaptureQualityWarning.Generic ->
+                                R.string.capture_review_generic_warning_title to R.string.capture_review_generic_warning_description
+                        }
                         GlifoCard(
                             backgroundColor = colors.alertFaint,
                             borderColor = colors.alertLine
@@ -122,10 +135,10 @@ fun CaptureReviewScreen(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 Icon(imageVector = Icons.Default.Warning, contentDescription = null, tint = colors.alert, modifier = Modifier.size(18.dp))
-                                Text(stringResource(R.string.capture_review_blur_warning_title), fontSize = 16.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                                Text(stringResource(warningTitleRes), fontSize = 16.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
                             }
                             Text(
-                                text = stringResource(R.string.capture_review_blur_warning_description),
+                                text = stringResource(warningDescriptionRes),
                                 fontSize = 12.sp,
                                 color = colors.textSecondary,
                                 lineHeight = 18.sp,

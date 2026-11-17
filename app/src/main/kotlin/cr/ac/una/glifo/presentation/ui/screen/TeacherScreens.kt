@@ -380,7 +380,9 @@ fun TeacherSyllabusScreen(
         pdfLauncher.launch(arrayOf("application/pdf"))
     }
 
-    val isUploading = (uiState as? UiState.Success)?.data?.isUploading == true
+    val successData = (uiState as? UiState.Success)?.data
+    val isUploading = successData?.isUploading == true
+    val canPublish = successData?.canPublish == true
 
     Column(
         modifier = Modifier
@@ -392,26 +394,28 @@ fun TeacherSyllabusScreen(
             isBack = true,
             onNavigationClick = onNavigateBack,
             actions = {
-                TextButton(
-                    enabled = !isUploading,
-                    onClick = {
-                        publishError = null
-                        scope.launch {
-                            when (val result = viewModel.publishSyllabus()) {
-                                is cr.ac.una.glifo.domain.error.Result.Success -> onPublishSuccess()
-                                is cr.ac.una.glifo.domain.error.Result.Failure -> {
-                                    publishError = result.error.toSyllabusErrorMessage(context)
+                if (canPublish) {
+                    TextButton(
+                        enabled = !isUploading,
+                        onClick = {
+                            publishError = null
+                            scope.launch {
+                                when (val result = viewModel.publishSyllabus()) {
+                                    is cr.ac.una.glifo.domain.error.Result.Success -> onPublishSuccess()
+                                    is cr.ac.una.glifo.domain.error.Result.Failure -> {
+                                        publishError = result.error.toSyllabusErrorMessage(context)
+                                    }
                                 }
                             }
                         }
+                    ) {
+                        Text(
+                            stringResource(R.string.teacher_syllabus_publish_button),
+                            color = if (isUploading) colors.textSecondary else colors.accentText,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium
+                        )
                     }
-                ) {
-                    Text(
-                        stringResource(R.string.teacher_syllabus_publish_button),
-                        color = if (isUploading) colors.textSecondary else colors.accentText,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
-                    )
                 }
             }
         )
@@ -866,7 +870,10 @@ fun TeacherGlossaryScreen(
             when (val state = uiState) {
                 is UiState.Loading -> GlifoLoadingBox()
                 is UiState.Empty -> GlifoEmptyBox(
-                    message = stringResource(R.string.teacher_glossary_no_match),
+                    message = stringResource(
+                        if (query.isBlank()) R.string.teacher_glossary_empty
+                        else R.string.teacher_glossary_no_match
+                    ),
                     actionText = stringResource(R.string.common_retry),
                     onAction = viewModel::load
                 )
@@ -918,16 +925,18 @@ fun TeacherGlossaryScreen(
                             modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
                         )
 
-                        GlifoCard(tight = true) {
-                            entries.forEachIndexed { i, entry ->
-                                GlifoItem(showBottomBorder = i < entries.size - 1) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(text = entry.term, fontSize = 16.sp, color = colors.textPrimary)
-                                        Text(text = entry.notation, fontSize = 13.sp, fontFamily = FontFamily.Monospace, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
+                        if (entries.isNotEmpty()) {
+                            GlifoCard(tight = true) {
+                                entries.forEachIndexed { i, entry ->
+                                    GlifoItem(showBottomBorder = i < entries.size - 1) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(text = entry.term, fontSize = 16.sp, color = colors.textPrimary)
+                                            Text(text = entry.notation, fontSize = 13.sp, fontFamily = FontFamily.Monospace, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
+                                        }
+                                        val bg = if (entry.isSymbol) colors.repairedSoft else colors.accentSoft
+                                        val fg = if (entry.isSymbol) colors.repaired else colors.accentText
+                                        GlifoBadge(text = entry.tag, backgroundColor = bg, textColor = fg)
                                     }
-                                    val bg = if (entry.isSymbol) colors.repairedSoft else colors.accentSoft
-                                    val fg = if (entry.isSymbol) colors.repaired else colors.accentText
-                                    GlifoBadge(text = entry.tag, backgroundColor = bg, textColor = fg)
                                 }
                             }
                         }
@@ -969,7 +978,12 @@ fun TeacherGlossaryScreen(
                         }
 
                         if (entries.isEmpty()) {
-                            GlifoBanner(text = stringResource(R.string.teacher_glossary_no_match), modifier = Modifier.padding(top = 12.dp))
+                            val emptyRes = if (query.isBlank()) {
+                                R.string.teacher_glossary_empty
+                            } else {
+                                R.string.teacher_glossary_no_match
+                            }
+                            GlifoBanner(text = stringResource(emptyRes), modifier = Modifier.padding(top = 12.dp))
                         }
                     }
                 }

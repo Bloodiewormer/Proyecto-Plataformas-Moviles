@@ -34,6 +34,7 @@ import cr.ac.una.glifo.core.ui.theme.GlifoTheme
 import cr.ac.una.glifo.domain.model.PageAnalysis
 import cr.ac.una.glifo.domain.model.RecognizedRegion
 import cr.ac.una.glifo.domain.model.RegionKind
+import cr.ac.una.glifo.domain.model.routeRes
 import cr.ac.una.glifo.presentation.viewmodel.CaptureProcessingViewModel
 import cr.ac.una.glifo.presentation.viewmodel.toMessage
 import kotlinx.coroutines.delay
@@ -298,7 +299,7 @@ private fun RegionRoutingSection(analysis: PageAnalysis) {
             ) {
                 GlifoConfidenceChip(state = region.confidenceState)
                 Text(
-                    text = stringResource(R.string.capture_processing_region_label, region.index + 1, region.kind.label),
+                    text = stringResource(R.string.capture_processing_region_label, region.index + 1, stringResource(region.kind.labelRes)),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
                     color = colors.textPrimary,
@@ -313,7 +314,7 @@ private fun RegionRoutingSection(analysis: PageAnalysis) {
             }
 
             Text(
-                text = region.route,
+                text = stringResource(region.routeRes(RegionClassifier.TEXT_CONFIDENCE_GATE)),
                 fontSize = 10.sp,
                 color = colors.textSecondary,
                 modifier = Modifier.padding(top = 4.dp)

@@ -17,17 +17,22 @@ import cr.ac.una.glifo.domain.error.Result
 fun AppError.toMessage(context: Context): String = when (this) {
     is AppError.NoConnection -> context.getString(R.string.error_no_connection)
     is AppError.Unauthorized -> context.getString(R.string.error_unauthorized)
-    is AppError.Validation -> issue
+    is AppError.Validation -> issue.ifBlank { context.getString(R.string.error_invalid_request) }
     is AppError.Server -> when (code) {
         "502", "503", "AI_PROVIDER_ERROR", "AI_NOT_CONFIGURED" ->
             context.getString(R.string.study_error_ai_unavailable)
-        "409", "NOTE_HAS_NO_PAGES" ->
+        "NOTE_HAS_NO_PAGES" ->
             context.getString(R.string.note_reconstruct_error_no_pages)
+        "409" ->
+            message.ifBlank { context.getString(R.string.error_conflict) }
+        "404" ->
+            message.ifBlank { context.getString(R.string.error_not_found) }
         "403" ->
             context.getString(R.string.study_error_forbidden)
-        else -> message
+        else ->
+            message.ifBlank { context.getString(R.string.error_server_code, code) }
     }
-    is AppError.Database -> message
+    is AppError.Database -> message.ifBlank { context.getString(R.string.error_unknown) }
     is AppError.Unknown -> context.getString(R.string.error_unknown)
 }
 

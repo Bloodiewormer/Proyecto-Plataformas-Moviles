@@ -1,7 +1,11 @@
 package cr.ac.una.glifo.core.opencv
 
+import android.content.Context
 import android.graphics.Bitmap
+import androidx.annotation.StringRes
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.domain.model.CaptureQualityCheck
+import cr.ac.una.glifo.domain.model.CaptureQualityIssue
 import org.opencv.android.Utils
 import org.opencv.core.Core
 import org.opencv.core.Mat
@@ -14,6 +18,14 @@ import org.opencv.imgproc.Imgproc
  */
 object ImageQualityAnalyzer {
 
+    internal data class QualityCheckSpec(
+        @StringRes val labelRes: Int,
+        @StringRes val scoreLabelRes: Int,
+        val percent: Float,
+        val isWarning: Boolean,
+        val issue: CaptureQualityIssue? = null
+    )
+
     // Umbrales empíricos
     private const val BLUR_THRESHOLD = 100.0 // Varianza Laplaciana (menor = más borroso)
     private const val DARK_THRESHOLD = 60.0  // Media de brillo (menor = muy oscuro)
@@ -23,7 +35,7 @@ object ImageQualityAnalyzer {
      * Analiza un Bitmap y devuelve una lista de chequeos de calidad.
      * Si alguna prueba falla (isWarning = true), el UI debería pedir reintento explícito.
      */
-    fun analyzeQuality(bitmap: Bitmap): List<CaptureQualityCheck> {
+    fun analyzeQuality(bitmap: Bitmap, context: Context): List<CaptureQualityCheck> {
         val src = Mat()
         Utils.bitmapToMat(bitmap, src)
 
@@ -34,24 +46,60 @@ object ImageQualityAnalyzer {
             src.copyTo(gray)
         }
 
-        // 1. Prueba de Borrosidad (Varianza Laplaciana)
-        val blurCheck = checkBlurriness(gray)
+        val blurCheck = checkBlurriness(gray, context)
+        val illuminationCheck = checkIllumination(gray, context)
 
-        // 2. Prueba de Iluminación (Media de píxeles)
-        val illuminationCheck = checkIllumination(gray)
-
-        // Liberar memoria
         src.release()
         gray.release()
 
         return listOf(blurCheck, illuminationCheck)
     }
 
-    /**
-     * Usa la varianza del Laplaciano para detectar qué tan enfocada está la imagen.
-     * Un borde bien definido tiene alta varianza. Una imagen borrosa tiene baja varianza.
-     */
-    private fun checkBlurriness(grayMat: Mat): CaptureQualityCheck {
+    internal fun blurCheckSpec(variance: Double): QualityCheckSpec {
+        val isBlurry = variance < BLUR_THRESHOLD
+        val scorePercent = (variance / 500.0).coerceIn(0.0, 1.0).toFloat()
+        return QualityCheckSpec(
+            labelRes = R.string.capture_quality_focus_label,
+            scoreLabelRes = if (isBlurry) R.string.capture_quality_focus_blurry else R.string.capture_quality_focus_optimal,
+            percent = scorePercent,
+            isWarning = isBlurry,
+            issue = if (isBlurry) CaptureQualityIssue.Blurry else null
+        )
+    }
+
+    internal fun illuminationCheckSpec(meanBrightness: Double): QualityCheckSpec {
+        val isTooDark = meanBrightness < DARK_THRESHOLD
+        val isTooBright = meanBrightness > BRIGHT_THRESHOLD
+        val isWarning = isTooDark || isTooBright
+        val scoreLabelRes = when {
+            isTooDark -> R.string.capture_quality_light_dark
+            isTooBright -> R.string.capture_quality_light_bright
+            else -> R.string.capture_quality_light_optimal
+        }
+        val distanceToIdeal = Math.abs(128.0 - meanBrightness)
+        val scorePercent = (1.0 - (distanceToIdeal / 128.0)).coerceIn(0.0, 1.0).toFloat()
+        return QualityCheckSpec(
+            labelRes = R.string.capture_quality_light_label,
+            scoreLabelRes = scoreLabelRes,
+            percent = scorePercent,
+            isWarning = isWarning,
+            issue = when {
+                isTooDark -> CaptureQualityIssue.Underexposed
+                isTooBright -> CaptureQualityIssue.Overexposed
+                else -> null
+            }
+        )
+    }
+
+    internal fun QualityCheckSpec.toDomain(context: Context): CaptureQualityCheck = CaptureQualityCheck(
+        label = context.getString(labelRes),
+        scoreLabel = context.getString(scoreLabelRes),
+        percent = percent,
+        isWarning = isWarning,
+        issue = issue
+    )
+
+    private fun checkBlurriness(grayMat: Mat, context: Context): CaptureQualityCheck {
         val laplacian = Mat()
         Imgproc.Laplacian(grayMat, laplacian, org.opencv.core.CvType.CV_64F)
 
@@ -59,51 +107,17 @@ object ImageQualityAnalyzer {
         val stdDev = MatOfDouble()
         Core.meanStdDev(laplacian, mean, stdDev)
 
-        // Varianza = Desviación estándar al cuadrado
         val variance = Math.pow(stdDev.toArray()[0], 2.0)
-        
+
         laplacian.release()
         mean.release()
         stdDev.release()
 
-        val isBlurry = variance < BLUR_THRESHOLD
-        
-        // Convertimos la varianza a un porcentaje "entendible" por la UI (topamos en 500 para el 100%)
-        val scorePercent = (variance / 500.0).coerceIn(0.0, 1.0).toFloat()
-
-        return CaptureQualityCheck(
-            label = "Enfoque y Nitidez",
-            scoreLabel = if (isBlurry) "Imagen borrosa" else "Enfoque óptimo",
-            percent = scorePercent,
-            isWarning = isBlurry
-        )
+        return blurCheckSpec(variance).toDomain(context)
     }
 
-    /**
-     * Calcula el brillo promedio para detectar fotos subexpuestas (oscuras) o sobreexpuestas (brillantes).
-     */
-    private fun checkIllumination(grayMat: Mat): CaptureQualityCheck {
+    private fun checkIllumination(grayMat: Mat, context: Context): CaptureQualityCheck {
         val mean = Core.mean(grayMat).`val`[0]
-        
-        val isTooDark = mean < DARK_THRESHOLD
-        val isTooBright = mean > BRIGHT_THRESHOLD
-        val isWarning = isTooDark || isTooBright
-
-        val scoreLabel = when {
-            isTooDark -> "Muy oscuro. Falta iluminación."
-            isTooBright -> "Sobreexpuesto. Exceso de luz."
-            else -> "Iluminación correcta"
-        }
-
-        // Convertimos a porcentaje ideal (128 es el centro perfecto)
-        val distanceToIdeal = Math.abs(128.0 - mean)
-        val scorePercent = (1.0 - (distanceToIdeal / 128.0)).coerceIn(0.0, 1.0).toFloat()
-
-        return CaptureQualityCheck(
-            label = "Iluminación",
-            scoreLabel = scoreLabel,
-            percent = scorePercent,
-            isWarning = isWarning
-        )
+        return illuminationCheckSpec(mean).toDomain(context)
     }
 }

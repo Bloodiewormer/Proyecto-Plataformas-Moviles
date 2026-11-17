@@ -99,6 +99,7 @@ class TeacherSyllabusViewModelTest {
         assertTrue(data.units.isEmpty())
         assertFalse(data.isPublished)
         assertTrue(data.canUploadPdf)
+        assertTrue(data.canPublish)
         assertFalse(data.hasTopics)
     }
 
@@ -129,6 +130,7 @@ class TeacherSyllabusViewModelTest {
         assertEquals(1, data.units.size)
         assertTrue(data.isPublished)
         assertFalse(data.canUploadPdf)
+        assertFalse(data.canPublish)
         assertTrue(data.hasTopics)
     }
 
@@ -153,6 +155,7 @@ class TeacherSyllabusViewModelTest {
         val data = (vm.state.value as UiState.Success).data
         assertTrue(data.isPublished)
         assertFalse(data.canUploadPdf)
+        assertFalse(data.canPublish)
     }
 
     @Test
@@ -167,7 +170,7 @@ class TeacherSyllabusViewModelTest {
     }
 
     @Test
-    fun `uploadSyllabusPdf happy path shows file name, picked size fallback, parsed date and units`() = runTest(dispatcher) {
+    fun `uploadSyllabusPdf happy path omits unknown size when backend does not return it`() = runTest(dispatcher) {
         val repo = FakeTeacherRepository().apply {
             uploadResult = Result.Success(
                 SyllabusDocument(
@@ -194,13 +197,40 @@ class TeacherSyllabusViewModelTest {
         assertEquals("moviles.pdf", repo.lastUploadedFileName)
         assertEquals(2048, repo.lastUploadedSize)
         assertEquals("moviles.pdf", data.fileName)
-        assertEquals("2.0 KB", data.formattedSize)
+        assertNull(data.formattedSize)
         assertEquals("16/11/2026", data.parsedAtDisplay)
         assertEquals("U1 · Compose", data.units.single().label)
         assertTrue(data.isPublished)
         assertFalse(data.canUploadPdf)
+        assertFalse(data.canPublish)
         assertFalse(data.isUploading)
         assertNull(data.actionError)
+    }
+
+    @Test
+    fun `uploadSyllabusPdf keeps formattedSize when backend returns it`() = runTest(dispatcher) {
+        val repo = FakeTeacherRepository().apply {
+            uploadResult = Result.Success(
+                SyllabusDocument(
+                    courseId = 10L,
+                    fileName = "moviles.pdf",
+                    sizeBytes = 2048L,
+                    formattedSize = "2.0 KB",
+                    parsedAtDisplay = "16/11/2026",
+                    syllabusVersion = 1,
+                    units = emptyList()
+                )
+            )
+        }
+        val vm = TeacherSyllabusViewModel(repo)
+        advanceUntilIdle()
+
+        vm.uploadSyllabusPdf("moviles.pdf", ByteArray(2048) { 1 })
+        advanceUntilIdle()
+
+        val data = (vm.state.value as UiState.Success).data
+        assertEquals("2.0 KB", data.formattedSize)
+        assertFalse(data.canPublish)
     }
 
     @Test
