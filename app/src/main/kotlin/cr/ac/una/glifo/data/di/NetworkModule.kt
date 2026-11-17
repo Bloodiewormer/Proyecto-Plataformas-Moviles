@@ -22,9 +22,9 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    // 10.0.2.2 es la máquina anfitriona vista desde el emulador: llega al backend (o a Mockoon)
-    // sin `adb reverse`. En un teléfono físico hay que poner la IP de la PC en la red local.
-    private const val BASE_URL = "http://10.0.2.2:8080/api/v1/"
+    // Debug: 10.0.2.2 es la máquina anfitriona vista desde el emulador (backend local o Mockoon).
+    // Release: el backend desplegado en Render. Se define por tipo de build en app/build.gradle.kts.
+    private const val BASE_URL = cr.ac.una.glifo.BuildConfig.API_BASE_URL
 
     @Provides
     @Singleton
