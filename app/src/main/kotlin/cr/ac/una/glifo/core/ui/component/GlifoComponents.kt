@@ -33,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
@@ -496,7 +497,9 @@ fun GlifoButton(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .height(height),
+            .height(height)
+            // Deshabilitado se veía igual que habilitado (por ejemplo "Responder" sin opción elegida).
+            .alpha(if (enabled) 1f else 0.45f),
         enabled = enabled,
         shape = shape,
         color = bgColor,
@@ -554,9 +557,12 @@ fun GlifoField(
     modifier: Modifier = Modifier,
     onValueChange: ((String) -> Unit)? = null,
     isFocused: Boolean = false,
-    isError: Boolean = false
+    isError: Boolean = false,
+    // Oculta el texto (puntos) y muestra el ícono del ojo para verlo un momento.
+    isPassword: Boolean = false
 ) {
     val colors = GlifoTheme.colors
+    var passwordVisible by remember { mutableStateOf(false) }
     val borderColor = when {
         isError -> colors.alert
         isFocused -> colors.accentLine
@@ -585,26 +591,54 @@ fun GlifoField(
             )
             Spacer(modifier = Modifier.height(2.dp))
             if (onValueChange != null) {
-                androidx.compose.foundation.text.BasicTextField(
-                    value = value,
-                    onValueChange = onValueChange,
-                    textStyle = androidx.compose.ui.text.TextStyle(
-                        color = colors.textPrimary,
-                        fontSize = 15.sp,
-                        fontFamily = FontFamily.SansSerif
-                    ),
-                    modifier = Modifier.fillMaxWidth(),
-                    decorationBox = { innerTextField ->
-                        if (value.isEmpty() && placeholder.isNotEmpty()) {
-                            Text(
-                                text = placeholder,
-                                fontSize = 15.sp,
-                                color = colors.textSecondary
+                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    androidx.compose.foundation.text.BasicTextField(
+                        value = value,
+                        onValueChange = onValueChange,
+                        textStyle = androidx.compose.ui.text.TextStyle(
+                            color = colors.textPrimary,
+                            fontSize = 15.sp,
+                            fontFamily = FontFamily.SansSerif
+                        ),
+                        singleLine = isPassword,
+                        visualTransformation = if (isPassword && !passwordVisible) {
+                            androidx.compose.ui.text.input.PasswordVisualTransformation()
+                        } else {
+                            androidx.compose.ui.text.input.VisualTransformation.None
+                        },
+                        keyboardOptions = if (isPassword) {
+                            androidx.compose.foundation.text.KeyboardOptions(
+                                keyboardType = androidx.compose.ui.text.input.KeyboardType.Password
                             )
+                        } else {
+                            androidx.compose.foundation.text.KeyboardOptions.Default
+                        },
+                        modifier = Modifier.weight(1f),
+                        decorationBox = { innerTextField ->
+                            if (value.isEmpty() && placeholder.isNotEmpty()) {
+                                Text(
+                                    text = placeholder,
+                                    fontSize = 15.sp,
+                                    color = colors.textSecondary
+                                )
+                            }
+                            innerTextField()
                         }
-                        innerTextField()
+                    )
+                    if (isPassword) {
+                        Icon(
+                            imageVector = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                            contentDescription = stringResource(
+                                if (passwordVisible) R.string.password_hide else R.string.password_show
+                            ),
+                            tint = colors.textSecondary,
+                            modifier = Modifier
+                                .padding(start = 8.dp)
+                                .size(20.dp)
+                                .clickable { passwordVisible = !passwordVisible }
+                        )
                     }
-                )
+                }
             } else {
                 Text(
                     text = value.ifEmpty { placeholder },
@@ -672,6 +706,9 @@ fun GlifoDrawerContent(
     onSettingsClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {}
 ) {
+    // El rol de la sesión manda sobre el que fija la pantalla (ver LocalSessionRole).
+    @Suppress("NAME_SHADOWING")
+    val role = LocalSessionRole.current ?: role
     val colors = GlifoTheme.colors
 
     val drawerHome = stringResource(R.string.drawer_item_home)
@@ -998,14 +1035,16 @@ fun GlifoTextField(
     label: String,
     modifier: Modifier = Modifier,
     isError: Boolean = false,
-    errorMessage: String? = null
+    errorMessage: String? = null,
+    isPassword: Boolean = false
 ) {
     Column(modifier = modifier) {
         GlifoField(
             label = label,
             value = value,
             onValueChange = onValueChange,
-            isError = isError
+            isError = isError,
+            isPassword = isPassword
         )
         if (isError && errorMessage != null) {
             Text(

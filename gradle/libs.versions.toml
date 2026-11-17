@@ -59,7 +59,8 @@ androidx-datastore-preferences = { group = "androidx.datastore", name = "datasto
 androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "work" }
 material-google = { group = "com.google.android.material", name = "material", version.ref = "material" }
-opencv = { group = "com.quickbirdstudios", name = "opencv", version = "4.5.3.0" }
+# SDK oficial de OpenCV (Maven Central). El de quickbirdstudios 4.5.3 no trae las .so alineadas a 16 KB.
+opencv = { group = "org.opencv", name = "opencv", version = "4.12.0" }
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics" }
 firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" }

@@ -56,13 +56,14 @@ class TeacherHomeViewModel @Inject constructor(
                 return@launch
             }
             val courseResult = courseRepository.getCourseDetail(courseId)
-            val gapsResult = teacherRepository.getGaps()
+            // getCourseStats es la cobertura del propio docente; la del grupo sale de coverage/gaps.
+            val group = (teacherRepository.getGroupCoverage() as? Result.Success)?.value
 
             _state.value = UiState.Success(
                 TeacherHomeUiData(
                     course = (courseResult as? Result.Success)?.value,
-                    stats = stats,
-                    gaps = (gapsResult as? Result.Success)?.value.orEmpty()
+                    stats = group?.let { stats.withGroup(it) } ?: stats,
+                    gaps = group?.topics.orEmpty()
                 )
             )
         }

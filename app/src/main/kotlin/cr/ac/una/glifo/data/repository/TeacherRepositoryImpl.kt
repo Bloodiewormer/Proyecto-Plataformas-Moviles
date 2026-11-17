@@ -4,13 +4,13 @@ import android.content.Context
 import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.AppError
 import cr.ac.una.glifo.core.datastore.ActiveCourseStore
-import cr.ac.una.glifo.data.datasource.dummy.DummyTeacherProvider
 import cr.ac.una.glifo.data.datasource.remote.ApiErrorHandler
 import cr.ac.una.glifo.data.datasource.remote.GlifoApi
 import cr.ac.una.glifo.data.dto.CreateGlossaryEntryRequest
 import cr.ac.una.glifo.data.dto.CreateSyllabusTopicRequest
 import cr.ac.una.glifo.data.dto.PublishSyllabusRequest
 import cr.ac.una.glifo.data.dto.ResolveGlossarySuggestionRequest
+import cr.ac.una.glifo.data.mapper.TeacherGapsMapper
 import cr.ac.una.glifo.data.mapper.toDomain
 import cr.ac.una.glifo.data.mapper.toSyllabusUnitRows
 import cr.ac.una.glifo.domain.error.Result
@@ -18,6 +18,7 @@ import cr.ac.una.glifo.domain.model.GlossaryEntry
 import cr.ac.una.glifo.domain.model.GlossarySuggestion
 import cr.ac.una.glifo.domain.model.SyllabusUnitRow
 import cr.ac.una.glifo.domain.model.TeacherGapTopic
+import cr.ac.una.glifo.domain.model.TeacherGroupCoverage
 import cr.ac.una.glifo.domain.repository.TeacherRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -157,8 +158,19 @@ class TeacherRepositoryImpl @Inject constructor(
         }
     }
 
+    // Antes venía de DummyTeacherProvider (temas de otro curso). Ahora sale de GET coverage/gaps.
     override suspend fun getGaps(): Result<List<TeacherGapTopic>> =
-        Result.Success(DummyTeacherProvider.getGaps())
+        when (val group = getGroupCoverage()) {
+            is Result.Success -> Result.Success(group.value.topics)
+            is Result.Failure -> group
+        }
+
+    override suspend fun getGroupCoverage(): Result<TeacherGroupCoverage> = withActiveCourse { courseId ->
+        ApiErrorHandler.safeApiCall(
+            apiCall = { api.getCourseGaps(courseId) },
+            transform = { response -> TeacherGapsMapper.toGroupCoverage(response.data) }
+        )
+    }
 
     /** Sin curso activo no hay a qué glosario ni temario apuntar: se le pide al docente que elija uno. */
     private suspend fun <T> withActiveCourse(block: suspend (Long) -> Result<T>): Result<T> {

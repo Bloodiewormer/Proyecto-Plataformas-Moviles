@@ -94,7 +94,14 @@ fun CourseDetailScreen(
                                 Text(text = "${stats.coveragePercent}%", fontSize = 26.sp, fontWeight = FontWeight.SemiBold, color = colors.accentText)
                             }
                             CovBar(v = stats.verified, r = stats.repaired, e = stats.escalated, u = stats.uncertain, modifier = Modifier.padding(vertical = 10.dp))
-                            Text(text = stringResource(R.string.course_detail_instructor_students, stats.instructorName, stats.studentCount), fontSize = 12.sp, color = colors.textSecondary)
+                            // Al estudiante no le sirve ver "0 estudiantes"; y el backend todavía no manda el nombre del docente.
+                            val viewerRole = cr.ac.una.glifo.core.ui.component.LocalSessionRole.current
+                            val showsStudents = viewerRole != null && viewerRole != cr.ac.una.glifo.domain.model.GlifoRole.Student && stats.studentCount > 0
+                            if (stats.instructorName.isNotBlank() && showsStudents) {
+                                Text(text = stringResource(R.string.course_detail_instructor_students, stats.instructorName, stats.studentCount), fontSize = 12.sp, color = colors.textSecondary)
+                            } else if (showsStudents) {
+                                Text(text = stringResource(R.string.teacher_gaps_student_count, stats.studentCount), fontSize = 12.sp, color = colors.textSecondary)
+                            }
                         }
                     }
 

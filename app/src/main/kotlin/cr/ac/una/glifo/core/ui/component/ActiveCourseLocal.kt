@@ -1,6 +1,8 @@
 package cr.ac.una.glifo.core.ui.component
 
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.staticCompositionLocalOf
+import cr.ac.una.glifo.domain.model.GlifoRole
 
 /**
  * Curso activo tal como lo muestra la interfaz: el nombre y la acción de cambiarlo. Lo provee
@@ -14,6 +16,13 @@ data class ActiveCourseUi(
 )
 
 val LocalActiveCourse = staticCompositionLocalOf { ActiveCourseUi(name = null, onChangeCourse = {}) }
+
+/**
+ * Rol de la sesión iniciada. El menú lateral lo usa antes que el rol que le pasa cada pantalla,
+ * así un estudiante nunca ve el menú de docente aunque llegue a una pantalla de docente.
+ * null = sin sesión (previews): se usa el rol del parámetro.
+ */
+val LocalSessionRole = compositionLocalOf<GlifoRole?> { null }
 
 /** Ruta que el menú lateral pide con onNavigate cuando se toca "Cambiar". */
 const val COURSE_SWITCHER_ROUTE = "course_switcher"

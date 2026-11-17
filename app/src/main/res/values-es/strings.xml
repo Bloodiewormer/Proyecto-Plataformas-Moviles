@@ -105,7 +105,7 @@
     <string name="settings_reject_low_quality">Rechazar fotos de baja calidad</string>
     <string name="settings_section_processing">PROCESAMIENTO</string>
     <string name="settings_confidence_threshold">Umbral de confianza</string>
-    <string name="settings_confidence_threshold_description">Por debajo de este valor la región escala al siguiente motor. Más alto significa más precisión y más llamadas.</string>
+    <string name="settings_confidence_threshold_description">Por debajo de este valor la región escala al siguiente motor. Es el valor que usa el procesamiento en el teléfono y no se puede cambiar desde aquí.</string>
     <string name="settings_allow_vision_escalation">Permitir escalar a visión (N2)</string>
     <string name="settings_confirm_before_n3">Pedir confirmación antes de N3</string>
     <string name="settings_section_sync">SINCRONIZACIÓN</string>
@@ -223,7 +223,7 @@
     <!-- CourseDetailScreen -->
     <string name="course_detail_subtitle">Centro de</string>
     <string name="course_detail_capture_description">Captura</string>
-    <string name="course_detail_instructor_students">%1$s · %2$d estudiantes</string>
+    <string name="course_detail_instructor_students">%1$s · estudiantes: %2$d</string>
     <string name="course_detail_my_notes">Mis apuntes</string>
     <string name="course_detail_note_count">%1$d apuntes</string>
     <string name="course_detail_coverage">Cobertura</string>
@@ -258,10 +258,10 @@
     <string name="coverage_subtitle">Cobertura de</string>
     <string name="coverage_calendar_description">Calendario</string>
     <string name="coverage_topic_count">%1$d temas</string>
-    <string name="coverage_solid_count">%1$d sólidos</string>
-    <string name="coverage_absent_count">%1$d ausentes</string>
-    <string name="coverage_partial_count">%1$d parciales</string>
-    <string name="coverage_doubtful_count">%1$d dudosos</string>
+    <string name="coverage_solid_count">Sólidos: %1$d</string>
+    <string name="coverage_absent_count">Ausentes: %1$d</string>
+    <string name="coverage_partial_count">Parciales: %1$d</string>
+    <string name="coverage_doubtful_count">Dudosos: %1$d</string>
 
     <!-- CoverageDeltaScreen -->
     <string name="coverage_delta_points_badge">+%1$d PUNTOS</string>
@@ -285,7 +285,7 @@
     <string name="study_quiz_title">Quiz</string>
     <string name="study_quiz_description">Sobre los cinco vacíos con menos evidencia, empezando por %1$s</string>
     <string name="study_footer_note">El material de estudio sale de la cobertura, no de un temario genérico: solo pregunta lo que tus apuntes no sostienen.</string>
-    <string name="study_empty_course">Todavía no hay material de estudio para este curso. Elige un curso o captura apuntes primero.</string>
+    <string name="study_empty_course">Todavía no hay material de estudio para este curso. Elegí un curso o capturá apuntes primero.</string>
     <string name="study_no_material_yet">Todavía no hay material. Tocá Generar.</string>
     <plurals name="study_flashcards_plural">
         <item quantity="one">%1$d flashcard</item>
@@ -304,7 +304,7 @@
 
     <!-- FlashcardScreen -->
     <string name="flashcard_progress_counter">%1$d / %2$d</string>
-    <string name="flashcard_unit_label">Unidad 3 · %1$s — tocá la tarjeta para voltear</string>
+    <string name="flashcard_unit_label">%1$s — tocá la tarjeta para voltear</string>
     <string name="flashcard_answer_label">Respuesta</string>
     <string name="flashcard_question_label">Pregunta</string>
     <string name="flashcard_badge_answer">RESPUESTA</string>
@@ -321,7 +321,7 @@
     <string name="quiz_view_result_button">Ver el resultado</string>
     <string name="quiz_correct_feedback">¡Correcto!</string>
     <string name="quiz_incorrect_feedback">No era esa</string>
-    <string name="quiz_local_grading_note">La corrección es local. Las 5 preguntas se generaron en una sola llamada.</string>
+    <string name="quiz_local_grading_note">La corrección es local, en el teléfono. Todas las preguntas del quiz se generaron en una sola llamada.</string>
 
     <!-- QuizResultScreen -->
     <string name="quiz_result_title">Resultado</string>
@@ -362,10 +362,10 @@
     <string name="home_pending_captures_banner">%1$d capturas en cola · se envían al volver la red</string>
     <string name="home_coverage_card_title">Cobertura del curso</string>
     <string name="home_coverage_breakdown">18 sólidos · 7 parciales · 5 ausentes</string>
-    <string name="home_coverage_delta_since">+%1$d desde el 8 ago</string>
+    <string name="home_coverage_delta_since">+%1$d esta semana</string>
     <string name="home_pending_today_section">PENDIENTES DE HOY</string>
     <string name="home_flashcard_count">%1$d flashcards</string>
-    <string name="home_flashcard_topic">Series · Integrales impropias</string>
+    <string name="home_flashcard_topic">Para repasar hoy</string>
     <string name="home_quiz_count">%1$d quiz</string>
     <string name="home_quiz_description">De los vacíos detectados</string>
     <string name="home_recent_notes_section">ÚLTIMOS APUNTES</string>
@@ -373,7 +373,7 @@
     <!-- TeacherHomeScreen -->
     <string name="teacher_home_default_course_code">EIF411</string>
     <string name="teacher_home_group_coverage_title">Cobertura del grupo</string>
-    <string name="teacher_home_enrolled_students">%1$d estudiantes inscritos · promedio del curso</string>
+    <string name="teacher_home_enrolled_students">Inscritos: %1$d · promedio del curso</string>
     <string name="teacher_home_gaps_section">TEMAS CON MÁS VACÍOS</string>
     <string name="teacher_home_uncovered_fraction">%1$s sin cubrir</string>
     <string name="teacher_home_attention_section">REQUIERE ATENCIÓN</string>
@@ -401,7 +401,7 @@
     <!-- TeacherCoursesScreen -->
     <string name="teacher_courses_create_description">Crear</string>
     <string name="teacher_courses_code_term">%1$s · II Ciclo 2026</string>
-    <string name="teacher_courses_coverage_students">%1$d%% de cobertura · %2$d estudiantes</string>
+    <string name="teacher_courses_coverage_students">%1$d%% de cobertura · estudiantes: %2$d</string>
     <string name="teacher_courses_no_syllabus_warning">Sin temario · sin cobertura</string>
     <string name="teacher_courses_create_new">Crear nuevo curso</string>
 
@@ -428,7 +428,7 @@
     <string name="teacher_add_button">Agregar</string>
 
     <!-- TeacherSyllabusScreen -->
-    <string name="teacher_syllabus_title">Temario · EIF411</string>
+    <string name="teacher_syllabus_title">Temario</string>
     <string name="teacher_syllabus_publish_button">Publicar</string>
     <string name="teacher_syllabus_file_meta">1.2 MB · procesado hace 2 minutos</string>
     <string name="teacher_syllabus_extraction_note">Se extrajeron %1$d unidades y %2$d temas. Revisalos antes de publicar: el temario se procesa una sola vez.</string>
@@ -459,13 +459,13 @@
 
     <!-- TeacherGapsScreen -->
     <string name="teacher_gaps_subtitle">Brechas de</string>
-    <string name="teacher_gaps_share_title">Brechas del grupo · EIF411</string>
-    <string name="teacher_gaps_share_summary_line">%1$d estudiantes · %2$d%% de cobertura promedio</string>
+    <string name="teacher_gaps_share_title">Brechas del grupo · %1$s</string>
+    <string name="teacher_gaps_share_summary_line">Estudiantes: %1$d · %2$d%% de cobertura promedio</string>
     <string name="teacher_gaps_share_gap_line">• %1$s — %2$s sin cubrir (%3$d%%)</string>
     <string name="teacher_gaps_share_chooser_title">Exportar brechas</string>
     <string name="teacher_gaps_export_description">Exportar</string>
-    <string name="teacher_gaps_student_count">%1$d estudiantes</string>
-    <string name="teacher_gaps_coverage_updated_today">Cobertura promedio del grupo · actualizada hoy</string>
+    <string name="teacher_gaps_student_count">Estudiantes: %1$d</string>
+    <string name="teacher_gaps_coverage_updated_today">Cobertura promedio del grupo</string>
     <string name="teacher_gaps_special_case_title">6.1 es un caso distinto</string>
     <string name="teacher_gaps_special_case_description">11 de los 14 tienen apuntes del tema, pero ilegibles. No es que no lo estudiaran.</string>
     <string name="teacher_gaps_privacy_note">Datos agregados. El docente nunca ve apuntes individuales.</string>
@@ -505,9 +505,9 @@
     <!-- AdminCoursesScreen -->
     <string name="admin_courses_title">Cursos</string>
     <string name="admin_courses_no_syllabus_badge">SIN TEMARIO</string>
-    <string name="admin_courses_students_with_coverage">%1$d estudiantes · %2$d%% de cobertura</string>
+    <string name="admin_courses_students_with_coverage">Estudiantes: %1$d · %2$d%% de cobertura</string>
     <!-- Lab 4: apuntes reales (#25) y cola de sincronización (#26) -->
-    <string name="note_detail_page_label_local">%1$d página(s) procesada(s) en este teléfono · %2$d regiones</string>
+    <string name="note_detail_page_label_local">Páginas procesadas en este teléfono: %1$d · regiones: %2$d</string>
     <string name="note_detail_page_label_server">Reconstrucción del servidor</string>
     <string name="note_detail_pending_sync">Pendiente de sincronizar</string>
     <string name="note_detail_corrected_badge">Corregido por ti</string>
@@ -526,7 +526,7 @@
     <string name="correct_fragment_no_suggestions">No hay términos parecidos en el glosario del curso guardado en este teléfono.</string>
     <string name="correct_fragment_saved_locally">La corrección se guarda con el apunte y marca el fragmento como verificado.</string>
     <string name="formula_viewer_ocr_read_section">LO QUE LEYÓ N1</string>
-    <string name="formula_viewer_latex_pending">La conversión a LaTeX (N1.5) todavía no se ejecutó para esta región. Mientras tanto puedes corregir el texto.</string>
+    <string name="formula_viewer_latex_pending">La conversión a LaTeX (N1.5) todavía no se ejecutó para esta región. Mientras tanto podés corregir el texto.</string>
     <string name="formula_viewer_kind_confidence">Confianza de la clasificación</string>
     <string name="formula_viewer_route">Ruta</string>
     <string name="formula_viewer_none_title">No hay fórmulas en este apunte</string>
@@ -546,14 +546,14 @@
     <string name="sync_queue_failed_badge">FALLÓ</string>
     <string name="sync_queue_sync_now">Sincronizar ahora</string>
     <string name="sync_queue_retry_failed">Reintentar fallidas</string>
-    <string name="sync_queue_attempts">%1$d intento(s) · %2$s</string>
+    <string name="sync_queue_attempts">Intentos: %1$d · %2$s</string>
     <string name="sync_queue_result">%1$d subidas · %2$d pendientes</string>
     <!-- Selector del curso activo -->
     <string name="course_switcher_title">Cambiar curso</string>
     <string name="course_switcher_hint">El curso activo es el que usan Inicio, Apuntes, Cobertura, Estudio y la cámara.</string>
     <string name="course_switcher_code">%1$s · código %2$s</string>
     <string name="course_switcher_active">Curso activo</string>
-    <string name="course_switcher_empty">Todavía no tienes cursos.</string>
+    <string name="course_switcher_empty">Todavía no tenés cursos.</string>
     <string name="course_switcher_join">Unirme a un curso</string>
     <string name="course_switcher_create">Crear un curso</string>
     <string name="drawer_no_active_course">Ningún curso elegido</string>
@@ -563,9 +563,9 @@
     <string name="study_quiz_count_title">Quiz de %1$d preguntas</string>
     <string name="quiz_progress_format">%1$d de %2$d</string>
     <string name="quiz_next_question_button">Siguiente pregunta</string>
-    <string name="study_error_no_connection">Sin conexión a internet. Revisa tu red e inténtalo de nuevo.</string>
-    <string name="study_error_ai_unavailable">El servicio de IA no está disponible en este momento. Inténtalo más tarde.</string>
-    <string name="study_error_forbidden">No tienes permiso para realizar esta acción en este curso.</string>
+    <string name="study_error_no_connection">Sin conexión a internet. Revisá tu red e intentalo de nuevo.</string>
+    <string name="study_error_ai_unavailable">El servicio de IA no está disponible en este momento. Intentalo más tarde.</string>
+    <string name="study_error_forbidden">No tenés permiso para hacer esto en este curso.</string>
     <string name="study_error_no_topics">Este curso todavía no tiene temas publicados en el temario.</string>
     <!-- Lab 6: reconstrucción de nota IA-01 (#42) -->
     <string name="note_detail_reconstruct_button">Reconstruir con IA</string>
@@ -597,5 +597,35 @@
     <string name="coverage_delta_changed_count">%1$d temas actualizados</string>
     <string name="coverage_delta_changed_topics_section">TEMAS QUE CAMBIARON</string>
     <string name="coverage_delta_empty_since">Sin cambios desde %1$s</string>
-    <string name="home_coverage_breakdown_format">%1$d sólidos · %2$d parciales · %3$d ausentes</string>
+    <string name="home_coverage_breakdown_format">Sólidos %1$d · parciales %2$d · ausentes %3$d</string>
+    <string name="quiz_result_review_flashcards">Repasar con flashcards</string>
+    <string name="password_show">Mostrar contraseña</string>
+    <string name="password_hide">Ocultar contraseña</string>
+    <string name="forgot_password_not_available">Glifo todavía no puede enviarte un enlace por correo para restablecerla.</string>
+    <string name="forgot_password_how_to">Si todavía la recordás, iniciá sesión y cambiala en Perfil → Cambiar contraseña. Si la olvidaste, por ahora pedile ayuda al equipo de Glifo.</string>
+    <string name="forgot_password_back_to_login">Volver a iniciar sesión</string>
+    <string name="change_password_title">Cambiar contraseña</string>
+    <string name="change_password_description">Escribí tu contraseña actual y la nueva. La próxima vez que inicies sesión, usá la nueva.</string>
+    <string name="change_password_current">Contraseña actual</string>
+    <string name="change_password_new">Contraseña nueva</string>
+    <string name="change_password_save">Guardar contraseña nueva</string>
+    <string name="change_password_saving">Guardando…</string>
+    <string name="change_password_success">Contraseña actualizada.</string>
+    <string name="change_password_error_current_empty">Escribí tu contraseña actual.</string>
+    <string name="change_password_error_same">La contraseña nueva tiene que ser distinta de la actual.</string>
+    <string name="settings_reject_low_quality_description">Si la foto sale borrosa, muy oscura o muy clara, vas a tener que tomarla de nuevo.</string>
+    <string name="settings_allow_vision_escalation_description">Las regiones dudosas se mandan al modelo de visión al sincronizar (llamada de pago). Apagado: se queda lo del teléfono y N1.5.</string>
+    <string name="capture_review_rejected_by_setting">Esta foto no pasó la revisión de calidad. Tomala de nuevo o apagá "Rechazar fotos de baja calidad" en Ajustes.</string>
+    <string name="flashcard_done_title">Sesión terminada</string>
+    <string name="flashcard_done_headline">Repasaste todas las tarjetas</string>
+    <string name="flashcard_done_summary">Tarjetas repasadas: %1$d · marcadas Otra vez: %2$d</string>
+    <string name="flashcard_done_restart">Repasar de nuevo</string>
+    <string name="flashcard_done_back">Volver</string>
+    <string name="note_detail_all_unreadable_hint">No se pudo leer texto en esta foto. Probá con otra foto con más luz y la hoja bien plana, o tocá una región para escribir lo que dice.</string>
+    <string name="login_server_waking">El servidor se está despertando. El primer inicio de sesión puede tardar hasta un minuto.</string>
+    <plurals name="notes_date_page_count_plural">
+        <item quantity="one">%1$s · %2$d página</item>
+        <item quantity="other">%1$s · %2$d páginas</item>
+    </plurals>
+    <string name="teacher_gaps_empty">Ningún tema tiene vacíos en el grupo por ahora.</string>
 </resources>

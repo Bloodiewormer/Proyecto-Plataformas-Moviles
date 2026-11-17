@@ -80,10 +80,11 @@ Anything else on those routes falls through to the happy-path response.
 ### URL del backend por tipo de build
 - `debug`: `http://10.0.2.2:8080/api/v1/` (backend local o Mockoon visto desde el emulador).
 - `release`: `https://glifo-api.onrender.com/api/v1/` (backend desplegado en Render).
-- Se define con `BuildConfig.API_BASE_URL` en `app/build.gradle.kts`; `NetworkModule` lo usa.
+- Se define con `BuildConfig.BASE_URL` en `app/build.gradle.kts`; `NetworkModule` lo usa. Para otro backend en release: `glifo.release.base.url=...` en `local.properties`, `-PGLIFO_RELEASE_BASE_URL=...` o la variable de entorno `GLIFO_RELEASE_BASE_URL`.
+- Las cuentas demo del login solo se muestran en debug (en release, con `glifo.release.show.demo=true` en `local.properties`).
 
 ### Firma de release
-La firma nunca se versiona. `app/build.gradle.kts` lee estas cuatro claves de `~/.gradle/gradle.properties` o de variables de entorno; si falta alguna, `assembleRelease` genera un APK sin firmar:
+La firma nunca se versiona. `app/build.gradle.kts` lee estas cuatro claves de `~/.gradle/gradle.properties` o de variables de entorno; si falta alguna, `assembleRelease` firma con la llave debug (sirve para pruebas, no para una tienda):
 
 ```properties
 GLIFO_RELEASE_STORE_FILE=C:/ruta/privada/glifo-release.jks
@@ -101,8 +102,8 @@ Guardá una copia de respaldo del keystore y su contraseña fuera del repositori
 4. En la consola de Firebase (proyecto `glifoapp`) → App Distribution → app `cr.ac.una.glifo`: subí `app-release.apk`, agregá testers o un grupo y notas de versión, y distribuí.
 
 ### Limitaciones
-- El APK incluye las bibliotecas nativas de las cuatro arquitecturas (también x86/x86_64 para emuladores), por eso pesa unos 200 MB.
-- Render en plan gratuito tarda hasta ~90 s en despertar: la primera petición tras un periodo inactivo puede agotar el tiempo de espera de la app (15 s de conexión); reintentar funciona.
+- El APK de release solo incluye `arm64-v8a` y `armeabi-v7a` (teléfonos reales); no se instala en emuladores x86.
+- Render en plan gratuito tarda hasta ~75 s en despertar (medido el 2026-11-16): la primera petición tras un periodo inactivo puede acercarse al tiempo de espera de la app (90 s de lectura); reintentar funciona.
 
 ## Documentation
 

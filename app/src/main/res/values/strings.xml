@@ -105,7 +105,7 @@
     <string name="settings_reject_low_quality">Reject low-quality photos</string>
     <string name="settings_section_processing">PROCESSING</string>
     <string name="settings_confidence_threshold">Confidence threshold</string>
-    <string name="settings_confidence_threshold_description">Below this value the region escalates to the next engine. Higher means more accuracy and more calls.</string>
+    <string name="settings_confidence_threshold_description">Below this value the region escalates to the next engine. It\'s the value on-device processing uses and can\'t be changed here.</string>
     <string name="settings_allow_vision_escalation">Allow escalation to vision (N2)</string>
     <string name="settings_confirm_before_n3">Ask for confirmation before N3</string>
     <string name="settings_section_sync">SYNC</string>
@@ -223,7 +223,7 @@
     <!-- CourseDetailScreen -->
     <string name="course_detail_subtitle">Hub for</string>
     <string name="course_detail_capture_description">Capture</string>
-    <string name="course_detail_instructor_students">%1$s · %2$d students</string>
+    <string name="course_detail_instructor_students">%1$s · students: %2$d</string>
     <string name="course_detail_my_notes">My notes</string>
     <string name="course_detail_note_count">%1$d notes</string>
     <string name="course_detail_coverage">Coverage</string>
@@ -304,7 +304,7 @@
 
     <!-- FlashcardScreen -->
     <string name="flashcard_progress_counter">%1$d / %2$d</string>
-    <string name="flashcard_unit_label">Unit 3 · %1$s — tap the card to flip</string>
+    <string name="flashcard_unit_label">%1$s — tap the card to flip</string>
     <string name="flashcard_answer_label">Answer</string>
     <string name="flashcard_question_label">Question</string>
     <string name="flashcard_badge_answer">ANSWER</string>
@@ -321,7 +321,7 @@
     <string name="quiz_view_result_button">View result</string>
     <string name="quiz_correct_feedback">Correct!</string>
     <string name="quiz_incorrect_feedback">Not quite</string>
-    <string name="quiz_local_grading_note">Grading is local. All 5 questions were generated in a single call.</string>
+    <string name="quiz_local_grading_note">Grading is local, on the phone. All the quiz questions were generated in a single call.</string>
 
     <!-- QuizResultScreen -->
     <string name="quiz_result_title">Result</string>
@@ -362,10 +362,10 @@
     <string name="home_pending_captures_banner">%1$d captures queued · sent when the network returns</string>
     <string name="home_coverage_card_title">Course coverage</string>
     <string name="home_coverage_breakdown">18 solid · 7 partial · 5 absent</string>
-    <string name="home_coverage_delta_since">+%1$d since Aug 8</string>
+    <string name="home_coverage_delta_since">+%1$d this week</string>
     <string name="home_pending_today_section">DUE TODAY</string>
     <string name="home_flashcard_count">%1$d flashcards</string>
-    <string name="home_flashcard_topic">Series · Improper integrals</string>
+    <string name="home_flashcard_topic">To review today</string>
     <string name="home_quiz_count">%1$d quiz</string>
     <string name="home_quiz_description">From the detected gaps</string>
     <string name="home_recent_notes_section">RECENT NOTES</string>
@@ -373,7 +373,7 @@
     <!-- TeacherHomeScreen -->
     <string name="teacher_home_default_course_code">EIF411</string>
     <string name="teacher_home_group_coverage_title">Group coverage</string>
-    <string name="teacher_home_enrolled_students">%1$d students enrolled · course average</string>
+    <string name="teacher_home_enrolled_students">Enrolled: %1$d · course average</string>
     <string name="teacher_home_gaps_section">TOPICS WITH THE MOST GAPS</string>
     <string name="teacher_home_uncovered_fraction">%1$s uncovered</string>
     <string name="teacher_home_attention_section">NEEDS ATTENTION</string>
@@ -401,7 +401,7 @@
     <!-- TeacherCoursesScreen -->
     <string name="teacher_courses_create_description">Create</string>
     <string name="teacher_courses_code_term">%1$s · Term II 2026</string>
-    <string name="teacher_courses_coverage_students">%1$d%% coverage · %2$d students</string>
+    <string name="teacher_courses_coverage_students">%1$d%% coverage · students: %2$d</string>
     <string name="teacher_courses_no_syllabus_warning">No syllabus · no coverage</string>
     <string name="teacher_courses_create_new">Create new course</string>
 
@@ -428,7 +428,7 @@
     <string name="teacher_add_button">Add</string>
 
     <!-- TeacherSyllabusScreen -->
-    <string name="teacher_syllabus_title">Syllabus · EIF411</string>
+    <string name="teacher_syllabus_title">Syllabus</string>
     <string name="teacher_syllabus_publish_button">Publish</string>
     <string name="teacher_syllabus_file_meta">1.2 MB · processed 2 minutes ago</string>
     <string name="teacher_syllabus_extraction_note">%1$d units and %2$d topics were extracted. Review them before publishing: the syllabus is processed only once.</string>
@@ -459,13 +459,13 @@
 
     <!-- TeacherGapsScreen -->
     <string name="teacher_gaps_subtitle">Gaps for</string>
-    <string name="teacher_gaps_share_title">Group gaps · EIF411</string>
-    <string name="teacher_gaps_share_summary_line">%1$d students · %2$d%% average coverage</string>
+    <string name="teacher_gaps_share_title">Group gaps · %1$s</string>
+    <string name="teacher_gaps_share_summary_line">Students: %1$d · %2$d%% average coverage</string>
     <string name="teacher_gaps_share_gap_line">• %1$s — %2$s uncovered (%3$d%%)</string>
     <string name="teacher_gaps_share_chooser_title">Export gaps</string>
     <string name="teacher_gaps_export_description">Export</string>
-    <string name="teacher_gaps_student_count">%1$d students</string>
-    <string name="teacher_gaps_coverage_updated_today">Group average coverage · updated today</string>
+    <string name="teacher_gaps_student_count">Students: %1$d</string>
+    <string name="teacher_gaps_coverage_updated_today">Group average coverage</string>
     <string name="teacher_gaps_special_case_title">6.1 is a different case</string>
     <string name="teacher_gaps_special_case_description">11 of the 14 have notes on the topic, but illegible ones. It\'s not that they didn\'t study it.</string>
     <string name="teacher_gaps_privacy_note">Aggregated data. The teacher never sees individual notes.</string>
@@ -505,9 +505,9 @@
     <!-- AdminCoursesScreen -->
     <string name="admin_courses_title">Courses</string>
     <string name="admin_courses_no_syllabus_badge">NO SYLLABUS</string>
-    <string name="admin_courses_students_with_coverage">%1$d students · %2$d%% coverage</string>
+    <string name="admin_courses_students_with_coverage">Students: %1$d · %2$d%% coverage</string>
     <!-- Lab 4: apuntes reales (#25) y cola de sincronización (#26) -->
-    <string name="note_detail_page_label_local">%1$d page(s) processed on this device · %2$d regions</string>
+    <string name="note_detail_page_label_local">Pages processed on this device: %1$d · regions: %2$d</string>
     <string name="note_detail_page_label_server">Reconstruction from the server</string>
     <string name="note_detail_pending_sync">Waiting to sync</string>
     <string name="note_detail_corrected_badge">Corrected by you</string>
@@ -546,7 +546,7 @@
     <string name="sync_queue_failed_badge">FAILED</string>
     <string name="sync_queue_sync_now">Sync now</string>
     <string name="sync_queue_retry_failed">Retry failed</string>
-    <string name="sync_queue_attempts">%1$d attempt(s) · %2$s</string>
+    <string name="sync_queue_attempts">Attempts: %1$d · %2$s</string>
     <string name="sync_queue_result">%1$d uploaded · %2$d pending</string>
     <!-- Selector del curso activo -->
     <string name="course_switcher_title">Change course</string>
@@ -563,17 +563,17 @@
     <string name="study_quiz_count_title">%1$d-question quiz</string>
     <string name="quiz_progress_format">%1$d of %2$d</string>
     <string name="quiz_next_question_button">Next question</string>
-    <string name="study_error_no_connection">Sin conexión a internet. Revisa tu red e inténtalo de nuevo.</string>
-    <string name="study_error_ai_unavailable">El servicio de IA no está disponible en este momento. Inténtalo más tarde.</string>
-    <string name="study_error_forbidden">No tienes permiso para realizar esta acción en este curso.</string>
-    <string name="study_error_no_topics">Este curso todavía no tiene temas publicados en el temario.</string>
+    <string name="study_error_no_connection">No internet connection. Check your network and try again.</string>
+    <string name="study_error_ai_unavailable">The AI service isn\'t available right now. Try again later.</string>
+    <string name="study_error_forbidden">You don\'t have permission to do this in this course.</string>
+    <string name="study_error_no_topics">This course doesn\'t have any published syllabus topics yet.</string>
     <!-- Lab 6: reconstrucción de nota IA-01 (#42) -->
-    <string name="note_detail_reconstruct_button">Reconstruir con IA</string>
-    <string name="note_detail_reconstructing_ai">Reconstruyendo con IA…</string>
-    <string name="note_reconstruct_error_no_connection">Sin conexión a internet. Revisá tu red e intentalo de nuevo.</string>
-    <string name="note_reconstruct_error_ai_unavailable">El servicio de IA no está disponible en este momento. Intentalo más tarde.</string>
-    <string name="note_reconstruct_error_no_pages">Esta nota todavía no tiene páginas subidas en el servidor.</string>
-    <string name="note_reconstruct_error_not_synced">El apunte todavía no se ha sincronizado con el servidor.</string>
+    <string name="note_detail_reconstruct_button">Rebuild with AI</string>
+    <string name="note_detail_reconstructing_ai">Rebuilding with AI…</string>
+    <string name="note_reconstruct_error_no_connection">No internet connection. Check your network and try again.</string>
+    <string name="note_reconstruct_error_ai_unavailable">The AI service isn\'t available right now. Try again later.</string>
+    <string name="note_reconstruct_error_no_pages">This note doesn\'t have any pages uploaded to the server yet.</string>
+    <string name="note_reconstruct_error_not_synced">This note hasn\'t synced with the server yet.</string>
     <!-- Lab 6: notificaciones push FCM dirigidas por device_id (#48) -->
     <string name="sync_notification_channel_name">Offline queue sync</string>
     <string name="sync_notification_channel_description">Notifications when this device finishes uploading its offline queue.</string>
@@ -598,4 +598,34 @@
     <string name="coverage_delta_changed_topics_section">UPDATED TOPICS</string>
     <string name="coverage_delta_empty_since">No changes since %1$s</string>
     <string name="home_coverage_breakdown_format">%1$d solid · %2$d partial · %3$d absent</string>
+    <string name="quiz_result_review_flashcards">Review with flashcards</string>
+    <string name="password_show">Show password</string>
+    <string name="password_hide">Hide password</string>
+    <string name="forgot_password_not_available">Glifo can\'t email you a reset link yet.</string>
+    <string name="forgot_password_how_to">If you still remember it, sign in and change it in Profile → Change password. If you forgot it, ask the Glifo team for help for now.</string>
+    <string name="forgot_password_back_to_login">Back to sign in</string>
+    <string name="change_password_title">Change password</string>
+    <string name="change_password_description">Enter your current password and the new one. Next time you sign in, use the new one.</string>
+    <string name="change_password_current">Current password</string>
+    <string name="change_password_new">New password</string>
+    <string name="change_password_save">Save new password</string>
+    <string name="change_password_saving">Saving…</string>
+    <string name="change_password_success">Password updated.</string>
+    <string name="change_password_error_current_empty">Enter your current password.</string>
+    <string name="change_password_error_same">The new password must be different from the current one.</string>
+    <string name="settings_reject_low_quality_description">If a photo is blurry, too dark or too bright, you\'ll have to retake it.</string>
+    <string name="settings_allow_vision_escalation_description">Unclear regions are sent to the vision model when syncing (paid call). Off: only on-device and N1.5 results are kept.</string>
+    <string name="capture_review_rejected_by_setting">This photo didn\'t pass the quality check. Retake it, or turn off "Reject low-quality photos" in Settings.</string>
+    <string name="flashcard_done_title">Session finished</string>
+    <string name="flashcard_done_headline">You reviewed every card</string>
+    <string name="flashcard_done_summary">Cards reviewed: %1$d · marked Again: %2$d</string>
+    <string name="flashcard_done_restart">Review again</string>
+    <string name="flashcard_done_back">Back</string>
+    <string name="note_detail_all_unreadable_hint">No text could be read from this photo. Try another photo with more light and the page flat, or tap a region to type what it says.</string>
+    <string name="login_server_waking">The server is waking up. The first sign-in can take up to a minute.</string>
+    <plurals name="notes_date_page_count_plural">
+        <item quantity="one">%1$s · %2$d page</item>
+        <item quantity="other">%1$s · %2$d pages</item>
+    </plurals>
+    <string name="teacher_gaps_empty">No topic has gaps in the group right now.</string>
 </resources>

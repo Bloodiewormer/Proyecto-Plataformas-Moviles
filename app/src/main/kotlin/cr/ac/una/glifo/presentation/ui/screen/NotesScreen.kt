@@ -15,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -159,7 +160,7 @@ fun NotesScreen(
                                         }
                                         Column(modifier = Modifier.weight(1f)) {
                                             Text(text = meta.note.title, fontSize = 14.sp, color = colors.textPrimary)
-                                            Text(text = stringResource(R.string.notes_date_page_count, meta.displayDate, meta.pageCount), fontSize = 12.sp, color = colors.textSecondary)
+                                            Text(text = pluralStringResource(R.plurals.notes_date_page_count_plural, meta.pageCount, meta.displayDate, meta.pageCount), fontSize = 12.sp, color = colors.textSecondary)
                                         }
                                         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                             meta.chips.forEach { chipState ->

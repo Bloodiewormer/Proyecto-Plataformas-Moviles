@@ -13,7 +13,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import cr.ac.una.glifo.R
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -25,6 +27,7 @@ import cr.ac.una.glifo.core.network.SessionEvent
 import cr.ac.una.glifo.core.ui.component.ActiveCourseUi
 import cr.ac.una.glifo.core.ui.component.COURSE_SWITCHER_ROUTE
 import cr.ac.una.glifo.core.ui.component.LocalActiveCourse
+import cr.ac.una.glifo.core.ui.component.LocalSessionRole
 import cr.ac.una.glifo.domain.model.GlifoRole
 import cr.ac.una.glifo.presentation.ui.screen.AdminCoursesScreen
 import cr.ac.una.glifo.presentation.ui.screen.AdminRolesScreen
@@ -101,12 +104,14 @@ fun GlifoNavHost(
     // threading it through nav arguments.
     val sessionViewModel: SessionViewModel = hiltViewModel()
     var sessionExpiredMessage by remember { mutableStateOf<String?>(null) }
+    // Se toma del idioma elegido en la app; el texto fijo del evento venía siempre en español.
+    val sessionExpiredText = stringResource(R.string.error_unauthorized)
 
     LaunchedEffect(Unit) {
         sessionViewModel.sessionEvents.collect { event ->
             when (event) {
                 is SessionEvent.SessionExpired -> {
-                    sessionExpiredMessage = event.message
+                    sessionExpiredMessage = sessionExpiredText
                     sessionViewModel.logout()
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
@@ -126,13 +131,18 @@ fun GlifoNavHost(
     // A single, consistent motion for every screen transition in the app instead of
     // an instant cut — kept subtle (short duration, small horizontal offset).
     val activeCourse by activeCourseViewModel.activeCourse.collectAsState()
+    // Rol real de la sesión: el menú lateral lo usa en vez del rol fijo de cada pantalla.
+    val sessionUser by sessionViewModel.currentUser.collectAsState()
     val activeCourseUi = ActiveCourseUi(
         name = activeCourse?.name,
         onChangeCourse = { navController.navigate(Screen.CourseSwitcher.route) { launchSingleTop = true } }
     )
 
     // El menú lateral de cualquier pantalla lee de aquí el curso activo y cómo cambiarlo.
-    CompositionLocalProvider(LocalActiveCourse provides activeCourseUi) {
+    CompositionLocalProvider(
+        LocalActiveCourse provides activeCourseUi,
+        LocalSessionRole provides sessionUser?.role
+    ) {
     NavHost(
         navController = navController,
         startDestination = startDestination,
@@ -194,6 +204,10 @@ fun GlifoNavHost(
                 onNavigateBack = { navController.popBackStack() },
                 onSendLink = { navController.popBackStack() }
             )
+        }
+
+        composable(Screen.ChangePassword.route) {
+            ChangePasswordScreen(onNavigateBack = { navController.popBackStack() })
         }
 
         // ── B: Inicio ────────────────────────────────────────────────────────
@@ -522,7 +536,7 @@ fun GlifoNavHost(
             QuizResultScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToCoverage = { navigateToCourseRoute { Screen.Coverage.createRoute(it) } },
-                onNavigateToGlossary = { navController.navigate(Screen.TeacherGlossary.route) }
+                onNavigateToStudy = { navigateToCourseRoute { Screen.StudyHub.createRoute(it) } }
             )
         }
 
@@ -698,7 +712,7 @@ fun GlifoNavHost(
             val user by sessionViewModel.currentUser.collectAsState()
             ProfileScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToChangePassword = { navController.navigate(Screen.ForgotPassword.route) },
+                onNavigateToChangePassword = { navController.navigate(Screen.ChangePassword.route) },
                 onNavigateToCourses = {
                     val coursesRoute = when (user?.role) {
                         GlifoRole.Teacher -> Screen.TeacherCourses.route

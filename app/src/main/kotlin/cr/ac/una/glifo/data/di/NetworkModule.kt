@@ -23,8 +23,8 @@ import javax.inject.Singleton
 object NetworkModule {
 
     // Debug: 10.0.2.2 es la máquina anfitriona vista desde el emulador (backend local o Mockoon).
-    // Release: el backend desplegado en Render. Se define por tipo de build en app/build.gradle.kts.
-    private const val BASE_URL = cr.ac.una.glifo.BuildConfig.API_BASE_URL
+    // Release: Render por defecto, configurable (ver app/build.gradle.kts).
+    private const val BASE_URL = cr.ac.una.glifo.BuildConfig.BASE_URL
 
     @Provides
     @Singleton
@@ -38,8 +38,9 @@ object NetworkModule {
             }
         }
         return OkHttpClient.Builder()
-            .connectTimeout(15, TimeUnit.SECONDS)
-            .readTimeout(60, TimeUnit.SECONDS)
+            // Render (plan gratis) duerme el servicio: despertarlo tarda hasta ~75 s, de ahí los 90 s de lectura.
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(90, TimeUnit.SECONDS)
             .writeTimeout(60, TimeUnit.SECONDS)
             .addInterceptor(authInterceptor)
             .addInterceptor(logging)

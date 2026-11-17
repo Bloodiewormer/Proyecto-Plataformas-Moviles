@@ -80,6 +80,18 @@ object LanguageManager {
         }
         @Suppress("DEPRECATION")
         baseActivity.resources.updateConfiguration(config, baseActivity.resources.displayMetrics)
+        // Los ViewModels y repositorios arman textos con el contexto de la aplicación (@ApplicationContext).
+        // Si solo se cambiaba el de la Activity, esos textos salían en el idioma del sistema (idioma mezclado).
+        val appResources = baseActivity.applicationContext.resources
+        val appConfig = Configuration(appResources.configuration)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            appConfig.setLocales(LocaleList(locale))
+        } else {
+            @Suppress("DEPRECATION")
+            appConfig.locale = locale
+        }
+        @Suppress("DEPRECATION")
+        appResources.updateConfiguration(appConfig, appResources.displayMetrics)
         val configContext = baseActivity.createConfigurationContext(config)
         return LocalizedContextWrapper(baseActivity, configContext)
     }
