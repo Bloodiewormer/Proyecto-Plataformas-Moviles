@@ -2,10 +2,10 @@ package cr.ac.una.glifo.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import cr.ac.una.glifo.core.common.AppError
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.domain.error.Result
-import cr.ac.una.glifo.domain.model.AdminRoleInfo
-import cr.ac.una.glifo.domain.model.AdminUserRow
+import cr.ac.una.glifo.domain.model.ApiHealth
 import cr.ac.una.glifo.domain.repository.AdminRepository
 import cr.ac.una.glifo.domain.repository.CourseRepository
 import cr.ac.una.glifo.domain.repository.SyncRepository
@@ -17,9 +17,9 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class AdminHomeUiData(
-    val roles: List<AdminRoleInfo>,
-    val recentSignups: List<AdminUserRow>,
-    val courseCount: Int,
+    val apiHealth: ApiHealth?,
+    val healthError: AppError?,
+    val courseCount: Int?,
     val pendingSyncCount: Int
 )
 
@@ -39,26 +39,24 @@ class AdminHomeViewModel @Inject constructor(
     fun load() {
         viewModelScope.launch {
             _state.value = UiState.Loading
-            val rolesResult = adminRepository.getRoles()
-            val roles = (rolesResult as? Result.Success)?.value
-            if (roles == null) {
-                _state.value = UiState.Error((rolesResult as Result.Failure).error)
-                return@launch
-            }
-            val signupsResult = adminRepository.getRecentSignups()
+            val healthResult = adminRepository.checkHealth()
             val studentCoursesResult = courseRepository.getStudentCourses()
             val teacherCoursesResult = courseRepository.getTeacherCourses()
             val pendingResult = syncRepository.getPendingCount()
 
-            val courseCount = (
-                (studentCoursesResult as? Result.Success)?.value.orEmpty() +
-                    (teacherCoursesResult as? Result.Success)?.value.orEmpty()
-                ).distinctBy { it.id }.size
+            val courseCount = if (studentCoursesResult is Result.Failure && teacherCoursesResult is Result.Failure) {
+                null
+            } else {
+                (
+                    (studentCoursesResult as? Result.Success)?.value.orEmpty() +
+                        (teacherCoursesResult as? Result.Success)?.value.orEmpty()
+                    ).distinctBy { it.id }.size
+            }
 
             _state.value = UiState.Success(
                 AdminHomeUiData(
-                    roles = roles,
-                    recentSignups = (signupsResult as? Result.Success)?.value.orEmpty(),
+                    apiHealth = (healthResult as? Result.Success)?.value,
+                    healthError = (healthResult as? Result.Failure)?.error,
                     courseCount = courseCount,
                     pendingSyncCount = (pendingResult as? Result.Success)?.value ?: 0
                 )

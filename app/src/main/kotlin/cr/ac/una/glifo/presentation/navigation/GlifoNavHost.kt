@@ -656,7 +656,6 @@ fun GlifoNavHost(
         composable(Screen.AdminUsers.route) {
             AdminUsersScreen(
                 onNavigateBackOrMenu = { navController.popBackStack() },
-                onNavigateToUserDetail = { userName -> navController.navigate(Screen.AdminUserDetail.createRoute(userName)) },
                 onNavigateDrawer = { route -> navigateFromDrawer(navController, route, activeCourseId) },
                 onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                 onLogout = {
@@ -672,7 +671,7 @@ fun GlifoNavHost(
             route = Screen.AdminUserDetail.route,
             arguments = listOf(navArgument("userName") { type = NavType.StringType })
         ) { backStackEntry ->
-            val userName = backStackEntry.arguments?.getString("userName") ?: "David González"
+            val userName = backStackEntry.arguments?.getString("userName").orEmpty()
             AdminUserDetailScreen(
                 userName = userName,
                 onNavigateBack = { navController.popBackStack() },
