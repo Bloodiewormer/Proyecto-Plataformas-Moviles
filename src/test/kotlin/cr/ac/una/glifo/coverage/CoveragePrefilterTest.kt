@@ -143,4 +143,30 @@ class CoveragePrefilterTest {
         assertEquals(CoveragePrefilter.MAX_EXCERPTS, excerpts.size)
         assertTrue(excerpts.all { it.length <= CoveragePrefilter.MAX_EXCERPT_CHARS })
     }
+
+    @Test
+    fun `un apunte sin tema asignado con LaTeX de limites e integrales deja los temas relacionados ambiguos y con citas`() {
+        val defIntegral = PrefilterTopic(105L, "U3.1", "Integral definida")
+        val agnesiNote = PrefilterNote(
+            null,
+            """
+            Hallar el área de la región comprendida entre la curva de Agnesi y el eje x y el volumen al girar.
+            El eje de las abscisas es la asíntota de la curva.
+            \lim_{x \to \infty} \frac{a^3}{x^2+a^2} = 0
+            A = \int_{-\infty}^{\infty} \frac{a^3}{x^2+a^2} dx
+            2\pi \int_{0}^{\frac{\pi}{2}} a^3 \cos^2 t \, dt
+            """.trimIndent()
+        )
+
+        val decisions = prefilter.decide(listOf(limits, defIntegral, integrals, series), listOf(agnesiNote))
+            .associateBy { it.topic.topicId }
+
+        assertNull(decisions.getValue(limits.topicId).state)
+        assertTrue(decisions.getValue(limits.topicId).excerpts.any { it.contains("\\lim") || it.contains("asíntota") })
+        assertNull(decisions.getValue(defIntegral.topicId).state)
+        assertTrue(decisions.getValue(defIntegral.topicId).excerpts.any { it.contains("\\int") || it.contains("área") })
+        assertNull(decisions.getValue(integrals.topicId).state)
+        assertTrue(decisions.getValue(integrals.topicId).excerpts.any { it.contains("\\infty") })
+        assertEquals("ABSENT", decisions.getValue(series.topicId).state)
+    }
 }

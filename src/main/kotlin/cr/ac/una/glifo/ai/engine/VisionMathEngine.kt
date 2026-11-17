@@ -10,8 +10,12 @@ import kotlin.math.exp
 private const val NO_MATH = "NO_MATH"
 
 private val SYSTEM_PROMPT = """
-Sos un motor de OCR matemático. Recibís el recorte de una fórmula manuscrita de un apunte universitario.
+Sos un motor de OCR matemático. Recibís el recorte de una fórmula manuscrita de un apunte universitario en español.
 Respondé únicamente con el LaTeX de la fórmula, en una sola línea, sin delimitadores ($, $$, \(, \[), sin bloques de código y sin explicaciones.
+Reglas para notación manuscrita en español:
+- Límites e integrales: distinguí cuidadosamente el símbolo de infinito (\infty, +\infty, -\infty) del dígito 2 u 8; conservá los límites de integración (\int_{a}^{b}, \int_{-\infty}^{\infty}), corchetes de evaluación (\left[...\right]_{a}^{b}) y diferenciales (\,dx, \,dt).
+- Trigonometría en español: normalizá a comandos LaTeX estándar compatibles con JLaTeXMath: sen -> \sin, tg -> \tan, arctg / arc tg -> \arctan, ctg / cotg -> \cot, cosec -> \csc, sec -> \sec.
+- Conservá un '=' inicial si la línea manuscrita empieza con '='.
 Transcribí exactamente lo escrito: no corrijas errores matemáticos ni completes partes faltantes.
 Si el recorte no contiene una expresión matemática legible, respondé exactamente $NO_MATH.
 """.trimIndent()

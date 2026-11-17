@@ -90,4 +90,19 @@ class VisionMathEngineTest {
     fun `sin api key el motor no esta disponible`() {
         assertFalse(engine(FakeLlmClient("x", emptyList()), apiKey = " ").isAvailable())
     }
+
+    @Test
+    fun `el prompt incluye reglas para notacion matematica manuscrita en espanol`() {
+        val client = FakeLlmClient("\\lim_{x \\to \\infty} \\tan x", listOf(-0.05, -0.05))
+
+        engine(client).recognize(png)
+
+        val prompt = client.lastRequest!!.systemPrompt
+        assertTrue(prompt.contains("\\infty"))
+        assertTrue(prompt.contains("tg -> \\tan"))
+        assertTrue(prompt.contains("arctg"))
+        assertTrue(prompt.contains("\\sec"))
+        assertTrue(prompt.contains("diferenciales"))
+        assertTrue(prompt.contains("'=' inicial"))
+    }
 }
