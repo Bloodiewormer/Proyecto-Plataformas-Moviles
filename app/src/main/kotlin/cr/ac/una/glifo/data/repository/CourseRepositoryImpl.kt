@@ -1,5 +1,7 @@
 package cr.ac.una.glifo.data.repository
 
+import android.content.Context
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.AppError
 import cr.ac.una.glifo.core.datastore.ActiveCourseStore
 import cr.ac.una.glifo.data.datasource.remote.ApiErrorHandler
@@ -14,6 +16,7 @@ import cr.ac.una.glifo.domain.model.CourseDetail
 import cr.ac.una.glifo.domain.model.CourseStats
 import cr.ac.una.glifo.domain.model.SyllabusTopic
 import cr.ac.una.glifo.domain.repository.CourseRepository
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
 /**
@@ -24,16 +27,29 @@ class CourseRepositoryImpl : CourseRepository {
 
     private val api: GlifoApi
     private val activeCourseStore: ActiveCourseStore?
+    private val appContext: Context?
 
     @Inject
+    constructor(
+        api: GlifoApi,
+        activeCourseStore: ActiveCourseStore,
+        @ApplicationContext appContext: Context
+    ) {
+        this.api = api
+        this.activeCourseStore = activeCourseStore
+        this.appContext = appContext
+    }
+
     constructor(api: GlifoApi, activeCourseStore: ActiveCourseStore) {
         this.api = api
         this.activeCourseStore = activeCourseStore
+        this.appContext = null
     }
 
     constructor(api: GlifoApi) {
         this.api = api
         this.activeCourseStore = null
+        this.appContext = null
     }
 
     override suspend fun getStudentCourses(): Result<List<Course>> =
@@ -69,7 +85,13 @@ class CourseRepositoryImpl : CourseRepository {
     override suspend fun findCourseByJoinCode(joinCode: String): Result<Course> {
         val trimmed = joinCode.trim()
         if (trimmed.isBlank()) {
-            return Result.Failure(AppError.Validation("joinCode", "El código no puede estar vacío"))
+            return Result.Failure(
+                AppError.Validation(
+                    "joinCode",
+                    appContext?.getString(R.string.course_error_code_empty)
+                        ?: "El código no puede estar vacío"
+                )
+            )
         }
         return when (val coursesResult = getStudentCourses()) {
             is Result.Success -> {
@@ -77,7 +99,13 @@ class CourseRepositoryImpl : CourseRepository {
                 if (course != null) {
                     Result.Success(course)
                 } else {
-                    Result.Failure(AppError.Validation("joinCode", "Código de curso inválido"))
+                    Result.Failure(
+                        AppError.Validation(
+                            "joinCode",
+                            appContext?.getString(R.string.course_error_invalid_code)
+                                ?: "Código de curso inválido"
+                        )
+                    )
                 }
             }
             is Result.Failure -> Result.Failure(coursesResult.error)
@@ -86,7 +114,13 @@ class CourseRepositoryImpl : CourseRepository {
 
     override suspend fun createCourse(name: String, code: String, term: String): Result<Course> {
         if (name.isBlank() || code.isBlank()) {
-            return Result.Failure(AppError.Validation("name", "Nombre y código son obligatorios"))
+            return Result.Failure(
+                AppError.Validation(
+                    "name",
+                    appContext?.getString(R.string.course_error_name_code_required)
+                        ?: "Nombre y código son obligatorios"
+                )
+            )
         }
         return ApiErrorHandler.safeApiCall(
             apiCall = { api.createCourse(CreateCourseRequest(name = name.trim(), code = code.trim(), term = term.trim())) },
@@ -101,7 +135,13 @@ class CourseRepositoryImpl : CourseRepository {
     override suspend fun joinCourse(joinCode: String): Result<Unit> {
         val trimmed = joinCode.trim()
         if (trimmed.isBlank()) {
-            return Result.Failure(AppError.Validation("joinCode", "Código de curso inválido"))
+            return Result.Failure(
+                AppError.Validation(
+                    "joinCode",
+                    appContext?.getString(R.string.course_error_invalid_code)
+                        ?: "Código de curso inválido"
+                )
+            )
         }
         return ApiErrorHandler.safeApiCall(
             apiCall = { api.joinCourse(JoinCourseRequest(trimmed)) },

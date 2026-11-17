@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
+import cr.ac.una.glifo.core.common.asString
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
 import cr.ac.una.glifo.domain.model.NoteContentSource
@@ -208,7 +209,7 @@ fun FormulaViewerScreen(
                         GlifoItem(compact = true, showBottomBorder = false) {
                             Icon(Icons.Default.BarChart, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
                             Text(stringResource(R.string.formula_viewer_route), fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                            Text(formula.route, fontSize = 13.sp, color = colors.textSecondary, textAlign = TextAlign.End, modifier = Modifier.weight(1f))
+                            Text(formula.routeText.asString(), fontSize = 13.sp, color = colors.textSecondary, textAlign = TextAlign.End, modifier = Modifier.weight(1f))
                         }
                     }
 

@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
+import cr.ac.una.glifo.core.common.asString
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
 import cr.ac.una.glifo.presentation.viewmodel.TopicDetailViewModel
@@ -77,7 +78,7 @@ fun TopicDetailScreen(
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             GlifoConfidenceChip(state = detail.state)
-                            GlifoBadge(text = detail.stateLabel, backgroundColor = colors.repairedSoft, textColor = colors.repaired)
+                            GlifoBadge(text = detail.stateLabelText.asString(), backgroundColor = colors.repairedSoft, textColor = colors.repaired)
                             Spacer(modifier = Modifier.weight(1f))
                             Text(detail.confidence, fontFamily = FontFamily.Monospace, fontSize = 14.sp, color = colors.textSecondary)
                         }

@@ -194,7 +194,10 @@ private fun ladderFor(fragment: NoteFragment, threshold: Float): List<LadderStep
     return listOf(
         LadderStep(stringResource(R.string.region_provenance_step_n0), LadderState.Done),
         LadderStep(stringResource(R.string.region_provenance_step_n1), LadderState.Done),
-        LadderStep(stringResource(R.string.region_provenance_step_classifier, fragment.kind.label), LadderState.Done),
+        LadderStep(
+            stringResource(R.string.region_provenance_step_classifier, stringResource(fragment.kind.labelRes)),
+            LadderState.Done
+        ),
         LadderStep(
             stringResource(R.string.region_provenance_step_n15),
             if (fragment.kind == RegionKind.Math) LadderState.Pending else LadderState.Skipped

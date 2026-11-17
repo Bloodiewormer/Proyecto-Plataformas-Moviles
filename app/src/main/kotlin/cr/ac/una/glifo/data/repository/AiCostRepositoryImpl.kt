@@ -1,6 +1,9 @@
 package cr.ac.una.glifo.data.repository
 
+import androidx.annotation.StringRes
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.AppError
+import cr.ac.una.glifo.core.common.UiText
 import cr.ac.una.glifo.core.datastore.ActiveCourseStore
 import cr.ac.una.glifo.data.datasource.local.dao.ProcessedPageDao
 import cr.ac.una.glifo.data.datasource.remote.ApiErrorHandler
@@ -55,17 +58,23 @@ class AiCostRepositoryImpl : AiCostRepository {
         val regions = analyses.flatMap { it.regions }
         val total = regions.size
 
-        fun row(state: ConfidenceState, label: String): AiCostBreakdownRow {
+        fun row(state: ConfidenceState, label: String, @StringRes labelRes: Int): AiCostBreakdownRow {
             val count = regions.count { it.confidenceState == state }
             val percent = if (total == 0) 0f else count * 100f / total
-            return AiCostBreakdownRow(state, label, percent, count.toString())
+            return AiCostBreakdownRow(
+                state = state,
+                label = label,
+                percent = percent,
+                count = count.toString(),
+                labelText = UiText.Resource(labelRes)
+            )
         }
 
         val breakdown = if (total == 0) emptyList() else listOf(
-            row(ConfidenceState.Verified, "N1 · ML Kit, en el teléfono"),
-            row(ConfidenceState.Repaired, "Enrutadas a N1.5 · OCR matemático"),
-            row(ConfidenceState.Escalated, "Enrutadas a N2 · visión"),
-            row(ConfidenceState.Uncertain, "Bajo la compuerta de N1")
+            row(ConfidenceState.Verified, "N1 · ML Kit, en el teléfono", R.string.ai_cost_breakdown_n1),
+            row(ConfidenceState.Repaired, "Enrutadas a N1.5 · OCR matemático", R.string.ai_cost_breakdown_n15),
+            row(ConfidenceState.Escalated, "Enrutadas a N2 · visión", R.string.ai_cost_breakdown_n2),
+            row(ConfidenceState.Uncertain, "Bajo la compuerta de N1", R.string.ai_cost_breakdown_uncertain)
         )
         val resolvedLocally = regions.count { it.confidenceState == ConfidenceState.Verified }
         val headlinePercent = if (total == 0) 0 else resolvedLocally * 100 / total
@@ -103,7 +112,9 @@ class AiCostRepositoryImpl : AiCostRepository {
                             breakdown = breakdown,
                             paidCalls = emptyList(),
                             footerNote = "Sin conexión al servidor: los datos de llamadas pagadas, tokens y costos del servidor no están disponibles. Mostrando únicamente métricas locales.",
-                            serverDataAvailable = false
+                            serverDataAvailable = false,
+                            periodText = UiText.Resource(R.string.ai_cost_period_this_phone, analyses.size, total),
+                            footerText = UiText.Resource(R.string.ai_cost_offline_footer)
                         )
                     )
                 } else {

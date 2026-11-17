@@ -584,4 +584,117 @@
     <string name="admin_reset_password_copy">Copy</string>
     <string name="admin_reset_password_copied">Copied</string>
     <string name="admin_reset_password_error_email">Type a valid email.</string>
+
+    <!-- Coverage & Delta localized labels -->
+    <string name="coverage_state_solid">SOLID</string>
+    <string name="coverage_state_partial">PARTIAL</string>
+    <string name="coverage_state_absent">ABSENT</string>
+    <string name="coverage_state_uncertain">UNCERTAIN</string>
+    <string name="coverage_unit_default">COURSE SYLLABUS</string>
+    <string name="coverage_delta_latest_update">Last updated: %1$s · View changes</string>
+    <string name="coverage_delta_view_recent">View recent syllabus changes</string>
+    <string name="coverage_topic_updated_at">Updated: %1$s</string>
+    <string name="coverage_delta_since">Since %1$s</string>
+    <string name="coverage_error_no_active_course">Select an active course first.</string>
+
+    <!-- AI usage & cost localized labels -->
+    <string name="ai_usage_call_ia_01">IA-01 · Note reconstruction</string>
+    <string name="ai_usage_call_ia_02">IA-02 · Study material</string>
+    <string name="ai_usage_call_ia_04">IA-04 · Syllabus coverage</string>
+    <string name="ai_usage_call_ocr_m">OCR_M (N1.5) · Math OCR</string>
+    <string name="ai_usage_call_ia_00">IA_00 (N2) · Vision repair</string>
+    <string name="ai_cost_period_this_phone">This phone · %1$d page(s) · %2$d regions</string>
+    <string name="ai_cost_footer_summary">This phone processed %1$d page(s) (%2$d regions). Server: %3$d paid call(s), %4$d avoided, %5$d tokens.</string>
+    <string name="ai_cost_breakdown_n1">N1 · ML Kit, on device</string>
+    <string name="ai_cost_breakdown_n15">Routed to N1.5 · Math OCR</string>
+    <string name="ai_cost_breakdown_n2">Routed to N2 · vision</string>
+    <string name="ai_cost_breakdown_uncertain">Below N1 gate</string>
+    <string name="ai_cost_offline_footer">No server connection: paid call, token and server cost data are unavailable. Showing local metrics only.</string>
+
+    <!-- Regions & Capture pipeline localized labels -->
+    <string name="region_kind_text">Text</string>
+    <string name="region_kind_math">Math</string>
+    <string name="region_kind_drawing">Drawing</string>
+    <string name="region_route_n1_5">N1.5 · Math OCR</string>
+    <string name="region_route_n2">N2 · Vision repair</string>
+    <string name="region_route_n2_below_gate">N2 · Vision repair (below gate)</string>
+    <string name="region_route_n1_verified">N1 · ML Kit verified</string>
+    <string name="note_fragment_route_server">%1$s · Server reconstruction</string>
+
+    <string name="capture_quality_focus_label">Focus &amp; Sharpness</string>
+    <string name="capture_quality_focus_blurry">Blurry image</string>
+    <string name="capture_quality_focus_optimal">Optimal focus</string>
+    <string name="capture_quality_light_label">Lighting</string>
+    <string name="capture_quality_light_dark">Too dark. Insufficient lighting.</string>
+    <string name="capture_quality_light_bright">Overexposed. Too much light.</string>
+    <string name="capture_quality_light_optimal">Proper lighting</string>
+
+    <string name="capture_step_dedup_name">Deduplication (pHash)</string>
+    <string name="capture_step_dedup_no_course">No course linked: skipped comparing against previous pages.</string>
+    <string name="capture_step_dedup_reused">Page already processed (%1$d/64 distinct bits) - result reused - 0 calls</string>
+    <string name="capture_step_dedup_new">New page - hash saved to detect repeats.</string>
+    <string name="capture_step_reused_skipped">Skipped: result reused from the already processed page.</string>
+    <string name="capture_step_n0_name">N0 - Preprocessing</string>
+    <string name="capture_step_n0_desc">Perspective corrected - normalized contrast - %1$d regions segmented</string>
+    <string name="capture_step_n1_name">N1 - Text OCR</string>
+    <string name="capture_step_n1_desc">%1$d of %2$d regions read - ML Kit, on device - %3$s s</string>
+    <string name="capture_step_classifier_name">Region classifier</string>
+    <string name="capture_step_classifier_desc">%1$d text - %2$d formulas - %3$d drawings</string>
+    <string name="capture_step_glossary_no_course">no course glossary</string>
+    <string name="capture_step_glossary_not_cached">no glossary on this device (downloaded when opening camera online)</string>
+    <string name="capture_step_glossary_cached">glossary v%1$d (%2$d terms, local copy)</string>
+    <string name="capture_step_n15_name">N1.5 - Math OCR</string>
+    <string name="capture_step_n15_desc_active">%1$d regions routed to LaTeX conversion - free tier</string>
+    <string name="capture_step_n15_desc_empty">No formulas were detected on this page.</string>
+    <string name="capture_step_n2_name">N2 - Vision repair</string>
+    <string name="capture_step_n2_desc_active">%1$d regions did not pass the N1 gate.</string>
+    <string name="capture_step_n2_desc_idle">Activates only if something fails the gates.</string>
+
+    <string name="capture_error_hash_failed">Could not compute the page fingerprint.</string>
+    <string name="capture_error_no_photo">There is no photo to analyze.</string>
+    <string name="capture_error_unreadable_photo">Could not read the captured photo.</string>
+    <string name="capture_error_local_pipeline_failed">Local processing failed.</string>
+
+    <!-- Study, Glossary, Syllabus, Courses, Notes, Sync & API errors -->
+    <string name="study_tf_true">True</string>
+    <string name="study_tf_false">False</string>
+    <string name="study_topic_fallback">Topic %1$d</string>
+    <string name="study_error_select_topic">Select at least one course topic</string>
+    <string name="study_error_no_quiz">No quiz questions available</string>
+
+    <string name="glossary_tag_symbol">SYMBOL</string>
+    <string name="glossary_tag_notation">NOTATION</string>
+    <string name="glossary_tag_term">TERM</string>
+    <string name="teacher_error_glossary_fields_required">Term and notation are required</string>
+
+    <string name="syllabus_unit_default">1 · Course topics</string>
+
+    <string name="course_error_code_empty">Code cannot be empty</string>
+    <string name="course_error_invalid_code">Invalid course code</string>
+    <string name="course_error_name_code_required">Name and code are required</string>
+
+    <string name="note_default_title_format">Note %1$s</string>
+    <string name="note_error_correction_empty">Correction cannot be empty</string>
+    <string name="note_error_fragment_missing">That fragment no longer exists in the note</string>
+    <string name="note_error_title_required">Title is required</string>
+    <string name="note_error_not_found">Note not found</string>
+
+    <string name="sync_item_page_title">%1$s · p.%2$d</string>
+    <string name="sync_item_note_title">%1$s · note</string>
+    <string name="sync_op_title">Operation %1$s #%2$d</string>
+    <string name="sync_timestamp_recent">Recent</string>
+    <string name="sync_error_no_connection">No connection to the server</string>
+    <string name="sync_error_unexpected">Unexpected error</string>
+    <string name="sync_error_unreadable_analysis">Saved page analysis cannot be read</string>
+    <string name="sync_error_unknown_operation">Unknown operation: %1$s</string>
+    <string name="sync_error_note_rejected_409">Server rejected the note (409)</string>
+    <string name="sync_error_session_expired">Session expired; retrying when signed back in</string>
+    <string name="sync_error_server_wait">Server requested to wait (%1$d)</string>
+    <string name="sync_error_server">Server error (%1$d)</string>
+    <string name="sync_error_rejected">Server rejected the operation (%1$d)</string>
+
+    <string name="error_invalid_request">Invalid request data</string>
+    <string name="error_not_found">Resource not found</string>
+    <string name="error_conflict">Request conflict</string>
+    <string name="error_server_code">Server error (%1$s)</string>
 </resources>

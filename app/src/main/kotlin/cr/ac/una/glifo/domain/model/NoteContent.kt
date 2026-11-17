@@ -1,5 +1,7 @@
 package cr.ac.una.glifo.domain.model
 
+import cr.ac.una.glifo.core.common.UiText
+
 // Backs NoteDetail / CorrectFragment / FormulaViewer / RegionProvenance — the "reading a
 // captured note" cluster. All four screens key off the same noteId.
 
@@ -39,7 +41,8 @@ data class NoteFragment(
     /** Si el LaTeX compila según el validador JLaTeXMath del servidor (#39 / #40). */
     val latexCompiles: Boolean? = null,
     /** Nivel que resolvió el fragmento ("N1", "N1_5", "N2", "UNRESOLVED"). */
-    val resolvedAt: String? = null
+    val resolvedAt: String? = null,
+    val routeText: UiText = UiText.Plain(route)
 ) {
     val displayText: String get() = correctedText ?: latex?.takeIf { it.isNotBlank() } ?: text
     val isCorrected: Boolean get() = correctedText != null

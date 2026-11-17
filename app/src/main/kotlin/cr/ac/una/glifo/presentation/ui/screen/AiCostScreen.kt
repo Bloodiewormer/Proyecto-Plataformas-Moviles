@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
+import cr.ac.una.glifo.core.common.asString
 import cr.ac.una.glifo.domain.model.ConfidenceState
 import cr.ac.una.glifo.domain.model.GlifoRole
 import cr.ac.una.glifo.core.ui.component.*
@@ -138,7 +139,7 @@ fun AiCostScreen(
                             borderColor = colors.verifiedLine
                         ) {
                             Text(
-                                text = stats.periodLabel,
+                                text = stats.periodText.asString(),
                                 fontSize = 12.sp,
                                 color = colors.textSecondary
                             )
@@ -207,7 +208,7 @@ fun AiCostScreen(
                                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                                 ) {
                                     GlifoConfidenceChip(state = row.state)
-                                    Text(text = row.label, fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                                    Text(text = row.labelText.asString(), fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
                                     Box(
                                         modifier = Modifier
                                             .width(64.dp)
@@ -264,7 +265,7 @@ fun AiCostScreen(
                                 stats.paidCalls.forEach { call ->
                                     GlifoItem(compact = true) {
                                         Column(modifier = Modifier.weight(1f)) {
-                                            Text(text = call.label, fontSize = 15.sp, color = colors.textPrimary)
+                                            Text(text = call.labelText.asString(), fontSize = 15.sp, color = colors.textPrimary)
                                             if (call.totalTokens > 0L) {
                                                 val callCost = if (call.isCostConfigured) call.estimatedCostLabel else stringResource(R.string.ai_cost_not_configured)
                                                 Text(
@@ -359,7 +360,7 @@ fun AiCostScreen(
                         ) {
                             Icon(imageVector = Icons.Default.GpsFixed, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp).padding(top = 1.dp))
                             Text(
-                                text = stats.footerNote,
+                                text = stats.footerText.asString(),
                                 fontSize = 12.sp,
                                 color = colors.textSecondary,
                                 lineHeight = 18.sp

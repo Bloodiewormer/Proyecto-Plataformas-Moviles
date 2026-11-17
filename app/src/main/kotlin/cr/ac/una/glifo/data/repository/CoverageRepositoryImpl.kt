@@ -1,5 +1,7 @@
 package cr.ac.una.glifo.data.repository
 
+import android.content.Context
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.AppError
 import cr.ac.una.glifo.core.datastore.ActiveCourseStore
 import cr.ac.una.glifo.data.datasource.local.dao.NoteDao
@@ -18,6 +20,7 @@ import cr.ac.una.glifo.domain.model.CoverageTopic
 import cr.ac.una.glifo.domain.model.TopicDetail
 import cr.ac.una.glifo.domain.model.TopicNoteRef
 import cr.ac.una.glifo.domain.repository.CoverageRepository
+import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.concurrent.ConcurrentHashMap
@@ -34,6 +37,7 @@ class CoverageRepositoryImpl : CoverageRepository {
     private val api: GlifoApi
     private val activeCourseStore: ActiveCourseStore?
     private val noteDao: NoteDao?
+    private val appContext: Context?
 
     private val cachedCoverageByCourse = ConcurrentHashMap<Long, CoverageResponseDto>()
     private val lastEvaluationIsoByCourse = ConcurrentHashMap<Long, String>()
@@ -42,20 +46,24 @@ class CoverageRepositoryImpl : CoverageRepository {
     constructor(
         api: GlifoApi,
         activeCourseStore: ActiveCourseStore,
-        noteDao: NoteDao
+        noteDao: NoteDao,
+        @ApplicationContext appContext: Context
     ) {
         this.api = api
         this.activeCourseStore = activeCourseStore
         this.noteDao = noteDao
+        this.appContext = appContext
     }
 
     constructor(
         api: GlifoApi,
-        activeCourseStore: ActiveCourseStore? = null
+        activeCourseStore: ActiveCourseStore? = null,
+        appContext: Context? = null
     ) {
         this.api = api
         this.activeCourseStore = activeCourseStore
         this.noteDao = null
+        this.appContext = appContext
     }
 
     override suspend fun getSummary(courseId: Long): Result<CoverageSummary> {
@@ -94,7 +102,7 @@ class CoverageRepositoryImpl : CoverageRepository {
         val courseId = activeCourseStore?.activeCourseId?.value
             ?: cachedCoverageByCourse.keys().toList().firstOrNull()
             ?: return Result.Failure(
-                AppError.Validation("courseId", "Selecciona un curso activo primero")
+                AppError.Validation("courseId", noActiveCourseMessage())
             )
 
         val coverageDto = cachedCoverageByCourse[courseId] ?: when (val fetched = fetchCoverage(courseId)) {
@@ -124,7 +132,7 @@ class CoverageRepositoryImpl : CoverageRepository {
             ?: activeCourseStore?.activeCourseId?.value
             ?: cachedCoverageByCourse.keys().toList().firstOrNull()
             ?: return Result.Failure(
-                AppError.Validation("courseId", "Selecciona un curso activo primero")
+                AppError.Validation("courseId", noActiveCourseMessage())
             )
 
         val resolvedSince = since
@@ -136,6 +144,9 @@ class CoverageRepositoryImpl : CoverageRepository {
             transform = { it.data.toDeltaInfo() }
         )
     }
+
+    private fun noActiveCourseMessage(): String =
+        appContext?.getString(R.string.coverage_error_no_active_course).orEmpty()
 
     fun getLastEvaluationIso(courseId: Long): String? = lastEvaluationIsoByCourse[courseId]
 

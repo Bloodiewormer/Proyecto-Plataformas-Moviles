@@ -1,5 +1,6 @@
 package cr.ac.una.glifo.data.repository
 
+import androidx.room.withTransaction
 import com.google.gson.JsonParser
 import cr.ac.una.glifo.core.common.AppError
 import cr.ac.una.glifo.core.common.UiState
@@ -300,6 +301,49 @@ class NoteRepositoryImplTest {
             assertTrue(afterSync.canReconstruct)
         } finally {
             Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun `saveCapture and error paths use localized resources when appContext is provided`() = runTest {
+        val context = mockk<android.content.Context> {
+            every { getString(cr.ac.una.glifo.R.string.note_default_title_format, any()) } answers {
+                val args = secondArg<Array<Any?>>()
+                "Note ${args[0]}"
+            }
+            every { getString(cr.ac.una.glifo.R.string.note_error_not_found) } returns "Note not found"
+            every { getString(cr.ac.una.glifo.R.string.note_error_correction_empty) } returns "Correction cannot be empty"
+        }
+        val db = mockk<GlifoDatabase>()
+        io.mockk.mockkStatic("androidx.room.RoomDatabaseKt")
+        try {
+            coEvery { db.withTransaction(any<suspend () -> Long>()) } coAnswers {
+                secondArg<suspend () -> Long>().invoke()
+            }
+            val localizedRepo = NoteRepositoryImpl(
+                api = api,
+                database = db,
+                noteDao = noteDao,
+                syncDao = syncDao,
+                syncScheduler = mockk<SyncScheduler>(relaxed = true),
+                appContext = context
+            )
+            val savedNote = slot<NoteEntity>()
+            coEvery { noteDao.pageHashesForCourse(1L) } returns emptyList()
+            coEvery { noteDao.insertNote(capture(savedNote)) } returns 11L
+            coEvery { noteDao.insertPage(any()) } returns 22L
+            coEvery { noteDao.noteById(99L) } returns null
+
+            val noteIdResult = localizedRepo.saveCapture(1L, "/photo.jpg", "0000", analysis)
+            val notFoundError = (localizedRepo.getNote(99L) as Result.Failure).error as AppError.Server
+            val blankCorrection = (localizedRepo.saveCorrection(7L, "p0-r0", " ") as Result.Failure).error as AppError.Validation
+
+            assertEquals(11L, (noteIdResult as Result.Success).value)
+            assertTrue(savedNote.captured.title.startsWith("Note "))
+            assertEquals("Note not found", notFoundError.message)
+            assertEquals("Correction cannot be empty", blankCorrection.issue)
+        } finally {
+            io.mockk.unmockkStatic("androidx.room.RoomDatabaseKt")
         }
     }
 }

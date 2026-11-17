@@ -2,6 +2,8 @@ package cr.ac.una.glifo.data.mapper
 
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import cr.ac.una.glifo.R
+import cr.ac.una.glifo.core.common.UiText
 import cr.ac.una.glifo.core.pipeline.RegionClassifier
 import cr.ac.una.glifo.data.datasource.local.entity.FragmentCorrectionEntity
 import cr.ac.una.glifo.data.datasource.local.entity.NoteEntity
@@ -13,6 +15,7 @@ import cr.ac.una.glifo.domain.model.NoteContentSource
 import cr.ac.una.glifo.domain.model.NoteFragment
 import cr.ac.una.glifo.domain.model.NotePageInfo
 import cr.ac.una.glifo.domain.model.RegionKind
+import cr.ac.una.glifo.domain.model.routeRes
 
 fun NoteEntity.toDomain(): Note = Note(id = id, courseId = courseId, title = title, classDate = classDate)
 
@@ -56,7 +59,8 @@ fun buildLocalNoteContent(
                 correctedText = corrected[id],
                 latex = region.latex,
                 latexCompiles = region.latexCompiles,
-                resolvedAt = region.resolvedAt
+                resolvedAt = region.resolvedAt,
+                routeText = UiText.Resource(region.routeRes(RegionClassifier.TEXT_CONFIDENCE_GATE))
             )
         }
     }
@@ -192,7 +196,8 @@ private fun serverFragment(
         correctedText = corrected[id],
         latex = latex,
         latexCompiles = latexCompiles,
-        resolvedAt = resolvedAt
+        resolvedAt = resolvedAt,
+        routeText = UiText.Resource(R.string.note_fragment_route_server, resolvedAt)
     )
 }
 

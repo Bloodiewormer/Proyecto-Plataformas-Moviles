@@ -1,6 +1,8 @@
 package cr.ac.una.glifo.data.repository
 
+import android.content.Context
 import androidx.room.withTransaction
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.AppError
 import cr.ac.una.glifo.core.pipeline.PerceptualHasher
 import cr.ac.una.glifo.core.sync.SyncScheduler
@@ -27,6 +29,7 @@ import cr.ac.una.glifo.domain.model.NoteContent
 import cr.ac.una.glifo.domain.model.NoteMeta
 import cr.ac.una.glifo.domain.model.PageAnalysis
 import cr.ac.una.glifo.domain.repository.NoteRepository
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -35,6 +38,7 @@ import retrofit2.HttpException
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import java.util.Locale
 import java.util.UUID
 import javax.inject.Inject
@@ -52,13 +56,46 @@ import javax.inject.Singleton
  * del servidor; si todavía no hay ninguno de los dos, se dice así en vez de inventarlo.
  */
 @Singleton
-class NoteRepositoryImpl @Inject constructor(
-    private val api: GlifoApi,
-    private val database: GlifoDatabase,
-    private val noteDao: NoteDao,
-    private val syncDao: SyncOperationDao,
+class NoteRepositoryImpl : NoteRepository {
+
+    private val api: GlifoApi
+    private val database: GlifoDatabase
+    private val noteDao: NoteDao
+    private val syncDao: SyncOperationDao
     private val syncScheduler: SyncScheduler
-) : NoteRepository {
+    private val appContext: Context?
+
+    @Inject
+    constructor(
+        api: GlifoApi,
+        database: GlifoDatabase,
+        noteDao: NoteDao,
+        syncDao: SyncOperationDao,
+        syncScheduler: SyncScheduler,
+        @ApplicationContext appContext: Context
+    ) {
+        this.api = api
+        this.database = database
+        this.noteDao = noteDao
+        this.syncDao = syncDao
+        this.syncScheduler = syncScheduler
+        this.appContext = appContext
+    }
+
+    constructor(
+        api: GlifoApi,
+        database: GlifoDatabase,
+        noteDao: NoteDao,
+        syncDao: SyncOperationDao,
+        syncScheduler: SyncScheduler
+    ) {
+        this.api = api
+        this.database = database
+        this.noteDao = noteDao
+        this.syncDao = syncDao
+        this.syncScheduler = syncScheduler
+        this.appContext = null
+    }
 
     override suspend fun getNotesForCourse(courseId: Long): Result<List<Note>> =
         when (val refreshed = refreshCourse(courseId)) {
@@ -146,7 +183,8 @@ class NoteRepositoryImpl @Inject constructor(
             ?: return Result.Failure(
                 AppError.Validation(
                     field = "serverId",
-                    issue = "El apunte todavía no se ha sincronizado con el servidor."
+                    issue = appContext?.getString(R.string.note_reconstruct_error_not_synced)
+                        ?: "El apunte todavía no se ha sincronizado con el servidor."
                 )
             )
 
@@ -172,11 +210,23 @@ class NoteRepositoryImpl @Inject constructor(
     override suspend fun saveCorrection(noteId: Long, fragmentId: String, correctedText: String): Result<Unit> {
         val trimmed = correctedText.trim()
         if (trimmed.isEmpty()) {
-            return Result.Failure(AppError.Validation("text", "La corrección no puede quedar vacía"))
+            return Result.Failure(
+                AppError.Validation(
+                    "text",
+                    appContext?.getString(R.string.note_error_correction_empty)
+                        ?: "La corrección no puede quedar vacía"
+                )
+            )
         }
         val content = (getNoteContent(noteId) as? Result.Success)?.value ?: return notFound()
         val fragment = content.fragment(fragmentId)
-            ?: return Result.Failure(AppError.Validation("fragment", "Ese fragmento ya no existe en el apunte"))
+            ?: return Result.Failure(
+                AppError.Validation(
+                    "fragment",
+                    appContext?.getString(R.string.note_error_fragment_missing)
+                        ?: "Ese fragmento ya no existe en el apunte"
+                )
+            )
 
         noteDao.upsertCorrection(
             FragmentCorrectionEntity(
@@ -192,7 +242,13 @@ class NoteRepositoryImpl @Inject constructor(
 
     override suspend fun createNote(courseId: Long, title: String, classDate: String): Result<Note> {
         if (title.isBlank()) {
-            return Result.Failure(AppError.Validation("title", "El título es obligatorio"))
+            return Result.Failure(
+                AppError.Validation(
+                    "title",
+                    appContext?.getString(R.string.note_error_title_required)
+                        ?: "El título es obligatorio"
+                )
+            )
         }
         return when (val created = ApiErrorHandler.safeApiCall(
             apiCall = { api.createNote(CreateNoteRequest(courseId, title.trim(), classDate.trim())) },
@@ -245,11 +301,17 @@ class NoteRepositoryImpl @Inject constructor(
             ?.let { return Result.Success(it.id) }
 
         val now = System.currentTimeMillis()
+        val formattedDate = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT)
+            .withLocale(Locale.getDefault())
+            .format(LocalDateTime.now())
+        val noteTitle = appContext?.getString(R.string.note_default_title_format, formattedDate)
+            ?: "Apunte ${TITLE_FORMAT.format(LocalDateTime.now())}"
+
         val noteId = database.withTransaction {
             val noteId = noteDao.insertNote(
                 NoteEntity(
                     courseId = courseId,
-                    title = "Apunte ${TITLE_FORMAT.format(LocalDateTime.now())}",
+                    title = noteTitle,
                     classDate = LocalDate.now().toString(),
                     status = STATUS_PROCESSING,
                     createdAt = now
@@ -328,7 +390,12 @@ class NoteRepositoryImpl @Inject constructor(
         updatedAt = now
     )
 
-    private fun <T> notFound(): Result<T> = Result.Failure(AppError.Server(code = "404", message = "Apunte no encontrado"))
+    private fun <T> notFound(): Result<T> = Result.Failure(
+        AppError.Server(
+            code = "404",
+            message = appContext?.getString(R.string.note_error_not_found) ?: "Apunte no encontrado"
+        )
+    )
 
     private companion object {
         const val STATUS_DRAFT = "DRAFT"
@@ -342,9 +409,13 @@ class NoteRepositoryImpl @Inject constructor(
             ConfidenceState.Uncertain
         )
         val TITLE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("d/MM/yyyy HH:mm")
-        private val DISPLAY_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.getDefault())
 
+        // Build formatter dynamically so switching the in-app language updates displayed note dates immediately.
         fun displayDate(isoDate: String): String =
-            runCatching { DISPLAY_FORMAT.format(LocalDate.parse(isoDate)) }.getOrDefault(isoDate)
+            runCatching {
+                DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+                    .withLocale(Locale.getDefault())
+                    .format(LocalDate.parse(isoDate))
+            }.getOrDefault(isoDate)
     }
 }

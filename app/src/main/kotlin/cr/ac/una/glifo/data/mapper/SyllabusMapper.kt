@@ -1,5 +1,6 @@
 package cr.ac.una.glifo.data.mapper
 
+import android.content.Context
 import cr.ac.una.glifo.data.dto.SyllabusDocumentResponse
 import cr.ac.una.glifo.domain.model.SyllabusDocument
 import java.time.Instant
@@ -14,7 +15,8 @@ object SyllabusMapper {
 
     fun toDomain(
         dto: SyllabusDocumentResponse,
-        zoneId: ZoneId = ZoneId.systemDefault()
+        zoneId: ZoneId = ZoneId.systemDefault(),
+        context: Context? = null
     ): SyllabusDocument = SyllabusDocument(
         courseId = dto.courseId,
         fileName = dto.fileName?.trim()?.takeIf { it.isNotEmpty() },
@@ -22,7 +24,7 @@ object SyllabusMapper {
         formattedSize = formatFileSize(dto.sizeBytes),
         parsedAtDisplay = toLocalDisplayDate(dto.parsedAt, zoneId),
         syllabusVersion = dto.syllabusVersion,
-        units = dto.topics.toSyllabusUnitRows()
+        units = dto.topics.toSyllabusUnitRows(context)
     )
 
     fun toLocalDisplayDate(
@@ -48,5 +50,6 @@ object SyllabusMapper {
 }
 
 fun SyllabusDocumentResponse.toDomain(
-    zoneId: ZoneId = ZoneId.systemDefault()
-): SyllabusDocument = SyllabusMapper.toDomain(this, zoneId)
+    zoneId: ZoneId = ZoneId.systemDefault(),
+    context: Context? = null
+): SyllabusDocument = SyllabusMapper.toDomain(this, zoneId, context)

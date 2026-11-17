@@ -378,4 +378,33 @@ class SyncRepositoryImplTest {
         coVerify(exactly = 1) { api.reconstructNote(42L) }
         coVerify { noteDao.setServerContent(7L, any(), "READY") }
     }
+
+    @Test
+    fun `getQueueItems and syncNow localize titles and error reasons when context is provided`() = runTest {
+        val context = io.mockk.mockk<android.content.Context> {
+            io.mockk.every { getString(cr.ac.una.glifo.R.string.sync_item_note_title, "Derivadas") } returns "Derivadas · note"
+            io.mockk.every { getString(cr.ac.una.glifo.R.string.sync_item_page_title, "Derivadas", 2) } returns "Derivadas · p.2"
+            io.mockk.every { getString(cr.ac.una.glifo.R.string.sync_error_server, 500) } returns "Server error (500)"
+        }
+        val localizedRepo = SyncRepositoryImpl(api, syncDao, noteDao, scheduler, null, null, context)
+        coEvery { syncDao.queueRows() } returns listOf(
+            cr.ac.una.glifo.data.datasource.local.entity.SyncOperationRow(
+                id = 1L, entityType = SyncOperationEntity.TYPE_CREATE_NOTE, status = SyncOperationEntity.STATUS_PENDING,
+                attempts = 0, lastError = null, updatedAt = 0L, noteId = 7L, noteTitle = "Derivadas", pageIndex = null
+            ),
+            cr.ac.una.glifo.data.datasource.local.entity.SyncOperationRow(
+                id = 2L, entityType = SyncOperationEntity.TYPE_UPLOAD_PAGE, status = SyncOperationEntity.STATUS_PENDING,
+                attempts = 0, lastError = null, updatedAt = 0L, noteId = 7L, noteTitle = "Derivadas", pageIndex = 1
+            )
+        )
+        coEvery { syncDao.runnable() } returns listOf(createOp)
+        coEvery { noteDao.noteById(7L) } returns unsynced
+        coEvery { api.createNote(any()) } throws httpException(500)
+
+        val queue = (localizedRepo.getQueueItems() as Result.Success).value
+        localizedRepo.syncNow()
+
+        assertEquals(listOf("Derivadas · note", "Derivadas · p.2"), queue.map { it.title })
+        coVerify { syncDao.update(1L, SyncOperationEntity.STATUS_PENDING, 1, "Server error (500)", any()) }
+    }
 }
