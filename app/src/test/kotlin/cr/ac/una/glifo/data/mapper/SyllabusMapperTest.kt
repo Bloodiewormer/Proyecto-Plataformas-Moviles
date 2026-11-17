@@ -58,6 +58,23 @@ class SyllabusMapperTest {
     }
 
     @Test
+    fun `default version with manual topics but no parsed_at is not published`() {
+        val dto = SyllabusDocumentResponse(
+            courseId = 6L,
+            fileName = null,
+            sizeBytes = null,
+            parsedAt = null,
+            syllabusVersion = 1,
+            topics = listOf(SyllabusTopicResponse(id = 1L, courseId = 6L, parentId = null, code = "U1", title = "Limites", orderIndex = 1))
+        )
+
+        val domain = SyllabusMapper.toDomain(dto, ZoneId.of("UTC"))
+
+        assertTrue(domain.hasSyllabus)
+        assertFalse(domain.isPublished)
+    }
+
+    @Test
     fun `null size and missing optional metadata map cleanly without fabricating values`() {
         val dto = SyllabusDocumentResponse(
             courseId = 5L,
