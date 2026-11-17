@@ -422,4 +422,52 @@ class NoteRepositoryImplTest {
             io.mockk.unmockkStatic("androidx.room.RoomDatabaseKt")
         }
     }
+
+    @Test
+    fun `updateNoteTopic persists server response in cache and keeps previous value on offline error`() = runTest {
+        val synced = remoteNote
+        val topicCache = cr.ac.una.glifo.data.datasource.local.NoteTopicCache()
+        topicCache.setTopicId(synced.id, 101L)
+        val trackedRepo = NoteRepositoryImpl(
+            api = api,
+            database = mockk<GlifoDatabase>(),
+            noteDao = noteDao,
+            syncDao = syncDao,
+            syncScheduler = mockk<SyncScheduler>(relaxed = true),
+            topicCache = topicCache,
+            appContext = mockk<android.content.Context>(relaxed = true)
+        )
+        coEvery { noteDao.noteById(8L) } returns synced
+        coEvery { api.updateNote(42L, any()) } throws IOException("offline")
+
+        val offlineResult = trackedRepo.updateNoteTopic(8L, 102L)
+        assertEquals(Result.Failure(AppError.NoConnection), offlineResult)
+        assertEquals(101L, (trackedRepo.getNote(8L) as Result.Success).value.syllabusTopicId)
+
+        val requestSlot = slot<cr.ac.una.glifo.data.dto.UpdateNoteRequest>()
+        coEvery { api.updateNote(42L, capture(requestSlot)) } returns ApiResponse(
+            NoteResponse(42L, 1L, "Derivadas", "2026-08-20", "READY", syllabusTopicId = 102L)
+        )
+        val successResult = trackedRepo.updateNoteTopic(8L, 102L)
+        assertEquals(102L, requestSlot.captured.syllabusTopicId)
+        assertEquals(102L, (successResult as Result.Success).value.syllabusTopicId)
+        assertEquals(102L, (trackedRepo.getNote(8L) as Result.Success).value.syllabusTopicId)
+
+        coEvery { api.updateNote(42L, any()) } returns ApiResponse(
+            NoteResponse(42L, 1L, "Derivadas", "2026-08-20", "READY", syllabusTopicId = null)
+        )
+        val cleared = trackedRepo.updateNoteTopic(8L, null)
+        assertNull((cleared as Result.Success).value.syllabusTopicId)
+        assertNull((trackedRepo.getNote(8L) as Result.Success).value.syllabusTopicId)
+    }
+
+    @Test
+    fun `updateNoteTopic fails cleanly when note has no serverId`() = runTest {
+        coEvery { noteDao.noteById(7L) } returns localNote
+
+        val result = repository.updateNoteTopic(7L, 101L)
+
+        assertTrue((result as Result.Failure).error is AppError.Validation)
+        coVerify(exactly = 0) { api.updateNote(any(), any()) }
+    }
 }

@@ -156,4 +156,100 @@ class CoverageRepositoryImplTest {
             deltaResult
         )
     }
+
+    @Test
+    fun `getTopicDetail links notes by syllabusTopicId instead of substring matching`() = runTest {
+        val activeStore = mockk<cr.ac.una.glifo.core.datastore.ActiveCourseStore>()
+        io.mockk.every { activeStore.activeCourseId } returns kotlinx.coroutines.flow.MutableStateFlow(1L)
+        val noteDao = mockk<cr.ac.una.glifo.data.datasource.local.dao.NoteDao>(relaxed = true)
+        val cache = cr.ac.una.glifo.data.datasource.local.NoteTopicCache()
+        val repo = CoverageRepositoryImpl(
+            api = api,
+            activeCourseStore = activeStore,
+            appContext = null,
+            noteDao = noteDao,
+            noteTopicCache = cache
+        )
+
+        coEvery { api.getCoverage(1L) } returns ApiResponse(data = sampleCoverageResponse)
+        coEvery { api.getNotes(1L) } returns ApiResponse(
+            data = listOf(
+                cr.ac.una.glifo.data.dto.NoteResponse(
+                    id = 50L,
+                    courseId = 1L,
+                    title = "Clase 4",
+                    classDate = "2026-10-25",
+                    status = "READY",
+                    syllabusTopicId = 101L
+                ),
+                cr.ac.una.glifo.data.dto.NoteResponse(
+                    id = 51L,
+                    courseId = 1L,
+                    title = "U1.1 Límites pero sin vínculo",
+                    classDate = "2026-10-26",
+                    status = "READY",
+                    syllabusTopicId = null
+                ),
+                cr.ac.una.glifo.data.dto.NoteResponse(
+                    id = 52L,
+                    courseId = 1L,
+                    title = "Otra clase de Límites",
+                    classDate = "2026-10-27",
+                    status = "READY",
+                    syllabusTopicId = 102L
+                )
+            )
+        )
+        coEvery { noteDao.notesForCourse(1L) } returns listOf(
+            cr.ac.una.glifo.data.datasource.local.entity.NoteEntity(
+                id = 500L, serverId = 50L, courseId = 1L, title = "Clase 4", classDate = "2026-10-25", status = "READY", createdAt = 1L
+            ),
+            cr.ac.una.glifo.data.datasource.local.entity.NoteEntity(
+                id = 501L, serverId = 51L, courseId = 1L, title = "U1.1 Límites pero sin vínculo", classDate = "2026-10-26", status = "READY", createdAt = 2L
+            ),
+            cr.ac.una.glifo.data.datasource.local.entity.NoteEntity(
+                id = 502L, serverId = 52L, courseId = 1L, title = "Otra clase de Límites", classDate = "2026-10-27", status = "READY", createdAt = 3L
+            )
+        )
+
+        val limitsDetail = (repo.getTopicDetail("U1.1 Límites") as Result.Success).value
+        assertEquals(listOf(500L), limitsDetail.noteRefs.map { it.noteId })
+        assertEquals(listOf("Clase 4"), limitsDetail.noteRefs.map { it.title })
+
+        val derivativesDetail = (repo.getTopicDetail("U1.3 Derivadas") as Result.Success).value
+        assertTrue(derivativesDetail.noteRefs.isEmpty())
+    }
+
+    @Test
+    fun `getTopicDetail falls back to NoteTopicCache offline and keeps unmatched topics empty`() = runTest {
+        val activeStore = mockk<cr.ac.una.glifo.core.datastore.ActiveCourseStore>()
+        io.mockk.every { activeStore.activeCourseId } returns kotlinx.coroutines.flow.MutableStateFlow(1L)
+        val noteDao = mockk<cr.ac.una.glifo.data.datasource.local.dao.NoteDao>(relaxed = true)
+        val cache = cr.ac.una.glifo.data.datasource.local.NoteTopicCache()
+        cache.setTopicId(900L, 102L)
+        val repo = CoverageRepositoryImpl(
+            api = api,
+            activeCourseStore = activeStore,
+            appContext = null,
+            noteDao = noteDao,
+            noteTopicCache = cache
+        )
+
+        coEvery { api.getCoverage(1L) } returns ApiResponse(data = sampleCoverageResponse)
+        coEvery { api.getNotes(1L) } throws IOException("offline")
+        coEvery { noteDao.notesForCourse(1L) } returns listOf(
+            cr.ac.una.glifo.data.datasource.local.entity.NoteEntity(
+                id = 900L, serverId = 90L, courseId = 1L, title = "Apunte de clase", classDate = "2026-10-28", status = "READY", createdAt = 1L
+            ),
+            cr.ac.una.glifo.data.datasource.local.entity.NoteEntity(
+                id = 901L, serverId = 91L, courseId = 1L, title = "U1.2 Continuidad sin vínculo", classDate = "2026-10-29", status = "READY", createdAt = 2L
+            )
+        )
+
+        val continuityDetail = (repo.getTopicDetail("U1.2 Continuidad") as Result.Success).value
+        assertEquals(listOf(900L), continuityDetail.noteRefs.map { it.noteId })
+
+        val missingTopicDetail = (repo.getTopicDetail("Unknown Topic") as Result.Success).value
+        assertTrue(missingTopicDetail.noteRefs.isEmpty())
+    }
 }
