@@ -644,7 +644,7 @@
     <string name="capture_step_glossary_not_cached">no glossary on this device (downloaded when opening camera online)</string>
     <string name="capture_step_glossary_cached">glossary v%1$d (%2$d terms, local copy)</string>
     <string name="capture_step_n15_name">N1.5 - Math OCR</string>
-    <string name="capture_step_n15_desc_active">%1$d regions routed to LaTeX conversion - free tier</string>
+    <string name="capture_step_n15_desc_active">%1$d regions routed to LaTeX conversion on the server (low cost)</string>
     <string name="capture_step_n15_desc_empty">No formulas were detected on this page.</string>
     <string name="capture_step_n2_name">N2 - Vision repair</string>
     <string name="capture_step_n2_desc_active">%1$d regions did not pass the N1 gate.</string>

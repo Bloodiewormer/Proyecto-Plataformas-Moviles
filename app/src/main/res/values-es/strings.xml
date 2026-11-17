@@ -644,7 +644,7 @@
     <string name="capture_step_glossary_not_cached">sin glosario en el dispositivo (se descarga al abrir la cámara con conexión)</string>
     <string name="capture_step_glossary_cached">glosario v%1$d (%2$d términos, copia local)</string>
     <string name="capture_step_n15_name">N1.5 - OCR matemático</string>
-    <string name="capture_step_n15_desc_active">%1$d regiones enrutadas a conversión LaTeX - capa gratuita</string>
+    <string name="capture_step_n15_desc_active">%1$d regiones enrutadas a conversión LaTeX en el servidor (bajo costo)</string>
     <string name="capture_step_n15_desc_empty">No se detectaron fórmulas en esta página.</string>
     <string name="capture_step_n2_name">N2 - Reparación por visión</string>
     <string name="capture_step_n2_desc_active">%1$d regiones no superaron la compuerta de N1.</string>
