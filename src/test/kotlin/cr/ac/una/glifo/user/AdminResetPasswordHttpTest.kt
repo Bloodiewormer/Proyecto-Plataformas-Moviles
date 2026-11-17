@@ -1,5 +1,8 @@
 package cr.ac.una.glifo.user
 
+import cr.ac.una.glifo.user.entity.User
+import cr.ac.una.glifo.user.repository.RoleRepository
+import cr.ac.una.glifo.user.repository.UserRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.BeforeEach
@@ -27,6 +30,8 @@ import tools.jackson.databind.json.JsonMapper
 class AdminResetPasswordHttpTest {
 
     @Autowired lateinit var context: WebApplicationContext
+    @Autowired lateinit var userRepository: UserRepository
+    @Autowired lateinit var roleRepository: RoleRepository
 
     private lateinit var mvc: MockMvc
     private val json = JsonMapper.builder().findAndAddModules().build()
@@ -101,6 +106,28 @@ class AdminResetPasswordHttpTest {
             contentType = MediaType.APPLICATION_JSON
             content = """{"email":"admin@una.ac.cr"}"""
         }.andExpect { status { isBadRequest() } }
+    }
+
+    @Test
+    fun `el admin no puede restablecer la contraseña de otro administrador`() {
+        val adminRole = roleRepository.findByName("ROLE_ADMIN")!!
+        val otherAdminEmail = "otro.admin@una.ac.cr"
+        userRepository.saveAndFlush(User().apply {
+            email = otherAdminEmail
+            passwordHash = "hash-de-prueba"
+            firstName = "Otro"
+            lastName = "Admin"
+            roles.add(adminRole)
+        })
+
+        mvc.post(resetUrl) {
+            header("Authorization", admin())
+            contentType = MediaType.APPLICATION_JSON
+            content = """{"email":"$otherAdminEmail"}"""
+        }.andExpect {
+            status { isBadRequest() }
+            jsonPath("$.message") { value("No se puede restablecer la contraseña de otra cuenta de administrador") }
+        }
     }
 
     @Test

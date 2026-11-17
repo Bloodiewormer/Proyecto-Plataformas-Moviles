@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController
 /**
  * | Método | Ruta                               | Éxito | Errores                                              |
  * |--------|------------------------------------|-------|------------------------------------------------------|
- * | POST   | /admin/users/reset-password        | 200   | 400 (correo inválido o la propia cuenta), 401, 403 (sin USER_MANAGE), 404 (no existe) |
+ * | POST   | /admin/users/reset-password        | 200   | 400 (correo inválido, propia cuenta u otro admin), 401, 403 (sin USER_MANAGE), 404 (no existe) |
  */
 @RestController
 @RequestMapping(

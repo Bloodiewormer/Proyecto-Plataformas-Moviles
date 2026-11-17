@@ -24,7 +24,8 @@ class AdminUserService(
 
     /**
      * Genera una contraseña temporal, la guarda cifrada y la devuelve en claro una sola vez.
-     * El admin no puede usarlo sobre su propia cuenta: para eso está change-password, que pide la actual.
+     * El admin no puede usarlo sobre su propia cuenta (para eso está change-password, que pide la
+     * actual) ni sobre otra cuenta con ROLE_ADMIN.
      */
     @Transactional
     fun resetPassword(adminId: Long, email: String): AdminResetPasswordResponse {
@@ -32,6 +33,9 @@ class AdminUserService(
             ?: throw ResourceNotFoundException("No hay ninguna cuenta con ese correo")
         if (user.id == adminId) {
             throw BadRequestException("Para tu propia cuenta usá Perfil → Cambiar contraseña")
+        }
+        if (user.roles.any { it.name == "ROLE_ADMIN" }) {
+            throw BadRequestException("No se puede restablecer la contraseña de otra cuenta de administrador")
         }
         val temporary = generateTemporaryPassword()
         user.passwordHash = passwordEncoder.encode(temporary) ?: ""
