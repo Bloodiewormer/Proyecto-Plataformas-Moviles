@@ -38,7 +38,9 @@ object PageSegmenter {
     /** Tope de fragmentos por pagina: mas que esto significa que la binarizacion se descontrolo. */
     private const val MAX_REGIONS = 48
 
-    fun segment(bitmap: Bitmap): List<SegmentedRegion> {
+    fun segment(bitmap: Bitmap): List<SegmentedRegion> = segmentResidual(bitmap, emptyList())
+
+    fun segmentResidual(bitmap: Bitmap, excludedBounds: List<RegionBounds>): List<SegmentedRegion> {
         val src = Mat()
         Utils.bitmapToMat(bitmap, src)
 
@@ -50,9 +52,6 @@ object PageSegmenter {
         }
         src.release()
 
-        // Binarizacion adaptativa: la tinta queda en blanco (255) sobre fondo negro, y
-        // aguanta que la hoja este iluminada de forma despareja. Umbral ajustado a 8.0
-        // para retener trazos suaves de lápiz o bolígrafos claros.
         val binary = Mat()
         val blockSize = oddAtLeast(max(gray.rows(), gray.cols()) / 40, 15)
         Imgproc.adaptiveThreshold(
@@ -66,7 +65,6 @@ object PageSegmenter {
         )
         gray.release()
 
-        // Quita el ruido de sal y pimienta antes de dilatar, para no inflar manchas sueltas.
         val denoiseKernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, Size(2.0, 2.0))
         Imgproc.morphologyEx(binary, binary, Imgproc.MORPH_OPEN, denoiseKernel)
         denoiseKernel.release()
@@ -74,19 +72,36 @@ object PageSegmenter {
         val width = binary.cols()
         val height = binary.rows()
 
-        // Dos pasadas de cierre: la horizontal pega las letras en palabras y lineas cohesivas;
-        // la vertical ayuda a agrupar líneas contiguas de un mismo párrafo o fórmula.
+        // Erase confirmed prose lines so adjacent diagrams or inline math are not merged into text blobs.
+        excludedBounds.forEach { box ->
+            val insetY = if (box.height >= 10) 1 else 0
+            val l = box.left.coerceIn(0, width)
+            val t = (box.top + insetY).coerceIn(0, height)
+            val r = box.right.coerceIn(0, width)
+            val b = (box.bottom - insetY).coerceIn(0, height)
+            if (r > l && b > t) {
+                Imgproc.rectangle(
+                    binary,
+                    org.opencv.core.Point(l.toDouble(), t.toDouble()),
+                    org.opencv.core.Point((r - 1).toDouble(), (b - 1).toDouble()),
+                    org.opencv.core.Scalar(0.0),
+                    -1
+                )
+            }
+        }
+
+        // Keep horizontal and vertical closing compact so columns and nearby figures stay separate.
         val merged = Mat()
         val horizontal = Imgproc.getStructuringElement(
             Imgproc.MORPH_RECT,
-            Size(max(14.0, width / 30.0), 1.0)
+            Size(max(10.0, width / 40.0), 1.0)
         )
         Imgproc.morphologyEx(binary, merged, Imgproc.MORPH_CLOSE, horizontal)
         horizontal.release()
 
         val vertical = Imgproc.getStructuringElement(
             Imgproc.MORPH_RECT,
-            Size(1.0, max(5.0, height / 60.0))
+            Size(1.0, max(3.0, height / 130.0))
         )
         Imgproc.morphologyEx(merged, merged, Imgproc.MORPH_CLOSE, vertical)
         vertical.release()
@@ -108,9 +123,8 @@ object PageSegmenter {
             if (keep) rect else null
         }
 
-        // Los solapes vienen de trazos que la morfologia no llego a unir (tildes, exponentes,
-        // el palo de una fraccion). Fusionarlos evita partir una formula en tres fragmentos.
-        val mergedRects = mergeOverlapping(rects)
+        val horizontalPad = max(4, (width * 0.008f).toInt())
+        val mergedRects = mergeOverlapping(rects, horizontalPad)
             .sortedByDescending { it.width * it.height }
             .take(MAX_REGIONS)
             .sortedWith(compareBy({ it.y }, { it.x }))
@@ -126,12 +140,9 @@ object PageSegmenter {
         return regions
     }
 
-    /**
-     * Mide la region sobre la mascara binaria sin dilatar: densidad de tinta real y cantidad
-     * de componentes conectados, que es lo que distingue un parrafo (muchos componentes
-     * chicos) de un diagrama (pocos trazos largos).
-     */
     private fun measure(binary: Mat, rect: Rect): RegionInkMetrics {
+        val pageWidth = binary.cols().coerceAtLeast(1)
+        val pageHeight = binary.rows().coerceAtLeast(1)
         val roi = Mat(binary, rect)
         val inkPixels = Core.countNonZero(roi)
         val area = (rect.width * rect.height).coerceAtLeast(1)
@@ -141,11 +152,32 @@ object PageSegmenter {
         Imgproc.findContours(roi, innerContours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE)
         hierarchy.release()
 
-        // Los componentes de 1 o 2 pixeles son ruido residual, no glifos.
         var components = 0
+        var horizontalBars = 0
+        var tallStrokes = 0
+        var maxStrokeMinSpan = 0f
+
         innerContours.forEach { contour ->
             val r = Imgproc.boundingRect(contour)
-            if (r.width > 2 && r.height > 2) components++
+            if (r.width > 2 && r.height > 2) {
+                components++
+                val wPage = r.width.toFloat() / pageWidth
+                val hPage = r.height.toFloat() / pageHeight
+                val wOverH = r.width.toFloat() / r.height.coerceAtLeast(1)
+                val hOverW = r.height.toFloat() / r.width.coerceAtLeast(1)
+
+                // Require thin elongated strokes for fraction bars (including compact x/a or a^3/(x^2+a^2) bars).
+                if (wPage in 0.024f..0.75f && hPage <= 0.012f && wOverH >= 3.5f) {
+                    horizontalBars++
+                }
+                if (hPage in 0.040f..0.35f && wPage <= 0.07f && hOverW >= 2.0f) {
+                    tallStrokes++
+                }
+                val minSpan = minOf(wPage, hPage)
+                if (minSpan > maxStrokeMinSpan) {
+                    maxStrokeMinSpan = minSpan
+                }
+            }
             contour.release()
         }
         roi.release()
@@ -153,19 +185,23 @@ object PageSegmenter {
         return RegionInkMetrics(
             inkDensity = (inkPixels.toFloat() / area).coerceIn(0f, 1f),
             componentCount = components,
-            aspectRatio = rect.width.toFloat() / rect.height.toFloat()
+            aspectRatio = rect.width.toFloat() / rect.height.coerceAtLeast(1).toFloat(),
+            horizontalBarCount = horizontalBars,
+            tallStrokeCount = tallStrokes,
+            maxStrokeMinSpanRatio = maxStrokeMinSpan,
+            heightRatio = rect.height.toFloat() / pageHeight,
+            areaRatio = area.toFloat() / (pageWidth * pageHeight).coerceAtLeast(1)
         )
     }
 
-    /** Fusiona repetidamente los rectangulos que se solapan hasta que ninguno se toca. */
-    private fun mergeOverlapping(input: List<Rect>): List<Rect> {
+    private fun mergeOverlapping(input: List<Rect>, horizontalPad: Int): List<Rect> {
         val pending = input.toMutableList()
         var changed = true
         while (changed) {
             changed = false
             outer@ for (i in pending.indices) {
                 for (j in i + 1 until pending.size) {
-                    if (intersects(pending[i], pending[j])) {
+                    if (intersects(pending[i], pending[j], horizontalPad)) {
                         val union = union(pending[i], pending[j])
                         pending.removeAt(j)
                         pending[i] = union
@@ -178,10 +214,8 @@ object PageSegmenter {
         return pending
     }
 
-    private fun intersects(a: Rect, b: Rect): Boolean {
-        // Permitir un margen horizontal de proximidad para fusionar palabras cercanas en la misma línea
-        val hPad = 12
-        return a.x < b.x + b.width + hPad && b.x < a.x + a.width + hPad &&
+    private fun intersects(a: Rect, b: Rect, horizontalPad: Int): Boolean {
+        return a.x < b.x + b.width + horizontalPad && b.x < a.x + a.width + horizontalPad &&
             a.y < b.y + b.height && b.y < a.y + a.height
     }
 
