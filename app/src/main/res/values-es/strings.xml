@@ -414,6 +414,7 @@
     <string name="teacher_glossary_suggestions_section">SUGERIDAS POR CORRECCIONES</string>
     <string name="teacher_glossary_discard_description">Descartar</string>
     <string name="teacher_glossary_accept_description">Aceptar</string>
+    <string name="teacher_glossary_empty">Todavía no hay términos en el glosario de este curso. Tocá + para agregar uno.</string>
     <string name="teacher_glossary_no_match">Ningún término coincide con esa búsqueda.</string>
     <string name="teacher_glossary_add_dialog_title">Agregar al glosario</string>
     <string name="teacher_glossary_field_term">Término</string>

@@ -870,7 +870,10 @@ fun TeacherGlossaryScreen(
             when (val state = uiState) {
                 is UiState.Loading -> GlifoLoadingBox()
                 is UiState.Empty -> GlifoEmptyBox(
-                    message = stringResource(R.string.teacher_glossary_no_match),
+                    message = stringResource(
+                        if (query.isBlank()) R.string.teacher_glossary_empty
+                        else R.string.teacher_glossary_no_match
+                    ),
                     actionText = stringResource(R.string.common_retry),
                     onAction = viewModel::load
                 )
@@ -922,16 +925,18 @@ fun TeacherGlossaryScreen(
                             modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
                         )
 
-                        GlifoCard(tight = true) {
-                            entries.forEachIndexed { i, entry ->
-                                GlifoItem(showBottomBorder = i < entries.size - 1) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(text = entry.term, fontSize = 16.sp, color = colors.textPrimary)
-                                        Text(text = entry.notation, fontSize = 13.sp, fontFamily = FontFamily.Monospace, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
+                        if (entries.isNotEmpty()) {
+                            GlifoCard(tight = true) {
+                                entries.forEachIndexed { i, entry ->
+                                    GlifoItem(showBottomBorder = i < entries.size - 1) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(text = entry.term, fontSize = 16.sp, color = colors.textPrimary)
+                                            Text(text = entry.notation, fontSize = 13.sp, fontFamily = FontFamily.Monospace, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
+                                        }
+                                        val bg = if (entry.isSymbol) colors.repairedSoft else colors.accentSoft
+                                        val fg = if (entry.isSymbol) colors.repaired else colors.accentText
+                                        GlifoBadge(text = entry.tag, backgroundColor = bg, textColor = fg)
                                     }
-                                    val bg = if (entry.isSymbol) colors.repairedSoft else colors.accentSoft
-                                    val fg = if (entry.isSymbol) colors.repaired else colors.accentText
-                                    GlifoBadge(text = entry.tag, backgroundColor = bg, textColor = fg)
                                 }
                             }
                         }
@@ -973,7 +978,12 @@ fun TeacherGlossaryScreen(
                         }
 
                         if (entries.isEmpty()) {
-                            GlifoBanner(text = stringResource(R.string.teacher_glossary_no_match), modifier = Modifier.padding(top = 12.dp))
+                            val emptyRes = if (query.isBlank()) {
+                                R.string.teacher_glossary_empty
+                            } else {
+                                R.string.teacher_glossary_no_match
+                            }
+                            GlifoBanner(text = stringResource(emptyRes), modifier = Modifier.padding(top = 12.dp))
                         }
                     }
                 }

@@ -414,6 +414,7 @@
     <string name="teacher_glossary_suggestions_section">SUGGESTED FROM CORRECTIONS</string>
     <string name="teacher_glossary_discard_description">Discard</string>
     <string name="teacher_glossary_accept_description">Accept</string>
+    <string name="teacher_glossary_empty">No glossary terms for this course yet. Tap + to add one.</string>
     <string name="teacher_glossary_no_match">No term matches that search.</string>
     <string name="teacher_glossary_add_dialog_title">Add to the glossary</string>
     <string name="teacher_glossary_field_term">Term</string>
