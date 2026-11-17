@@ -4,12 +4,8 @@ import kotlinx.coroutines.flow.StateFlow
 import cr.ac.una.glifo.domain.model.User
 
 /**
- * Holds the currently logged-in user for the lifetime of the process, and the (test-only,
- * locally-picked) profile photo. Purely in-memory — same behavior as the previous
- * `SessionManager` singleton — but now declared as a domain contract and backed by a
- * Hilt-injected `@Singleton` implementation in `data/`, instead of a raw object screens
- * reached into directly. Photo is a `String?` (URI text) rather than `android.net.Uri` so
- * this interface stays framework-free; the presentation layer parses it back into a `Uri`.
+ * Holds the currently logged-in user for the lifetime of the process, and the path of their
+ * profile photo, which is kept only on this device per user.
  */
 interface SessionRepository {
     val currentUser: StateFlow<User?>
@@ -20,5 +16,7 @@ interface SessionRepository {
 
     /** Token vencido: cierra la sesión sin borrar datos locales pendientes de sincronizar. */
     suspend fun expireSession() = logout()
-    fun setProfilePhotoUri(uri: String?)
+
+    /** Copia la imagen elegida (URI del selector) como foto del usuario actual. */
+    suspend fun saveProfilePhoto(sourceUri: String)
 }

@@ -809,21 +809,12 @@ fun GlifoDrawerContent(
                 .drawBottomBorder(colors.border)
                 .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 14.dp)
         ) {
-            // Avatar Circle
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .background(colors.surfaceHigh, CircleShape)
-                    .border(1.dp, colors.border, CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = userInitials,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = colors.accentText
-                )
-            }
+            ProfileAvatar(
+                photoPath = LocalProfilePhotoPath.current,
+                initials = userInitials,
+                size = 48.dp,
+                fontSize = 16.sp
+            )
 
             Spacer(modifier = Modifier.height(10.dp))
 

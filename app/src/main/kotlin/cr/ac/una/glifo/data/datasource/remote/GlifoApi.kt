@@ -43,6 +43,7 @@ import cr.ac.una.glifo.data.dto.SyncCompleteResponse
 import cr.ac.una.glifo.data.dto.UpdateDeviceTokenRequest
 import cr.ac.una.glifo.data.dto.UpdateNoteRequest
 import okhttp3.MultipartBody
+import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -69,6 +70,15 @@ interface GlifoApi {
     /** Pide token. 204 si cambió; 400 con mensaje si la actual no coincide o la nueva no sirve. */
     @POST("auth/change-password")
     suspend fun changePassword(@Body request: ChangePasswordRequest): Response<Unit>
+
+    /** Foto de perfil del usuario con sesión: 204 al subir; JPEG/PNG de hasta 1 MB. */
+    @Multipart
+    @PUT("users/me/avatar")
+    suspend fun uploadAvatar(@Part file: MultipartBody.Part): Response<Unit>
+
+    /** 200 con la imagen, o 404 si el usuario no tiene foto en el servidor. */
+    @GET("users/me/avatar")
+    suspend fun getAvatar(): Response<ResponseBody>
 
     /** Solo admin (USER_MANAGE). 404 si el correo no existe; 400 si es la propia cuenta o el correo no es válido. */
     @POST("admin/users/reset-password")

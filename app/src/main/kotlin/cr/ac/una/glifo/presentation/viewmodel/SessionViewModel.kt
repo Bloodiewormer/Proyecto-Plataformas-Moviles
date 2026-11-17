@@ -63,5 +63,7 @@ class SessionViewModel @Inject constructor(
         viewModelScope.launch { sessionRepository.expireSession() }
     }
 
-    fun setProfilePhotoUri(uri: String?) = sessionRepository.setProfilePhotoUri(uri)
+    fun saveProfilePhoto(sourceUri: String) {
+        viewModelScope.launch { sessionRepository.saveProfilePhoto(sourceUri) }
+    }
 }
