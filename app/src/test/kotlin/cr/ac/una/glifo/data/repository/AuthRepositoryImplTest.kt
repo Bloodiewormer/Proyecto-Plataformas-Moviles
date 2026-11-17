@@ -20,6 +20,8 @@ import org.junit.Test
 import retrofit2.HttpException
 import retrofit2.Response
 import java.io.IOException
+import java.net.SocketException
+import java.net.SocketTimeoutException
 
 /**
  * Covers the error-mapping table in [AuthRepositoryImpl.callApi]'s KDoc — the piece of Lab 3's
@@ -64,6 +66,15 @@ class AuthRepositoryImplTest {
         val result = repository.login("est@una.ac.cr", "password")
 
         assertEquals(Result.Failure(AppError.NoConnection), result)
+    }
+
+    @Test
+    fun `should map timeout and connection reset to NoConnection`() = runTest {
+        coEvery { api.login(any()) } throws SocketTimeoutException("timeout")
+        assertEquals(Result.Failure(AppError.NoConnection), repository.login("est@una.ac.cr", "password"))
+
+        coEvery { api.login(any()) } throws SocketException("Connection reset")
+        assertEquals(Result.Failure(AppError.NoConnection), repository.login("est@una.ac.cr", "password"))
     }
 
     @Test

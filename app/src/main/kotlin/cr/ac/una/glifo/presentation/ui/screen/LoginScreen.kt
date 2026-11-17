@@ -49,6 +49,7 @@ fun LoginScreen(
     var visible by remember { mutableStateOf(false) }
 
     val demoAccountHints by viewModel.demoAccountHints.collectAsState()
+    val isRetrying by viewModel.isRetrying.collectAsState()
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
@@ -164,7 +165,7 @@ fun LoginScreen(
                             Box(modifier = Modifier.fillMaxWidth().height(44.dp), contentAlignment = Alignment.Center) {
                                 CircularProgressIndicator(color = GlifoTheme.colors.accent)
                             }
-                            if (slowServer) {
+                            if (slowServer || isRetrying) {
                                 Text(
                                     text = stringResource(R.string.login_server_waking),
                                     color = GlifoTheme.colors.textSecondary,
