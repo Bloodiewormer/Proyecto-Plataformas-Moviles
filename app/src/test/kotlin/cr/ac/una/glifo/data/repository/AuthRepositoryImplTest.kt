@@ -6,6 +6,7 @@ import cr.ac.una.glifo.data.datasource.remote.GlifoApi
 import cr.ac.una.glifo.data.dto.AuthResponse
 import cr.ac.una.glifo.data.dto.UserDto
 import cr.ac.una.glifo.domain.error.Result
+import cr.ac.una.glifo.domain.model.GlifoRole
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -138,5 +139,27 @@ class AuthRepositoryImplTest {
             Result.Failure(AppError.Server("409", "El correo ya existe")),
             result
         )
+    }
+
+    @Test
+    fun `should return student, teacher and admin demo hints in debug builds`() = runTest {
+        val hints = demoAccountHintsForBuild(isDebug = true)
+
+        assertEquals(
+            listOf(GlifoRole.Student, GlifoRole.Teacher, GlifoRole.Admin),
+            hints.map { it.role }
+        )
+        assertEquals(Result.Success(hints), repository.getDemoAccountHints())
+    }
+
+    @Test
+    fun `should exclude admin demo account in release builds`() {
+        val hints = demoAccountHintsForBuild(isDebug = false)
+
+        assertEquals(
+            listOf(GlifoRole.Student, GlifoRole.Teacher),
+            hints.map { it.role }
+        )
+        assertTrue(hints.none { it.role == GlifoRole.Admin })
     }
 }
