@@ -42,23 +42,27 @@ class StudyRepositoryImpl : StudyRepository {
         api: GlifoApi,
         studyItemDao: StudyItemDao,
         courseRepository: CourseRepository,
-        @ApplicationContext appContext: Context
+        @ApplicationContext appContext: Context,
+        sessionCacheRegistry: SessionCacheRegistry
     ) {
         this.api = api
         this.studyItemDao = studyItemDao
         this.courseRepository = courseRepository
         this.appContext = appContext
+        sessionCacheRegistry.register(::clearCache)
     }
 
     constructor(
         api: GlifoApi,
         studyItemDao: StudyItemDao,
-        courseRepository: CourseRepository
+        courseRepository: CourseRepository,
+        sessionCacheRegistry: SessionCacheRegistry? = null
     ) {
         this.api = api
         this.studyItemDao = studyItemDao
         this.courseRepository = courseRepository
         this.appContext = null
+        sessionCacheRegistry?.register(::clearCache)
     }
 
     constructor(
@@ -69,6 +73,10 @@ class StudyRepositoryImpl : StudyRepository {
         studyItemDao = studyItemDao,
         courseRepository = CourseRepositoryImpl(api)
     )
+
+    fun clearCache() {
+        quizResultsByCourse.clear()
+    }
 
     override suspend fun generateStudyItems(
         courseId: Long,

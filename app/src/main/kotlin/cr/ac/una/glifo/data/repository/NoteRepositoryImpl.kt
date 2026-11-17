@@ -15,6 +15,7 @@ import cr.ac.una.glifo.data.datasource.local.entity.NotePageEntity
 import cr.ac.una.glifo.data.datasource.local.entity.SyncOperationEntity
 import cr.ac.una.glifo.data.datasource.remote.ApiErrorHandler
 import cr.ac.una.glifo.data.datasource.remote.GlifoApi
+import cr.ac.una.glifo.data.dto.CreateGlossarySuggestionRequest
 import cr.ac.una.glifo.data.dto.CreateNoteRequest
 import cr.ac.una.glifo.data.mapper.LOCAL_LEVEL_REACHED
 import cr.ac.una.glifo.data.mapper.buildLocalNoteContent
@@ -30,10 +31,12 @@ import cr.ac.una.glifo.domain.model.NoteMeta
 import cr.ac.una.glifo.domain.model.PageAnalysis
 import cr.ac.una.glifo.domain.repository.NoteRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withTimeoutOrNull
 import retrofit2.HttpException
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -237,7 +240,40 @@ class NoteRepositoryImpl : NoteRepository {
                 createdAt = System.currentTimeMillis()
             )
         )
+        submitGlossarySuggestionBestEffort(
+            courseId = content.note.courseId,
+            serverNoteId = content.serverId,
+            originalText = fragment.text,
+            correctedText = trimmed,
+            previousCorrection = fragment.correctedText
+        )
         return Result.Success(Unit)
+    }
+
+    // Best-effort instead of queueing in sync_operations because SyncOperationEntity lacks a suggestion payload and altering it would require a Room migration.
+    private suspend fun submitGlossarySuggestionBestEffort(
+        courseId: Long,
+        serverNoteId: Long?,
+        originalText: String,
+        correctedText: String,
+        previousCorrection: String?
+    ) {
+        if (!shouldSuggestGlossaryCorrection(originalText, correctedText, previousCorrection)) return
+        try {
+            withTimeoutOrNull(SUGGESTION_TIMEOUT_MS) {
+                api.suggestGlossaryEntry(
+                    courseId = courseId,
+                    request = CreateGlossarySuggestionRequest(
+                        originalText = originalText.trim(),
+                        suggestedCorrection = correctedText.trim(),
+                        noteId = serverNoteId
+                    )
+                )
+            }
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (_: Exception) {
+        }
     }
 
     override suspend fun createNote(courseId: Long, title: String, classDate: String): Result<Note> {
@@ -401,6 +437,7 @@ class NoteRepositoryImpl : NoteRepository {
         const val STATUS_DRAFT = "DRAFT"
         const val STATUS_PROCESSING = "PROCESSING"
         const val STATUS_READY = "READY"
+        const val SUGGESTION_TIMEOUT_MS = 3_000L
 
         val CHIP_ORDER = listOf(
             ConfidenceState.Verified,
@@ -418,4 +455,24 @@ class NoteRepositoryImpl : NoteRepository {
                     .format(LocalDate.parse(isoDate))
             }.getOrDefault(isoDate)
     }
+}
+
+internal const val MAX_GLOSSARY_SUGGESTION_LENGTH = 120
+private const val UNREADABLE_PLACEHOLDER = "[ilegible]"
+
+internal fun shouldSuggestGlossaryCorrection(
+    originalText: String,
+    correctedText: String,
+    previousCorrection: String? = null
+): Boolean {
+    val original = originalText.trim()
+    val corrected = correctedText.trim()
+    if (original.isEmpty() || corrected.isEmpty()) return false
+    if (original == corrected) return false
+    if (previousCorrection != null && previousCorrection.trim() == corrected) return false
+    if (original.equals(UNREADABLE_PLACEHOLDER, ignoreCase = true)) return false
+    if (original.length > MAX_GLOSSARY_SUGGESTION_LENGTH || corrected.length > MAX_GLOSSARY_SUGGESTION_LENGTH) {
+        return false
+    }
+    return true
 }

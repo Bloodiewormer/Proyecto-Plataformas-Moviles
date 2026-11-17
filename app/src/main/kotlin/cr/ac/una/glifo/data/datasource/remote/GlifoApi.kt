@@ -14,6 +14,7 @@ import cr.ac.una.glifo.data.dto.CoverageDeltaResponseDto
 import cr.ac.una.glifo.data.dto.CoverageResponseDto
 import cr.ac.una.glifo.data.dto.CreateCourseRequest
 import cr.ac.una.glifo.data.dto.CreateGlossaryEntryRequest
+import cr.ac.una.glifo.data.dto.CreateGlossarySuggestionRequest
 import cr.ac.una.glifo.data.dto.CreateNotePageRequest
 import cr.ac.una.glifo.data.dto.CreateNoteRequest
 import cr.ac.una.glifo.data.dto.CreateSyllabusTopicRequest
@@ -124,6 +125,12 @@ interface GlifoApi {
 
     @GET("courses/{id}/glossary/suggestions")
     suspend fun getGlossarySuggestions(@Path("id") courseId: Long): ApiResponse<List<GlossarySuggestionResponse>>
+
+    @POST("courses/{id}/glossary/suggestions")
+    suspend fun suggestGlossaryEntry(
+        @Path("id") courseId: Long,
+        @Body request: CreateGlossarySuggestionRequest
+    ): ApiResponse<GlossarySuggestionResponse>
 
     @PATCH("courses/{id}/glossary/suggestions/{suggestionId}")
     suspend fun resolveGlossarySuggestion(

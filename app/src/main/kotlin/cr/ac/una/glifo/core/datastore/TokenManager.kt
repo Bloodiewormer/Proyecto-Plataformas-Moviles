@@ -16,7 +16,16 @@ import javax.inject.Inject
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "glifo_prefs")
 
-class TokenManager @Inject constructor(private val context: Context) {
+class TokenManager private constructor(
+    private val dataStoreProvider: () -> DataStore<Preferences>
+) {
+
+    constructor(context: Context) : this({ context.dataStore })
+
+    internal constructor(dataStore: DataStore<Preferences>) : this({ dataStore })
+
+    private val dataStore: DataStore<Preferences>
+        get() = dataStoreProvider()
 
     companion object {
         private val TOKEN_KEY = stringPreferencesKey("jwt_token")
@@ -32,13 +41,14 @@ class TokenManager @Inject constructor(private val context: Context) {
         private val NOTIFY_SYNC_DONE_KEY = booleanPreferencesKey("notify_sync_done")
         private val SEEN_NOTIFICATION_EVENTS_KEY = stringPreferencesKey("seen_notification_events")
         private const val MAX_SEEN_EVENTS = 50
+        private const val LAST_REPORTED_SYNC_OP_PREFIX = "last_reported_sync_op_"
 
         private fun lastReportedSyncOpKey(userId: Long) =
-            longPreferencesKey("last_reported_sync_op_$userId")
+            longPreferencesKey("$LAST_REPORTED_SYNC_OP_PREFIX$userId")
     }
 
     suspend fun saveToken(token: String, userId: Long, userEmail: String) {
-        context.dataStore.edit { preferences ->
+        dataStore.edit { preferences ->
             preferences[TOKEN_KEY] = token
             preferences[USER_ID_KEY] = userId
             preferences[USER_EMAIL_KEY] = userEmail
@@ -46,21 +56,21 @@ class TokenManager @Inject constructor(private val context: Context) {
     }
 
     suspend fun getToken(): String? {
-        return context.dataStore.data.first()[TOKEN_KEY]
+        return dataStore.data.first()[TOKEN_KEY]
     }
 
     suspend fun getUserId(): Long? {
-        return context.dataStore.data.first()[USER_ID_KEY]
+        return dataStore.data.first()[USER_ID_KEY]
     }
 
     suspend fun getOrCreateInstallationId(): String {
-        val current = context.dataStore.data.first()[INSTALLATION_ID_KEY]
+        val current = dataStore.data.first()[INSTALLATION_ID_KEY]
         if (!current.isNullOrBlank()) {
             return current
         }
         val generated = UUID.randomUUID().toString()
         var resolved = generated
-        context.dataStore.edit { preferences ->
+        dataStore.edit { preferences ->
             val existing = preferences[INSTALLATION_ID_KEY]
             if (existing.isNullOrBlank()) {
                 preferences[INSTALLATION_ID_KEY] = generated
@@ -74,17 +84,17 @@ class TokenManager @Inject constructor(private val context: Context) {
     suspend fun saveFcmToken(token: String) {
         val normalized = token.trim()
         if (normalized.isEmpty()) return
-        context.dataStore.edit { preferences ->
+        dataStore.edit { preferences ->
             preferences[FCM_TOKEN_KEY] = normalized
         }
     }
 
     suspend fun getFcmToken(): String? {
-        return context.dataStore.data.first()[FCM_TOKEN_KEY]
+        return dataStore.data.first()[FCM_TOKEN_KEY]
     }
 
     suspend fun saveRegisteredDevice(deviceId: Long, userId: Long, syncedToken: String?) {
-        context.dataStore.edit { preferences ->
+        dataStore.edit { preferences ->
             preferences[REGISTERED_DEVICE_ID_KEY] = deviceId
             preferences[REGISTERED_DEVICE_USER_ID_KEY] = userId
             if (syncedToken != null) {
@@ -96,19 +106,19 @@ class TokenManager @Inject constructor(private val context: Context) {
     }
 
     suspend fun getRegisteredDeviceId(): Long? {
-        return context.dataStore.data.first()[REGISTERED_DEVICE_ID_KEY]
+        return dataStore.data.first()[REGISTERED_DEVICE_ID_KEY]
     }
 
     suspend fun getRegisteredDeviceUserId(): Long? {
-        return context.dataStore.data.first()[REGISTERED_DEVICE_USER_ID_KEY]
+        return dataStore.data.first()[REGISTERED_DEVICE_USER_ID_KEY]
     }
 
     suspend fun getLastSyncedFcmToken(): String? {
-        return context.dataStore.data.first()[LAST_SYNCED_FCM_TOKEN_KEY]
+        return dataStore.data.first()[LAST_SYNCED_FCM_TOKEN_KEY]
     }
 
     suspend fun clearRegisteredDevice() {
-        context.dataStore.edit { preferences ->
+        dataStore.edit { preferences ->
             preferences.remove(REGISTERED_DEVICE_ID_KEY)
             preferences.remove(REGISTERED_DEVICE_USER_ID_KEY)
             preferences.remove(LAST_SYNCED_FCM_TOKEN_KEY)
@@ -116,11 +126,11 @@ class TokenManager @Inject constructor(private val context: Context) {
     }
 
     suspend fun getLastReportedSyncOpId(userId: Long): Long {
-        return context.dataStore.data.first()[lastReportedSyncOpKey(userId)] ?: 0L
+        return dataStore.data.first()[lastReportedSyncOpKey(userId)] ?: 0L
     }
 
     suspend fun setLastReportedSyncOpId(userId: Long, opId: Long) {
-        context.dataStore.edit { preferences ->
+        dataStore.edit { preferences ->
             val key = lastReportedSyncOpKey(userId)
             val current = preferences[key] ?: 0L
             if (opId > current) {
@@ -130,17 +140,17 @@ class TokenManager @Inject constructor(private val context: Context) {
     }
 
     suspend fun isNotifySyncDoneEnabled(): Boolean {
-        return context.dataStore.data.first()[NOTIFY_SYNC_DONE_KEY] ?: true
+        return dataStore.data.first()[NOTIFY_SYNC_DONE_KEY] ?: true
     }
 
     suspend fun setNotifySyncDoneEnabled(enabled: Boolean) {
-        context.dataStore.edit { preferences ->
+        dataStore.edit { preferences ->
             preferences[NOTIFY_SYNC_DONE_KEY] = enabled
         }
     }
 
     suspend fun hasSeenNotificationEvent(eventId: String): Boolean {
-        val raw = context.dataStore.data.first()[SEEN_NOTIFICATION_EVENTS_KEY].orEmpty()
+        val raw = dataStore.data.first()[SEEN_NOTIFICATION_EVENTS_KEY].orEmpty()
         return raw.split(",").any { it == eventId }
     }
 
@@ -152,7 +162,7 @@ class TokenManager @Inject constructor(private val context: Context) {
         val clean = eventId.trim()
         if (clean.isEmpty()) return false
         var wasNew = false
-        context.dataStore.edit { preferences ->
+        dataStore.edit { preferences ->
             val existing = preferences[SEEN_NOTIFICATION_EVENTS_KEY]
                 ?.split(",")
                 ?.filter { it.isNotBlank() }
@@ -171,25 +181,29 @@ class TokenManager @Inject constructor(private val context: Context) {
      * de la app, el `fcm_token` actual del dispositivo y las preferencias locales.
      */
     suspend fun clearAll() {
-        context.dataStore.edit { preferences ->
+        dataStore.edit { preferences ->
             preferences.remove(TOKEN_KEY)
             preferences.remove(USER_ID_KEY)
             preferences.remove(USER_EMAIL_KEY)
             preferences.remove(REGISTERED_DEVICE_ID_KEY)
             preferences.remove(REGISTERED_DEVICE_USER_ID_KEY)
             preferences.remove(LAST_SYNCED_FCM_TOKEN_KEY)
+            preferences.remove(SEEN_NOTIFICATION_EVENTS_KEY)
+            preferences.asMap().keys
+                .filter { it.name.startsWith(LAST_REPORTED_SYNC_OP_PREFIX) }
+                .forEach { preferences.remove(it) }
         }
     }
 
-    val tokenFlow: Flow<String?> = context.dataStore.data.map { preferences ->
+    val tokenFlow: Flow<String?> = dataStore.data.map { preferences ->
         preferences[TOKEN_KEY]
     }
 
-    val isLoggedInFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
+    val isLoggedInFlow: Flow<Boolean> = dataStore.data.map { preferences ->
         preferences[TOKEN_KEY] != null
     }
 
-    val notifySyncDoneFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
+    val notifySyncDoneFlow: Flow<Boolean> = dataStore.data.map { preferences ->
         preferences[NOTIFY_SYNC_DONE_KEY] ?: true
     }
 }

@@ -13,6 +13,8 @@ import cr.ac.una.glifo.data.datasource.local.entity.NoteEntity
 import cr.ac.una.glifo.data.datasource.local.entity.NotePageEntity
 import cr.ac.una.glifo.data.datasource.remote.GlifoApi
 import cr.ac.una.glifo.data.dto.ApiResponse
+import cr.ac.una.glifo.data.dto.CreateGlossarySuggestionRequest
+import cr.ac.una.glifo.data.dto.GlossarySuggestionResponse
 import cr.ac.una.glifo.data.dto.NoteDetailResponse
 import cr.ac.una.glifo.data.dto.NoteResponse
 import cr.ac.una.glifo.data.mapper.toSnapshotJson
@@ -141,18 +143,92 @@ class NoteRepositoryImplTest {
     }
 
     @Test
-    fun `saving a correction stores the original text next to the new one`() = runTest {
+    fun `saving a correction stores the original text next to the new one and submits glossary suggestion`() = runTest {
         val saved = slot<FragmentCorrectionEntity>()
+        val suggestionSlot = slot<CreateGlossarySuggestionRequest>()
         coEvery { noteDao.noteById(7L) } returns localNote
         coEvery { noteDao.pagesForNote(7L) } returns listOf(page)
         coEvery { noteDao.correctionsForNote(7L) } returns emptyList()
         coEvery { noteDao.upsertCorrection(capture(saved)) } returns Unit
+        coEvery { api.suggestGlossaryEntry(1L, capture(suggestionSlot)) } returns ApiResponse(
+            GlossarySuggestionResponse(
+                id = 10L,
+                courseId = 1L,
+                suggestedBy = "Ana",
+                noteId = null,
+                originalText = "converjencia",
+                suggestedCorrection = "convergencia",
+                status = "PENDING",
+                createdAt = "2026-10-01T00:00:00Z",
+                resolvedAt = null
+            )
+        )
 
         val result = repository.saveCorrection(7L, "p0-r1", "  convergencia ")
 
         assertEquals(Result.Success(Unit), result)
         assertEquals("convergencia", saved.captured.correctedText)
         assertEquals("converjencia", saved.captured.originalText)
+        assertEquals("converjencia", suggestionSlot.captured.originalText)
+        assertEquals("convergencia", suggestionSlot.captured.suggestedCorrection)
+        assertNull(suggestionSlot.captured.noteId)
+        coVerify(exactly = 1) { api.suggestGlossaryEntry(1L, any()) }
+    }
+
+    @Test
+    fun `saving a correction on a synced note includes server note id and still succeeds when suggestion API fails`() = runTest {
+        val contentJson = """{"schemaVersion":1,"blocks":[{"id":"b1","type":"PARAGRAPH","spans":[{"text":"derivada","confidence":0.5,"resolvedAt":"N1","isUncertain":true}]}]}"""
+        val syncedWithContent = remoteNote.copy(contentJson = contentJson)
+        coEvery { noteDao.noteById(8L) } returns syncedWithContent
+        coEvery { noteDao.pagesForNote(8L) } returns emptyList()
+        coEvery { noteDao.correctionsForNote(8L) } returns emptyList()
+        coEvery { noteDao.upsertCorrection(any()) } returns Unit
+        coEvery { api.suggestGlossaryEntry(1L, any()) } throws IOException("offline")
+
+        val offlineResult = repository.saveCorrection(8L, "b1-s0", "integral")
+
+        assertEquals(Result.Success(Unit), offlineResult)
+        coVerify(exactly = 1) { noteDao.upsertCorrection(any()) }
+        coVerify(exactly = 1) {
+            api.suggestGlossaryEntry(
+                1L,
+                CreateGlossarySuggestionRequest("derivada", "integral", noteId = 42L)
+            )
+        }
+
+        val errorBody = """{"message":"bad"}""".toResponseBody("application/json".toMediaTypeOrNull())
+        coEvery { api.suggestGlossaryEntry(1L, any()) } throws HttpException(Response.error<Any>(500, errorBody))
+        val serverErrResult = repository.saveCorrection(8L, "b1-s0", "diferencial")
+        assertEquals(Result.Success(Unit), serverErrResult)
+    }
+
+    @Test
+    fun `glossary suggestion eligibility filters blank, identical, unreadable, and oversized texts`() {
+        assertFalse(shouldSuggestGlossaryCorrection("", "convergencia"))
+        assertFalse(shouldSuggestGlossaryCorrection("   ", "convergencia"))
+        assertFalse(shouldSuggestGlossaryCorrection("convergencia", "   "))
+        assertFalse(shouldSuggestGlossaryCorrection("convergencia", "  convergencia "))
+        assertFalse(shouldSuggestGlossaryCorrection("converjencia", "convergencia", previousCorrection = "convergencia"))
+        assertFalse(shouldSuggestGlossaryCorrection("[ilegible]", "derivada"))
+        assertFalse(shouldSuggestGlossaryCorrection("a".repeat(MAX_GLOSSARY_SUGGESTION_LENGTH + 1), "derivada"))
+        assertFalse(shouldSuggestGlossaryCorrection("derivada", "b".repeat(MAX_GLOSSARY_SUGGESTION_LENGTH + 1)))
+
+        assertTrue(shouldSuggestGlossaryCorrection("converjencia", "convergencia"))
+        assertTrue(shouldSuggestGlossaryCorrection("x", "α"))
+    }
+
+    @Test
+    fun `saving a correction that does not qualify for glossary skips the suggestion endpoint`() = runTest {
+        coEvery { noteDao.noteById(7L) } returns localNote
+        coEvery { noteDao.pagesForNote(7L) } returns listOf(page)
+        coEvery { noteDao.correctionsForNote(7L) } returns emptyList()
+        coEvery { noteDao.upsertCorrection(any()) } returns Unit
+
+        val result = repository.saveCorrection(7L, "p0-r1", "converjencia")
+
+        assertEquals(Result.Success(Unit), result)
+        coVerify(exactly = 1) { noteDao.upsertCorrection(any()) }
+        coVerify(exactly = 0) { api.suggestGlossaryEntry(any(), any()) }
     }
 
     @Test

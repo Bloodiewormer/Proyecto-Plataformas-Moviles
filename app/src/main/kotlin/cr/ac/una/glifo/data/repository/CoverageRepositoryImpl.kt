@@ -47,23 +47,32 @@ class CoverageRepositoryImpl : CoverageRepository {
         api: GlifoApi,
         activeCourseStore: ActiveCourseStore,
         noteDao: NoteDao,
-        @ApplicationContext appContext: Context
+        @ApplicationContext appContext: Context,
+        sessionCacheRegistry: SessionCacheRegistry
     ) {
         this.api = api
         this.activeCourseStore = activeCourseStore
         this.noteDao = noteDao
         this.appContext = appContext
+        sessionCacheRegistry.register(::clearCache)
     }
 
     constructor(
         api: GlifoApi,
         activeCourseStore: ActiveCourseStore? = null,
-        appContext: Context? = null
+        appContext: Context? = null,
+        sessionCacheRegistry: SessionCacheRegistry? = null
     ) {
         this.api = api
         this.activeCourseStore = activeCourseStore
         this.noteDao = null
         this.appContext = appContext
+        sessionCacheRegistry?.register(::clearCache)
+    }
+
+    fun clearCache() {
+        cachedCoverageByCourse.clear()
+        lastEvaluationIsoByCourse.clear()
     }
 
     override suspend fun getSummary(courseId: Long): Result<CoverageSummary> {
