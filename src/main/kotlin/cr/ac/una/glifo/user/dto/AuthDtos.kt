@@ -23,6 +23,15 @@ data class RegisterRequest(
     val lastName: String?
 )
 
+/** Cambio de contraseña del usuario autenticado. Mismas reglas de largo que el registro. */
+data class ChangePasswordRequest(
+    @field:NotBlank(message = "La contraseña actual es obligatoria")
+    val currentPassword: String,
+    @field:NotBlank(message = "La contraseña nueva es obligatoria")
+    @field:Size(min = 6, max = 72, message = "La contraseña debe tener entre 6 y 72 caracteres")
+    val newPassword: String
+)
+
 /** Se devuelve tal cual, sin el envoltorio `data`: es el formato que espera la app. */
 data class AuthResponse(
     val token: String,

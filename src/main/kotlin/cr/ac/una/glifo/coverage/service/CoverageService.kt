@@ -7,9 +7,11 @@ import cr.ac.una.glifo.course.entity.SyllabusTopic
 import cr.ac.una.glifo.course.repository.CourseRepository
 import cr.ac.una.glifo.course.repository.EnrollmentRepository
 import cr.ac.una.glifo.course.repository.SyllabusTopicRepository
+import cr.ac.una.glifo.coverage.dto.CourseGapsResponse
 import cr.ac.una.glifo.coverage.dto.CoverageDeltaResponse
 import cr.ac.una.glifo.coverage.dto.CoverageResponse
 import cr.ac.una.glifo.coverage.dto.TopicCoverageResponse
+import cr.ac.una.glifo.coverage.dto.TopicGapResponse
 import cr.ac.una.glifo.study.entity.TopicCoverage
 import cr.ac.una.glifo.study.repository.TopicCoverageRepository
 import org.springframework.stereotype.Service
@@ -99,6 +101,62 @@ class CoverageService(
             since = since,
             changedCounts = countByState(changedRows),
             changedTopics = changedRows
+        )
+    }
+
+    /**
+     * Brechas del grupo: por cada tema hoja, cuántos estudiantes activos no lo tienen SOLID.
+     * Solo el docente dueño (o un admin) la ve; a cualquier otro se le responde 404, igual que
+     * en el resto de la cobertura, para no revelar que el curso existe.
+     */
+    @Transactional(readOnly = true)
+    fun getCourseGaps(courseId: Long, userId: Long, isAdmin: Boolean): CourseGapsResponse {
+        val course = courseRepository.findById(courseId).orElseThrow { ResourceNotFoundException("Curso no encontrado") }
+        if (!isAdmin && course.owner?.id != userId) {
+            throw ResourceNotFoundException("Curso no encontrado")
+        }
+
+        val studentIds = enrollmentRepository.findByCourseIdAndStatus(courseId, "ACTIVE")
+            .mapNotNull { it.user?.id }
+            .distinct()
+        val topics = syllabusTopicRepository.findByCourseIdOrderByOrderIndex(courseId)
+        val parentIds = topics.mapNotNull { it.parent?.id }.toSet()
+        val leaves = topics.filter { it.id !in parentIds }
+
+        val rows = if (studentIds.isEmpty() || leaves.isEmpty()) emptyList()
+        else topicCoverageRepository.findBySyllabusTopicIdInAndUserIdIn(leaves.map { it.id }, studentIds)
+        // topicId -> (userId -> fila); un estudiante sin fila en un tema cuenta como ABSENT con 0.
+        val byTopic = rows.filter { it.syllabusTopic != null && it.user != null }
+            .groupBy { it.syllabusTopic!!.id }
+            .mapValues { (_, list) -> list.associateBy { it.user!!.id } }
+
+        val topicGaps = leaves.map { topic ->
+            val perStudent = byTopic[topic.id].orEmpty()
+            val states = studentIds.map { perStudent[it]?.state ?: "ABSENT" }
+            val scores = studentIds.map { perStudent[it]?.score ?: 0f }
+            TopicGapResponse(
+                topicId = topic.id,
+                code = topic.code,
+                title = topic.title,
+                studentsWithGap = states.count { it != "SOLID" },
+                solidCount = states.count { it == "SOLID" },
+                partialCount = states.count { it == "PARTIAL" },
+                absentCount = states.count { it == "ABSENT" },
+                uncertainCount = states.count { it == "UNCERTAIN" },
+                averagePct = toPercent(scores.averageOrZero())
+            )
+        }.sortedWith(compareByDescending<TopicGapResponse> { it.studentsWithGap }.thenBy { it.averagePct })
+
+        val allScores = leaves.flatMap { topic ->
+            val perStudent = byTopic[topic.id].orEmpty()
+            studentIds.map { perStudent[it]?.score ?: 0f }
+        }
+
+        return CourseGapsResponse(
+            courseId = courseId,
+            enrolledStudents = studentIds.size,
+            coveragePct = toPercent(allScores.averageOrZero()),
+            topics = topicGaps
         )
     }
 

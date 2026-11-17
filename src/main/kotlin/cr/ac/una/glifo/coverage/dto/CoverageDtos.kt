@@ -28,6 +28,33 @@ data class TopicCoverageResponse(
     @JsonProperty("updated_at") val updatedAt: Instant?
 )
 
+/**
+ * `GET /courses/{id}/coverage/gaps`: brechas del grupo para el docente dueño del curso.
+ * Un estudiante tiene brecha en un tema si no está SOLID (incluye no tener fila: ABSENT).
+ */
+data class CourseGapsResponse(
+    @JsonProperty("course_id") val courseId: Long,
+    /** Estudiantes con matrícula ACTIVE. */
+    @JsonProperty("enrolled_students") val enrolledStudents: Int,
+    /** Promedio del grupo, de 0 a 100 (promedio de los scores de todos los temas hoja y estudiantes). */
+    @JsonProperty("coverage_pct") val coveragePct: Float,
+    /** Temas hoja ordenados de más a menos estudiantes con brecha. */
+    val topics: List<TopicGapResponse>
+)
+
+data class TopicGapResponse(
+    @JsonProperty("topic_id") val topicId: Long,
+    val code: String,
+    val title: String,
+    @JsonProperty("students_with_gap") val studentsWithGap: Int,
+    @JsonProperty("solid_count") val solidCount: Int,
+    @JsonProperty("partial_count") val partialCount: Int,
+    @JsonProperty("absent_count") val absentCount: Int,
+    @JsonProperty("uncertain_count") val uncertainCount: Int,
+    /** Promedio del score del tema en el grupo, de 0 a 100. */
+    @JsonProperty("average_pct") val averagePct: Float
+)
+
 /** `GET /courses/{id}/coverage/delta?since=`: qué cambió desde una fecha (§4.5). */
 data class CoverageDeltaResponse(
     @JsonProperty("course_id") val courseId: Long,

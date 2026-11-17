@@ -1,8 +1,11 @@
 package cr.ac.una.glifo.user.service
 
+import cr.ac.una.glifo.common.exception.BadRequestException
 import cr.ac.una.glifo.common.exception.DuplicateResourceException
+import cr.ac.una.glifo.common.exception.ResourceNotFoundException
 import cr.ac.una.glifo.security.JwtProvider
 import cr.ac.una.glifo.user.dto.AuthResponse
+import cr.ac.una.glifo.user.dto.ChangePasswordRequest
 import cr.ac.una.glifo.user.dto.LoginRequest
 import cr.ac.una.glifo.user.dto.RegisterRequest
 import cr.ac.una.glifo.user.entity.User
@@ -62,5 +65,24 @@ class AuthService(
         val token = jwtProvider.generateToken(authentication)
         
         return AuthResponse(token, user.toResponse())
+    }
+
+    /**
+     * Cambia la contraseña del usuario autenticado. Exige la actual para que un teléfono
+     * desbloqueado con la sesión abierta no baste para cambiarla.
+     * Responde 400 (no 401) si la actual no coincide: la app trata un 401 como sesión vencida.
+     */
+    @Transactional
+    fun changePassword(userId: Long, request: ChangePasswordRequest) {
+        val user = userRepository.findById(userId)
+            .orElseThrow { ResourceNotFoundException("Usuario no encontrado") }
+        if (!passwordEncoder.matches(request.currentPassword, user.passwordHash)) {
+            throw BadRequestException("La contraseña actual no es correcta")
+        }
+        if (passwordEncoder.matches(request.newPassword, user.passwordHash)) {
+            throw BadRequestException("La contraseña nueva debe ser distinta de la actual")
+        }
+        user.passwordHash = passwordEncoder.encode(request.newPassword) ?: ""
+        userRepository.save(user)
     }
 }
