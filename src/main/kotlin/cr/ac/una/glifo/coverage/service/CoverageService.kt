@@ -7,6 +7,7 @@ import cr.ac.una.glifo.course.entity.SyllabusTopic
 import cr.ac.una.glifo.course.repository.CourseRepository
 import cr.ac.una.glifo.course.repository.EnrollmentRepository
 import cr.ac.una.glifo.course.repository.SyllabusTopicRepository
+import cr.ac.una.glifo.course.service.CourseService
 import cr.ac.una.glifo.course.service.sortedHierarchically
 import cr.ac.una.glifo.coverage.dto.CourseGapsResponse
 import cr.ac.una.glifo.coverage.dto.CoverageDeltaResponse
@@ -39,7 +40,8 @@ class CoverageService(
     private val courseRepository: CourseRepository,
     private val enrollmentRepository: EnrollmentRepository,
     private val syllabusTopicRepository: SyllabusTopicRepository,
-    private val topicCoverageRepository: TopicCoverageRepository
+    private val topicCoverageRepository: TopicCoverageRepository,
+    private val courseService: CourseService
 ) {
 
     @Transactional(readOnly = true)
@@ -163,14 +165,8 @@ class CoverageService(
     }
 
     @Transactional(readOnly = true)
-    fun findAccessibleCourse(courseId: Long, userId: Long): Course {
-        val course = courseRepository.findById(courseId).orElseThrow { ResourceNotFoundException("Curso no encontrado") }
-        val isOwner = course.owner?.id == userId
-        if (!isOwner && !enrollmentRepository.existsByUserIdAndCourseId(userId, courseId)) {
-            throw ResourceNotFoundException("Curso no encontrado")
-        }
-        return course
-    }
+    fun findAccessibleCourse(courseId: Long, userId: Long, isAdmin: Boolean = false): Course =
+        courseService.findAccessibleCourse(courseId, userId, isAdmin)
 
     private fun coverageByTopic(userId: Long, topics: List<SyllabusTopic>): Map<Long, TopicCoverage> {
         if (topics.isEmpty()) return emptyMap()

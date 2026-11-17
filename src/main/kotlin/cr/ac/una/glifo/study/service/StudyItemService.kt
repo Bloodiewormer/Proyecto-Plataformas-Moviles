@@ -11,6 +11,7 @@ import cr.ac.una.glifo.course.entity.SyllabusTopic
 import cr.ac.una.glifo.course.repository.CourseRepository
 import cr.ac.una.glifo.course.repository.EnrollmentRepository
 import cr.ac.una.glifo.course.repository.SyllabusTopicRepository
+import cr.ac.una.glifo.course.service.CourseService
 import cr.ac.una.glifo.study.dto.GenerateStudyItemsRequest
 import cr.ac.una.glifo.study.dto.StudyItemResponse
 import cr.ac.una.glifo.study.entity.StudyItem
@@ -34,7 +35,8 @@ class StudyItemService @Autowired constructor(
     private val enrollmentRepository: EnrollmentRepository,
     private val syllabusTopicRepository: SyllabusTopicRepository,
     private val studyItemRepository: StudyItemRepository,
-    private val aiOrchestrator: AiOrchestrator
+    private val aiOrchestrator: AiOrchestrator,
+    private val courseService: CourseService
 ) {
 
     constructor(
@@ -42,13 +44,15 @@ class StudyItemService @Autowired constructor(
         enrollmentRepository: EnrollmentRepository,
         syllabusTopicRepository: SyllabusTopicRepository,
         studyItemRepository: StudyItemRepository,
-        generationService: GenerationService
+        generationService: GenerationService,
+        courseService: CourseService
     ) : this(
         courseRepository = courseRepository,
         enrollmentRepository = enrollmentRepository,
         syllabusTopicRepository = syllabusTopicRepository,
         studyItemRepository = studyItemRepository,
-        aiOrchestrator = AiOrchestrator(generationService)
+        aiOrchestrator = AiOrchestrator(generationService),
+        courseService = courseService
     )
 
     /**
@@ -132,9 +136,10 @@ class StudyItemService @Autowired constructor(
     fun list(
         courseId: Long,
         topicId: Long?,
-        userId: Long
+        userId: Long,
+        isAdmin: Boolean = false
     ): List<StudyItemResponse> {
-        requireCourseMember(courseId, userId)
+        courseService.findAccessibleCourse(courseId, userId, isAdmin)
 
         if (topicId != null) {
             val courseTopicsById = syllabusTopicRepository.findByCourseIdOrderByOrderIndex(courseId)

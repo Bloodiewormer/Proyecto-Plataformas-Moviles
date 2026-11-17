@@ -67,10 +67,23 @@ class CourseService @Autowired constructor(
     }
 
     @Transactional(readOnly = true)
-    fun getCourseById(id: Long): CourseResponse {
-        val course = courseRepository.findById(id)
+    fun getCourseById(id: Long, userId: Long, isAdmin: Boolean = false): CourseResponse =
+        findAccessibleCourse(id, userId, isAdmin).toResponse()
+
+    /**
+     * Busca un curso accesible para [userId]: el docente dueño, un estudiante con matrícula
+     * ACTIVE o un administrador ([isAdmin]). Responde 404 en caso contrario para no revelar
+     * que el curso existe.
+     */
+    @Transactional(readOnly = true)
+    fun findAccessibleCourse(courseId: Long, userId: Long, isAdmin: Boolean = false): Course {
+        val course = courseRepository.findById(courseId)
             .orElseThrow { ResourceNotFoundException("Curso no encontrado") }
-        return course.toResponse()
+        val isOwner = course.owner?.id == userId
+        if (!isAdmin && !isOwner && !enrollmentRepository.existsByUserIdAndCourseIdAndStatus(userId, courseId, "ACTIVE")) {
+            throw ResourceNotFoundException("Curso no encontrado")
+        }
+        return course
     }
 
     @Transactional
@@ -152,9 +165,8 @@ class CourseService @Autowired constructor(
 
     /** Devuelve los metadatos del sílabo guardado y sus temas sin leer ningún PDF ni llamar a la IA. */
     @Transactional(readOnly = true)
-    fun getSyllabusDocument(courseId: Long): SyllabusDocumentResponse {
-        val course = courseRepository.findById(courseId)
-            .orElseThrow { ResourceNotFoundException("Curso no encontrado") }
+    fun getSyllabusDocument(courseId: Long, userId: Long, isAdmin: Boolean = false): SyllabusDocumentResponse {
+        val course = findAccessibleCourse(courseId, userId, isAdmin)
         val topics = syllabusTopicRepository.findByCourseIdOrderByOrderIndex(courseId)
             .sortedHierarchically()
             .map { it.toResponse() }
@@ -222,10 +234,8 @@ class CourseService @Autowired constructor(
     }
 
     @Transactional(readOnly = true)
-    fun getCourseTopics(courseId: Long): List<SyllabusTopicResponse> {
-        if (!courseRepository.existsById(courseId)) {
-            throw ResourceNotFoundException("Curso no encontrado")
-        }
+    fun getCourseTopics(courseId: Long, userId: Long, isAdmin: Boolean = false): List<SyllabusTopicResponse> {
+        findAccessibleCourse(courseId, userId, isAdmin)
         return syllabusTopicRepository.findByCourseIdOrderByOrderIndex(courseId)
             .sortedHierarchically()
             .map { it.toResponse() }

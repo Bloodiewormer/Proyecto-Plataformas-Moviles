@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.*
  *
  * | Método | Ruta                                        | Éxito | Errores                                        |
  * |--------|---------------------------------------------|-------|------------------------------------------------|
- * | GET    | /courses/{id}/glossary                      | 200   | 400, 404 (no es miembro)                       |
+ * | GET    | /courses/{id}/glossary                      | 200   | 400, 404 (no existe o no es miembro/admin)     |
  * | POST   | /courses/{id}/glossary                      | 201   | 400, 403 (sin GLOSSARY_WRITE o no es dueño), 409 (duplicado), 415 |
  * | DELETE | /courses/{id}/glossary/{entryId}            | 204   | 400, 403, 404                                  |
  * | GET    | /courses/{id}/glossary/suggestions?status=  | 200   | 400, 403                                       |
@@ -41,7 +41,7 @@ class GlossaryController(private val glossaryService: GlossaryService) {
         @PathVariable @Positive(message = "El id del curso debe ser positivo") courseId: Long,
         @AuthenticationPrincipal user: GlifoUserDetails
     ): ResponseEntity<ApiResponse<CourseGlossaryResponse>> =
-        ResponseEntity.ok(ApiResponse(data = glossaryService.getGlossary(courseId, user.userId)))
+        ResponseEntity.ok(ApiResponse(data = glossaryService.getGlossary(courseId, user.userId, user.isAdmin())))
 
     @PostMapping(consumes = [MediaType.APPLICATION_JSON_VALUE])
     @PreAuthorize("hasAuthority('GLOSSARY_WRITE')")

@@ -7,10 +7,12 @@ import cr.ac.una.glifo.course.entity.SyllabusTopic
 import cr.ac.una.glifo.course.repository.CourseRepository
 import cr.ac.una.glifo.course.repository.EnrollmentRepository
 import cr.ac.una.glifo.course.repository.SyllabusTopicRepository
+import cr.ac.una.glifo.course.service.CourseService
 import cr.ac.una.glifo.coverage.service.CoverageService
 import cr.ac.una.glifo.study.entity.TopicCoverage
 import cr.ac.una.glifo.study.repository.TopicCoverageRepository
 import cr.ac.una.glifo.user.entity.User
+import cr.ac.una.glifo.user.repository.UserRepository
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -56,10 +58,16 @@ class CoverageServiceUnitTest {
         enrollmentRepository = mock(EnrollmentRepository::class.java)
         topicRepository = mock(SyllabusTopicRepository::class.java)
         coverageRepository = mock(TopicCoverageRepository::class.java)
-        service = CoverageService(courseRepository, enrollmentRepository, topicRepository, coverageRepository)
+        val courseService = CourseService(
+            courseRepository,
+            enrollmentRepository,
+            mock(UserRepository::class.java),
+            topicRepository
+        )
+        service = CoverageService(courseRepository, enrollmentRepository, topicRepository, coverageRepository, courseService)
 
         `when`(courseRepository.findById(10L)).thenReturn(Optional.of(course))
-        `when`(enrollmentRepository.existsByUserIdAndCourseId(1L, 10L)).thenReturn(true)
+        `when`(enrollmentRepository.existsByUserIdAndCourseIdAndStatus(1L, 10L, "ACTIVE")).thenReturn(true)
         `when`(topicRepository.findByCourseIdOrderByOrderIndex(10L)).thenReturn(topics)
     }
 
@@ -137,7 +145,7 @@ class CoverageServiceUnitTest {
 
     @Test
     fun `quien no esta matriculado recibe 404 y no 403`() {
-        `when`(enrollmentRepository.existsByUserIdAndCourseId(99L, 10L)).thenReturn(false)
+        `when`(enrollmentRepository.existsByUserIdAndCourseIdAndStatus(99L, 10L, "ACTIVE")).thenReturn(false)
 
         assertThrows<ResourceNotFoundException> { service.getCoverage(10L, 99L) }
     }

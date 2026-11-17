@@ -187,7 +187,7 @@ class SyllabusPdfHttpTest {
 
         // GET no debe llamar al LLM y devuelve size_bytes = null
         mvc.get("/api/v1/courses/${course.id}/syllabus") {
-            header("Authorization", studentBearer())
+            header("Authorization", teacherAuth)
         }.andExpect {
             status { isOk() }
             jsonPath("$.data.course_id") { value(course.id) }

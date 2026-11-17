@@ -6,7 +6,7 @@ import cr.ac.una.glifo.common.exception.DuplicateResourceException
 import cr.ac.una.glifo.common.exception.ResourceNotFoundException
 import cr.ac.una.glifo.course.entity.Course
 import cr.ac.una.glifo.course.repository.CourseRepository
-import cr.ac.una.glifo.course.repository.EnrollmentRepository
+import cr.ac.una.glifo.course.service.CourseService
 import cr.ac.una.glifo.glossary.dto.CourseGlossaryResponse
 import cr.ac.una.glifo.glossary.dto.CreateGlossaryEntryRequest
 import cr.ac.una.glifo.glossary.dto.CreateGlossarySuggestionRequest
@@ -33,8 +33,8 @@ private val SUGGESTION_STATUSES = setOf("PENDING", "APPROVED", "REJECTED")
  * Glosario canónico de notación del curso y moderación de sugerencias (issue #33, D-15).
  *
  * Reglas:
- * - Leer el glosario: cualquier miembro del curso (matriculado o docente dueño). Si no es
- *   miembro, 404, para no revelar que el curso existe.
+ * - Leer el glosario: docente dueño, estudiante con matrícula ACTIVE o administrador. Si no,
+ *   404, para no revelar que el curso existe.
  * - Escribir el glosario y moderar: solo el docente dueño. El privilegio GLOSSARY_WRITE lo
  *   revisa el controller; aquí se revisa que además sea SU curso (403 si no lo es).
  * - El estudiante nunca escribe en course_glossary: deja una sugerencia PENDING que el
@@ -45,7 +45,7 @@ private val SUGGESTION_STATUSES = setOf("PENDING", "APPROVED", "REJECTED")
 @Service
 class GlossaryService(
     private val courseRepository: CourseRepository,
-    private val enrollmentRepository: EnrollmentRepository,
+    private val courseService: CourseService,
     private val glossaryRepository: CourseGlossaryRepository,
     private val suggestionRepository: GlossarySuggestionRepository,
     private val userRepository: UserRepository,
@@ -53,8 +53,8 @@ class GlossaryService(
 ) {
 
     @Transactional(readOnly = true)
-    fun getGlossary(courseId: Long, userId: Long): CourseGlossaryResponse {
-        val course = findMemberCourse(courseId, userId)
+    fun getGlossary(courseId: Long, userId: Long, isAdmin: Boolean = false): CourseGlossaryResponse {
+        val course = courseService.findAccessibleCourse(courseId, userId, isAdmin)
         return course.toGlossaryResponse(glossaryRepository.findByCourseIdOrderByTerm(courseId))
     }
 
@@ -77,7 +77,7 @@ class GlossaryService(
 
     @Transactional
     fun suggest(courseId: Long, userId: Long, request: CreateGlossarySuggestionRequest): GlossarySuggestionResponse {
-        val course = findMemberCourse(courseId, userId)
+        val course = courseService.findAccessibleCourse(courseId, userId)
         val user = userRepository.findById(userId).orElseThrow { ResourceNotFoundException("Usuario no encontrado") }
         val note = request.noteId?.let { noteId ->
             val note = noteRepository.findById(noteId).orElseThrow { ResourceNotFoundException("Apunte no encontrado") }
@@ -156,14 +156,6 @@ class GlossaryService(
     private fun bumpGlossaryVersion(course: Course) {
         course.glossaryVersion += 1
         courseRepository.save(course)
-    }
-
-    private fun findMemberCourse(courseId: Long, userId: Long): Course {
-        val course = courseRepository.findById(courseId).orElseThrow { ResourceNotFoundException("Curso no encontrado") }
-        if (course.owner?.id != userId && !enrollmentRepository.existsByUserIdAndCourseId(userId, courseId)) {
-            throw ResourceNotFoundException("Curso no encontrado")
-        }
-        return course
     }
 
     /** Un docente con GLOSSARY_WRITE pero que no es dueño del curso recibe 403. */
