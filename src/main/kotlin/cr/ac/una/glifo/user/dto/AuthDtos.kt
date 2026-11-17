@@ -48,3 +48,16 @@ data class UserResponse(
     /** Todos los roles tal como están en la base (ROLE_STUDENT, …). */
     val roles: List<String>
 )
+
+/** El admin restablece la contraseña de otra cuenta (no hay envío de correos todavía). */
+data class AdminResetPasswordRequest(
+    @field:NotBlank(message = "El correo es obligatorio")
+    @field:Email(message = "El correo no es válido")
+    val email: String
+)
+
+/** La contraseña temporal se muestra una sola vez al admin, para que se la pase al usuario. */
+data class AdminResetPasswordResponse(
+    val email: String,
+    val temporaryPassword: String
+)
