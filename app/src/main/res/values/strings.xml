@@ -575,4 +575,16 @@
     <string name="admin_reset_password_copy">Copy</string>
     <string name="admin_reset_password_copied">Copied</string>
     <string name="admin_reset_password_error_email">Type a valid email.</string>
+
+    <!-- Coverage & Delta localized labels -->
+    <string name="coverage_state_solid">SOLID</string>
+    <string name="coverage_state_partial">PARTIAL</string>
+    <string name="coverage_state_absent">ABSENT</string>
+    <string name="coverage_state_uncertain">UNCERTAIN</string>
+    <string name="coverage_unit_default">COURSE SYLLABUS</string>
+    <string name="coverage_delta_latest_update">Last updated: %1$s · View changes</string>
+    <string name="coverage_delta_view_recent">View recent syllabus changes</string>
+    <string name="coverage_topic_updated_at">Updated: %1$s</string>
+    <string name="coverage_delta_since">Since %1$s</string>
+    <string name="coverage_error_no_active_course">Select an active course first.</string>
 </resources>

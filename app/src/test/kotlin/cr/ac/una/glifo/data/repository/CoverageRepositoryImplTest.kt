@@ -136,4 +136,24 @@ class CoverageRepositoryImplTest {
         assertEquals("502", (badGatewayError as AppError.Server).code)
         assertEquals("Error en el juez semántico IA-04", badGatewayError.message)
     }
+
+    @Test
+    fun `getTopicDetail and getDelta resolve localized no-active-course message from Context`() = runTest {
+        val context = mockk<android.content.Context> {
+            io.mockk.every { getString(cr.ac.una.glifo.R.string.coverage_error_no_active_course) } returns "Select an active course first."
+        }
+        val repoWithContext = CoverageRepositoryImpl(api = api, activeCourseStore = null, appContext = context)
+
+        val topicResult = repoWithContext.getTopicDetail("Limits")
+        val deltaResult = repoWithContext.getDelta(courseId = null, since = null)
+
+        assertEquals(
+            Result.Failure(AppError.Validation("courseId", "Select an active course first.")),
+            topicResult
+        )
+        assertEquals(
+            Result.Failure(AppError.Validation("courseId", "Select an active course first.")),
+            deltaResult
+        )
+    }
 }

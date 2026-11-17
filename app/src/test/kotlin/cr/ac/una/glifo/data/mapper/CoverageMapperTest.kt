@@ -1,13 +1,21 @@
 package cr.ac.una.glifo.data.mapper
 
+import cr.ac.una.glifo.R
+import cr.ac.una.glifo.core.common.UiText
 import cr.ac.una.glifo.data.dto.CoverageDeltaResponseDto
 import cr.ac.una.glifo.data.dto.CoverageResponseDto
 import cr.ac.una.glifo.data.dto.TopicCoverageResponseDto
 import cr.ac.una.glifo.domain.model.ConfidenceState
+import cr.ac.una.glifo.domain.model.CoverageTopic
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
+import java.util.Locale
 
 class CoverageMapperTest {
 
@@ -18,10 +26,19 @@ class CoverageMapperTest {
         assertEquals(ConfidenceState.Escalated, CoverageMapper.mapState("ABSENT"))
         assertEquals(ConfidenceState.Uncertain, CoverageMapper.mapState("UNCERTAIN"))
         assertEquals(ConfidenceState.Uncertain, CoverageMapper.mapState(null))
+        assertEquals(R.string.coverage_state_solid, CoverageMapper.stateLabelRes(ConfidenceState.Verified))
+        assertEquals(R.string.coverage_state_partial, CoverageMapper.stateLabelRes(ConfidenceState.Repaired))
+        assertEquals(R.string.coverage_state_absent, CoverageMapper.stateLabelRes(ConfidenceState.Escalated))
+        assertEquals(R.string.coverage_state_uncertain, CoverageMapper.stateLabelRes(ConfidenceState.Uncertain))
     }
 
     @Test
-    fun `toSummary and toTopics map state counts, percentages and leaf topics excluding parent containers`() {
+    fun `toSummary and toTopics map state counts, percentages, localized UiText and leaf topics`() {
+        val zone = ZoneId.of("America/Costa_Rica")
+        val locale = Locale.US
+        val expectedUpdated = LocalDate.of(2026, 10, 28)
+            .format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale))
+
         val dto = CoverageResponseDto(
             courseId = 1L,
             coveragePct = 55.0f,
@@ -80,7 +97,7 @@ class CoverageMapperTest {
             )
         )
 
-        val summary = dto.toSummary()
+        val summary = dto.toSummary(zoneId = zone, locale = locale)
         assertEquals(5, summary.topicCount)
         assertEquals(55, summary.coveragePercent)
         assertEquals(2, summary.solidCount)
@@ -91,22 +108,42 @@ class CoverageMapperTest {
         assertEquals(20f, summary.r, 0.01f)
         assertEquals(20f, summary.e, 0.01f)
         assertEquals(20f, summary.u, 0.01f)
+        assertEquals(UiText.Plain("U1 · LÍMITES Y CONTINUIDAD"), summary.unitText)
+        assertEquals(
+            UiText.Resource(R.string.coverage_delta_latest_update, expectedUpdated),
+            summary.deltaText
+        )
 
-        val topics = dto.toTopics()
+        val noParentDto = dto.copy(topics = dto.topics.drop(1).map { it.copy(updatedAt = null) })
+        val noParentSummary = noParentDto.toSummary(zoneId = zone, locale = locale)
+        assertEquals(UiText.Resource(R.string.coverage_unit_default), noParentSummary.unitText)
+        assertEquals(UiText.Resource(R.string.coverage_delta_view_recent), noParentSummary.deltaText)
+
+        val topics = dto.toTopics(zoneId = zone, locale = locale)
         assertEquals(4, topics.size)
         assertEquals(ConfidenceState.Verified, topics[0].state)
         assertEquals("U1.1 Definición formal de límite", topics[0].name)
         assertEquals("0.92", topics[0].score)
+        assertEquals(
+            UiText.Resource(R.string.coverage_topic_updated_at, expectedUpdated),
+            topics[0].noteText
+        )
         assertEquals(ConfidenceState.Repaired, topics[1].state)
         assertEquals(ConfidenceState.Uncertain, topics[2].state)
         assertEquals(ConfidenceState.Escalated, topics[3].state)
+        assertEquals(null, topics[3].noteText)
     }
 
     @Test
-    fun `toDeltaInfo maps changed topics and handles empty delta without inventing percentages`() {
+    fun `toDeltaInfo formats since date using supplied timezone and locale`() {
+        val costaRica = ZoneId.of("America/Costa_Rica")
+        val utc = ZoneId.of("UTC")
+        val esLocale = Locale.forLanguageTag("es")
+        val enLocale = Locale.US
+
         val deltaDto = CoverageDeltaResponseDto(
             courseId = 1L,
-            since = "2026-10-21T00:00:00Z",
+            since = "2026-10-21T02:30:00Z",
             changedCounts = mapOf("SOLID" to 1, "PARTIAL" to 1, "ABSENT" to 0, "UNCERTAIN" to 0),
             changedTopics = listOf(
                 TopicCoverageResponseDto(
@@ -121,20 +158,34 @@ class CoverageMapperTest {
             )
         )
 
-        val deltaInfo = deltaDto.toDeltaInfo()
-        assertTrue(deltaInfo.changedTopics.isNotEmpty())
-        assertEquals("2026-10-21T00:00:00Z", deltaInfo.sinceIso)
-        assertEquals("2026-10-21", deltaInfo.sinceDisplay)
-        assertEquals(1, deltaInfo.changedTopics.size)
-        assertEquals(0, deltaInfo.fromPercent)
-        assertEquals(0, deltaInfo.toPercent)
+        val crInfo = deltaDto.toDeltaInfo(zoneId = costaRica, locale = enLocale)
+        val expectedCr = LocalDate.of(2026, 10, 20)
+            .format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(enLocale))
+        assertTrue(crInfo.changedTopics.isNotEmpty())
+        assertEquals("2026-10-21T02:30:00Z", crInfo.sinceIso)
+        assertEquals(expectedCr, crInfo.sinceDisplay)
+        assertEquals(UiText.Resource(R.string.coverage_delta_since, expectedCr), crInfo.dateRangeText)
+        assertEquals(1, crInfo.changedTopics.size)
+        assertEquals(0, crInfo.fromPercent)
+        assertEquals(0, crInfo.toPercent)
+
+        val utcEsInfo = deltaDto.toDeltaInfo(zoneId = utc, locale = esLocale)
+        val expectedUtcEs = LocalDate.of(2026, 10, 21)
+            .format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(esLocale))
+        assertEquals(expectedUtcEs, utcEsInfo.sinceDisplay)
+        assertEquals(UiText.Resource(R.string.coverage_delta_since, expectedUtcEs), utcEsInfo.dateRangeText)
+
+        val detail = CoverageMapper.toTopicDetail(
+            CoverageTopic(state = ConfidenceState.Repaired, name = "U1.2", note = null, score = "0.65")
+        )
+        assertEquals(UiText.Resource(R.string.coverage_state_partial), detail.stateLabelText)
 
         val emptyDelta = CoverageDeltaResponseDto(
             courseId = 1L,
             since = "2026-10-28T00:00:00Z",
             changedCounts = emptyMap(),
             changedTopics = emptyList()
-        ).toDeltaInfo()
+        ).toDeltaInfo(zoneId = utc, locale = enLocale)
 
         assertFalse(emptyDelta.changedTopics.isNotEmpty())
         assertTrue(emptyDelta.changedTopics.isEmpty())

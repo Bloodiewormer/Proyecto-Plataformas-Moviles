@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
+import cr.ac.una.glifo.core.common.asString
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
 import cr.ac.una.glifo.domain.model.ConfidenceState
@@ -68,7 +69,7 @@ fun CoverageDeltaScreen(
                         .padding(14.dp)
                 ) {
                     GlifoCard {
-                        Text(delta.dateRange, fontSize = 12.sp, color = colors.textSecondary)
+                        Text(delta.dateRangeText.asString(), fontSize = 12.sp, color = colors.textSecondary)
 
                         Spacer(modifier = Modifier.height(8.dp))
 
@@ -135,8 +136,9 @@ fun CoverageDeltaScreen(
                                     GlifoConfidenceChip(state = topic.state)
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(text = topic.name, fontSize = 14.sp, color = colors.textPrimary)
-                                        if (topic.note != null) {
-                                            Text(text = topic.note, fontSize = 12.sp, color = colors.textSecondary)
+                                        val topicNote = topic.noteText?.asString() ?: topic.note
+                                        if (topicNote != null) {
+                                            Text(text = topicNote, fontSize = 12.sp, color = colors.textSecondary)
                                         }
                                     }
                                     Text(

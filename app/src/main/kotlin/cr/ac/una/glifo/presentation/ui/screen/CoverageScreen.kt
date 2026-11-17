@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
+import cr.ac.una.glifo.core.common.asString
 import cr.ac.una.glifo.domain.model.ConfidenceState
 import cr.ac.una.glifo.domain.model.GlifoRole
 import cr.ac.una.glifo.core.ui.component.*
@@ -124,7 +125,7 @@ fun CoverageScreen(
                         text = "",
                         content = {
                             Icon(imageVector = Icons.Default.ShowChart, contentDescription = null, tint = colors.textPrimary, modifier = Modifier.size(16.dp))
-                            Text(summary.deltaLabel, fontSize = 12.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                            Text(summary.deltaText.asString(), fontSize = 12.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
                             Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textPrimary, modifier = Modifier.size(16.dp))
                         },
                         modifier = Modifier.clickable(onClick = onNavigateToDelta)
@@ -220,7 +221,7 @@ fun CoverageScreen(
                         }
 
                         Text(
-                            text = summary.unitLabel,
+                            text = summary.unitText.asString(),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.SemiBold,
                             letterSpacing = 0.6.sp,
@@ -239,8 +240,9 @@ fun CoverageScreen(
                                         GlifoConfidenceChip(state = topic.state)
                                         Column(modifier = Modifier.weight(1f)) {
                                             Text(text = topic.name, fontSize = 13.sp, color = colors.textPrimary)
-                                            if (topic.note != null) {
-                                                Text(text = topic.note, fontSize = 11.sp, color = colors.textSecondary)
+                                            val topicNote = topic.noteText?.asString() ?: topic.note
+                                            if (topicNote != null) {
+                                                Text(text = topicNote, fontSize = 11.sp, color = colors.textSecondary)
                                             }
                                         }
                                         Text(

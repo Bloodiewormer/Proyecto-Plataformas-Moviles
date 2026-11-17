@@ -575,4 +575,16 @@
     <string name="admin_reset_password_copy">Copiar</string>
     <string name="admin_reset_password_copied">Copiada</string>
     <string name="admin_reset_password_error_email">Escribí un correo válido.</string>
+
+    <!-- Coverage & Delta localized labels -->
+    <string name="coverage_state_solid">SÓLIDO</string>
+    <string name="coverage_state_partial">PARCIAL</string>
+    <string name="coverage_state_absent">AUSENTE</string>
+    <string name="coverage_state_uncertain">INCIERTO</string>
+    <string name="coverage_unit_default">TEMARIO DEL CURSO</string>
+    <string name="coverage_delta_latest_update">Última actualización: %1$s · Ver cambios</string>
+    <string name="coverage_delta_view_recent">Ver cambios recientes del temario</string>
+    <string name="coverage_topic_updated_at">Actualizado: %1$s</string>
+    <string name="coverage_delta_since">Desde %1$s</string>
+    <string name="coverage_error_no_active_course">Selecciona un curso activo primero</string>
 </resources>
