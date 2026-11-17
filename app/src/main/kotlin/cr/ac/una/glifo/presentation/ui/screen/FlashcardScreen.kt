@@ -196,14 +196,28 @@ private fun FlashcardContent(
 
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    Text(
-                        text = if (showingBack) currentCard.answer else currentCard.question,
-                        fontSize = if (showingBack) 16.sp else 19.sp,
-                        lineHeight = 26.sp,
-                        textAlign = TextAlign.Center,
-                        // La respuesta iba en gris sobre fondo oscuro y se leía poco.
-                        color = colors.textPrimary
-                    )
+                    val cardText = if (showingBack) currentCard.answer else currentCard.question
+                    if (LatexHtmlBuilder.containsLatex(cardText)) {
+                        LatexFormula(
+                            latex = cardText,
+                            mode = LatexRenderMode.Mixed,
+                            fontSize = if (showingBack) 16.sp else 19.sp,
+                            lineHeight = 26.sp,
+                            textColor = colors.textPrimary,
+                            textAlign = TextAlign.Center,
+                            allowHorizontalScroll = false,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    } else {
+                        Text(
+                            text = cardText,
+                            fontSize = if (showingBack) 16.sp else 19.sp,
+                            lineHeight = 26.sp,
+                            textAlign = TextAlign.Center,
+                            // La respuesta iba en gris sobre fondo oscuro y se leía poco.
+                            color = colors.textPrimary
+                        )
+                    }
 
                     if (showingBack) {
                         Spacer(modifier = Modifier.height(20.dp))

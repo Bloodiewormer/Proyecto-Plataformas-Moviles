@@ -26,6 +26,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -174,14 +175,30 @@ private fun QuizContent(
                 Text(question.topicLabel, fontSize = 12.sp, color = colors.textSecondary)
             }
 
-            Text(
-                text = question.prompt,
-                fontSize = 19.sp,
-                fontWeight = FontWeight.Normal,
-                lineHeight = 28.sp,
-                color = colors.textPrimary,
-                modifier = Modifier.padding(bottom = 22.dp)
-            )
+            if (LatexHtmlBuilder.containsLatex(question.prompt)) {
+                LatexFormula(
+                    latex = question.prompt,
+                    mode = LatexRenderMode.Mixed,
+                    fontSize = 19.sp,
+                    lineHeight = 28.sp,
+                    textColor = colors.textPrimary,
+                    textAlign = TextAlign.Start,
+                    fallbackFontWeight = FontWeight.Normal,
+                    allowHorizontalScroll = false,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 22.dp)
+                )
+            } else {
+                Text(
+                    text = question.prompt,
+                    fontSize = 19.sp,
+                    fontWeight = FontWeight.Normal,
+                    lineHeight = 28.sp,
+                    color = colors.textPrimary,
+                    modifier = Modifier.padding(bottom = 22.dp)
+                )
+            }
 
             question.options.forEachIndexed { i, label ->
                 val optionLetter = listOf("A", "B", "C", "D").getOrElse(i) { "${i + 1}" }
@@ -221,7 +238,21 @@ private fun QuizContent(
                                 )
                             }
                         }
-                        Text(text = label, fontSize = 16.sp, color = colors.textPrimary)
+                        if (LatexHtmlBuilder.containsLatex(label)) {
+                            LatexFormula(
+                                latex = label,
+                                mode = LatexRenderMode.Mixed,
+                                fontSize = 16.sp,
+                                lineHeight = 22.sp,
+                                textColor = colors.textPrimary,
+                                textAlign = TextAlign.Start,
+                                fallbackFontWeight = FontWeight.Normal,
+                                allowHorizontalScroll = false,
+                                modifier = Modifier.weight(1f)
+                            )
+                        } else {
+                            Text(text = label, fontSize = 16.sp, color = colors.textPrimary)
+                        }
                     }
                 }
             }
@@ -276,12 +307,26 @@ private fun QuizContent(
                                 color = if (correct) colors.verified else colors.alert
                             )
                             Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = question.explanation,
-                                fontSize = 13.sp,
-                                color = colors.textSecondary,
-                                lineHeight = 18.sp
-                            )
+                            if (LatexHtmlBuilder.containsLatex(question.explanation)) {
+                                LatexFormula(
+                                    latex = question.explanation,
+                                    mode = LatexRenderMode.Mixed,
+                                    fontSize = 13.sp,
+                                    lineHeight = 18.sp,
+                                    textColor = colors.textSecondary,
+                                    textAlign = TextAlign.Start,
+                                    fallbackFontWeight = FontWeight.Normal,
+                                    allowHorizontalScroll = false,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            } else {
+                                Text(
+                                    text = question.explanation,
+                                    fontSize = 13.sp,
+                                    color = colors.textSecondary,
+                                    lineHeight = 18.sp
+                                )
+                            }
                         }
                     }
                 }

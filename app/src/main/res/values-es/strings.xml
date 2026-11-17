@@ -181,6 +181,10 @@
     <string name="formula_viewer_photo_placeholder">Fotografía de la región</string>
     <string name="formula_viewer_transcription_section">TRANSCRIPCIÓN</string>
     <string name="formula_viewer_latex_generated">LaTeX generado</string>
+    <string name="formula_viewer_toggle_latex">LaTeX</string>
+    <string name="formula_viewer_toggle_latex_description">Mostrar u ocultar LaTeX sin procesar</string>
+    <string name="formula_viewer_copy_latex">Copiar LaTeX</string>
+    <string name="formula_viewer_copied">Copiado</string>
     <string name="formula_viewer_compiles_jlatex">Compila con JLaTeXMath</string>
     <string name="formula_viewer_engine_confidence">Confianza del motor</string>
     <string name="formula_viewer_correct">Corregir</string>

@@ -363,14 +363,26 @@ private fun FormulaFragment(fragment: NoteFragment, resolved: Boolean, onClick: 
                     color = colors.textSecondary
                 )
             }
-            Text(
-                text = fragment.displayText.ifBlank { stringResource(R.string.note_detail_unreadable_fragment) },
-                fontSize = 17.sp,
-                fontWeight = FontWeight.Medium,
-                color = colors.textPrimary,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
-            )
+            if (resolved && fragment.displayText.isNotBlank()) {
+                LatexFormula(
+                    latex = fragment.displayText,
+                    mode = LatexRenderMode.Formula,
+                    fontSize = 17.sp,
+                    textColor = colors.textPrimary,
+                    textAlign = TextAlign.Center,
+                    allowHorizontalScroll = false,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+                )
+            } else {
+                Text(
+                    text = fragment.displayText.ifBlank { stringResource(R.string.note_detail_unreadable_fragment) },
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = colors.textPrimary,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+                )
+            }
             if (fragment.bounds != null) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Icon(imageVector = Icons.Default.Image, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(15.dp))
