@@ -23,5 +23,6 @@ interface TeacherRepository {
 
     /** Cobertura y brechas del grupo del curso activo. Por defecto falla (repositorios falsos de pruebas). */
     suspend fun getGroupCoverage(): Result<TeacherGroupCoverage> = Result.Failure(AppError.Unknown)
+    suspend fun getGroupCoverage(courseId: Long): Result<TeacherGroupCoverage> = Result.Failure(AppError.Unknown)
 }
 

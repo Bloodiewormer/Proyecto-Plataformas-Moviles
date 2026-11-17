@@ -6,6 +6,7 @@ import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.domain.error.Result
 import cr.ac.una.glifo.domain.model.Course
 import cr.ac.una.glifo.domain.repository.CourseRepository
+import cr.ac.una.glifo.domain.repository.TeacherRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,7 +17,8 @@ import javax.inject.Inject
 /** Screen J4: Cursos (vista de Admin) — every course in the system, not just "sus" cursos. */
 @HiltViewModel
 class AdminCoursesViewModel @Inject constructor(
-    private val courseRepository: CourseRepository
+    private val courseRepository: CourseRepository,
+    private val teacherRepository: TeacherRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<UiState<List<CourseWithStats>>>(UiState.Loading)
@@ -43,7 +45,9 @@ class AdminCoursesViewModel @Inject constructor(
 
     private suspend fun withStats(courses: List<Course>): List<CourseWithStats> =
         courses.mapNotNull { course ->
-            val statsResult = courseRepository.getCourseStats(course.id)
-            (statsResult as? Result.Success)?.value?.let { CourseWithStats(course, it) }
+            val stats = (courseRepository.getCourseStats(course.id) as? Result.Success)?.value
+                ?: return@mapNotNull null
+            val group = (teacherRepository.getGroupCoverage(course.id) as? Result.Success)?.value
+            CourseWithStats(course, group?.let { stats.withGroup(it) } ?: stats)
         }
 }

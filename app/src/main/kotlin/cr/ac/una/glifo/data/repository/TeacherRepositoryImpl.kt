@@ -166,11 +166,14 @@ class TeacherRepositoryImpl @Inject constructor(
         }
 
     override suspend fun getGroupCoverage(): Result<TeacherGroupCoverage> = withActiveCourse { courseId ->
+        getGroupCoverage(courseId)
+    }
+
+    override suspend fun getGroupCoverage(courseId: Long): Result<TeacherGroupCoverage> =
         ApiErrorHandler.safeApiCall(
             apiCall = { api.getCourseGaps(courseId) },
             transform = { response -> TeacherGapsMapper.toGroupCoverage(response.data) }
         )
-    }
 
     /** Sin curso activo no hay a qué glosario ni temario apuntar: se le pide al docente que elija uno. */
     private suspend fun <T> withActiveCourse(block: suspend (Long) -> Result<T>): Result<T> {

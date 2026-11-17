@@ -63,6 +63,8 @@ fun TeacherCoursesScreen(
     val uiState by viewModel.state.collectAsState()
     val activeCourseId by viewModel.activeCourseId.collectAsState()
 
+    LaunchedEffect(Unit) { viewModel.load() }
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         gesturesEnabled = true,
