@@ -1,6 +1,7 @@
 package cr.ac.una.glifo.data.repository
 
 import cr.ac.una.glifo.core.datastore.ActiveCourseStore
+import cr.ac.una.glifo.core.datastore.ProfilePhotoStore
 import cr.ac.una.glifo.core.datastore.TokenManager
 import cr.ac.una.glifo.data.datasource.local.GlifoDatabase
 import cr.ac.una.glifo.data.datasource.local.dao.StudyItemDao
@@ -15,7 +16,12 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
+import okhttp3.ResponseBody.Companion.toResponseBody
+import retrofit2.Response
+import java.io.IOException
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -36,6 +42,8 @@ class SessionRepositoryImplTest {
 
     private val tokenManager = mockk<TokenManager>(relaxed = true)
     private val localUserDataCleaner = mockk<LocalUserDataCleaner>(relaxed = true)
+    private val profilePhotoStore = mockk<ProfilePhotoStore>()
+    private val api = mockk<GlifoApi>()
     private lateinit var repository: SessionRepositoryImpl
 
     private val testUser = User(
@@ -49,7 +57,11 @@ class SessionRepositoryImplTest {
     fun setUp() {
         coEvery { tokenManager.clearAll() } returns Unit
         coEvery { localUserDataCleaner.clearUserData() } returns Unit
-        repository = SessionRepositoryImpl(tokenManager, localUserDataCleaner)
+        every { profilePhotoStore.find(any()) } returns null
+        coEvery { api.getAvatar() } returns Response.error(404, "".toResponseBody())
+        coEvery { api.uploadAvatar(any()) } returns Response.success(204, Unit)
+        coEvery { profilePhotoStore.save(10L, "content://picker/photo") } returns "/files/profile_photos/10-1.jpg"
+        repository = SessionRepositoryImpl(tokenManager, localUserDataCleaner, profilePhotoStore, { api }, CoroutineScope(Dispatchers.Unconfined))
     }
 
     @Test
@@ -59,12 +71,74 @@ class SessionRepositoryImplTest {
     }
 
     @Test
+    fun `login restores the photo saved on this device for that user`() {
+        every { profilePhotoStore.find(10L) } returns "/files/profile_photos/10-1.jpg"
+
+        repository.login(testUser)
+
+        assertEquals("/files/profile_photos/10-1.jpg", repository.profilePhotoUri.value)
+    }
+
+    @Test
+    fun `saving a photo also uploads it`() = runTest {
+        val local = tempFolder.newFile("10-1.jpg").apply { writeBytes(byteArrayOf(1, 2, 3)) }.absolutePath
+        coEvery { profilePhotoStore.save(10L, "content://picker/photo") } returns local
+        repository.login(testUser)
+
+        repository.saveProfilePhoto("content://picker/photo")
+
+        assertEquals(local, repository.profilePhotoUri.value)
+        coVerify(exactly = 1) { api.uploadAvatar(any()) }
+    }
+
+    @Test
+    fun `login replaces the local photo with the one on the server`() = runTest {
+        val serverBytes = byteArrayOf(9, 8, 7)
+        coEvery { api.getAvatar() } returns Response.success(serverBytes.toResponseBody())
+        coEvery { profilePhotoStore.saveDownloaded(10L, serverBytes) } returns "/files/profile_photos/10-2.jpg"
+
+        repository.login(testUser)
+
+        assertEquals("/files/profile_photos/10-2.jpg", repository.profilePhotoUri.value)
+    }
+
+    @Test
+    fun `login uploads the local photo when the server has none`() = runTest {
+        val local = tempFolder.newFile("10-1.jpg").apply { writeBytes(byteArrayOf(1, 2, 3)) }.absolutePath
+        every { profilePhotoStore.find(10L) } returns local
+
+        repository.login(testUser)
+
+        assertEquals(local, repository.profilePhotoUri.value)
+        coVerify(exactly = 1) { api.uploadAvatar(any()) }
+    }
+
+    @Test
+    fun `login keeps the local photo when the server cannot be reached`() = runTest {
+        every { profilePhotoStore.find(10L) } returns "/files/profile_photos/10-1.jpg"
+        coEvery { api.getAvatar() } throws IOException("offline")
+
+        repository.login(testUser)
+
+        assertEquals("/files/profile_photos/10-1.jpg", repository.profilePhotoUri.value)
+        coVerify(exactly = 0) { api.uploadAvatar(any()) }
+    }
+
+    @Test
+    fun `saving a photo without a session does nothing`() = runTest {
+        repository.saveProfilePhoto("content://picker/photo")
+
+        assertNull(repository.profilePhotoUri.value)
+        coVerify(exactly = 0) { profilePhotoStore.save(any(), any()) }
+    }
+
+    @Test
     fun `logout clears tokenManager, clears local user data, and resets in memory user state`() = runTest {
         repository.login(testUser)
-        repository.setProfilePhotoUri("file:///test/photo.jpg")
+        repository.saveProfilePhoto("content://picker/photo")
 
         assertEquals(testUser, repository.currentUser.value)
-        assertEquals("file:///test/photo.jpg", repository.profilePhotoUri.value)
+        assertEquals("/files/profile_photos/10-1.jpg", repository.profilePhotoUri.value)
 
         repository.logout()
 
@@ -138,7 +212,7 @@ class SessionRepositoryImplTest {
                 pagesRootDir = pagesDir,
                 ioDispatcher = ioExecutor.asCoroutineDispatcher()
             )
-            val sessionRepo = SessionRepositoryImpl(tokenManager, cleaner)
+            val sessionRepo = SessionRepositoryImpl(tokenManager, cleaner, null, null, CoroutineScope(Dispatchers.Unconfined))
 
             sessionRepo.logout()
 

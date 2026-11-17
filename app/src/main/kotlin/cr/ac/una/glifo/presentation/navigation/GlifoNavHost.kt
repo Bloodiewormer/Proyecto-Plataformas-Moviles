@@ -28,6 +28,7 @@ import cr.ac.una.glifo.core.ui.component.ActiveCourseUi
 import cr.ac.una.glifo.core.ui.component.COURSE_SWITCHER_ROUTE
 import cr.ac.una.glifo.core.ui.component.LocalActiveCourse
 import cr.ac.una.glifo.core.ui.component.LocalPendingSyncCount
+import cr.ac.una.glifo.core.ui.component.LocalProfilePhotoPath
 import cr.ac.una.glifo.core.ui.component.LocalSessionRole
 import cr.ac.una.glifo.domain.model.GlifoRole
 import cr.ac.una.glifo.presentation.ui.screen.AdminCoursesScreen
@@ -134,6 +135,7 @@ fun GlifoNavHost(
     val activeCourse by activeCourseViewModel.activeCourse.collectAsState()
     // Rol real de la sesión: el menú lateral lo usa en vez del rol fijo de cada pantalla.
     val sessionUser by sessionViewModel.currentUser.collectAsState()
+    val profilePhotoPath by sessionViewModel.profilePhotoUri.collectAsState()
     val activeCourseUi = ActiveCourseUi(
         name = activeCourse?.name,
         onChangeCourse = { navController.navigate(Screen.CourseSwitcher.route) { launchSingleTop = true } }
@@ -143,7 +145,8 @@ fun GlifoNavHost(
     CompositionLocalProvider(
         LocalActiveCourse provides activeCourseUi,
         LocalSessionRole provides sessionUser?.role,
-        LocalPendingSyncCount provides sessionViewModel::pendingSyncCount
+        LocalPendingSyncCount provides sessionViewModel::pendingSyncCount,
+        LocalProfilePhotoPath provides profilePhotoPath
     ) {
     NavHost(
         navController = navController,

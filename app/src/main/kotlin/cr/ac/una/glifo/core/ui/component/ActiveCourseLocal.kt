@@ -27,5 +27,8 @@ val LocalSessionRole = compositionLocalOf<GlifoRole?> { null }
 /** Cuántas capturas faltan por sincronizar; el menú lo consulta antes de cerrar sesión, que borra los datos locales. */
 val LocalPendingSyncCount = staticCompositionLocalOf<suspend () -> Int> { { 0 } }
 
+/** Ruta local de la foto de perfil del usuario de la sesión; null = mostrar iniciales. */
+val LocalProfilePhotoPath = compositionLocalOf<String?> { null }
+
 /** Ruta que el menú lateral pide con onNavigate cuando se toca "Cambiar". */
 const val COURSE_SWITCHER_ROUTE = "course_switcher"

@@ -1,11 +1,8 @@
 package cr.ac.una.glifo.presentation.ui.screen
 
-import android.graphics.BitmapFactory
-import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -26,13 +23,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -57,7 +50,6 @@ fun ProfileScreen(
     sessionViewModel: SessionViewModel = hiltViewModel()
 ) {
     val colors = GlifoTheme.colors
-    val context = LocalContext.current
     val user by sessionViewModel.currentUser.collectAsState()
     val role = user?.role ?: GlifoRole.Student
     val roleLabel = when (role) {
@@ -72,19 +64,10 @@ fun ProfileScreen(
 
     LaunchedEffect(role) { viewModel.load(role) }
 
-    val photoUriString by sessionViewModel.profilePhotoUri.collectAsState()
-    val avatarBitmap = remember(photoUriString) {
-        photoUriString?.let { uriString ->
-            runCatching {
-                context.contentResolver.openInputStream(Uri.parse(uriString))?.use { BitmapFactory.decodeStream(it) }
-            }.getOrNull()?.asImageBitmap()
-        }
-    }
-    // Test-only photo picker: nothing is uploaded, it's just kept for this session
-    // (Android's built-in photo picker, no runtime permission needed).
+    val photoPath by sessionViewModel.profilePhotoUri.collectAsState()
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
-    ) { uri -> if (uri != null) sessionViewModel.setProfilePhotoUri(uri.toString()) }
+    ) { uri -> if (uri != null) sessionViewModel.saveProfilePhoto(uri.toString()) }
 
     Column(
         modifier = Modifier
@@ -120,25 +103,12 @@ fun ProfileScreen(
                             )
                         }
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(72.dp)
-                            .clip(CircleShape)
-                            .background(colors.surfaceHigh)
-                            .border(1.dp, colors.border, CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (avatarBitmap != null) {
-                            Image(
-                                bitmap = avatarBitmap,
-                                contentDescription = stringResource(R.string.profile_photo_description),
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
-                            )
-                        } else {
-                            Text(user?.initials.orEmpty(), fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = colors.accentText)
-                        }
-                    }
+                    ProfileAvatar(
+                        photoPath = photoPath,
+                        initials = user?.initials.orEmpty(),
+                        size = 72.dp,
+                        fontSize = 24.sp
+                    )
                     Box(
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
