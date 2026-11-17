@@ -17,6 +17,9 @@ data class SyllabusDocument(
 ) {
     val hasSyllabus: Boolean
         get() = units.isNotEmpty() || !fileName.isNullOrBlank()
+
+    val isPublished: Boolean
+        get() = parsedAtDisplay != null || syllabusVersion > 0 || units.isNotEmpty()
 }
 /** [percent] = % de estudiantes con brecha en el tema; [fraction] = "con brecha/inscritos". */
 data class TeacherGapTopic(val state: ConfidenceState, val label: String, val percent: Float, val fraction: String)

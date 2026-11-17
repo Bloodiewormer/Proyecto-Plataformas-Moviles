@@ -220,6 +220,19 @@ class TeacherRepositoryImplTest {
     }
 
     @Test
+    fun `uploadSyllabusPdf mapea error 409 con el mensaje del servidor`() = runTest {
+        coEvery { api.uploadSyllabusPdf(10L, any()) } throws
+            httpException(409, """{"message":"El temario de este curso ya fue publicado"}""")
+
+        val result = repository.uploadSyllabusPdf("programa.pdf", ByteArray(16) { 1 })
+
+        assertEquals(
+            Result.Failure(AppError.Server("409", "El temario de este curso ya fue publicado")),
+            result
+        )
+    }
+
+    @Test
     fun `publishSyllabus no inventa sourceUri cuando se publica manualmente`() = runTest {
         val requestSlot = slot<PublishSyllabusRequest>()
         coEvery { api.publishSyllabus(10L, capture(requestSlot)) } returns ApiResponse(emptyList())

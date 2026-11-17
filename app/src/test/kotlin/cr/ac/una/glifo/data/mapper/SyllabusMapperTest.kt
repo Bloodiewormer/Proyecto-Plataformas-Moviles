@@ -35,6 +35,7 @@ class SyllabusMapperTest {
         assertEquals("10/11/2026", domain.parsedAtDisplay)
         assertEquals(2, domain.syllabusVersion)
         assertTrue(domain.hasSyllabus)
+        assertTrue(domain.isPublished)
         assertEquals(1, domain.units.size)
         assertEquals("U1 · Fundamentos", domain.units[0].label)
         assertEquals(2, domain.units[0].topicCount)
@@ -76,6 +77,7 @@ class SyllabusMapperTest {
         assertEquals(0, domain.syllabusVersion)
         assertTrue(domain.units.isEmpty())
         assertFalse(domain.hasSyllabus)
+        assertFalse(domain.isPublished)
     }
 
     @Test

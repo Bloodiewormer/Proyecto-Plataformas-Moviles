@@ -27,6 +27,9 @@ data class TeacherSyllabusUiData(
 ) {
     val hasTopics: Boolean
         get() = units.isNotEmpty()
+
+    val canUploadPdf: Boolean
+        get() = !isPublished
 }
 
 @HiltViewModel
@@ -51,7 +54,7 @@ class TeacherSyllabusViewModel @Inject constructor(
                 is Result.Failure -> _state.value = UiState.Error(result.error)
                 is Result.Success -> {
                     val doc = result.value
-                    val serverHasSyllabus = doc.syllabusVersion > 0 || doc.units.isNotEmpty()
+                    val serverHasSyllabus = doc.isPublished
                     if (currentCourseId != null && currentCourseId != doc.courseId) {
                         pendingTopics.clear()
                     }

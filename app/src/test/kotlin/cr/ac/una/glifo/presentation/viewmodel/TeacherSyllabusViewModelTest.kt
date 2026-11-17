@@ -1,5 +1,7 @@
 package cr.ac.una.glifo.presentation.viewmodel
 
+import android.content.Context
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.AppError
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.domain.error.Result
@@ -10,6 +12,9 @@ import cr.ac.una.glifo.domain.model.SyllabusTopicRow
 import cr.ac.una.glifo.domain.model.SyllabusUnitRow
 import cr.ac.una.glifo.domain.model.TeacherGapTopic
 import cr.ac.una.glifo.domain.repository.TeacherRepository
+import cr.ac.una.glifo.presentation.ui.screen.toSyllabusErrorMessage
+import io.mockk.every
+import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -93,6 +98,7 @@ class TeacherSyllabusViewModelTest {
         assertNull(data.parsedAtDisplay)
         assertTrue(data.units.isEmpty())
         assertFalse(data.isPublished)
+        assertTrue(data.canUploadPdf)
         assertFalse(data.hasTopics)
     }
 
@@ -122,7 +128,31 @@ class TeacherSyllabusViewModelTest {
         assertEquals("16/11/2026", data.parsedAtDisplay)
         assertEquals(1, data.units.size)
         assertTrue(data.isPublished)
+        assertFalse(data.canUploadPdf)
         assertTrue(data.hasTopics)
+    }
+
+    @Test
+    fun `load treats document with parsedAt as published and disables PDF upload even without file`() = runTest(dispatcher) {
+        val repo = FakeTeacherRepository().apply {
+            syllabusResult = Result.Success(
+                SyllabusDocument(
+                    courseId = 10L,
+                    fileName = null,
+                    sizeBytes = null,
+                    formattedSize = null,
+                    parsedAtDisplay = "16/11/2026",
+                    syllabusVersion = 0,
+                    units = emptyList()
+                )
+            )
+        }
+        val vm = TeacherSyllabusViewModel(repo)
+        advanceUntilIdle()
+
+        val data = (vm.state.value as UiState.Success).data
+        assertTrue(data.isPublished)
+        assertFalse(data.canUploadPdf)
     }
 
     @Test
@@ -168,6 +198,7 @@ class TeacherSyllabusViewModelTest {
         assertEquals("16/11/2026", data.parsedAtDisplay)
         assertEquals("U1 · Compose", data.units.single().label)
         assertTrue(data.isPublished)
+        assertFalse(data.canUploadPdf)
         assertFalse(data.isUploading)
         assertNull(data.actionError)
     }
@@ -205,6 +236,26 @@ class TeacherSyllabusViewModelTest {
         val data = (vm.state.value as UiState.Success).data
         assertFalse(data.isUploading)
         assertEquals(AppError.Validation("request", "El PDF no tiene texto extraíble"), data.actionError)
+    }
+
+    @Test
+    fun `uploadSyllabusPdf 409 surfaces server message directly through toSyllabusErrorMessage`() = runTest(dispatcher) {
+        val serverMessage = "El temario de este curso ya fue publicado"
+        val repo = FakeTeacherRepository().apply {
+            uploadResult = Result.Failure(AppError.Server("409", serverMessage))
+        }
+        val context = mockk<Context> {
+            every { getString(R.string.teacher_syllabus_already_published) } returns "El temario de este curso ya está publicado."
+        }
+        val vm = TeacherSyllabusViewModel(repo)
+        advanceUntilIdle()
+
+        vm.uploadSyllabusPdf("programa.pdf", ByteArray(1024) { 1 })
+        advanceUntilIdle()
+
+        val data = (vm.state.value as UiState.Success).data
+        assertEquals(AppError.Server("409", serverMessage), data.actionError)
+        assertEquals(serverMessage, data.actionError!!.toSyllabusErrorMessage(context))
     }
 
     @Test
