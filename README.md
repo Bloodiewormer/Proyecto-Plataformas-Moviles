@@ -75,6 +75,35 @@ Anything else on those routes falls through to the happy-path response.
   - Se requiere un dispositivo o emulador con **Google Play Services** configurado y conectado a internet para recibir mensajes de FCM.
   - Si el usuario fuerza la detención de la aplicación (*Force Stop*) desde los ajustes del sistema o si el fabricante aplica restricciones agresivas de segundo plano (*Doze* / *App Standby*), el sistema operativo retendrá o descartará la entrega hasta que el usuario vuelva a abrir la aplicación.
 
+## Distribución del APK con Firebase App Distribution (Proyecto final — Issue #55)
+
+### URL del backend por tipo de build
+- `debug`: `http://10.0.2.2:8080/api/v1/` (backend local o Mockoon visto desde el emulador).
+- `release`: `https://glifo-api.onrender.com/api/v1/` (backend desplegado en Render).
+- Se define con `BuildConfig.API_BASE_URL` en `app/build.gradle.kts`; `NetworkModule` lo usa.
+
+### Firma de release
+La firma nunca se versiona. `app/build.gradle.kts` lee estas cuatro claves de `~/.gradle/gradle.properties` o de variables de entorno; si falta alguna, `assembleRelease` genera un APK sin firmar:
+
+```properties
+GLIFO_RELEASE_STORE_FILE=C:/ruta/privada/glifo-release.jks
+GLIFO_RELEASE_STORE_PASSWORD=...
+GLIFO_RELEASE_KEY_ALIAS=glifo-release
+GLIFO_RELEASE_KEY_PASSWORD=...
+```
+
+Guardá una copia de respaldo del keystore y su contraseña fuera del repositorio: sin ellos no se pueden publicar actualizaciones que se instalen encima de la versión distribuida.
+
+### Generar, verificar y distribuir
+1. Subí `versionCode` (y `versionName`) en `app/build.gradle.kts` antes de cada entrega nueva.
+2. Desde la raíz del workspace: `gradlew.bat -p <ruta-del-frontend> :app:assembleRelease`.
+3. Verificá la firma: `apksigner verify --print-certs app/build/outputs/apk/release/app-release.apk`.
+4. En la consola de Firebase (proyecto `glifoapp`) → App Distribution → app `cr.ac.una.glifo`: subí `app-release.apk`, agregá testers o un grupo y notas de versión, y distribuí.
+
+### Limitaciones
+- El APK incluye las bibliotecas nativas de las cuatro arquitecturas (también x86/x86_64 para emuladores), por eso pesa unos 200 MB.
+- Render en plan gratuito tarda hasta ~90 s en despertar: la primera petición tras un periodo inactivo puede agotar el tiempo de espera de la app (15 s de conexión); reintentar funciona.
+
 ## Documentation
 
 See `docs/Glifo_Arquitectura_Estandares.md` and `docs/claude_Glifo_UML_Modeling.md` for detailed technical specifications.
