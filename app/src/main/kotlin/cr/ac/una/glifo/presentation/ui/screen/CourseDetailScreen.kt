@@ -66,7 +66,11 @@ fun CourseDetailScreen(
 
         when (val state = uiState) {
             is UiState.Loading -> GlifoLoadingBox()
-            is UiState.Empty -> GlifoLoadingBox()
+            is UiState.Empty -> GlifoEmptyBox(
+                message = stringResource(R.string.courses_empty_no_courses),
+                actionText = stringResource(R.string.common_nav_back),
+                onAction = onNavigateBack
+            )
             is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = { viewModel.load(courseId) })
             is UiState.Success -> {
                 val course = state.data.course
@@ -161,7 +165,12 @@ fun CourseDetailScreen(
                                 Icon(imageVector = Icons.Default.ShowChart, contentDescription = null, tint = colors.accentText, modifier = Modifier.size(20.dp))
                                 Spacer(modifier = Modifier.height(6.dp))
                                 Text(text = stringResource(R.string.course_detail_whats_changed), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                                Text(text = stringResource(R.string.course_detail_weekly_delta, stats.weeklyDeltaPoints), fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
+                                val deltaText = if (stats.weeklyDeltaPoints > 0) {
+                                    stringResource(R.string.course_detail_weekly_delta, stats.weeklyDeltaPoints)
+                                } else {
+                                    stringResource(R.string.courses_delta_none)
+                                }
+                                Text(text = deltaText, fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
                             }
                         }
                     }

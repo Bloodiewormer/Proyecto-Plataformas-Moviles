@@ -244,15 +244,7 @@ fun CaptureScreen(
                         )
                     }
 
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .background(colors.surfaceHigh, RoundedCornerShape(7.dp))
-                            .border(1.dp, colors.border, RoundedCornerShape(7.dp)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("1/8", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = colors.textSecondary)
-                    }
+                    Spacer(modifier = Modifier.size(40.dp))
                 }
             } else {
                 CameraPermissionRationale(

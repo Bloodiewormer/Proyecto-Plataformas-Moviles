@@ -6,6 +6,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.Schedule
@@ -17,13 +18,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -129,7 +127,11 @@ fun HomeScreen(
         ) {
             when (val state = uiState) {
                 is UiState.Loading -> GlifoLoadingBox()
-                is UiState.Empty -> GlifoLoadingBox()
+                is UiState.Empty -> GlifoEmptyBox(
+                    message = stringResource(R.string.courses_empty_no_courses),
+                    actionText = stringResource(R.string.courses_title),
+                    onAction = onNavigateToCourses
+                )
                 is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
                 is UiState.Success -> {
                     val data = state.data
@@ -216,12 +218,14 @@ fun HomeScreen(
                                             fontSize = 12.sp,
                                             color = colors.textSecondary
                                         )
-                                        Text(
-                                            text = stringResource(R.string.home_coverage_delta_since, stats.weeklyDeltaPoints),
-                                            fontSize = 12.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            color = colors.verified
-                                        )
+                                        if (stats.weeklyDeltaPoints > 0) {
+                                            Text(
+                                                text = stringResource(R.string.home_coverage_delta_since, stats.weeklyDeltaPoints),
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Medium,
+                                                color = colors.verified
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -453,7 +457,7 @@ fun TeacherHomeScreen(
                 .background(colors.background)
         ) {
             GlifoTopAppBar(
-                title = (uiState as? UiState.Success)?.data?.course?.code ?: stringResource(R.string.teacher_home_default_course_code),
+                title = (uiState as? UiState.Success)?.data?.course?.code ?: stringResource(R.string.drawer_no_active_course),
                 subtitle = stringResource(R.string.home_subtitle_active_course),
                 hasDropdown = true,
                 onTitleClick = activeCourse.onChangeCourse,
@@ -462,12 +466,19 @@ fun TeacherHomeScreen(
 
             when (val state = uiState) {
                 is UiState.Loading -> GlifoLoadingBox()
-                is UiState.Empty -> GlifoLoadingBox()
+                is UiState.Empty -> GlifoEmptyBox(
+                    message = stringResource(R.string.courses_empty_no_courses),
+                    actionText = stringResource(R.string.courses_title),
+                    onAction = onNavigateToCourses
+                )
                 is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
                 is UiState.Success -> {
                     val data = state.data
+                    val course = data.course
                     val stats = data.stats
                     val gaps = data.gaps
+                    val hasSyllabus = stats.hasSyllabus ||
+                        course?.syllabusStatus?.uppercase() in setOf("PARSED", "PUBLISHED")
 
                     Column(
                         modifier = Modifier
@@ -523,55 +534,69 @@ fun TeacherHomeScreen(
                             modifier = Modifier.padding(top = 18.dp, bottom = 8.dp)
                         )
 
-                        GlifoStaggeredEntry(index = 1) {
-                            GlifoCard(tight = true) {
-                                gaps.forEachIndexed { i, gap ->
-                                    GlifoItem(compact = true, showBottomBorder = i < gaps.size - 1, onClick = onNavigateToGaps) {
-                                        GlifoConfidenceChip(state = gap.state)
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(text = gap.label, fontSize = 13.sp, color = colors.textPrimary)
-                                            Text(text = stringResource(R.string.teacher_home_uncovered_fraction, gap.fraction), fontSize = 11.sp, color = colors.textSecondary)
+                        if (gaps.isEmpty()) {
+                            Text(
+                                text = stringResource(R.string.teacher_gaps_empty),
+                                fontSize = 13.sp,
+                                color = colors.textSecondary
+                            )
+                        } else {
+                            GlifoStaggeredEntry(index = 1) {
+                                GlifoCard(tight = true) {
+                                    gaps.forEachIndexed { i, gap ->
+                                        GlifoItem(compact = true, showBottomBorder = i < gaps.size - 1, onClick = onNavigateToGaps) {
+                                            GlifoConfidenceChip(state = gap.state)
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(text = gap.label, fontSize = 13.sp, color = colors.textPrimary)
+                                                Text(text = stringResource(R.string.teacher_home_uncovered_fraction, gap.fraction), fontSize = 11.sp, color = colors.textSecondary)
+                                            }
+                                            Text(text = "${gap.percent.toInt()}%", fontSize = 12.sp, color = colors.textSecondary)
+                                            Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(16.dp))
                                         }
-                                        Text(text = "${gap.percent.toInt()}%", fontSize = 12.sp, color = colors.textSecondary)
-                                        Icon(imageVector = Icons.Default.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(16.dp))
                                     }
                                 }
                             }
                         }
 
-                        // Requiere atención
-                        Text(
-                            text = stringResource(R.string.teacher_home_attention_section),
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            letterSpacing = 0.6.sp,
-                            color = colors.textSecondary,
-                            modifier = Modifier.padding(top = 18.dp, bottom = 8.dp)
-                        )
+                        if (course != null && !hasSyllabus) {
+                            Text(
+                                text = stringResource(R.string.teacher_home_attention_section),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                letterSpacing = 0.6.sp,
+                                color = colors.textSecondary,
+                                modifier = Modifier.padding(top = 18.dp, bottom = 8.dp)
+                            )
 
-                        GlifoStaggeredEntry(index = 2) {
-                            GlifoCard(
-                                backgroundColor = colors.alertFaint,
-                                borderColor = colors.alertLine
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            GlifoStaggeredEntry(index = 2) {
+                                GlifoCard(
+                                    backgroundColor = colors.alertFaint,
+                                    borderColor = colors.alertLine
                                 ) {
-                                    Icon(imageVector = Icons.Default.Warning, contentDescription = null, tint = colors.alert, modifier = Modifier.size(18.dp))
-                                    Text(text = stringResource(R.string.teacher_home_no_syllabus_title), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Icon(imageVector = Icons.Default.Warning, contentDescription = null, tint = colors.alert, modifier = Modifier.size(18.dp))
+                                        Text(
+                                            text = stringResource(R.string.teacher_home_no_syllabus_title, course.name),
+                                            fontSize = 15.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = colors.textPrimary
+                                        )
+                                    }
+                                    Text(
+                                        text = stringResource(R.string.teacher_home_no_syllabus_description),
+                                        fontSize = 12.sp,
+                                        color = colors.textSecondary,
+                                        modifier = Modifier.padding(top = 6.dp, bottom = 12.dp)
+                                    )
+                                    GlifoButton(
+                                        text = stringResource(R.string.teacher_home_publish_syllabus),
+                                        variant = GlifoButtonVariant.Secondary,
+                                        onClick = onNavigateToSyllabus
+                                    )
                                 }
-                                Text(
-                                    text = stringResource(R.string.teacher_home_no_syllabus_description),
-                                    fontSize = 12.sp,
-                                    color = colors.textSecondary,
-                                    modifier = Modifier.padding(top = 6.dp, bottom = 12.dp)
-                                )
-                                GlifoButton(
-                                    text = stringResource(R.string.teacher_home_publish_syllabus),
-                                    variant = GlifoButtonVariant.Secondary,
-                                    onClick = onNavigateToSyllabus
-                                )
                             }
                         }
                     }
@@ -581,7 +606,7 @@ fun TeacherHomeScreen(
     }
 }
 
-// ── Screen B4: Inicio Administrador ────────────────────────────────────────────
+// ── Screen B4: Inicio Administrador ───────────────────────────────────────────
 @Composable
 fun AdminHomeScreen(
     onNavigateToUsers: () -> Unit,
@@ -652,21 +677,25 @@ fun AdminHomeScreen(
                 title = stringResource(R.string.admin_home_title),
                 onNavigationClick = { scope.launch { drawerState.open() } },
                 actions = {
+                    IconButton(onClick = viewModel::load) {
+                        Icon(imageVector = Icons.Default.Refresh, contentDescription = stringResource(R.string.common_retry), tint = colors.textSecondary, modifier = Modifier.size(20.dp))
+                    }
                     IconButton(onClick = onNavigateToUsers) {
-                        Icon(imageVector = Icons.Default.Group, contentDescription = stringResource(R.string.admin_home_users_description), tint = colors.textSecondary, modifier = Modifier.size(22.dp))
+                        Icon(imageVector = Icons.Default.LockReset, contentDescription = stringResource(R.string.admin_reset_password_title), tint = colors.textSecondary, modifier = Modifier.size(22.dp))
                     }
                 }
             )
 
             when (val state = uiState) {
                 is UiState.Loading -> GlifoLoadingBox()
-                is UiState.Empty -> GlifoLoadingBox()
+                is UiState.Empty -> GlifoEmptyBox(
+                    message = stringResource(R.string.admin_home_unavailable_notice),
+                    actionText = stringResource(R.string.common_retry),
+                    onAction = viewModel::load
+                )
                 is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
                 is UiState.Success -> {
                     val data = state.data
-                    val roles = data.roles
-                    val recentSignups = data.recentSignups
-                    val courseCount = data.courseCount
 
                     Column(
                         modifier = Modifier
@@ -680,22 +709,27 @@ fun AdminHomeScreen(
                         ) {
                             GlifoStaggeredEntry(index = 0, modifier = Modifier.weight(1f)) {
                                 GlifoCard(
-                                    onClick = onNavigateToUsers,
+                                    onClick = onNavigateToCourses,
                                     modifier = Modifier.height(84.dp)
                                 ) {
-                                    Text(roles.sumOf { it.userCount }.toString(), fontSize = 18.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                                    Text(
+                                        text = data.courseCount?.toString() ?: "—",
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = colors.textPrimary
+                                    )
                                     Spacer(modifier = Modifier.weight(1f))
-                                    Text(stringResource(R.string.admin_home_active_users), fontSize = 12.sp, color = colors.textSecondary)
+                                    Text(stringResource(R.string.admin_home_published_courses), fontSize = 12.sp, color = colors.textSecondary)
                                 }
                             }
                             GlifoStaggeredEntry(index = 1, modifier = Modifier.weight(1f)) {
                                 GlifoCard(
-                                    onClick = onNavigateToCourses,
+                                    onClick = onNavigateToUsers,
                                     modifier = Modifier.height(84.dp)
                                 ) {
-                                    Text("$courseCount", fontSize = 18.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                                    Icon(imageVector = Icons.Default.LockReset, contentDescription = null, tint = colors.accentText, modifier = Modifier.size(20.dp))
                                     Spacer(modifier = Modifier.weight(1f))
-                                    Text(stringResource(R.string.admin_home_published_courses), fontSize = 12.sp, color = colors.textSecondary)
+                                    Text(stringResource(R.string.admin_reset_password_title), fontSize = 12.sp, color = colors.textSecondary)
                                 }
                             }
                         }
@@ -711,20 +745,24 @@ fun AdminHomeScreen(
 
                         GlifoStaggeredEntry(index = 2) {
                             GlifoCard(tight = true) {
+                                val health = data.apiHealth
                                 GlifoItem(compact = true) {
-                                    Icon(Icons.Default.Check, contentDescription = null, tint = colors.verified, modifier = Modifier.size(18.dp))
+                                    Icon(
+                                        imageVector = if (health != null) Icons.Default.Check else Icons.Default.Warning,
+                                        contentDescription = null,
+                                        tint = if (health != null) colors.verified else colors.alert,
+                                        modifier = Modifier.size(18.dp)
+                                    )
                                     Text(stringResource(R.string.admin_home_api_label), fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                                    Text(stringResource(R.string.admin_home_api_latency), fontSize = 12.sp, color = colors.textSecondary)
-                                }
-                                GlifoItem(compact = true) {
-                                    Icon(Icons.Default.Check, contentDescription = null, tint = colors.verified, modifier = Modifier.size(18.dp))
-                                    Text(stringResource(R.string.admin_home_postgres_label), fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                                    Text(stringResource(R.string.admin_home_postgres_status), fontSize = 12.sp, color = colors.textSecondary)
-                                }
-                                GlifoItem(compact = true) {
-                                    Icon(Icons.Default.Warning, contentDescription = null, tint = colors.alert, modifier = Modifier.size(18.dp))
-                                    Text(stringResource(R.string.admin_home_simpletex_label), fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                                    Text(stringResource(R.string.admin_home_simpletex_quota), fontSize = 12.sp, color = colors.textSecondary)
+                                    Text(
+                                        text = if (health != null) {
+                                            listOf(health.service, health.status).filter { it.isNotBlank() }.joinToString(" · ")
+                                        } else {
+                                            data.healthError?.toMessage(context) ?: stringResource(R.string.admin_home_api_unavailable)
+                                        },
+                                        fontSize = 12.sp,
+                                        color = if (health != null) colors.textSecondary else colors.alert
+                                    )
                                 }
                                 GlifoItem(compact = true, showBottomBorder = false) {
                                     Icon(Icons.Default.Check, contentDescription = null, tint = colors.verified, modifier = Modifier.size(18.dp))
@@ -735,7 +773,7 @@ fun AdminHomeScreen(
                         }
 
                         Text(
-                            text = stringResource(R.string.admin_home_role_distribution_section),
+                            text = stringResource(R.string.course_detail_quick_access_section),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.SemiBold,
                             letterSpacing = 0.6.sp,
@@ -744,72 +782,42 @@ fun AdminHomeScreen(
                         )
 
                         GlifoStaggeredEntry(index = 3) {
-                            val total = roles.sumOf { it.userCount }.coerceAtLeast(1)
                             GlifoCard(tight = true) {
-                                roles.forEachIndexed { i, role ->
-                                    val barColor = if (role.isSensitive) colors.alert else colors.accent
-                                    val fraction = role.userCount.toFloat() / total
-                                    GlifoItem(showBottomBorder = i < roles.size - 1) {
-                                        Text(role.name, fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                                        Box(
-                                            modifier = Modifier
-                                                .width(80.dp)
-                                                .height(6.dp)
-                                                .clip(RoundedCornerShape(999.dp))
-                                                .background(colors.surfaceHigh)
-                                        ) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .fillMaxHeight()
-                                                    .fillMaxWidth(fraction)
-                                                    .background(barColor)
-                                            )
-                                        }
-                                        Text(
-                                            role.userCount.toString(),
-                                            fontSize = 12.sp,
-                                            fontFamily = FontFamily.Monospace,
-                                            color = colors.textSecondary,
-                                            modifier = Modifier.width(28.dp),
-                                            textAlign = TextAlign.End
-                                        )
-                                    }
+                                GlifoItem(compact = true, onClick = onNavigateToCourses) {
+                                    Icon(Icons.Default.School, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
+                                    Text(stringResource(R.string.admin_courses_title), fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(16.dp))
+                                }
+                                GlifoItem(compact = true, onClick = onNavigateToAiCost) {
+                                    Icon(Icons.Default.BarChart, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
+                                    Text(stringResource(R.string.ai_cost_title_admin), fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(16.dp))
+                                }
+                                GlifoItem(compact = true, showBottomBorder = false, onClick = onNavigateToUsers) {
+                                    Icon(Icons.Default.LockReset, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
+                                    Text(stringResource(R.string.admin_reset_password_title), fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(16.dp))
                                 }
                             }
                         }
 
-                        Text(
-                            text = stringResource(R.string.admin_home_recent_signups_section),
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            letterSpacing = 0.6.sp,
-                            color = colors.textSecondary,
-                            modifier = Modifier.padding(top = 18.dp, bottom = 8.dp)
-                        )
+                        Spacer(modifier = Modifier.height(14.dp))
 
-                        GlifoStaggeredEntry(index = 4) {
-                            GlifoCard(tight = true) {
-                                recentSignups.forEachIndexed { i, signup ->
-                                    GlifoItem(compact = true, showBottomBorder = i < recentSignups.size - 1) {
-                                        Icon(
-                                            imageVector = Icons.Default.Person,
-                                            contentDescription = null,
-                                            tint = colors.textSecondary,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                        Text(
-                                            text = signup.email,
-                                            fontSize = 14.sp,
-                                            color = colors.textPrimary,
-                                            modifier = Modifier.weight(1f)
-                                        )
-                                        Text(
-                                            text = if (i == 0) stringResource(R.string.admin_home_hours_ago_2) else stringResource(R.string.admin_home_hours_ago_5),
-                                            fontSize = 12.sp,
-                                            color = colors.textSecondary
-                                        )
-                                    }
-                                }
+                        GlifoCard(
+                            backgroundColor = colors.accentFaint,
+                            borderColor = colors.accentLine
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalAlignment = Alignment.Top
+                            ) {
+                                Icon(Icons.Default.Info, contentDescription = null, tint = colors.accentText, modifier = Modifier.size(18.dp))
+                                Text(
+                                    text = stringResource(R.string.admin_home_unavailable_notice),
+                                    fontSize = 12.sp,
+                                    color = colors.textSecondary,
+                                    lineHeight = 16.sp
+                                )
                             }
                         }
 

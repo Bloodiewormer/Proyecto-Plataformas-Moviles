@@ -15,7 +15,8 @@ fun CourseResponse.toDomain(): Course = Course(
     id = id,
     name = name,
     code = code,
-    joinCode = joinCode
+    joinCode = joinCode,
+    term = term
 )
 
 fun CourseDetailResponse.toDomain(): CourseDetail = CourseDetail(

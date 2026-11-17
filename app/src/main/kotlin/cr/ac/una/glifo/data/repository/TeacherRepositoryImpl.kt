@@ -16,11 +16,15 @@ import cr.ac.una.glifo.data.mapper.toSyllabusUnitRows
 import cr.ac.una.glifo.domain.error.Result
 import cr.ac.una.glifo.domain.model.GlossaryEntry
 import cr.ac.una.glifo.domain.model.GlossarySuggestion
+import cr.ac.una.glifo.domain.model.SyllabusDocument
 import cr.ac.una.glifo.domain.model.SyllabusUnitRow
 import cr.ac.una.glifo.domain.model.TeacherGapTopic
 import cr.ac.una.glifo.domain.model.TeacherGroupCoverage
 import cr.ac.una.glifo.domain.repository.TeacherRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import javax.inject.Inject
 
 /**
@@ -70,11 +74,39 @@ class TeacherRepositoryImpl @Inject constructor(
             )
         }
 
-    override suspend fun getSyllabusFileName(): Result<String> = withActiveCourse { courseId ->
+    override suspend fun getSyllabus(): Result<SyllabusDocument> = withActiveCourse { courseId ->
         ApiErrorHandler.safeApiCall(
-            apiCall = { api.getCourse(courseId) },
-            transform = { "programa-${it.data.code}.pdf" }
+            apiCall = { api.getCourseSyllabus(courseId) },
+            transform = { it.data.toDomain() }
         )
+    }
+
+    override suspend fun uploadSyllabusPdf(fileName: String, pdfBytes: ByteArray): Result<SyllabusDocument> {
+        if (pdfBytes.isEmpty()) {
+            return Result.Failure(
+                AppError.Validation(
+                    field = "file",
+                    issue = appContext.getString(R.string.teacher_syllabus_error_unreadable)
+                )
+            )
+        }
+        if (pdfBytes.size > MAX_PDF_BYTES) {
+            return Result.Failure(
+                AppError.Validation(
+                    field = "file",
+                    issue = appContext.getString(R.string.teacher_syllabus_error_too_large)
+                )
+            )
+        }
+        return withActiveCourse { courseId ->
+            val safeName = fileName.trim().ifEmpty { DEFAULT_PDF_NAME }
+            val body = pdfBytes.toRequestBody(PDF_MEDIA_TYPE.toMediaType())
+            val part = MultipartBody.Part.createFormData("file", safeName, body)
+            ApiErrorHandler.safeApiCall(
+                apiCall = { api.uploadSyllabusPdf(courseId, part) },
+                transform = { it.data.toDomain() }
+            )
+        }
     }
 
     override suspend fun isSyllabusPublished(): Result<Boolean> = withActiveCourse { courseId ->
@@ -123,7 +155,7 @@ class TeacherRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun publishSyllabus(topics: List<String>): Result<Unit> {
+    override suspend fun publishSyllabus(topics: List<String>, sourceUri: String?): Result<Unit> {
         val cleanTopics = topics.map { it.trim() }.filter { it.isNotEmpty() }
         if (cleanTopics.isEmpty()) {
             return Result.Failure(
@@ -148,7 +180,7 @@ class TeacherRepositoryImpl @Inject constructor(
                     api.publishSyllabus(
                         courseId = courseId,
                         request = PublishSyllabusRequest(
-                            sourceUri = "programa-curso-$courseId.pdf",
+                            sourceUri = sourceUri?.trim()?.takeIf { it.isNotEmpty() },
                             topics = requests
                         )
                     )
@@ -166,11 +198,14 @@ class TeacherRepositoryImpl @Inject constructor(
         }
 
     override suspend fun getGroupCoverage(): Result<TeacherGroupCoverage> = withActiveCourse { courseId ->
+        getGroupCoverage(courseId)
+    }
+
+    override suspend fun getGroupCoverage(courseId: Long): Result<TeacherGroupCoverage> =
         ApiErrorHandler.safeApiCall(
             apiCall = { api.getCourseGaps(courseId) },
             transform = { response -> TeacherGapsMapper.toGroupCoverage(response.data) }
         )
-    }
 
     /** Sin curso activo no hay a qué glosario ni temario apuntar: se le pide al docente que elija uno. */
     private suspend fun <T> withActiveCourse(block: suspend (Long) -> Result<T>): Result<T> {
@@ -195,6 +230,10 @@ class TeacherRepositoryImpl @Inject constructor(
     }
 
     private companion object {
+        const val MAX_PDF_BYTES = 10 * 1024 * 1024
+        const val PDF_MEDIA_TYPE = "application/pdf"
+        const val DEFAULT_PDF_NAME = "syllabus.pdf"
+
         /**
          * El backend marca el temario publicado como PARSED (CourseMappers.kt) y Mockoon como
          * PUBLISHED. Antes se comparaba con "READY", que nadie envía, y un temario publicado
