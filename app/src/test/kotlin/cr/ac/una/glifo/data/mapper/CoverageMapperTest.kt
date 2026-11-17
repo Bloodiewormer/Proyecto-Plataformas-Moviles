@@ -190,4 +190,22 @@ class CoverageMapperTest {
         assertFalse(emptyDelta.changedTopics.isNotEmpty())
         assertTrue(emptyDelta.changedTopics.isEmpty())
     }
+
+    @Test
+    fun `toTopics tags each leaf with its parent unit label`() {
+        val dto = CoverageResponseDto(
+            courseId = 1L,
+            topics = listOf(
+                TopicCoverageResponseDto(topicId = 1L, code = "U1", title = "Uno"),
+                TopicCoverageResponseDto(topicId = 11L, parentId = 1L, code = "U1.1", title = "a", state = "SOLID"),
+                TopicCoverageResponseDto(topicId = 2L, code = "U2", title = "Dos"),
+                TopicCoverageResponseDto(topicId = 21L, parentId = 2L, code = "U2.1", title = "b", state = "ABSENT"),
+                TopicCoverageResponseDto(topicId = 3L, code = "S", title = "Suelto", state = "PARTIAL")
+            )
+        )
+
+        val topics = CoverageMapper.toTopics(dto, java.time.ZoneId.of("UTC"), java.util.Locale.ROOT)
+
+        assertEquals(listOf("U1 · UNO", "U2 · DOS", null), topics.map { it.unitLabel })
+    }
 }

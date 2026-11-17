@@ -11,7 +11,8 @@ data class CoverageTopic(
     val code: String = "",
     val title: String = name,
     val updatedAt: String? = null,
-    val noteText: UiText? = note?.let(UiText::Plain)
+    val noteText: UiText? = note?.let(UiText::Plain),
+    val unitLabel: String? = null
 )
 
 data class CoverageSummary(
