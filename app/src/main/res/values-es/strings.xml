@@ -421,7 +421,7 @@
     <string name="teacher_new_course_button_creating">Creando...</string>
     <string name="teacher_new_course_button_create">Crear curso</string>
     <string name="teacher_add_topic_dialog_title">Agregar tema</string>
-    <string name="teacher_add_topic_dialog_description">Se agrega a la primera unidad (3 · Series).</string>
+    <string name="teacher_add_topic_dialog_description">Se agrega a la primera unidad del temario.</string>
     <string name="teacher_add_topic_field_label">Nombre del tema</string>
     <string name="teacher_add_topic_field_placeholder">p. ej. 3.6 Series alternadas</string>
     <string name="teacher_add_button">Agregar</string>
@@ -429,8 +429,15 @@
     <!-- TeacherSyllabusScreen -->
     <string name="teacher_syllabus_title">Temario</string>
     <string name="teacher_syllabus_publish_button">Publicar</string>
-    <string name="teacher_syllabus_file_meta">1.2 MB · procesado hace 2 minutos</string>
-    <string name="teacher_syllabus_extraction_note">Se extrajeron %1$d unidades y %2$d temas. Revisalos antes de publicar: el temario se procesa una sola vez.</string>
+    <string name="teacher_syllabus_upload_pdf">Subir PDF</string>
+    <string name="teacher_syllabus_replace_pdf">Subir otro PDF</string>
+    <string name="teacher_syllabus_uploading_ai">Analizando el temario con IA…</string>
+    <string name="teacher_syllabus_empty_title">Todavía no hay temario</string>
+    <string name="teacher_syllabus_empty_description">Subí el programa del curso en PDF para extraer sus unidades y temas automáticamente.</string>
+    <string name="teacher_syllabus_file_meta_full">%1$s · procesado el %2$s</string>
+    <string name="teacher_syllabus_file_meta_date_only">Procesado el %1$s</string>
+    <string name="teacher_syllabus_saved_summary">%1$d unidades y %2$d temas guardados.</string>
+    <string name="teacher_syllabus_pending_summary">%1$d unidades y %2$d temas listos para publicar.</string>
     <string name="teacher_syllabus_structure_section">ESTRUCTURA DETECTADA</string>
     <string name="teacher_syllabus_add_topic_manually">Agregar un tema a mano</string>
     <string name="teacher_syllabus_no_active_course">Seleccioná o creá un curso activo primero.</string>
@@ -438,6 +445,12 @@
     <string name="teacher_syllabus_empty_topics_error">Agregá al menos un tema antes de publicar el temario.</string>
     <string name="teacher_syllabus_already_published">El temario de este curso ya está publicado.</string>
     <string name="teacher_syllabus_pending_unit_label">1 · Temas pendientes</string>
+    <string name="teacher_syllabus_replace_confirm_title">¿Reemplazar el temario actual?</string>
+    <string name="teacher_syllabus_replace_confirm_message">Si subís otro PDF, se van a reemplazar todos los temas actuales del curso.</string>
+    <string name="teacher_syllabus_replace_confirm_action">Reemplazar</string>
+    <string name="teacher_syllabus_replace_cancel">Cancelar</string>
+    <string name="teacher_syllabus_error_too_large">El PDF supera el límite de 10 MB.</string>
+    <string name="teacher_syllabus_error_unreadable">No se pudo leer el PDF seleccionado.</string>
 
     <!-- TeacherGlossaryScreen -->
     <string name="teacher_glossary_title">Glosario</string>

@@ -34,6 +34,7 @@ import cr.ac.una.glifo.data.dto.RegisterDeviceRequest
 import cr.ac.una.glifo.data.dto.RegisterRequest
 import cr.ac.una.glifo.data.dto.ResolveGlossarySuggestionRequest
 import cr.ac.una.glifo.data.dto.StudyItemResponse
+import cr.ac.una.glifo.data.dto.SyllabusDocumentResponse
 import cr.ac.una.glifo.data.dto.SyllabusTopicResponse
 import cr.ac.una.glifo.data.dto.SyncCompleteRequest
 import cr.ac.una.glifo.data.dto.SyncCompleteResponse
@@ -81,6 +82,16 @@ interface GlifoApi {
     suspend fun joinCourse(@Body request: JoinCourseRequest): ApiResponse<EnrollmentResponse>
 
     // Temario / Topics del curso (#32)
+    @GET("courses/{id}/syllabus")
+    suspend fun getCourseSyllabus(@Path("id") courseId: Long): ApiResponse<SyllabusDocumentResponse>
+
+    @Multipart
+    @POST("courses/{id}/syllabus/pdf")
+    suspend fun uploadSyllabusPdf(
+        @Path("id") courseId: Long,
+        @Part file: MultipartBody.Part
+    ): ApiResponse<SyllabusDocumentResponse>
+
     @POST("courses/{id}/syllabus")
     suspend fun publishSyllabus(
         @Path("id") courseId: Long,

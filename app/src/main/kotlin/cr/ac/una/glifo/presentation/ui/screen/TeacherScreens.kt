@@ -1,6 +1,11 @@
 package cr.ac.una.glifo.presentation.ui.screen
 
+import android.content.Context
 import android.content.Intent
+import android.net.Uri
+import android.provider.OpenableColumns
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -28,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import cr.ac.una.glifo.R
+import cr.ac.una.glifo.core.common.AppError
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.domain.model.ConfidenceState
 import cr.ac.una.glifo.domain.model.GlifoRole
@@ -40,7 +46,11 @@ import cr.ac.una.glifo.presentation.viewmodel.TeacherGlossaryViewModel
 import cr.ac.una.glifo.presentation.viewmodel.TeacherNewCourseViewModel
 import cr.ac.una.glifo.presentation.viewmodel.TeacherSyllabusViewModel
 import cr.ac.una.glifo.presentation.viewmodel.toMessage
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
 
 // ── Screen I1: Cursos Docente ─────────────────────────────────────────────────
 @Composable
@@ -329,7 +339,7 @@ fun TeacherNewCourseScreen(
     }
 }
 
-// ── Screen I3: Publicar Temario ───────────────────────────────────────────────
+// ── Screen I3: Publicar Temario ─────────────────────────────────────────────────
 @Composable
 fun TeacherSyllabusScreen(
     onNavigateBack: () -> Unit,
@@ -340,8 +350,33 @@ fun TeacherSyllabusScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var showAddTopicDialog by remember { mutableStateOf(false) }
+    var showReplaceConfirmDialog by remember { mutableStateOf(false) }
     var publishError by remember { mutableStateOf<String?>(null) }
     val uiState by viewModel.state.collectAsState()
+
+    val pdfLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        publishError = null
+        scope.launch {
+            when (val picked = readSyllabusPdfFromUri(context, uri)) {
+                is PickedPdfResult.Success -> viewModel.uploadSyllabusPdf(picked.fileName, picked.bytes)
+                is PickedPdfResult.Error -> viewModel.reportPdfError(picked.field)
+            }
+        }
+    }
+
+    val onUploadPdfClick: () -> Unit = {
+        val current = (uiState as? UiState.Success)?.data
+        if (current?.hasTopics == true) {
+            showReplaceConfirmDialog = true
+        } else {
+            pdfLauncher.launch(arrayOf("application/pdf"))
+        }
+    }
+
+    val isUploading = (uiState as? UiState.Success)?.data?.isUploading == true
 
     Column(
         modifier = Modifier
@@ -353,27 +388,26 @@ fun TeacherSyllabusScreen(
             isBack = true,
             onNavigationClick = onNavigateBack,
             actions = {
-                TextButton(onClick = {
-                    publishError = null
-                    scope.launch {
-                        when (val result = viewModel.publishSyllabus()) {
-                            is cr.ac.una.glifo.domain.error.Result.Success -> onPublishSuccess()
-                            is cr.ac.una.glifo.domain.error.Result.Failure -> {
-                                val err = result.error
-                                publishError = when {
-                                    err is cr.ac.una.glifo.core.common.AppError.Validation &&
-                                        err.field == TeacherSyllabusViewModel.FIELD_ALREADY_PUBLISHED ->
-                                        context.getString(R.string.teacher_syllabus_already_published)
-                                    err is cr.ac.una.glifo.core.common.AppError.Validation &&
-                                        (err.field == TeacherSyllabusViewModel.FIELD_EMPTY_TOPICS || err.field == "topics") ->
-                                        context.getString(R.string.teacher_syllabus_empty_topics_error)
-                                    else -> err.toMessage(context)
+                TextButton(
+                    enabled = !isUploading,
+                    onClick = {
+                        publishError = null
+                        scope.launch {
+                            when (val result = viewModel.publishSyllabus()) {
+                                is cr.ac.una.glifo.domain.error.Result.Success -> onPublishSuccess()
+                                is cr.ac.una.glifo.domain.error.Result.Failure -> {
+                                    publishError = result.error.toSyllabusErrorMessage(context)
                                 }
                             }
                         }
                     }
-                }) {
-                    Text(stringResource(R.string.teacher_syllabus_publish_button), color = colors.accentText, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                ) {
+                    Text(
+                        stringResource(R.string.teacher_syllabus_publish_button),
+                        color = if (isUploading) colors.textSecondary else colors.accentText,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
             }
         )
@@ -384,83 +418,192 @@ fun TeacherSyllabusScreen(
             }
         }
 
-
         when (val state = uiState) {
             is UiState.Loading -> GlifoLoadingBox()
             is UiState.Empty -> GlifoLoadingBox()
             is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
             is UiState.Success -> {
-                val units = state.data.units
-                val fileName = state.data.fileName
+                val data = state.data
+                val units = data.units
+                val fileName = data.fileName
                 val totalTopics = units.sumOf { it.topicCount }
 
                 Column(
                     modifier = Modifier
                         .weight(1f)
+                        .navigationBarsPadding()
                         .verticalScroll(rememberScrollState())
                         .padding(14.dp)
                 ) {
-                    GlifoCard(borderColor = colors.accentLine) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    data.actionError?.let { error ->
+                        GlifoBanner(
+                            text = error.toSyllabusErrorMessage(context),
+                            isWarning = true,
+                            modifier = Modifier
+                                .padding(bottom = 12.dp)
+                                .clickable { viewModel.dismissActionError() }
+                        )
+                    }
+
+                    if (data.isUploading) {
+                        GlifoCard(
+                            backgroundColor = colors.accentFaint,
+                            borderColor = colors.accentLine,
+                            modifier = Modifier.padding(bottom = 12.dp)
                         ) {
-                            Icon(Icons.Default.PictureAsPdf, contentDescription = null, tint = colors.accentText, modifier = Modifier.size(32.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(fileName, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                                Text(stringResource(R.string.teacher_syllabus_file_meta), fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(18.dp),
+                                    strokeWidth = 2.dp,
+                                    color = colors.accent
+                                )
+                                Text(
+                                    text = stringResource(R.string.teacher_syllabus_uploading_ai),
+                                    fontSize = 14.sp,
+                                    color = colors.textPrimary
+                                )
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.Top
-                    ) {
-                        Icon(Icons.Default.Check, contentDescription = null, tint = colors.verified, modifier = Modifier.size(18.dp).padding(top = 1.dp))
-                        Text(
-                            text = stringResource(R.string.teacher_syllabus_extraction_note, units.size, totalTopics),
-                            fontSize = 12.sp,
-                            color = colors.textSecondary,
-                            lineHeight = 18.sp
-                        )
-                    }
-
-                    Text(
-                        text = stringResource(R.string.teacher_syllabus_structure_section),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        letterSpacing = 0.6.sp,
-                        color = colors.textSecondary,
-                        modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
-                    )
-
-                    GlifoCard(tight = true) {
-                        units.forEachIndexed { unitIdx, unit ->
-                            val unitLabel = unit.label.ifBlank { stringResource(R.string.teacher_syllabus_pending_unit_label) }
-                            GlifoItem(compact = true, backgroundColor = colors.surfaceHigh, showBottomBorder = unit.topics.isEmpty() && unitIdx < units.size - 1) {
+                    if (fileName == null && units.isEmpty()) {
+                        GlifoCard(borderColor = colors.accentLine) {
+                            Row(
+                                verticalAlignment = Alignment.Top,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
                                 Icon(
-                                    imageVector = if (unit.topics.isNotEmpty()) Icons.Default.KeyboardArrowDown else Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                    Icons.Default.PictureAsPdf,
                                     contentDescription = null,
                                     tint = colors.accentText,
-                                    modifier = Modifier.size(18.dp)
+                                    modifier = Modifier.size(32.dp)
                                 )
-                                Text(unitLabel, fontWeight = FontWeight.Medium, fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                                Text(stringResource(R.string.course_detail_topic_count, unit.topicCount), fontSize = 12.sp, color = colors.textSecondary)
-                                Icon(Icons.Default.Edit, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = stringResource(R.string.teacher_syllabus_empty_title),
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = colors.textPrimary
+                                    )
+                                    Text(
+                                        text = stringResource(R.string.teacher_syllabus_empty_description),
+                                        fontSize = 13.sp,
+                                        color = colors.textSecondary,
+                                        lineHeight = 18.sp,
+                                        modifier = Modifier.padding(top = 4.dp)
+                                    )
+                                }
                             }
-                            unit.topics.forEachIndexed { i, topic ->
-                                GlifoItem(
-                                    compact = true,
-                                    backgroundColor = if (topic.hasIssue) colors.alertFaint else Color.Transparent,
-                                    showBottomBorder = !(unitIdx == units.size - 1 && i == unit.topics.size - 1),
-                                    modifier = Modifier.padding(start = 24.dp)
+                            Spacer(modifier = Modifier.height(14.dp))
+                            GlifoButton(
+                                text = stringResource(R.string.teacher_syllabus_upload_pdf),
+                                icon = Icons.Default.UploadFile,
+                                enabled = !data.isUploading,
+                                onClick = onUploadPdfClick
+                            )
+                        }
+                    } else {
+                        if (fileName != null) {
+                            val metaText = when {
+                                data.formattedSize != null && data.parsedAtDisplay != null ->
+                                    stringResource(R.string.teacher_syllabus_file_meta_full, data.formattedSize, data.parsedAtDisplay)
+                                data.formattedSize != null -> data.formattedSize
+                                data.parsedAtDisplay != null ->
+                                    stringResource(R.string.teacher_syllabus_file_meta_date_only, data.parsedAtDisplay)
+                                else -> null
+                            }
+
+                            GlifoCard(borderColor = colors.accentLine) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
-                                    Text(topic.label, fontSize = 15.sp, color = if (topic.hasIssue) colors.alert else colors.textPrimary, modifier = Modifier.weight(1f))
-                                    Icon(Icons.Default.Edit, contentDescription = null, tint = if (topic.hasIssue) colors.alert else colors.textSecondary, modifier = Modifier.size(18.dp))
+                                    Icon(Icons.Default.PictureAsPdf, contentDescription = null, tint = colors.accentText, modifier = Modifier.size(32.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(fileName, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                                        if (metaText != null) {
+                                            Text(metaText, fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
+                                        }
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(12.dp))
+                                GlifoButton(
+                                    text = stringResource(R.string.teacher_syllabus_replace_pdf),
+                                    variant = GlifoButtonVariant.Secondary,
+                                    small = true,
+                                    icon = Icons.Default.UploadFile,
+                                    enabled = !data.isUploading,
+                                    onClick = onUploadPdfClick
+                                )
+                            }
+                        } else {
+                            GlifoButton(
+                                text = stringResource(R.string.teacher_syllabus_upload_pdf),
+                                variant = GlifoButtonVariant.Secondary,
+                                icon = Icons.Default.UploadFile,
+                                enabled = !data.isUploading,
+                                onClick = onUploadPdfClick
+                            )
+                        }
+
+                        if (units.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalAlignment = Alignment.Top
+                            ) {
+                                Icon(Icons.Default.Check, contentDescription = null, tint = colors.verified, modifier = Modifier.size(18.dp).padding(top = 1.dp))
+                                Text(
+                                    text = stringResource(
+                                        if (data.isPublished) R.string.teacher_syllabus_saved_summary else R.string.teacher_syllabus_pending_summary,
+                                        units.size,
+                                        totalTopics
+                                    ),
+                                    fontSize = 12.sp,
+                                    color = colors.textSecondary,
+                                    lineHeight = 18.sp
+                                )
+                            }
+
+                            Text(
+                                text = stringResource(R.string.teacher_syllabus_structure_section),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                letterSpacing = 0.6.sp,
+                                color = colors.textSecondary,
+                                modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                            )
+
+                            GlifoCard(tight = true) {
+                                units.forEachIndexed { unitIdx, unit ->
+                                    val unitLabel = unit.label.ifBlank { stringResource(R.string.teacher_syllabus_pending_unit_label) }
+                                    GlifoItem(compact = true, backgroundColor = colors.surfaceHigh, showBottomBorder = unit.topics.isEmpty() && unitIdx < units.size - 1) {
+                                        Icon(
+                                            imageVector = if (unit.topics.isNotEmpty()) Icons.Default.KeyboardArrowDown else Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                            contentDescription = null,
+                                            tint = colors.accentText,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Text(unitLabel, fontWeight = FontWeight.Medium, fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                                        Text(stringResource(R.string.course_detail_topic_count, unit.topicCount), fontSize = 12.sp, color = colors.textSecondary)
+                                        Icon(Icons.Default.Edit, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
+                                    }
+                                    unit.topics.forEachIndexed { i, topic ->
+                                        GlifoItem(
+                                            compact = true,
+                                            backgroundColor = if (topic.hasIssue) colors.alertFaint else Color.Transparent,
+                                            showBottomBorder = !(unitIdx == units.size - 1 && i == unit.topics.size - 1),
+                                            modifier = Modifier.padding(start = 24.dp)
+                                        ) {
+                                            Text(topic.label, fontSize = 15.sp, color = if (topic.hasIssue) colors.alert else colors.textPrimary, modifier = Modifier.weight(1f))
+                                            Icon(Icons.Default.Edit, contentDescription = null, tint = if (topic.hasIssue) colors.alert else colors.textSecondary, modifier = Modifier.size(18.dp))
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -472,6 +615,7 @@ fun TeacherSyllabusScreen(
                         text = stringResource(R.string.teacher_syllabus_add_topic_manually),
                         variant = GlifoButtonVariant.Secondary,
                         icon = Icons.Default.Add,
+                        enabled = !data.isUploading,
                         onClick = { showAddTopicDialog = true }
                     )
                 }
@@ -487,6 +631,126 @@ fun TeacherSyllabusScreen(
                 showAddTopicDialog = false
             }
         )
+    }
+
+    if (showReplaceConfirmDialog) {
+        ReplaceSyllabusConfirmDialog(
+            onDismiss = { showReplaceConfirmDialog = false },
+            onConfirm = {
+                showReplaceConfirmDialog = false
+                pdfLauncher.launch(arrayOf("application/pdf"))
+            }
+        )
+    }
+}
+
+private sealed interface PickedPdfResult {
+    data class Success(val fileName: String, val bytes: ByteArray) : PickedPdfResult
+    data class Error(val field: String) : PickedPdfResult
+}
+
+private suspend fun readSyllabusPdfFromUri(context: Context, uri: Uri): PickedPdfResult =
+    withContext(Dispatchers.IO) {
+        try {
+            var displayName = "syllabus.pdf"
+            var reportedSize: Long? = null
+            context.contentResolver.query(
+                uri,
+                arrayOf(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE),
+                null,
+                null,
+                null
+            )?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val nameIdx = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    if (nameIdx >= 0 && !cursor.isNull(nameIdx)) {
+                        cursor.getString(nameIdx)?.trim()?.takeIf { it.isNotEmpty() }?.let { displayName = it }
+                    }
+                    val sizeIdx = cursor.getColumnIndex(OpenableColumns.SIZE)
+                    if (sizeIdx >= 0 && !cursor.isNull(sizeIdx)) {
+                        reportedSize = cursor.getLong(sizeIdx)
+                    }
+                }
+            }
+
+            if ((reportedSize ?: 0L) > TeacherSyllabusViewModel.MAX_PDF_BYTES) {
+                return@withContext PickedPdfResult.Error(TeacherSyllabusViewModel.FIELD_PDF_TOO_LARGE)
+            }
+
+            val stream = context.contentResolver.openInputStream(uri)
+                ?: return@withContext PickedPdfResult.Error(TeacherSyllabusViewModel.FIELD_PDF_UNREADABLE)
+
+            val bytes = stream.use { input ->
+                val out = ByteArrayOutputStream()
+                val buffer = ByteArray(8192)
+                var total = 0L
+                while (true) {
+                    val read = input.read(buffer)
+                    if (read == -1) break
+                    total += read
+                    // Corta antes de leer archivos enormes completos a memoria.
+                    if (total > TeacherSyllabusViewModel.MAX_PDF_BYTES) {
+                        return@withContext PickedPdfResult.Error(TeacherSyllabusViewModel.FIELD_PDF_TOO_LARGE)
+                    }
+                    out.write(buffer, 0, read)
+                }
+                out.toByteArray()
+            }
+
+            if (bytes.isEmpty()) {
+                PickedPdfResult.Error(TeacherSyllabusViewModel.FIELD_PDF_UNREADABLE)
+            } else {
+                PickedPdfResult.Success(displayName, bytes)
+            }
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (_: Exception) {
+            PickedPdfResult.Error(TeacherSyllabusViewModel.FIELD_PDF_UNREADABLE)
+        }
+    }
+
+private fun AppError.toSyllabusErrorMessage(context: Context): String = when {
+    this is AppError.Validation && field == TeacherSyllabusViewModel.FIELD_ALREADY_PUBLISHED ->
+        context.getString(R.string.teacher_syllabus_already_published)
+    this is AppError.Validation && (field == TeacherSyllabusViewModel.FIELD_EMPTY_TOPICS || field == "topics") ->
+        context.getString(R.string.teacher_syllabus_empty_topics_error)
+    this is AppError.Validation && field == TeacherSyllabusViewModel.FIELD_PDF_TOO_LARGE ->
+        context.getString(R.string.teacher_syllabus_error_too_large)
+    this is AppError.Validation && field == TeacherSyllabusViewModel.FIELD_PDF_UNREADABLE ->
+        context.getString(R.string.teacher_syllabus_error_unreadable)
+    else -> toMessage(context)
+}
+
+@Composable
+private fun ReplaceSyllabusConfirmDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
+    val colors = GlifoTheme.colors
+    Dialog(onDismissRequest = onDismiss) {
+        GlifoCard {
+            Text(
+                stringResource(R.string.teacher_syllabus_replace_confirm_title),
+                fontSize = 17.sp,
+                fontWeight = FontWeight.Medium,
+                color = colors.textPrimary
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                stringResource(R.string.teacher_syllabus_replace_confirm_message),
+                fontSize = 13.sp,
+                color = colors.textSecondary,
+                lineHeight = 18.sp
+            )
+            Spacer(modifier = Modifier.height(14.dp))
+            GlifoButton(
+                text = stringResource(R.string.teacher_syllabus_replace_confirm_action),
+                onClick = onConfirm
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            GlifoButton(
+                text = stringResource(R.string.teacher_syllabus_replace_cancel),
+                variant = GlifoButtonVariant.Secondary,
+                onClick = onDismiss
+            )
+        }
     }
 }
 

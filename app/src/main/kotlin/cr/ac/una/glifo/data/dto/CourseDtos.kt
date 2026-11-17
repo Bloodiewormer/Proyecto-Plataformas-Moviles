@@ -107,3 +107,12 @@ data class SyllabusTopicResponse(
     @SerializedName("order_index") val orderIndex: Int
 )
 
+data class SyllabusDocumentResponse(
+    @SerializedName("course_id") val courseId: Long,
+    @SerializedName("file_name") val fileName: String? = null,
+    @SerializedName("size_bytes") val sizeBytes: Long? = null,
+    @SerializedName("parsed_at") val parsedAt: String? = null,
+    @SerializedName("syllabus_version") val syllabusVersion: Int = 0,
+    @SerializedName("topics") val topics: List<SyllabusTopicResponse> = emptyList()
+)
+
