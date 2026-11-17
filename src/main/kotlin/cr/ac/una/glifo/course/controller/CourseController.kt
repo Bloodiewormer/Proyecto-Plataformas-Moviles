@@ -29,7 +29,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder
  * | GET    | /courses/{id}              | 200   | 400, 404                                                         |
  * | POST   | /courses                   | 201   | 400, 403 (sin COURSE_WRITE), 415                                 |
  * | POST   | /courses/{id}/syllabus     | 201   | 400, 403 (sin SYLLABUS_PUBLISH o dueño), 404, 409, 415           |
- * | POST   | /courses/{id}/syllabus/pdf | 201   | 400, 403 (sin SYLLABUS_PUBLISH o dueño), 404, 413, 415, 502, 503 |
+ * | POST   | /courses/{id}/syllabus/pdf | 201   | 400, 403 (sin SYLLABUS_PUBLISH o dueño), 404, 409 (ya publicado), 413, 415, 502, 503 |
  * | GET    | /courses/{id}/syllabus     | 200   | 400, 401, 404                                                    |
  * | GET    | /courses/{id}/topics       | 200   | 400, 404                                                         |
  * | POST   | /courses/{id}/topics       | 201   | 400, 403 (sin SYLLABUS_PUBLISH o dueño), 404, 415                |

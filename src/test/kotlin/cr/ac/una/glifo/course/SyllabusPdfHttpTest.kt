@@ -202,6 +202,19 @@ class SyllabusPdfHttpTest {
     }
 
     @Test
+    fun `curso con temario ya publicado responde 409 sin llamar a la IA`() {
+        val demoCourseId = courseRepository.findByJoinCode("GLF-CALC1")!!.id
+        val part = MockMultipartFile("file", "programa.pdf", "application/pdf", buildPdfBytes("Unidad 1: Limites"))
+
+        mvc.multipart("/api/v1/courses/$demoCourseId/syllabus/pdf") {
+            file(part)
+            header("Authorization", teacherBearer())
+        }.andExpect { status { isConflict() } }
+
+        verifyNoInteractions(llmClient)
+    }
+
+    @Test
     fun `archivo que no es PDF responde 400 sin llamar a la IA`() {
         val course = createOwnedCourse()
         val part = MockMultipartFile("file", "notas.txt", "text/plain", "esto no es un pdf".toByteArray())
@@ -337,7 +350,8 @@ class SyllabusPdfHttpTest {
             LlmResult("""{"units": []}""", "gpt-4o-mini", 100, 10, 100L)
         )
 
-        mvc.multipart("/api/v1/courses/${course.id}/syllabus/pdf") {
+        val unpublishedCourse = createOwnedCourse()
+        mvc.multipart("/api/v1/courses/${unpublishedCourse.id}/syllabus/pdf") {
             file(MockMultipartFile("file", "silabo2.pdf", "application/pdf", pdfBytes))
             header("Authorization", teacherBearer())
         }.andExpect {

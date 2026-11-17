@@ -110,8 +110,9 @@ class CourseService @Autowired constructor(
     }
 
     /**
-     * Extrae el temario desde un archivo PDF con la IA (fuera de transacción) y reemplaza
-     * los temas del curso en una transacción corta, sin almacenar el binario del PDF.
+     * Extrae el temario desde un archivo PDF con la IA (fuera de transacción) y lo publica
+     * en una transacción corta. Como el publish manual, solo vale una vez: así no se borran
+     * coberturas ni ítems de estudio ya ligados a los temas, sin almacenar el binario del PDF.
      */
     fun publishSyllabusFromPdf(
         courseId: Long,
@@ -120,6 +121,9 @@ class CourseService @Autowired constructor(
         isAdmin: Boolean = false
     ): SyllabusDocumentResponse {
         val course = requirePublishableCourse(courseId, userId, isAdmin)
+        if (course.syllabusParsedAt != null) {
+            throw DuplicateResourceException("El temario de este curso ya fue publicado")
+        }
         val parser = syllabusParserService
             ?: throw IllegalStateException("SyllabusParserService no configurado")
 
@@ -131,9 +135,6 @@ class CourseService @Autowired constructor(
         )
 
         val (savedCourse, savedTopics) = transactions.execute {
-            if (syllabusTopicRepository.findByCourseIdOrderByOrderIndex(courseId).isNotEmpty()) {
-                syllabusTopicRepository.deleteAllByCourseId(courseId)
-            }
             val freshCourse = courseRepository.findById(courseId)
                 .orElseThrow { ResourceNotFoundException("Curso no encontrado") }
             applyPublishSyllabus(freshCourse, publishRequest)
