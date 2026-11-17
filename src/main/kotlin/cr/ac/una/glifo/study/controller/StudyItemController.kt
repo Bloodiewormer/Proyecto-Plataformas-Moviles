@@ -55,7 +55,7 @@ class StudyItemController(
         @RequestParam(required = false) @Positive(message = "El id del tema debe ser positivo") topicId: Long? = null,
         @AuthenticationPrincipal user: GlifoUserDetails
     ): ResponseEntity<ApiResponse<List<StudyItemResponse>>> {
-        val items = studyItemService.list(courseId, topicId, user.userId)
+        val items = studyItemService.list(courseId, topicId, user.userId, user.isAdmin())
         return ResponseEntity.ok(ApiResponse(data = items))
     }
 }

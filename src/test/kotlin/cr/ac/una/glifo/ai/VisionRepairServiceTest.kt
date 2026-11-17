@@ -297,4 +297,78 @@ class VisionRepairServiceTest {
         assertEquals("AI_NOT_CONFIGURED", ex.code)
         assertTrue(llm.requests.isEmpty())
     }
+
+    @Test
+    fun `un recorte etiquetado DRAWING con formula se reclasifica a MATH y guarda su LaTeX`() {
+        regions = """
+            [
+              {"id": "r3", "kind": "DRAWING", "resolvedAt": "UNRESOLVED", "confidence": 0.31, "isUncertain": true, "text": "A-"},
+              {"id": "r4", "kind": "DRAWING", "resolvedAt": "UNRESOLVED", "confidence": 0.35, "isUncertain": true, "text": "U-"}
+            ]
+        """.trimIndent()
+        llm.tokens = tokens(
+            "r3|" to 0.0, "MATH|" to 0.0, "\\lim_{x \\to \\infty} \\frac{a^3}{x^2+a^2} = 0" to -0.05, "\n" to 0.0,
+            "r4|" to 0.0, "\\int_{0}^{\\infty} x^2\\,dx" to -0.05
+        )
+
+        val response = service.repairPage(7L, 1L, 0, linkedMapOf("r3" to png, "r4" to png))
+
+        assertEquals(2, response.repaired)
+        assertEquals(listOf("MATH", "MATH"), response.regions.map { it.kind })
+        val (_, byId) = saved()
+        assertEquals("MATH", byId.getValue("r3")["kind"].asString())
+        assertEquals("\\lim_{x \\to \\infty} \\frac{a^3}{x^2+a^2} = 0", byId.getValue("r3")["latex"].asString())
+        assertEquals("MATH", byId.getValue("r4")["kind"].asString())
+        assertEquals("\\int_{0}^{\\infty} x^2\\,dx", byId.getValue("r4")["latex"].asString())
+    }
+
+    @Test
+    fun `un dibujo real con descripcion breve de confianza moderada se acepta en N2`() {
+        llm.tokens = tokens("r3|" to 0.0, "DRAWING|" to 0.0, "Curva de campana simétrica respecto al eje y" to -0.65)
+
+        val response = service.repairPage(7L, 1L, 0, linkedMapOf("r3" to png))
+
+        assertEquals(1, response.repaired)
+        assertEquals("N2", response.regions.single().resolvedAt)
+        assertEquals("DRAWING", response.regions.single().kind)
+        assertEquals("Curva de campana simétrica respecto al eje y", saved().second.getValue("r3")["caption"].asString())
+    }
+
+    @Test
+    fun `una pagina con 16 regiones pendientes se repara en una sola llamada`() {
+        regions = (1..16).joinToString(prefix = "[", postfix = "]") { i ->
+            """{"id": "r$i", "kind": "TEXT", "resolvedAt": "UNRESOLVED", "confidence": 0.4, "isUncertain": true, "text": "x$i"}"""
+        }
+        val tokenList = (1..16).flatMap { i ->
+            listOf("r$i|" to 0.0, "TEXT|" to 0.0, "línea $i" to -0.05) + if (i < 16) listOf("\n" to 0.0) else emptyList()
+        }
+        llm.tokens = tokens(*tokenList.toTypedArray())
+        val crops = (1..16).associate { "r$it" to png }
+
+        val response = service.repairPage(7L, 1L, 0, crops)
+
+        assertEquals(1, llm.requests.size)
+        assertEquals(16, llm.requests.single().images.size)
+        assertEquals(16, response.repaired)
+    }
+
+    @Test
+    fun `una formula o texto legible de confianza intermedia conserva su transcripcion como incierta`() {
+        llm.tokens = tokens(
+            "r1|" to 0.0, "TEXT|" to 0.0, "por el método de los discos" to -0.8, "\n" to 0.0,
+            "r2|" to 0.0, "MATH|" to 0.0, "\\int_{0}^{\\pi/2} a^3 \\cos^2 t\\,dt" to -0.5
+        )
+
+        val response = service.repairPage(7L, 1L, 0, linkedMapOf("r1" to png, "r2" to png))
+
+        assertEquals(0, response.repaired)
+        assertEquals(2, response.uncertain)
+        assertEquals("por el método de los discos", response.regions[0].value)
+        assertEquals("\\int_{0}^{\\pi/2} a^3 \\cos^2 t\\,dt", response.regions[1].value)
+        val (_, byId) = saved()
+        assertEquals("por el método de los discos", byId.getValue("r1")["text"].asString())
+        assertTrue(byId.getValue("r1")["isUncertain"].asBoolean())
+        assertEquals("\\int_{0}^{\\pi/2} a^3 \\cos^2 t\\,dt", byId.getValue("r2")["latex"].asString())
+        assertTrue(byId.getValue("r2")["isUncertain"].asBoolean())
+    }
 }

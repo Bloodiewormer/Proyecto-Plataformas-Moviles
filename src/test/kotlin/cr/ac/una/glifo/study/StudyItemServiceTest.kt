@@ -13,11 +13,13 @@ import cr.ac.una.glifo.course.entity.SyllabusTopic
 import cr.ac.una.glifo.course.repository.CourseRepository
 import cr.ac.una.glifo.course.repository.EnrollmentRepository
 import cr.ac.una.glifo.course.repository.SyllabusTopicRepository
+import cr.ac.una.glifo.course.service.CourseService
 import cr.ac.una.glifo.study.dto.GenerateStudyItemsRequest
 import cr.ac.una.glifo.study.entity.StudyItem
 import cr.ac.una.glifo.study.repository.StudyItemRepository
 import cr.ac.una.glifo.study.service.StudyItemService
 import cr.ac.una.glifo.user.entity.User
+import cr.ac.una.glifo.user.repository.UserRepository
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -73,16 +75,24 @@ class StudyItemServiceTest {
         studyItemRepository = mock(StudyItemRepository::class.java)
         generationService = mock(GenerationService::class.java)
 
+        val courseService = CourseService(
+            courseRepository,
+            enrollmentRepository,
+            mock(UserRepository::class.java),
+            syllabusTopicRepository
+        )
         service = StudyItemService(
             courseRepository = courseRepository,
             enrollmentRepository = enrollmentRepository,
             syllabusTopicRepository = syllabusTopicRepository,
             studyItemRepository = studyItemRepository,
-            generationService = generationService
+            generationService = generationService,
+            courseService = courseService
         )
 
         `when`(courseRepository.findById(10L)).thenReturn(Optional.of(course))
         `when`(enrollmentRepository.existsByUserIdAndCourseId(1L, 10L)).thenReturn(true)
+        `when`(enrollmentRepository.existsByUserIdAndCourseIdAndStatus(1L, 10L, "ACTIVE")).thenReturn(true)
         `when`(syllabusTopicRepository.findByCourseIdOrderByOrderIndex(10L))
             .thenReturn(listOf(topic101, topic102))
         `when`(studyItemRepository.saveAll(anyList())).thenAnswer { invocation ->
@@ -227,5 +237,24 @@ class StudyItemServiceTest {
         assertEquals(1, filteredItems.size)
         assertEquals(501L, filteredItems[0].id)
         assertEquals(101L, filteredItems[0].syllabusTopicId)
+    }
+
+    @Test
+    fun `g - list responde 404 si el usuario no es miembro ni admin`() {
+        `when`(enrollmentRepository.existsByUserIdAndCourseIdAndStatus(99L, 10L, "ACTIVE")).thenReturn(false)
+
+        assertThrows<ResourceNotFoundException> {
+            service.list(courseId = 10L, topicId = null, userId = 99L)
+        }
+    }
+
+    @Test
+    fun `h - list permite acceso al admin aunque no este matriculado`() {
+        val item101 = existingFlashcard(topic101, id = 501L)
+        `when`(enrollmentRepository.existsByUserIdAndCourseIdAndStatus(99L, 10L, "ACTIVE")).thenReturn(false)
+        `when`(studyItemRepository.findByCourseId(10L)).thenReturn(listOf(item101))
+
+        val items = service.list(courseId = 10L, topicId = null, userId = 99L, isAdmin = true)
+        assertEquals(1, items.size)
     }
 }

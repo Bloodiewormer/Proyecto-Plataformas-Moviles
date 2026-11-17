@@ -185,7 +185,13 @@ class AiCallAuditTest {
         `when`(studyItemRepository.findByCourseIdAndSyllabusTopicId(10L, 101L)).thenReturn(
             listOf(StudyItem().apply { id = 900L; this.course = ownedCourse; this.syllabusTopic = syllabusTopic; kind = "FLASHCARD"; payload = "{}" })
         )
-        val studyItemService = StudyItemService(courseRepository, enrollmentRepository, syllabusTopicRepository, studyItemRepository, generation)
+        val courseService = cr.ac.una.glifo.course.service.CourseService(
+            courseRepository,
+            enrollmentRepository,
+            mock(cr.ac.una.glifo.user.repository.UserRepository::class.java),
+            syllabusTopicRepository
+        )
+        val studyItemService = StudyItemService(courseRepository, enrollmentRepository, syllabusTopicRepository, studyItemRepository, generation, courseService)
 
         val outcome = studyItemService.generate(10L, GenerateStudyItemsRequest(topicIds = listOf(101L), itemsPerTopic = 2), userId = 2L)
 

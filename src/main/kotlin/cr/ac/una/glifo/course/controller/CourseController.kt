@@ -26,12 +26,12 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder
  * | Método | Ruta                       | Éxito | Errores                                                          |
  * |--------|----------------------------|-------|------------------------------------------------------------------|
  * | GET    | /courses                   | 200   | 401                                                              |
- * | GET    | /courses/{id}              | 200   | 400, 404                                                         |
+ * | GET    | /courses/{id}              | 200   | 400, 401, 404 (no existe o no es miembro/admin)                  |
  * | POST   | /courses                   | 201   | 400, 403 (sin COURSE_WRITE), 415                                 |
  * | POST   | /courses/{id}/syllabus     | 201   | 400, 403 (sin SYLLABUS_PUBLISH o dueño), 404, 409, 415           |
  * | POST   | /courses/{id}/syllabus/pdf | 201   | 400, 403 (sin SYLLABUS_PUBLISH o dueño), 404, 409 (ya publicado), 413, 415, 502, 503 |
- * | GET    | /courses/{id}/syllabus     | 200   | 400, 401, 404                                                    |
- * | GET    | /courses/{id}/topics       | 200   | 400, 404                                                         |
+ * | GET    | /courses/{id}/syllabus     | 200   | 400, 401, 404 (no existe o no es miembro/admin)                  |
+ * | GET    | /courses/{id}/topics       | 200   | 400, 401, 404 (no existe o no es miembro/admin)                  |
  * | POST   | /courses/{id}/topics       | 201   | 400, 403 (sin SYLLABUS_PUBLISH o dueño), 404, 415                |
  */
 @RestController
@@ -39,16 +39,15 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 class CourseController(private val courseService: CourseService) {
 
     @GetMapping
-
     fun getCourses(@AuthenticationPrincipal user: GlifoUserDetails): ResponseEntity<ApiResponse<List<CourseResponse>>> =
         ResponseEntity.ok(ApiResponse(data = courseService.getUserCourses(user.userId)))
 
     @GetMapping("/{id}")
-
     fun getCourse(
-        @PathVariable @Positive(message = "El id del curso debe ser positivo") id: Long
+        @PathVariable @Positive(message = "El id del curso debe ser positivo") id: Long,
+        @AuthenticationPrincipal user: GlifoUserDetails
     ): ResponseEntity<ApiResponse<CourseResponse>> =
-        ResponseEntity.ok(ApiResponse(data = courseService.getCourseById(id)))
+        ResponseEntity.ok(ApiResponse(data = courseService.getCourseById(id, user.userId, user.isAdmin())))
 
     /** 201 Created con la ubicación del curso nuevo en el encabezado Location. */
     @PostMapping(consumes = [MediaType.APPLICATION_JSON_VALUE])
@@ -82,22 +81,24 @@ class CourseController(private val courseService: CourseService) {
         @RequestPart("file") file: MultipartFile,
         @AuthenticationPrincipal user: GlifoUserDetails
     ): ResponseEntity<ApiResponse<SyllabusDocumentResponse>> {
-        val isAdmin = user.authorities.any { it.authority == "ROLE_ADMIN" || it.authority == "USER_MANAGE" }
-        val response = courseService.publishSyllabusFromPdf(id, file, user.userId, isAdmin)
+        val response = courseService.publishSyllabusFromPdf(id, file, user.userId, user.isAdmin())
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse(data = response))
     }
 
     /** Devuelve los metadatos del sílabo guardado y sus temas sin reprocesar el PDF. */
     @GetMapping("/{id}/syllabus")
     fun getSyllabus(
-        @PathVariable @Positive(message = "El id del curso debe ser positivo") id: Long
+        @PathVariable @Positive(message = "El id del curso debe ser positivo") id: Long,
+        @AuthenticationPrincipal user: GlifoUserDetails
     ): ResponseEntity<ApiResponse<SyllabusDocumentResponse>> =
-        ResponseEntity.ok(ApiResponse(data = courseService.getSyllabusDocument(id)))
+        ResponseEntity.ok(ApiResponse(data = courseService.getSyllabusDocument(id, user.userId, user.isAdmin())))
 
     @GetMapping("/{id}/topics")
-
-    fun getCourseTopics(@PathVariable id: Long): ResponseEntity<ApiResponse<List<SyllabusTopicResponse>>> {
-        val response = courseService.getCourseTopics(id)
+    fun getCourseTopics(
+        @PathVariable @Positive(message = "El id del curso debe ser positivo") id: Long,
+        @AuthenticationPrincipal user: GlifoUserDetails
+    ): ResponseEntity<ApiResponse<List<SyllabusTopicResponse>>> {
+        val response = courseService.getCourseTopics(id, user.userId, user.isAdmin())
         return ResponseEntity.ok(ApiResponse(data = response))
     }
 

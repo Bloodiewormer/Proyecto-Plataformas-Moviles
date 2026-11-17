@@ -36,6 +36,19 @@ private val SHORT_STOPWORDS = setOf(
 private val MARKS = Regex("\\p{M}+")
 private val NON_ALNUM = Regex("[^a-z0-9]+")
 private val SENTENCE_BREAK = Regex("\\n|(?<![0-9])[.;](?=\\s|$)")
+private val LATEX_LIM = Regex("""\\lim(?![a-zA-Z])""")
+private val LATEX_INT = Regex("""\\i?int(?![a-zA-Z])""")
+private val LATEX_INT_BOUNDED = Regex("""\\i?int\s*(?:_|\^|\\limits(?![a-zA-Z]))""")
+private val LATEX_INFTY = Regex("""\\infty(?![a-zA-Z])""")
+private val LATEX_SUM = Regex("""\\sum(?![a-zA-Z])""")
+private val LATEX_DERIV = Regex("""\\frac\s*\{\s*d(?:\b|[a-zA-Z])|\\partial(?![a-zA-Z])""")
+private val PROSE_ASINTOTA = Regex("""\basintot[a-z]*\b""")
+private val PROSE_AREA = Regex("""\barea\b""")
+private val PROSE_AREA_CTX = Regex("""\b(?:curv[a-z]*|regio[a-z]*|bajo|simetr[a-z]*|abscis[a-z]*|integr[a-z]*)\b""")
+private val PROSE_VOLUMEN = Regex("""\bvolumen[a-z]*\b""")
+private val PROSE_VOLUMEN_CTX = Regex("""\b(?:revolu[a-z]*|disc[a-z]*|arandel[a-z]*|solid[a-z]*|girar[a-z]*|eje|integr[a-z]*)\b""")
+private val PROSE_PRIMITIVA = Regex("""\b(?:primitiv[a-z]*|antiderivad[a-z]*)\b""")
+private val PROSE_SUSTITUCION = Regex("""\b(?:sustitucion[a-z]*|cambio\s+de\s+variable)\b""")
 
 /**
  * Pre-filtro determinista de cobertura (D-08), sin IA: resuelve los temas claros y deja como
@@ -46,17 +59,19 @@ private val SENTENCE_BREAK = Regex("\\n|(?<![0-9])[.;](?=\\s|$)")
  * - Sin apuntes con contenido: todo ABSENT.
  * - SOLID, solo con evidencia directa: al menos [MIN_SOLID_KEYWORDS] palabras clave y al menos
  *   [SOLID_RATIO] de ellas en los apuntes asignados al propio tema (no en otros apuntes).
- * - ABSENT: ninguna palabra clave aparece y ningún apunte está asignado al propio tema. Un apunte
- *   asignado solo a la unidad no lo impide: el subtema puede no haberse visto.
+ * - ABSENT: ninguna palabra clave (ni su equivalente en LaTeX/notación matemática) aparece y ningún
+ *   apunte está asignado al propio tema. Un apunte asignado solo a la unidad no lo impide: el
+ *   subtema puede no haberse visto.
  * - Ambiguo: el resto, o títulos sin palabras clave. Los fragmentos para IA-04 priorizan las
- *   oraciones con palabras clave, luego las de apuntes del tema y por último las de su unidad.
+ *   oraciones con palabras clave o notación matemática relacionada, luego las de apuntes del tema
+ *   y por último las de su unidad.
  */
 @Component
 class CoveragePrefilter {
 
     fun decide(topics: List<PrefilterTopic>, notes: List<PrefilterNote>): List<PrefilterDecision> {
         if (notes.isEmpty()) return topics.map { PrefilterDecision(it, "ABSENT", 0f, 0, emptyList()) }
-        val allStems = notes.flatMap { stems(it.text, short = true) }.toSet()
+        val allStems = notes.flatMap { evidenceStems(it.text) }.toSet()
         return topics.map { topic ->
             val keywords = keywords(topic.title)
             val hits = keywords.count { it in allStems }
@@ -86,7 +101,7 @@ class CoveragePrefilter {
             note.text.split(SENTENCE_BREAK).map { it.trim() }.filter { it.isNotEmpty() }.map { note to it }
         }
         fun rank(note: PrefilterNote, sentence: String) = when {
-            keywords(sentence).any { it in keywords } -> 0
+            evidenceStems(sentence).any { it in keywords } -> 0
             note.linkedTopicId == topic.topicId -> 1
             note.linkedTopicId != null && note.linkedTopicId in topic.ancestorIds -> 2
             else -> null
@@ -106,6 +121,51 @@ class CoveragePrefilter {
         const val MAX_EXCERPT_CHARS = 300
 
         fun keywords(title: String): Set<String> = stems(title, short = true)
+
+        /**
+         * Raíces léxicas del texto más señales equivalentes de notación LaTeX y conceptos
+         * matemáticos en español, usadas únicamente para evitar falsos ABSENT y priorizar citas a IA-04.
+         */
+        fun evidenceStems(text: String): Set<String> {
+            val base = stems(text, short = true).toMutableSet()
+            val normalized = Normalizer.normalize(text.lowercase(Locale.ROOT), Normalizer.Form.NFD).replace(MARKS, "")
+            val hasLim = LATEX_LIM.containsMatchIn(text)
+            val hasInt = LATEX_INT.containsMatchIn(text)
+            val hasInfty = LATEX_INFTY.containsMatchIn(text)
+            if (hasLim) base.add("limit")
+            if (hasInt) {
+                base.add("integr")
+                if (LATEX_INT_BOUNDED.containsMatchIn(text)) base.add("defini")
+                if (hasInfty || hasLim) base.add("improp")
+            }
+            if (hasInfty) base.add("infinit")
+            if (LATEX_SUM.containsMatchIn(text)) {
+                base.add("sum")
+                base.add("seri")
+            }
+            if (LATEX_DERIV.containsMatchIn(text)) base.add("deriv")
+            if (PROSE_ASINTOTA.containsMatchIn(normalized)) base.add("limit")
+            if (PROSE_AREA.containsMatchIn(normalized) && (hasInt || PROSE_AREA_CTX.containsMatchIn(normalized))) {
+                base.add("integr")
+                base.add("defini")
+                base.add("aplic")
+            }
+            if (PROSE_VOLUMEN.containsMatchIn(normalized) && (hasInt || PROSE_VOLUMEN_CTX.containsMatchIn(normalized))) {
+                base.add("integr")
+                base.add("defini")
+                base.add("revolu")
+                base.add("aplic")
+            }
+            if (PROSE_PRIMITIVA.containsMatchIn(normalized)) {
+                base.add("integr")
+                base.add("indefi")
+            }
+            if (PROSE_SUSTITUCION.containsMatchIn(normalized)) {
+                base.add("integr")
+                base.add("tecnic")
+            }
+            return base
+        }
 
         fun stems(text: String, short: Boolean = false): Set<String> =
             Normalizer.normalize(text.lowercase(Locale.ROOT), Normalizer.Form.NFD)

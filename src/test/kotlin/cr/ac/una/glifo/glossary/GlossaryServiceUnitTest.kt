@@ -7,6 +7,8 @@ import cr.ac.una.glifo.common.exception.ResourceNotFoundException
 import cr.ac.una.glifo.course.entity.Course
 import cr.ac.una.glifo.course.repository.CourseRepository
 import cr.ac.una.glifo.course.repository.EnrollmentRepository
+import cr.ac.una.glifo.course.repository.SyllabusTopicRepository
+import cr.ac.una.glifo.course.service.CourseService
 import cr.ac.una.glifo.glossary.dto.CreateGlossaryEntryRequest
 import cr.ac.una.glifo.glossary.dto.CreateGlossarySuggestionRequest
 import cr.ac.una.glifo.glossary.dto.ResolveGlossarySuggestionRequest
@@ -60,13 +62,19 @@ class GlossaryServiceUnitTest {
         suggestionRepository = mock(GlossarySuggestionRepository::class.java)
         userRepository = mock(UserRepository::class.java)
         noteRepository = mock(NoteRepository::class.java)
+        val courseService = CourseService(
+            courseRepository,
+            enrollmentRepository,
+            userRepository,
+            mock(SyllabusTopicRepository::class.java)
+        )
         service = GlossaryService(
-            courseRepository, enrollmentRepository, glossaryRepository,
+            courseRepository, courseService, glossaryRepository,
             suggestionRepository, userRepository, noteRepository
         )
 
         `when`(courseRepository.findById(10L)).thenReturn(Optional.of(course))
-        `when`(enrollmentRepository.existsByUserIdAndCourseId(1L, 10L)).thenReturn(true)
+        `when`(enrollmentRepository.existsByUserIdAndCourseIdAndStatus(1L, 10L, "ACTIVE")).thenReturn(true)
         `when`(userRepository.findById(1L)).thenReturn(Optional.of(student))
         // save devuelve lo mismo que recibe, como haría el repositorio real.
         `when`(glossaryRepository.save(any(CourseGlossary::class.java))).thenAnswer { it.arguments[0] }
@@ -100,7 +108,7 @@ class GlossaryServiceUnitTest {
 
     @Test
     fun `quien no es miembro del curso recibe 404 al leer el glosario`() {
-        `when`(enrollmentRepository.existsByUserIdAndCourseId(99L, 10L)).thenReturn(false)
+        `when`(enrollmentRepository.existsByUserIdAndCourseIdAndStatus(99L, 10L, "ACTIVE")).thenReturn(false)
 
         assertThrows<ResourceNotFoundException> { service.getGlossary(10L, 99L) }
     }

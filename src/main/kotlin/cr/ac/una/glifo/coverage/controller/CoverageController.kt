@@ -63,10 +63,8 @@ class CoverageController(
     fun getCourseGaps(
         @PathVariable @Positive(message = "El id del curso debe ser positivo") courseId: Long,
         @AuthenticationPrincipal user: GlifoUserDetails
-    ): ResponseEntity<ApiResponse<CourseGapsResponse>> {
-        val isAdmin = user.authorities.any { it.authority == "ROLE_ADMIN" || it.authority == "USER_MANAGE" }
-        return ResponseEntity.ok(ApiResponse(data = coverageService.getCourseGaps(courseId, user.userId, isAdmin)))
-    }
+    ): ResponseEntity<ApiResponse<CourseGapsResponse>> =
+        ResponseEntity.ok(ApiResponse(data = coverageService.getCourseGaps(courseId, user.userId, user.isAdmin())))
 
     /** IA-04: recalcula la cobertura; en meta va cuántos temas resolvió el pre-filtro y cuántos la IA. */
     @PostMapping("/evaluate")

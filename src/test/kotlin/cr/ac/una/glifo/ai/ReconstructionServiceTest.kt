@@ -503,4 +503,44 @@ class ReconstructionServiceTest {
         assertEquals("Una parábola", regions.getValue("r1").text)
         assertEquals("hola", regions.getValue("r2").text)
     }
+
+    @Test
+    fun `k - conserva verbatim el LaTeX de N1_5 o N2, convierte DRAWING en FIGURE sin ilegible y mantiene texto legible incierto`() {
+        val note = processingNote()
+        val page = defaultPage(
+            note = note,
+            regionsJson = """
+                [
+                  {"id": "r1", "bbox": [0.1, 0.10, 0.9, 0.20], "kind": "TEXT", "resolvedAt": "UNRESOLVED", "confidence": 0.49, "isUncertain": true, "text": "por el método de los discos"},
+                  {"id": "r2", "bbox": [0.1, 0.25, 0.9, 0.40], "kind": "DRAWING", "resolvedAt": "UNRESOLVED", "confidence": 0.0, "isUncertain": true, "text": "Sin texto legible: 23 trazos, 18% de tinta"},
+                  {"id": "r3", "bbox": [0.1, 0.45, 0.9, 0.60], "kind": "MATH", "resolvedAt": "N1_5", "confidence": 0.97, "isUncertain": false, "latex": "= 2\\pi \\int_{0}^{\\frac{\\pi}{2}} a^3 \\cos^2 t\\,dt"}
+                ]
+            """.trimIndent()
+        )
+        `when`(noteRepository.findById(50L)).thenReturn(Optional.of(note))
+        `when`(notePageRepository.findByNoteIdOrderByPageIndex(50L)).thenReturn(listOf(page))
+
+        val aiResponse = """
+            {
+              "schemaVersion": 1,
+              "blocks": [
+                {"id": "b1", "type": "PARAGRAPH", "spans": [{"text": "[ilegible]", "regionId": "r1"}]},
+                {"id": "b2", "type": "FIGURE", "caption": "[ilegible]", "regionId": "r2"},
+                {"id": "b3", "type": "FORMULA", "latex": "2\\pi \\int a^3 \\cos^2 t dt", "regionId": "r3"}
+              ]
+            }
+        """.trimIndent()
+        val captor = stubLlmContent(aiResponse)
+
+        service.reconstructNote(50L, 1L)
+
+        val blocks = jsonMapper.readTree(note.content!!).get("blocks")
+        assertEquals(3, blocks.size())
+        assertEquals("por el método de los discos", blocks[0]["spans"][0]["text"].asString())
+        assertEquals("FIGURE", blocks[1]["type"].asString())
+        assertEquals("Figura manuscrita", blocks[1]["caption"].asString())
+        assertEquals("= 2\\pi \\int_{0}^{\\frac{\\pi}{2}} a^3 \\cos^2 t\\,dt", blocks[2]["latex"].asString())
+        assertTrue(captor.value.systemPrompt.contains("pageIndex, bboxY, bboxX"))
+        assertTrue(captor.value.systemPrompt.contains("\"type\": \"FIGURE\""))
+    }
 }
