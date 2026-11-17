@@ -380,7 +380,9 @@ fun TeacherSyllabusScreen(
         pdfLauncher.launch(arrayOf("application/pdf"))
     }
 
-    val isUploading = (uiState as? UiState.Success)?.data?.isUploading == true
+    val successData = (uiState as? UiState.Success)?.data
+    val isUploading = successData?.isUploading == true
+    val canPublish = successData?.canPublish == true
 
     Column(
         modifier = Modifier
@@ -392,26 +394,28 @@ fun TeacherSyllabusScreen(
             isBack = true,
             onNavigationClick = onNavigateBack,
             actions = {
-                TextButton(
-                    enabled = !isUploading,
-                    onClick = {
-                        publishError = null
-                        scope.launch {
-                            when (val result = viewModel.publishSyllabus()) {
-                                is cr.ac.una.glifo.domain.error.Result.Success -> onPublishSuccess()
-                                is cr.ac.una.glifo.domain.error.Result.Failure -> {
-                                    publishError = result.error.toSyllabusErrorMessage(context)
+                if (canPublish) {
+                    TextButton(
+                        enabled = !isUploading,
+                        onClick = {
+                            publishError = null
+                            scope.launch {
+                                when (val result = viewModel.publishSyllabus()) {
+                                    is cr.ac.una.glifo.domain.error.Result.Success -> onPublishSuccess()
+                                    is cr.ac.una.glifo.domain.error.Result.Failure -> {
+                                        publishError = result.error.toSyllabusErrorMessage(context)
+                                    }
                                 }
                             }
                         }
+                    ) {
+                        Text(
+                            stringResource(R.string.teacher_syllabus_publish_button),
+                            color = if (isUploading) colors.textSecondary else colors.accentText,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium
+                        )
                     }
-                ) {
-                    Text(
-                        stringResource(R.string.teacher_syllabus_publish_button),
-                        color = if (isUploading) colors.textSecondary else colors.accentText,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
-                    )
                 }
             }
         )
