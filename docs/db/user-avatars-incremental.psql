@@ -1,0 +1,43 @@
+\set ON_ERROR_STOP on
+
+BEGIN;
+SET LOCAL lock_timeout = '5s';
+SET LOCAL statement_timeout = '60s';
+SET LOCAL search_path = pg_catalog;
+SELECT pg_catalog.pg_advisory_xact_lock(197701, 60);
+
+DO $identity$
+BEGIN
+    IF pg_catalog.current_database() <> 'neondb' OR current_user <> 'neondb_owner' THEN
+        RAISE EXCEPTION 'Expected database neondb and initialization role neondb_owner';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'glifo_runtime') THEN
+        RAISE EXCEPTION 'Expected the previously initialized runtime role';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_class relation
+        JOIN pg_catalog.pg_namespace namespace ON namespace.oid = relation.relnamespace
+        JOIN pg_catalog.pg_roles owner_role ON owner_role.oid = relation.relowner
+        WHERE namespace.nspname = 'public' AND relation.relname = 'users'
+        AND relation.relkind = 'r' AND owner_role.rolname = current_user) THEN
+        RAISE EXCEPTION 'Expected public.users owned by neondb_owner';
+    END IF;
+    IF pg_catalog.to_regclass('public.user_avatars') IS NOT NULL THEN
+        RAISE EXCEPTION 'public.user_avatars already exists; repeated migrations are refused';
+    END IF;
+END
+$identity$;
+
+CREATE TABLE public.user_avatars (
+    user_id bigint NOT NULL,
+    content_type character varying(32) NOT NULL,
+    data bytea NOT NULL,
+    updated_at timestamp(6) with time zone NOT NULL,
+    CONSTRAINT pk_user_avatars PRIMARY KEY (user_id),
+    CONSTRAINT fk_user_avatars_user FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE,
+    CONSTRAINT ck_user_avatars_type CHECK (content_type IN ('image/jpeg', 'image/png')),
+    CONSTRAINT ck_user_avatars_size CHECK (octet_length(data) BETWEEN 1 AND 1048576)
+);
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.user_avatars TO glifo_runtime;
+
+COMMIT;
