@@ -41,10 +41,19 @@ fun FlashcardScreen(
     val context = LocalContext.current
     val uiState by viewModel.state.collectAsState()
 
+    val title = stringResource(R.string.study_state_flashcards_title)
     when (val state = uiState) {
-        is UiState.Loading -> GlifoLoadingBox()
-        is UiState.Empty -> GlifoBanner(text = stringResource(R.string.study_empty_course))
-        is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
+        is UiState.Loading -> GlifoStatusScreen(title, onNavigateBack) { GlifoLoadingBox() }
+        is UiState.Empty -> GlifoStatusScreen(title, onNavigateBack) {
+            GlifoEmptyBox(
+                message = stringResource(R.string.study_empty_flashcards),
+                actionText = stringResource(R.string.common_back),
+                onAction = onNavigateBack
+            )
+        }
+        is UiState.Error -> GlifoStatusScreen(title, onNavigateBack) {
+            GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
+        }
         is UiState.Success -> {
             val cards = state.data
             FlashcardContent(cards, onNavigateBack, colors, density)

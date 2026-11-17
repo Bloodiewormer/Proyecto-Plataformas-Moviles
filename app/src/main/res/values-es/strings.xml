@@ -602,7 +602,7 @@
     <string name="password_show">Mostrar contraseña</string>
     <string name="password_hide">Ocultar contraseña</string>
     <string name="forgot_password_not_available">Glifo todavía no puede enviarte un enlace por correo para restablecerla.</string>
-    <string name="forgot_password_how_to">Si todavía la recordás, iniciá sesión y cambiala en Perfil → Cambiar contraseña. Si la olvidaste, por ahora pedile ayuda al equipo de Glifo.</string>
+    <string name="forgot_password_how_to">Si todavía la recordás, iniciá sesión y cambiala en Perfil → Cambiar contraseña. Si la olvidaste, pedile al administrador de Glifo que te la restablezca: te va a dar una contraseña temporal.</string>
     <string name="forgot_password_back_to_login">Volver a iniciar sesión</string>
     <string name="change_password_title">Cambiar contraseña</string>
     <string name="change_password_description">Escribí tu contraseña actual y la nueva. La próxima vez que inicies sesión, usá la nueva.</string>
@@ -628,4 +628,17 @@
         <item quantity="other">%1$s · %2$d páginas</item>
     </plurals>
     <string name="teacher_gaps_empty">Ningún tema tiene vacíos en el grupo por ahora.</string>
+    <string name="common_back">Volver</string>
+    <string name="study_state_flashcards_title">Flashcards</string>
+    <string name="study_empty_flashcards">Todavía no hay flashcards para este curso. Generalas desde Estudio con \"Generar material de estudio\".</string>
+    <string name="study_empty_quiz">Todavía no hay quiz para este curso. Generalo desde Estudio con \"Generar material de estudio\".</string>
+    <string name="admin_reset_password_title">Restablecer contraseña</string>
+    <string name="admin_reset_password_description">Escribí el correo de la cuenta. Se genera una contraseña temporal para que se la pasés a la persona.</string>
+    <string name="admin_reset_password_button">Restablecer</string>
+    <string name="admin_reset_password_working">Restableciendo…</string>
+    <string name="admin_reset_password_done">Contraseña temporal de %1$s:</string>
+    <string name="admin_reset_password_hint">Solo se muestra esta vez. Decile que entre con ella y la cambie en Perfil → Cambiar contraseña.</string>
+    <string name="admin_reset_password_copy">Copiar</string>
+    <string name="admin_reset_password_copied">Copiada</string>
+    <string name="admin_reset_password_error_email">Escribí un correo válido.</string>
 </resources>

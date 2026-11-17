@@ -1,13 +1,22 @@
 package cr.ac.una.glifo.data.repository
 
 import cr.ac.una.glifo.data.datasource.dummy.DummyAdminProvider
+import cr.ac.una.glifo.data.datasource.remote.ApiErrorHandler
+import cr.ac.una.glifo.data.datasource.remote.GlifoApi
+import cr.ac.una.glifo.data.dto.AdminResetPasswordRequest
 import cr.ac.una.glifo.domain.error.Result
 import cr.ac.una.glifo.domain.model.AdminRoleInfo
 import cr.ac.una.glifo.domain.model.AdminUserRow
 import cr.ac.una.glifo.domain.repository.AdminRepository
 import javax.inject.Inject
 
-class AdminRepositoryImpl @Inject constructor() : AdminRepository {
+/**
+ * La lista de usuarios y roles sigue saliendo de [DummyAdminProvider] (no hay endpoints de
+ * usuarios todavía). Restablecer contraseña sí va contra el backend.
+ */
+class AdminRepositoryImpl @Inject constructor(
+    private val api: GlifoApi
+) : AdminRepository {
     override suspend fun getUsers(): Result<List<AdminUserRow>> =
         Result.Success(DummyAdminProvider.getUsers())
 
@@ -32,4 +41,10 @@ class AdminRepositoryImpl @Inject constructor() : AdminRepository {
 
     override suspend fun getPrivilegesFor(roleLabel: String): Result<List<String>> =
         Result.Success(DummyAdminProvider.getPrivilegesFor(roleLabel))
+
+    override suspend fun resetUserPassword(email: String): Result<String> =
+        ApiErrorHandler.safeApiCall(
+            apiCall = { api.adminResetPassword(AdminResetPasswordRequest(email.trim())) },
+            transform = { it.data.temporaryPassword }
+        )
 }

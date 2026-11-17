@@ -15,3 +15,9 @@ data class ChangePasswordRequest(val currentPassword: String, val newPassword: S
  * mock (Mockoon route) that defines it, not the other way around.
  */
 data class UserDto(val id: Long, val email: String, val firstName: String?, val lastName: String?, val role: String)
+
+/** POST admin/users/reset-password (solo admin). */
+data class AdminResetPasswordRequest(val email: String)
+
+/** La temporal llega en claro una sola vez, para que el admin se la pase al usuario. */
+data class AdminResetPasswordResponse(val email: String, val temporaryPassword: String)

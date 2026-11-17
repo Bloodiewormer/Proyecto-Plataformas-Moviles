@@ -1,5 +1,7 @@
 package cr.ac.una.glifo.data.datasource.remote
 
+import cr.ac.una.glifo.data.dto.AdminResetPasswordRequest
+import cr.ac.una.glifo.data.dto.AdminResetPasswordResponse
 import cr.ac.una.glifo.data.dto.AiUsageResponseDto
 import cr.ac.una.glifo.data.dto.ApiResponse
 import cr.ac.una.glifo.data.dto.AuthResponse
@@ -60,6 +62,10 @@ interface GlifoApi {
     /** Pide token. 204 si cambió; 400 con mensaje si la actual no coincide o la nueva no sirve. */
     @POST("auth/change-password")
     suspend fun changePassword(@Body request: ChangePasswordRequest): Response<Unit>
+
+    /** Solo admin (USER_MANAGE). 404 si el correo no existe; 400 si es la propia cuenta o el correo no es válido. */
+    @POST("admin/users/reset-password")
+    suspend fun adminResetPassword(@Body request: AdminResetPasswordRequest): ApiResponse<AdminResetPasswordResponse>
 
     // Courses
     @GET("courses")

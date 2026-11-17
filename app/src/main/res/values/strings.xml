@@ -602,7 +602,7 @@
     <string name="password_show">Show password</string>
     <string name="password_hide">Hide password</string>
     <string name="forgot_password_not_available">Glifo can\'t email you a reset link yet.</string>
-    <string name="forgot_password_how_to">If you still remember it, sign in and change it in Profile → Change password. If you forgot it, ask the Glifo team for help for now.</string>
+    <string name="forgot_password_how_to">If you still remember it, sign in and change it in Profile → Change password. If you forgot it, ask the Glifo administrator to reset it: they will give you a temporary password.</string>
     <string name="forgot_password_back_to_login">Back to sign in</string>
     <string name="change_password_title">Change password</string>
     <string name="change_password_description">Enter your current password and the new one. Next time you sign in, use the new one.</string>
@@ -628,4 +628,17 @@
         <item quantity="other">%1$s · %2$d pages</item>
     </plurals>
     <string name="teacher_gaps_empty">No topic has gaps in the group right now.</string>
+    <string name="common_back">Back</string>
+    <string name="study_state_flashcards_title">Flashcards</string>
+    <string name="study_empty_flashcards">There are no flashcards for this course yet. Generate them from Study with \"Generate study material\".</string>
+    <string name="study_empty_quiz">There is no quiz for this course yet. Generate it from Study with \"Generate study material\".</string>
+    <string name="admin_reset_password_title">Reset password</string>
+    <string name="admin_reset_password_description">Type the account email. A temporary password is generated so you can give it to the person.</string>
+    <string name="admin_reset_password_button">Reset</string>
+    <string name="admin_reset_password_working">Resetting…</string>
+    <string name="admin_reset_password_done">Temporary password for %1$s:</string>
+    <string name="admin_reset_password_hint">It is shown only this once. Tell them to sign in with it and change it in Profile → Change password.</string>
+    <string name="admin_reset_password_copy">Copy</string>
+    <string name="admin_reset_password_copied">Copied</string>
+    <string name="admin_reset_password_error_email">Type a valid email.</string>
 </resources>
