@@ -48,10 +48,19 @@ fun QuizScreen(
     val uiState by viewModel.state.collectAsState()
     val currentIndex by viewModel.currentIndex.collectAsState()
 
+    val title = stringResource(R.string.study_quiz_title)
     when (val state = uiState) {
-        is UiState.Loading -> GlifoLoadingBox()
-        is UiState.Empty -> GlifoBanner(text = stringResource(R.string.study_empty_course))
-        is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
+        is UiState.Loading -> GlifoStatusScreen(title, onNavigateBack) { GlifoLoadingBox() }
+        is UiState.Empty -> GlifoStatusScreen(title, onNavigateBack) {
+            GlifoEmptyBox(
+                message = stringResource(R.string.study_empty_quiz),
+                actionText = stringResource(R.string.common_back),
+                onAction = onNavigateBack
+            )
+        }
+        is UiState.Error -> GlifoStatusScreen(title, onNavigateBack) {
+            GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
+        }
         is UiState.Success -> {
             val questions = state.data
             val safeIndex = currentIndex.coerceIn(0, questions.lastIndex)

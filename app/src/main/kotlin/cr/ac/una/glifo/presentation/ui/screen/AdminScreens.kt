@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.LockReset
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.*
@@ -34,7 +35,9 @@ import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.domain.model.GlifoRole
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
+import cr.ac.una.glifo.domain.error.Result
 import cr.ac.una.glifo.presentation.viewmodel.AdminCoursesViewModel
+import cr.ac.una.glifo.presentation.viewmodel.AdminResetPasswordViewModel
 import cr.ac.una.glifo.presentation.viewmodel.AdminRolesViewModel
 import cr.ac.una.glifo.presentation.viewmodel.AdminUserDetailViewModel
 import cr.ac.una.glifo.presentation.viewmodel.AdminUsersViewModel
@@ -68,6 +71,7 @@ fun AdminUsersScreen(
     var searchOpen by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf("") }
     var showAddDialog by remember { mutableStateOf(false) }
+    var showResetDialog by remember { mutableStateOf(false) }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -113,6 +117,9 @@ fun AdminUsersScreen(
                 actions = {
                     IconButton(onClick = { searchOpen = !searchOpen; if (!searchOpen) query = "" }) {
                         Icon(Icons.Default.Search, contentDescription = stringResource(R.string.common_search), tint = colors.textSecondary, modifier = Modifier.size(20.dp))
+                    }
+                    IconButton(onClick = { showResetDialog = true }) {
+                        Icon(Icons.Default.LockReset, contentDescription = stringResource(R.string.admin_reset_password_title), tint = colors.textSecondary, modifier = Modifier.size(20.dp))
                     }
                     IconButton(onClick = { showAddDialog = true }) {
                         Icon(Icons.Default.Add, contentDescription = stringResource(R.string.teacher_glossary_add_description), tint = colors.textSecondary, modifier = Modifier.size(20.dp))
@@ -216,6 +223,10 @@ fun AdminUsersScreen(
         }
     }
 
+    if (showResetDialog) {
+        ResetPasswordDialog(onDismiss = { showResetDialog = false })
+    }
+
     if (showAddDialog) {
         AddUserDialog(
             onDismiss = { showAddDialog = false },
@@ -274,6 +285,104 @@ private fun AddUserDialog(
                 enabled = name.isNotBlank() && email.isNotBlank(),
                 onClick = { onAdd(name, email, role) }
             )
+        }
+    }
+}
+
+/**
+ * El admin escribe el correo de una cuenta y recibe una contraseña temporal para pasársela.
+ * Es el camino de "Olvidé mi contraseña" mientras la app no pueda mandar correos.
+ */
+@Composable
+private fun ResetPasswordDialog(
+    onDismiss: () -> Unit,
+    viewModel: AdminResetPasswordViewModel = hiltViewModel()
+) {
+    val colors = GlifoTheme.colors
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var email by remember { mutableStateOf("") }
+    var working by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+    var temporary by remember { mutableStateOf<String?>(null) }
+    var copied by remember { mutableStateOf(false) }
+    val invalidEmail = stringResource(R.string.admin_reset_password_error_email)
+
+    Dialog(onDismissRequest = onDismiss) {
+        GlifoCard {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(stringResource(R.string.admin_reset_password_title), fontSize = 17.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.common_close), tint = colors.textSecondary, modifier = Modifier.clickable(onClick = onDismiss))
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+
+            val result = temporary
+            if (result == null) {
+                Text(stringResource(R.string.admin_reset_password_description), fontSize = 13.sp, color = colors.textSecondary)
+                Spacer(modifier = Modifier.height(12.dp))
+                GlifoField(
+                    label = stringResource(R.string.login_email_label),
+                    value = email,
+                    placeholder = stringResource(R.string.admin_users_field_email_placeholder),
+                    onValueChange = { email = it; error = null }
+                )
+                error?.let {
+                    Text(it, fontSize = 13.sp, color = colors.alert, modifier = Modifier.padding(top = 6.dp))
+                }
+                Spacer(modifier = Modifier.height(14.dp))
+                GlifoButton(
+                    text = if (working) stringResource(R.string.admin_reset_password_working) else stringResource(R.string.admin_reset_password_button),
+                    enabled = !working && email.isNotBlank(),
+                    onClick = {
+                        // Validación mínima antes de llamar: el backend vuelve a validar.
+                        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches()) {
+                            error = invalidEmail
+                            return@GlifoButton
+                        }
+                        working = true
+                        scope.launch {
+                            when (val r = viewModel.resetPassword(email)) {
+                                is Result.Success -> temporary = r.value
+                                is Result.Failure -> error = r.error.toMessage(context)
+                            }
+                            working = false
+                        }
+                    }
+                )
+            } else {
+                Text(stringResource(R.string.admin_reset_password_done, email.trim()), fontSize = 13.sp, color = colors.textSecondary)
+                Spacer(modifier = Modifier.height(10.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(colors.surfaceHigh, RoundedCornerShape(8.dp))
+                        .padding(vertical = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(result, fontFamily = FontFamily.Monospace, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, color = colors.textPrimary)
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(stringResource(R.string.admin_reset_password_hint), fontSize = 12.sp, color = colors.textSecondary)
+                Spacer(modifier = Modifier.height(14.dp))
+                GlifoButton(
+                    text = if (copied) stringResource(R.string.admin_reset_password_copied) else stringResource(R.string.admin_reset_password_copy),
+                    onClick = {
+                        val clipboard = context.getSystemService(android.content.ClipboardManager::class.java)
+                        clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("Glifo", result))
+                        copied = true
+                    }
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                GlifoButton(
+                    text = stringResource(R.string.common_close),
+                    variant = GlifoButtonVariant.Secondary,
+                    onClick = onDismiss
+                )
+            }
         }
     }
 }

@@ -12,4 +12,8 @@ interface AdminRepository {
     suspend fun setActive(name: String, active: Boolean): Result<Unit>
     suspend fun getRoles(): Result<List<AdminRoleInfo>>
     suspend fun getPrivilegesFor(roleLabel: String): Result<List<String>>
+
+    /** Restablece la contraseña de la cuenta con ese correo y devuelve la temporal. */
+    suspend fun resetUserPassword(email: String): Result<String> =
+        Result.Failure(cr.ac.una.glifo.core.common.AppError.Unknown)
 }
