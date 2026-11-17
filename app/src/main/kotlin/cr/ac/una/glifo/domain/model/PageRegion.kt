@@ -31,12 +31,14 @@ data class RegionBounds(
  * cualquier texto. El clasificador las combina con la salida de N1 para decidir el tipo.
  */
 data class RegionInkMetrics(
-    /** Proporción de píxeles con tinta dentro del rectángulo (0..1). */
     val inkDensity: Float,
-    /** Cantidad de componentes conectados (proxy de "cuántos glifos/trazos hay"). */
     val componentCount: Int,
-    /** ancho / alto del rectángulo. */
-    val aspectRatio: Float
+    val aspectRatio: Float,
+    val horizontalBarCount: Int = 0,
+    val tallStrokeCount: Int = 0,
+    val maxStrokeMinSpanRatio: Float = 0f,
+    val heightRatio: Float = 0f,
+    val areaRatio: Float = 0f
 )
 
 /** Una región de la página después de N1 (OCR local) y del clasificador. */
