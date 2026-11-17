@@ -137,4 +137,43 @@ class NoteContentMapperTest {
         )
         assertEquals(R.string.region_route_n2, resolvedN2.routeRes())
     }
+
+    @Test
+    fun `buildServerNoteContent maps suggestedTopicId and syllabusTopicId`() {
+        val note = NoteEntity(
+            id = 5L,
+            serverId = 50L,
+            courseId = 1L,
+            title = "Limits",
+            classDate = "2026-11-12",
+            status = "READY",
+            contentJson = """
+                {
+                  "schemaVersion": 1,
+                  "suggestedTopicId": 105,
+                  "blocks": [
+                    { "id": "b1", "type": "HEADING", "text": "Limits" }
+                  ]
+                }
+            """.trimIndent(),
+            createdAt = 1000L
+        )
+
+        val unlinked = buildServerNoteContent(note, emptyList(), hasPendingSync = false)
+        assertEquals(105L, unlinked.suggestedTopicId)
+        assertEquals(null, unlinked.note.syllabusTopicId)
+
+        val linked = buildServerNoteContent(note, emptyList(), hasPendingSync = false, syllabusTopicId = 102L)
+        assertEquals(105L, linked.suggestedTopicId)
+        assertEquals(102L, linked.note.syllabusTopicId)
+    }
+
+    @Test
+    fun `parseSuggestedTopicId handles snake_case strings and rejects invalid values`() {
+        assertEquals(108L, parseSuggestedTopicId("""{"suggested_topic_id":"108"}"""))
+        assertEquals(null, parseSuggestedTopicId("""{"suggestedTopicId":0}"""))
+        assertEquals(null, parseSuggestedTopicId("""{"suggestedTopicId":-4}"""))
+        assertEquals(null, parseSuggestedTopicId("""{"suggestedTopicId":"abc"}"""))
+        assertEquals(null, parseSuggestedTopicId(null))
+    }
 }

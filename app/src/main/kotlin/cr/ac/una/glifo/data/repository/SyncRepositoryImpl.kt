@@ -9,6 +9,7 @@ import cr.ac.una.glifo.core.datastore.AppPreferences
 import cr.ac.una.glifo.core.push.DevicePushManager
 import cr.ac.una.glifo.core.push.QueueCompletionReportOutcome
 import cr.ac.una.glifo.core.sync.SyncScheduler
+import cr.ac.una.glifo.data.datasource.local.NoteTopicCache
 import cr.ac.una.glifo.data.datasource.local.dao.NoteDao
 import cr.ac.una.glifo.data.datasource.local.dao.SyncOperationDao
 import cr.ac.una.glifo.data.datasource.local.entity.NotePageEntity
@@ -58,16 +59,57 @@ import kotlin.math.max
  * Cola offline (issue #26): el outbox en Room y el proceso que la vacia contra la API.
  */
 @Singleton
-class SyncRepositoryImpl @Inject constructor(
-    private val api: GlifoApi,
-    private val syncDao: SyncOperationDao,
-    private val noteDao: NoteDao,
-    private val scheduler: SyncScheduler,
-    private val devicePushManager: DevicePushManager?,
+class SyncRepositoryImpl : SyncRepository {
+
+    private val api: GlifoApi
+    private val syncDao: SyncOperationDao
+    private val noteDao: NoteDao
+    private val scheduler: SyncScheduler
+    private val devicePushManager: DevicePushManager?
     // null en las pruebas: se comporta como si N2 estuviera permitido.
-    private val appPreferences: AppPreferences? = null,
-    @ApplicationContext private val appContext: Context? = null
-) : SyncRepository {
+    private val appPreferences: AppPreferences?
+    private val appContext: Context?
+    private val noteTopicCache: NoteTopicCache?
+
+    @Inject
+    constructor(
+        api: GlifoApi,
+        syncDao: SyncOperationDao,
+        noteDao: NoteDao,
+        scheduler: SyncScheduler,
+        devicePushManager: DevicePushManager?,
+        appPreferences: AppPreferences?,
+        @ApplicationContext appContext: Context?,
+        noteTopicCache: NoteTopicCache
+    ) {
+        this.api = api
+        this.syncDao = syncDao
+        this.noteDao = noteDao
+        this.scheduler = scheduler
+        this.devicePushManager = devicePushManager
+        this.appPreferences = appPreferences
+        this.appContext = appContext
+        this.noteTopicCache = noteTopicCache
+    }
+
+    constructor(
+        api: GlifoApi,
+        syncDao: SyncOperationDao,
+        noteDao: NoteDao,
+        scheduler: SyncScheduler,
+        devicePushManager: DevicePushManager?,
+        appPreferences: AppPreferences? = null,
+        appContext: Context? = null
+    ) {
+        this.api = api
+        this.syncDao = syncDao
+        this.noteDao = noteDao
+        this.scheduler = scheduler
+        this.devicePushManager = devicePushManager
+        this.appPreferences = appPreferences
+        this.appContext = appContext
+        this.noteTopicCache = null
+    }
 
     constructor(
         api: GlifoApi,
@@ -79,7 +121,9 @@ class SyncRepositoryImpl @Inject constructor(
         syncDao = syncDao,
         noteDao = noteDao,
         scheduler = scheduler,
-        devicePushManager = null
+        devicePushManager = null,
+        appPreferences = null,
+        appContext = null
     )
 
     // Un solo vaciado a la vez: el worker y el botón "sincronizar ahora" podrían coincidir.
@@ -258,6 +302,7 @@ class SyncRepositoryImpl @Inject constructor(
             val reconstructed = api.reconstructNote(serverId).data
             val contentJson = reconstructed.content?.takeIf { !it.isJsonNull }?.toString()
             noteDao.setServerContent(note.id, contentJson, reconstructed.status ?: STATUS_READY)
+            noteTopicCache?.setTopicId(note.id, reconstructed.syllabusTopicId)
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (_: Exception) {

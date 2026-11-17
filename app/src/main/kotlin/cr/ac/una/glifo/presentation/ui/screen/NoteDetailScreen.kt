@@ -95,13 +95,28 @@ fun NoteDetailScreen(
                 val uiData = state.data
                 val data = uiData.content
                 val errorText = uiData.reconstructError?.toReconstructMessage(context)
+                val topicSection: @Composable () -> Unit = {
+                    NoteTopicSection(
+                        linkedTopicId = data.note.syllabusTopicId,
+                        suggestedTopicId = data.suggestedTopicId,
+                        courseTopics = uiData.courseTopics,
+                        isTopicsLoading = uiData.isTopicsLoading,
+                        isUpdatingTopic = uiData.isUpdatingTopic,
+                        topicError = uiData.topicError,
+                        onSelectTopic = { topicId -> viewModel.updateTopic(noteId, topicId) },
+                        onAcceptSuggestion = { viewModel.acceptSuggestedTopic(noteId) },
+                        onRefreshTopics = { viewModel.loadCourseTopics(data.note.courseId, force = true) },
+                        onClearError = { viewModel.clearTopicError() }
+                    )
+                }
                 if (data.source == NoteContentSource.Unavailable) {
                     UnavailableContent(
                         pendingSync = data.hasPendingSync,
                         canReconstruct = data.canReconstruct,
                         isReconstructing = uiData.isReconstructing,
                         reconstructError = errorText,
-                        onReconstruct = { viewModel.reconstructNote(noteId) }
+                        onReconstruct = { viewModel.reconstructNote(noteId) },
+                        topicSection = topicSection
                     )
                 } else {
                     NoteContentBody(
@@ -109,6 +124,7 @@ fun NoteDetailScreen(
                         isReconstructing = uiData.isReconstructing,
                         reconstructError = errorText,
                         onReconstruct = { viewModel.reconstructNote(noteId) },
+                        topicSection = topicSection,
                         onFragmentClick = { fragment ->
                             when {
                                 fragment.kind == RegionKind.Math -> onNavigateToFormula(fragment.id)
@@ -130,6 +146,7 @@ private fun ColumnScope.NoteContentBody(
     isReconstructing: Boolean,
     reconstructError: String?,
     onReconstruct: () -> Unit,
+    topicSection: @Composable () -> Unit,
     onFragmentClick: (NoteFragment) -> Unit,
     onReviewWeakest: () -> Unit
 ) {
@@ -185,6 +202,9 @@ private fun ColumnScope.NoteContentBody(
                 Text(stringResource(R.string.note_detail_pending_sync), fontSize = 11.sp, color = colors.textSecondary, modifier = Modifier.padding(start = 4.dp))
             }
         }
+
+        topicSection()
+        Spacer(modifier = Modifier.height(12.dp))
 
         ReconstructAiControls(
             canReconstruct = content.canReconstruct,
@@ -387,28 +407,40 @@ private fun UnavailableContent(
     canReconstruct: Boolean,
     isReconstructing: Boolean,
     reconstructError: String?,
-    onReconstruct: () -> Unit
+    onReconstruct: () -> Unit,
+    topicSection: @Composable () -> Unit
 ) {
     val colors = GlifoTheme.colors
     Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier = Modifier
+            .fillMaxSize()
+            .navigationBarsPadding()
+            .verticalScroll(rememberScrollState())
+            .padding(14.dp)
     ) {
-        Text(stringResource(R.string.note_detail_unavailable_title), fontSize = 16.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary, textAlign = TextAlign.Center)
-        Text(
-            stringResource(if (pendingSync) R.string.note_detail_pending_sync else R.string.note_detail_unavailable_description),
-            fontSize = 13.sp,
-            color = colors.textSecondary,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(top = 8.dp, bottom = 16.dp)
-        )
-        ReconstructAiControls(
-            canReconstruct = canReconstruct,
-            isReconstructing = isReconstructing,
-            reconstructError = reconstructError,
-            onReconstruct = onReconstruct
-        )
+        topicSection()
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 10.dp, vertical = 32.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(stringResource(R.string.note_detail_unavailable_title), fontSize = 16.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary, textAlign = TextAlign.Center)
+            Text(
+                stringResource(if (pendingSync) R.string.note_detail_pending_sync else R.string.note_detail_unavailable_description),
+                fontSize = 13.sp,
+                color = colors.textSecondary,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 8.dp, bottom = 16.dp)
+            )
+            ReconstructAiControls(
+                canReconstruct = canReconstruct,
+                isReconstructing = isReconstructing,
+                reconstructError = reconstructError,
+                onReconstruct = onReconstruct
+            )
+        }
     }
 }
 

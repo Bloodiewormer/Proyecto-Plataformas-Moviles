@@ -47,7 +47,8 @@ data class NoteResponse(
     @SerializedName("title") val title: String,
     @SerializedName("class_date") val classDate: String,
     /** DRAFT · PROCESSING · READY · ARCHIVED; el mock no lo manda. */
-    @SerializedName("status") val status: String? = null
+    @SerializedName("status") val status: String? = null,
+    @SerializedName("syllabus_topic_id") val syllabusTopicId: Long? = null
 )
 
 data class NoteDetailResponse(
@@ -57,13 +58,21 @@ data class NoteDetailResponse(
     @SerializedName("class_date") val classDate: String,
     @SerializedName("status") val status: String? = null,
     /** Reconstrucción IA-01 (§5.5) como JSON; null mientras no exista. */
-    @SerializedName("content") val content: JsonElement? = null
+    @SerializedName("content") val content: JsonElement? = null,
+    @SerializedName("syllabus_topic_id") val syllabusTopicId: Long? = null
 )
 
 data class CreateNoteRequest(
     @SerializedName("course_id") val courseId: Long,
     @SerializedName("title") val title: String,
-    @SerializedName("class_date") val classDate: String
+    @SerializedName("class_date") val classDate: String,
+    @SerializedName("syllabus_topic_id") val syllabusTopicId: Long? = null
+)
+
+data class UpdateNoteRequest(
+    @SerializedName("syllabus_topic_id") val syllabusTopicId: Long? = null,
+    @SerializedName("class_date") val classDate: String,
+    @SerializedName("title") val title: String
 )
 
 /** `POST notes/{id}/pages`: la página ya procesada en el teléfono (issue #26). */

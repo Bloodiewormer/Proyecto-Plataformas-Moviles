@@ -73,7 +73,8 @@ data class NoteContent(
     /** Estado del apunte (DRAFT · PROCESSING · READY · ARCHIVED). */
     val status: String = "READY",
     /** Identificador en el servidor; null mientras no esté sincronizado. */
-    val serverId: Long? = null
+    val serverId: Long? = null,
+    val suggestedTopicId: Long? = null
 ) {
     /** La nota está en PROCESSING y ya fue sincronizada con el servidor (#42). */
     val canReconstruct: Boolean

@@ -4,7 +4,8 @@ data class Note(
     val id: Long,
     val courseId: Long,
     val title: String,
-    val classDate: String
+    val classDate: String,
+    val syllabusTopicId: Long? = null
 )
 
 data class NoteMeta(

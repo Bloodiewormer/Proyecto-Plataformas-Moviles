@@ -678,6 +678,19 @@
     <string name="note_error_fragment_missing">Ese fragmento ya no existe en el apunte</string>
     <string name="note_error_title_required">El título es obligatorio</string>
     <string name="note_error_not_found">Apunte no encontrado</string>
+    <string name="note_topic_section_title">TEMA</string>
+    <string name="note_topic_unlinked">Sin tema vinculado</string>
+    <string name="note_topic_select">Seleccionar</string>
+    <string name="note_topic_change">Cambiar</string>
+    <string name="note_topic_fallback_label">Tema #%1$d</string>
+    <string name="note_topic_suggested_label">Tema sugerido: %1$s</string>
+    <string name="note_topic_suggested_accept">Aceptar</string>
+    <string name="note_topic_picker_title">Seleccionar tema del temario</string>
+    <string name="note_topic_picker_empty">Todavía no hay temas disponibles en este curso.</string>
+    <string name="note_topic_picker_retry">Reintentar</string>
+    <string name="note_topic_picker_clear">Quitar tema vinculado</string>
+    <string name="note_topic_error_no_connection">Sin conexión. Conectate a internet para guardar el tema del apunte.</string>
+    <string name="note_topic_error_not_synced">Esperá a que el apunte se sincronice con el servidor antes de vincular un tema.</string>
 
     <string name="sync_item_page_title">%1$s · p.%2$d</string>
     <string name="sync_item_note_title">%1$s · apunte</string>

@@ -7,6 +7,7 @@ import cr.ac.una.glifo.core.common.AppError
 import cr.ac.una.glifo.core.pipeline.PerceptualHasher
 import cr.ac.una.glifo.core.sync.SyncScheduler
 import cr.ac.una.glifo.data.datasource.local.GlifoDatabase
+import cr.ac.una.glifo.data.datasource.local.NoteTopicCache
 import cr.ac.una.glifo.data.datasource.local.dao.NoteDao
 import cr.ac.una.glifo.data.datasource.local.dao.SyncOperationDao
 import cr.ac.una.glifo.data.datasource.local.entity.FragmentCorrectionEntity
@@ -16,6 +17,7 @@ import cr.ac.una.glifo.data.datasource.local.entity.SyncOperationEntity
 import cr.ac.una.glifo.data.datasource.remote.ApiErrorHandler
 import cr.ac.una.glifo.data.datasource.remote.GlifoApi
 import cr.ac.una.glifo.data.dto.CreateNoteRequest
+import cr.ac.una.glifo.data.dto.UpdateNoteRequest
 import cr.ac.una.glifo.data.mapper.LOCAL_LEVEL_REACHED
 import cr.ac.una.glifo.data.mapper.buildLocalNoteContent
 import cr.ac.una.glifo.data.mapper.buildServerNoteContent
@@ -63,6 +65,7 @@ class NoteRepositoryImpl : NoteRepository {
     private val noteDao: NoteDao
     private val syncDao: SyncOperationDao
     private val syncScheduler: SyncScheduler
+    private val topicCache: NoteTopicCache
     private val appContext: Context?
 
     @Inject
@@ -72,6 +75,7 @@ class NoteRepositoryImpl : NoteRepository {
         noteDao: NoteDao,
         syncDao: SyncOperationDao,
         syncScheduler: SyncScheduler,
+        topicCache: NoteTopicCache,
         @ApplicationContext appContext: Context
     ) {
         this.api = api
@@ -79,8 +83,26 @@ class NoteRepositoryImpl : NoteRepository {
         this.noteDao = noteDao
         this.syncDao = syncDao
         this.syncScheduler = syncScheduler
+        this.topicCache = topicCache
         this.appContext = appContext
     }
+
+    constructor(
+        api: GlifoApi,
+        database: GlifoDatabase,
+        noteDao: NoteDao,
+        syncDao: SyncOperationDao,
+        syncScheduler: SyncScheduler,
+        appContext: Context
+    ) : this(
+        api = api,
+        database = database,
+        noteDao = noteDao,
+        syncDao = syncDao,
+        syncScheduler = syncScheduler,
+        topicCache = NoteTopicCache(),
+        appContext = appContext
+    )
 
     constructor(
         api: GlifoApi,
@@ -94,12 +116,15 @@ class NoteRepositoryImpl : NoteRepository {
         this.noteDao = noteDao
         this.syncDao = syncDao
         this.syncScheduler = syncScheduler
+        this.topicCache = NoteTopicCache()
         this.appContext = null
     }
 
     override suspend fun getNotesForCourse(courseId: Long): Result<List<Note>> =
         when (val refreshed = refreshCourse(courseId)) {
-            is Result.Success -> Result.Success(noteDao.notesForCourse(courseId).map { it.toDomain() })
+            is Result.Success -> Result.Success(
+                noteDao.notesForCourse(courseId).map { it.toDomain(topicCache.getTopicId(it.id)) }
+            )
             is Result.Failure -> refreshed
         }
 
@@ -116,7 +141,8 @@ class NoteRepositoryImpl : NoteRepository {
     }
 
     override suspend fun getNote(noteId: Long): Result<Note> =
-        noteDao.noteById(noteId)?.let { Result.Success(it.toDomain()) } ?: notFound()
+        noteDao.noteById(noteId)?.let { Result.Success(it.toDomain(topicCache.getTopicId(it.id))) }
+            ?: notFound()
 
     override suspend fun getNoteMeta(noteId: Long): Result<NoteMeta> =
         noteDao.noteById(noteId)?.let { Result.Success(it.toMeta()) } ?: notFound()
@@ -134,11 +160,15 @@ class NoteRepositoryImpl : NoteRepository {
         val pages = noteDao.pagesForNote(noteId)
 
         if (!note.contentJson.isNullOrBlank()) {
-            return Result.Success(buildServerNoteContent(note, corrections, pending, pages))
+            return Result.Success(
+                buildServerNoteContent(note, corrections, pending, pages, topicCache.getTopicId(note.id))
+            )
         }
 
         if (pages.isNotEmpty()) {
-            return Result.Success(buildLocalNoteContent(note, pages, corrections, pending))
+            return Result.Success(
+                buildLocalNoteContent(note, pages, corrections, pending, topicCache.getTopicId(note.id))
+            )
         }
 
         // Apunte que solo existe en el servidor: se pide su reconstrucción y se guarda para
@@ -150,29 +180,34 @@ class NoteRepositoryImpl : NoteRepository {
             val contentJson = refreshed.content?.takeIf { !it.isJsonNull }?.toString()
             val status = refreshed.status ?: note.status
             noteDao.setServerContent(note.id, contentJson, status)
+            topicCache.setTopicId(note.id, refreshed.syllabusTopicId)
             note.copy(contentJson = contentJson, status = status)
         } else {
             note
         }
-        return Result.Success(buildServerNoteContent(current, corrections, pending))
+        return Result.Success(
+            buildServerNoteContent(current, corrections, pending, syllabusTopicId = topicCache.getTopicId(current.id))
+        )
     }
 
     override fun observeNoteContent(noteId: Long): Flow<Result<NoteContent>> =
         combine(
             noteDao.observeNoteById(noteId).distinctUntilChanged(),
-            syncDao.observePendingForNote(noteId).distinctUntilChanged()
-        ) { note, pendingCount -> note to (pendingCount > 0) }
+            syncDao.observePendingForNote(noteId).distinctUntilChanged(),
+            topicCache.changes
+        ) { note, pendingCount, _ -> note to (pendingCount > 0) }
             .map { (note, pending) ->
                 note ?: return@map notFound()
                 val corrections = noteDao.correctionsForNote(noteId)
                 val pages = noteDao.pagesForNote(noteId)
+                val topicId = topicCache.getTopicId(note.id)
                 when {
                     !note.contentJson.isNullOrBlank() ->
-                        Result.Success(buildServerNoteContent(note, corrections, pending, pages))
+                        Result.Success(buildServerNoteContent(note, corrections, pending, pages, topicId))
                     pages.isNotEmpty() ->
-                        Result.Success(buildLocalNoteContent(note, pages, corrections, pending))
+                        Result.Success(buildLocalNoteContent(note, pages, corrections, pending, topicId))
                     else ->
-                        Result.Success(buildServerNoteContent(note, corrections, pending))
+                        Result.Success(buildServerNoteContent(note, corrections, pending, syllabusTopicId = topicId))
                 }
             }
             .distinctUntilChanged()
@@ -197,11 +232,14 @@ class NoteRepositoryImpl : NoteRepository {
                 val contentJson = dto.content?.takeIf { !it.isJsonNull }?.toString()
                 val status = dto.status ?: STATUS_READY
                 noteDao.setServerContent(note.id, contentJson, status)
+                topicCache.setTopicId(note.id, dto.syllabusTopicId)
                 val updated = note.copy(contentJson = contentJson, status = status)
                 val corrections = noteDao.correctionsForNote(localNoteId)
                 val pending = syncDao.pendingForNote(localNoteId) > 0
                 val pages = noteDao.pagesForNote(localNoteId)
-                Result.Success(buildServerNoteContent(updated, corrections, pending, pages))
+                Result.Success(
+                    buildServerNoteContent(updated, corrections, pending, pages, topicCache.getTopicId(updated.id))
+                )
             }
             is Result.Failure -> remote
         }
@@ -240,6 +278,39 @@ class NoteRepositoryImpl : NoteRepository {
         return Result.Success(Unit)
     }
 
+    override suspend fun updateNoteTopic(noteId: Long, topicId: Long?): Result<Note> {
+        val note = noteDao.noteById(noteId) ?: return notFound()
+        val serverId = note.serverId
+            ?: return Result.Failure(
+                AppError.Validation(
+                    field = "serverId",
+                    issue = appContext?.getString(R.string.note_topic_error_not_synced)
+                        ?: "El apunte todavía no se ha sincronizado con el servidor."
+                )
+            )
+        val normalizedTopicId = topicId?.takeIf { it > 0L }
+        return when (val remote = ApiErrorHandler.safeApiCall(
+            apiCall = {
+                api.updateNote(
+                    id = serverId,
+                    request = UpdateNoteRequest(
+                        syllabusTopicId = normalizedTopicId,
+                        classDate = note.classDate,
+                        title = note.title
+                    )
+                )
+            },
+            transform = { it.data }
+        )) {
+            is Result.Success -> {
+                val dto = remote.value
+                topicCache.setTopicId(note.id, dto.syllabusTopicId)
+                Result.Success(note.toDomain(dto.syllabusTopicId))
+            }
+            is Result.Failure -> remote
+        }
+    }
+
     override suspend fun createNote(courseId: Long, title: String, classDate: String): Result<Note> {
         if (title.isBlank()) {
             return Result.Failure(
@@ -266,7 +337,8 @@ class NoteRepositoryImpl : NoteRepository {
                         createdAt = System.currentTimeMillis()
                     )
                 )
-                Result.Success(Note(localId, dto.courseId, dto.title, dto.classDate))
+                topicCache.setTopicId(localId, dto.syllabusTopicId)
+                Result.Success(Note(localId, dto.courseId, dto.title, dto.classDate, dto.syllabusTopicId))
             }
             is Result.Failure -> created
         }
@@ -286,6 +358,7 @@ class NoteRepositoryImpl : NoteRepository {
             if (remote is Result.Failure) return remote
         }
         noteDao.deleteNote(noteId)
+        topicCache.remove(noteId)
         return Result.Success(Unit)
     }
 
@@ -358,6 +431,13 @@ class NoteRepositoryImpl : NoteRepository {
                         )
                     }
                 )
+                val localIdByServerId = noteDao.notesForCourse(courseId)
+                    .mapNotNull { entity -> entity.serverId?.let { it to entity.id } }
+                    .toMap()
+                remote.value.forEach { dto ->
+                    val localId = localIdByServerId[dto.id] ?: return@forEach
+                    topicCache.setTopicId(localId, dto.syllabusTopicId)
+                }
                 Result.Success(Unit)
             }
             is Result.Failure -> if (noteDao.notesForCourse(courseId).isNotEmpty()) Result.Success(Unit) else remote
@@ -365,13 +445,14 @@ class NoteRepositoryImpl : NoteRepository {
 
     private suspend fun NoteEntity.toMeta(): NoteMeta {
         val pages = noteDao.pagesForNote(id)
+        val topicId = topicCache.getTopicId(id)
         val content = when {
-            !contentJson.isNullOrBlank() -> buildServerNoteContent(this, noteDao.correctionsForNote(id), false, pages)
-            pages.isNotEmpty() -> buildLocalNoteContent(this, pages, noteDao.correctionsForNote(id), false)
+            !contentJson.isNullOrBlank() -> buildServerNoteContent(this, noteDao.correctionsForNote(id), false, pages, topicId)
+            pages.isNotEmpty() -> buildLocalNoteContent(this, pages, noteDao.correctionsForNote(id), false, topicId)
             else -> null
         }
         return NoteMeta(
-            note = toDomain(),
+            note = toDomain(topicId),
             chips = content?.chips().orEmpty(),
             pageCount = pages.size,
             displayDate = displayDate(classDate)
