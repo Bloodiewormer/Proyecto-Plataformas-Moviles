@@ -1,5 +1,6 @@
 package cr.ac.una.glifo.data.repository
 
+import cr.ac.una.glifo.BuildConfig
 import cr.ac.una.glifo.core.common.AppError
 import cr.ac.una.glifo.core.datastore.TokenManager
 import cr.ac.una.glifo.core.push.DevicePushManager
@@ -73,7 +74,7 @@ class AuthRepositoryImpl @Inject constructor(
         )
 
     override suspend fun getDemoAccountHints(): Result<List<DemoAccountHint>> =
-        Result.Success(DummyAuthProvider.demoAccounts.map { DemoAccountHint(it.email, it.password, it.role) })
+        Result.Success(demoAccountHintsForBuild(isDebug = BuildConfig.DEBUG))
 
     /**
      * Runs one auth call and turns its outcome into [Result], per the error-handling
@@ -136,3 +137,9 @@ private fun String.splitName(): Pair<String, String> {
     val parts = trim().split(" ", limit = 2)
     return parts[0] to (parts.getOrNull(1) ?: "")
 }
+
+// Admin credentials must not be one tap away in a distributed release APK.
+internal fun demoAccountHintsForBuild(isDebug: Boolean): List<DemoAccountHint> =
+    DummyAuthProvider.demoAccounts
+        .let { accounts -> if (isDebug) accounts else accounts.filterNot { it.role == GlifoRole.Admin } }
+        .map { DemoAccountHint(it.email, it.password, it.role) }

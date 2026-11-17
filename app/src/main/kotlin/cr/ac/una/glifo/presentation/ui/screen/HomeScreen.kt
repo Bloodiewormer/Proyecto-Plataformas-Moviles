@@ -143,7 +143,7 @@ fun HomeScreen(
                     Column(modifier = Modifier.fillMaxSize()) {
                         // Top AppBar
                         GlifoTopAppBar(
-                            title = course?.name ?: stringResource(R.string.home_default_active_course),
+                            title = course?.name ?: stringResource(R.string.drawer_no_active_course),
                             subtitle = stringResource(R.string.home_subtitle_active_course),
                             hasDropdown = true,
                             onTitleClick = activeCourse.onChangeCourse,

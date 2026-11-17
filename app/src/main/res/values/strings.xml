@@ -357,7 +357,6 @@
     <string name="ai_cost_total_label">Total</string>
 
     <!-- HomeScreen (Student) -->
-    <string name="home_default_active_course">Calculus II</string>
     <string name="home_subtitle_active_course">Active course</string>
     <string name="home_pending_captures_banner">%1$d captures queued · sent when the network returns</string>
     <string name="home_coverage_card_title">Course coverage</string>
