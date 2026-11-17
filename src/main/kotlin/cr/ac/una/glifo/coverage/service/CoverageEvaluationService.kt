@@ -5,6 +5,7 @@ import cr.ac.una.glifo.ai.service.AmbiguousTopic
 import cr.ac.una.glifo.ai.service.SemanticJudgeService
 import cr.ac.una.glifo.common.exception.ConflictException
 import cr.ac.una.glifo.course.repository.SyllabusTopicRepository
+import cr.ac.una.glifo.course.service.sortedHierarchically
 import cr.ac.una.glifo.coverage.dto.CoverageResponse
 import cr.ac.una.glifo.note.entity.NoteStatus
 import cr.ac.una.glifo.note.repository.NoteRepository
@@ -133,7 +134,7 @@ class CoverageEvaluationService(
 
     private fun snapshot(courseId: Long, userId: Long): Snapshot {
         val course = coverageService.findAccessibleCourse(courseId, userId)
-        val topics = syllabusTopicRepository.findByCourseIdOrderByOrderIndex(courseId)
+        val topics = syllabusTopicRepository.findByCourseIdOrderByOrderIndex(courseId).sortedHierarchically()
         val parentById = topics.associate { it.id to it.parent?.id }
         val leaves = topics.filter { it.id !in parentById.values }.map { topic ->
             val seen = mutableSetOf(topic.id)

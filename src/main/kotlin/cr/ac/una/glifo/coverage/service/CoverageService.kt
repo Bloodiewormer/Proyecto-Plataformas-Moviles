@@ -7,6 +7,7 @@ import cr.ac.una.glifo.course.entity.SyllabusTopic
 import cr.ac.una.glifo.course.repository.CourseRepository
 import cr.ac.una.glifo.course.repository.EnrollmentRepository
 import cr.ac.una.glifo.course.repository.SyllabusTopicRepository
+import cr.ac.una.glifo.course.service.sortedHierarchically
 import cr.ac.una.glifo.coverage.dto.CourseGapsResponse
 import cr.ac.una.glifo.coverage.dto.CoverageDeltaResponse
 import cr.ac.una.glifo.coverage.dto.CoverageResponse
@@ -44,7 +45,7 @@ class CoverageService(
     @Transactional(readOnly = true)
     fun getCoverage(courseId: Long, userId: Long): CoverageResponse {
         findAccessibleCourse(courseId, userId)
-        val topics = syllabusTopicRepository.findByCourseIdOrderByOrderIndex(courseId)
+        val topics = syllabusTopicRepository.findByCourseIdOrderByOrderIndex(courseId).sortedHierarchically()
         val coverageByTopic = coverageByTopic(userId, topics)
 
         val parentIds = topics.mapNotNull { it.parent?.id }.toSet()
@@ -87,13 +88,14 @@ class CoverageService(
             throw BadRequestException("La fecha 'since' no puede estar en el futuro")
         }
         findAccessibleCourse(courseId, userId)
-        val topics = syllabusTopicRepository.findByCourseIdOrderByOrderIndex(courseId)
-        val topicById = topics.associateBy { it.id }
+        val topics = syllabusTopicRepository.findByCourseIdOrderByOrderIndex(courseId).sortedHierarchically()
 
-        val changed = if (topics.isEmpty()) emptyList() else
+        val changedByTopicId = if (topics.isEmpty()) emptyMap() else
             topicCoverageRepository.findByUserIdAndSyllabusTopicIdInAndUpdatedAtAfter(userId, topics.map { it.id }, since)
-        val changedRows = changed.mapNotNull { coverage ->
-            topicById[coverage.syllabusTopic?.id]?.toLeafResponse(coverage)
+                .filter { it.syllabusTopic != null }
+                .associateBy { it.syllabusTopic!!.id }
+        val changedRows = topics.mapNotNull { topic ->
+            changedByTopicId[topic.id]?.let { topic.toLeafResponse(it) }
         }
 
         return CoverageDeltaResponse(
@@ -119,7 +121,7 @@ class CoverageService(
         val studentIds = enrollmentRepository.findByCourseIdAndStatus(courseId, "ACTIVE")
             .mapNotNull { it.user?.id }
             .distinct()
-        val topics = syllabusTopicRepository.findByCourseIdOrderByOrderIndex(courseId)
+        val topics = syllabusTopicRepository.findByCourseIdOrderByOrderIndex(courseId).sortedHierarchically()
         val parentIds = topics.mapNotNull { it.parent?.id }.toSet()
         val leaves = topics.filter { it.id !in parentIds }
 
