@@ -145,6 +145,14 @@
     <string name="capture_review_preview_placeholder">Capture preview</string>
     <string name="capture_review_blur_warning_title">The photo is blurry</string>
     <string name="capture_review_blur_warning_description">At this level of blur, recognition would invent text. Rest your elbow on the table and retake the shot.</string>
+    <string name="capture_review_overexposed_warning_title">The photo is overexposed</string>
+    <string name="capture_review_overexposed_warning_description">Too much glare washes out ink and formulas. Move away from direct light or turn off the flash and retake the shot.</string>
+    <string name="capture_review_underexposed_warning_title">The photo is too dark</string>
+    <string name="capture_review_underexposed_warning_description">Low light makes fine strokes hard to read. Move to a brighter spot and retake the shot.</string>
+    <string name="capture_review_multiple_warning_title">The photo needs another take</string>
+    <string name="capture_review_multiple_warning_description">Both focus and lighting issues can distort recognition. Rest your elbow under even light and retake the shot.</string>
+    <string name="capture_review_generic_warning_title">The photo has quality issues</string>
+    <string name="capture_review_generic_warning_description">Recognition may miss or misread text. Adjust focus and lighting and retake the shot.</string>
     <string name="capture_review_quality_section">QUALITY DIAGNOSTICS</string>
     <string name="capture_review_retake">Retake photo</string>
     <string name="capture_review_process_anyway">Process it anyway, I know it\'ll fail</string>

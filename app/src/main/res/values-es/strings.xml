@@ -145,6 +145,14 @@
     <string name="capture_review_preview_placeholder">Vista previa de la captura</string>
     <string name="capture_review_blur_warning_title">La foto está movida</string>
     <string name="capture_review_blur_warning_description">Con este nivel de desenfoque el reconocimiento inventaría texto. Apoyá el codo en la mesa y repetí la toma.</string>
+    <string name="capture_review_overexposed_warning_title">La foto tiene exceso de luz</string>
+    <string name="capture_review_overexposed_warning_description">El reflejo lava la tinta y las fórmulas. Alejá la hoja de la luz directa o apagá el flash y repetí la toma.</string>
+    <string name="capture_review_underexposed_warning_title">La foto está muy oscura</string>
+    <string name="capture_review_underexposed_warning_description">Con poca luz los trazos finos no se leen bien. Buscá un lugar más iluminado y repetí la toma.</string>
+    <string name="capture_review_multiple_warning_title">La foto necesita otra toma</string>
+    <string name="capture_review_multiple_warning_description">El desenfoque y la iluminación dificultan el reconocimiento. Apoyá el codo con luz pareja y repetí la toma.</string>
+    <string name="capture_review_generic_warning_title">La foto tiene problemas de calidad</string>
+    <string name="capture_review_generic_warning_description">El reconocimiento puede fallar o inventar texto. Mejorá el enfoque y la iluminación y repetí la toma.</string>
     <string name="capture_review_quality_section">DIAGNÓSTICO DE CALIDAD</string>
     <string name="capture_review_retake">Repetir la foto</string>
     <string name="capture_review_process_anyway">Procesarla igual, sé que va a fallar</string>
