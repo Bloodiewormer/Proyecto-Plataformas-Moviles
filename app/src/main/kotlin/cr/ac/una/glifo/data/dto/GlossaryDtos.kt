@@ -44,3 +44,10 @@ data class ResolveGlossarySuggestionRequest(
     @SerializedName("status") val status: String,
     @SerializedName("kind") val kind: String = "TERM"
 )
+
+/** `POST courses/{id}/glossary/suggestions`: el estudiante sugiere una entrada al glosario (D-15). */
+data class CreateGlossarySuggestionRequest(
+    @SerializedName("original_text") val originalText: String,
+    @SerializedName("suggested_correction") val suggestedCorrection: String,
+    @SerializedName("note_id") val noteId: Long? = null
+)
