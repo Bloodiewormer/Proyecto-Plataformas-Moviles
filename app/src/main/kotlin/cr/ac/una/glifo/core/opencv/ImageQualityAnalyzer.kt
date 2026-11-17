@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import androidx.annotation.StringRes
 import cr.ac.una.glifo.R
 import cr.ac.una.glifo.domain.model.CaptureQualityCheck
+import cr.ac.una.glifo.domain.model.CaptureQualityIssue
 import org.opencv.android.Utils
 import org.opencv.core.Core
 import org.opencv.core.Mat
@@ -21,7 +22,8 @@ object ImageQualityAnalyzer {
         @StringRes val labelRes: Int,
         @StringRes val scoreLabelRes: Int,
         val percent: Float,
-        val isWarning: Boolean
+        val isWarning: Boolean,
+        val issue: CaptureQualityIssue? = null
     )
 
     // Umbrales empíricos
@@ -60,7 +62,8 @@ object ImageQualityAnalyzer {
             labelRes = R.string.capture_quality_focus_label,
             scoreLabelRes = if (isBlurry) R.string.capture_quality_focus_blurry else R.string.capture_quality_focus_optimal,
             percent = scorePercent,
-            isWarning = isBlurry
+            isWarning = isBlurry,
+            issue = if (isBlurry) CaptureQualityIssue.Blurry else null
         )
     }
 
@@ -79,7 +82,12 @@ object ImageQualityAnalyzer {
             labelRes = R.string.capture_quality_light_label,
             scoreLabelRes = scoreLabelRes,
             percent = scorePercent,
-            isWarning = isWarning
+            isWarning = isWarning,
+            issue = when {
+                isTooDark -> CaptureQualityIssue.Underexposed
+                isTooBright -> CaptureQualityIssue.Overexposed
+                else -> null
+            }
         )
     }
 
@@ -87,7 +95,8 @@ object ImageQualityAnalyzer {
         label = context.getString(labelRes),
         scoreLabel = context.getString(scoreLabelRes),
         percent = percent,
-        isWarning = isWarning
+        isWarning = isWarning,
+        issue = issue
     )
 
     private fun checkBlurriness(grayMat: Mat, context: Context): CaptureQualityCheck {

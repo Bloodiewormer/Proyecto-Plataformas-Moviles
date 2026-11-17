@@ -1,8 +1,10 @@
 package cr.ac.una.glifo.core.opencv
 
 import cr.ac.una.glifo.R
+import cr.ac.una.glifo.domain.model.CaptureQualityIssue
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -40,5 +42,14 @@ class ImageQualityAnalyzerTest {
         assertEquals(R.string.capture_quality_light_optimal, optimal.scoreLabelRes)
         assertFalse(optimal.isWarning)
         assertEquals(1.0f, optimal.percent, 0.001f)
+    }
+
+    @Test
+    fun `specs expose the issue independent of the localized text`() {
+        assertEquals(CaptureQualityIssue.Blurry, ImageQualityAnalyzer.blurCheckSpec(variance = 45.0).issue)
+        assertNull(ImageQualityAnalyzer.blurCheckSpec(variance = 250.0).issue)
+        assertEquals(CaptureQualityIssue.Underexposed, ImageQualityAnalyzer.illuminationCheckSpec(meanBrightness = 30.0).issue)
+        assertEquals(CaptureQualityIssue.Overexposed, ImageQualityAnalyzer.illuminationCheckSpec(meanBrightness = 230.0).issue)
+        assertNull(ImageQualityAnalyzer.illuminationCheckSpec(meanBrightness = 128.0).issue)
     }
 }
