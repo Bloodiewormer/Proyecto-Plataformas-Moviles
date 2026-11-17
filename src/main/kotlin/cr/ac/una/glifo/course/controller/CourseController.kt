@@ -7,6 +7,7 @@ import cr.ac.una.glifo.course.dto.CreateSyllabusTopicRequest
 import cr.ac.una.glifo.course.dto.EnrollmentResponse
 import cr.ac.una.glifo.course.dto.JoinCourseRequest
 import cr.ac.una.glifo.course.dto.PublishSyllabusRequest
+import cr.ac.una.glifo.course.dto.SyllabusDocumentResponse
 import cr.ac.una.glifo.course.dto.SyllabusTopicResponse
 import cr.ac.una.glifo.course.service.CourseService
 import cr.ac.una.glifo.security.GlifoUserDetails
@@ -18,14 +19,20 @@ import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 
 /**
- * | Método | Ruta          | Éxito | Errores                              |
- * |--------|---------------|-------|--------------------------------------|
- * | GET    | /courses      | 200   | 401                                  |
- * | GET    | /courses/{id} | 200   | 400, 404                             |
- * | POST   | /courses      | 201   | 400, 403 (sin COURSE_WRITE), 415     |
+ * | Método | Ruta                       | Éxito | Errores                                                          |
+ * |--------|----------------------------|-------|------------------------------------------------------------------|
+ * | GET    | /courses                   | 200   | 401                                                              |
+ * | GET    | /courses/{id}              | 200   | 400, 404                                                         |
+ * | POST   | /courses                   | 201   | 400, 403 (sin COURSE_WRITE), 415                                 |
+ * | POST   | /courses/{id}/syllabus     | 201   | 400, 403 (sin SYLLABUS_PUBLISH o dueño), 404, 409, 415           |
+ * | POST   | /courses/{id}/syllabus/pdf | 201   | 400, 403 (sin SYLLABUS_PUBLISH o dueño), 404, 409 (ya publicado), 413, 415, 502, 503 |
+ * | GET    | /courses/{id}/syllabus     | 200   | 400, 401, 404                                                    |
+ * | GET    | /courses/{id}/topics       | 200   | 400, 404                                                         |
+ * | POST   | /courses/{id}/topics       | 201   | 400, 403 (sin SYLLABUS_PUBLISH o dueño), 404, 415                |
  */
 @RestController
 @RequestMapping("\${url.courses}", produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -66,6 +73,26 @@ class CourseController(private val courseService: CourseService) {
         val response = courseService.publishSyllabus(id, request, user.userId)
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse(data = response))
     }
+
+    /** 201 Created: extrae el temario desde el PDF con la IA y lo publica en el curso. */
+    @PostMapping("/{id}/syllabus/pdf", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    @PreAuthorize("hasAuthority('SYLLABUS_PUBLISH')")
+    fun uploadSyllabusPdf(
+        @PathVariable @Positive(message = "El id del curso debe ser positivo") id: Long,
+        @RequestPart("file") file: MultipartFile,
+        @AuthenticationPrincipal user: GlifoUserDetails
+    ): ResponseEntity<ApiResponse<SyllabusDocumentResponse>> {
+        val isAdmin = user.authorities.any { it.authority == "ROLE_ADMIN" || it.authority == "USER_MANAGE" }
+        val response = courseService.publishSyllabusFromPdf(id, file, user.userId, isAdmin)
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse(data = response))
+    }
+
+    /** Devuelve los metadatos del sílabo guardado y sus temas sin reprocesar el PDF. */
+    @GetMapping("/{id}/syllabus")
+    fun getSyllabus(
+        @PathVariable @Positive(message = "El id del curso debe ser positivo") id: Long
+    ): ResponseEntity<ApiResponse<SyllabusDocumentResponse>> =
+        ResponseEntity.ok(ApiResponse(data = courseService.getSyllabusDocument(id)))
 
     @GetMapping("/{id}/topics")
 

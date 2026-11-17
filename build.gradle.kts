@@ -54,6 +54,9 @@ dependencies {
     // --- Notificaciones push reales con Firebase Cloud Messaging (issue #48) ---
     implementation("com.google.firebase:firebase-admin:9.4.3")
 
+    // --- Extracción de texto de sílabos en PDF ---
+    implementation("org.apache.pdfbox:pdfbox:3.0.8")
+
     // Sin Flyway: igual que en clase, el esquema lo genera Hibernate a partir de las
     // entidades (spring.jpa.hibernate.ddl-auto) y import.sql carga los datos (D-27).
 

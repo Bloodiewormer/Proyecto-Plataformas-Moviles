@@ -28,6 +28,8 @@ import org.springframework.web.context.request.ServletWebRequest
 import org.springframework.web.context.request.WebRequest
 import org.springframework.web.method.annotation.HandlerMethodValidationException
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
+import org.springframework.web.multipart.MaxUploadSizeExceededException
+import org.springframework.web.multipart.support.MissingServletRequestPartException
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
 import org.springframework.web.servlet.resource.NoResourceFoundException
 import tools.jackson.core.JacksonException
@@ -106,12 +108,18 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
             }
             is MissingServletRequestParameterException ->
                 "MISSING_PARAMETER" to "Falta el parámetro obligatorio '${ex.parameterName}'"
+            is MissingServletRequestPartException ->
+                "MISSING_PARAMETER" to "Falta el archivo obligatorio '${ex.requestPartName}'"
             is MissingPathVariableException -> "MISSING_PARAMETER" to "Falta '${ex.variableName}' en la ruta"
+            is MaxUploadSizeExceededException ->
+                "PAYLOAD_TOO_LARGE" to "El archivo supera el tamaño máximo permitido"
             is NoResourceFoundException -> "NOT_FOUND" to "La ruta ${request.path() ?: ""} no existe"
             is HttpRequestMethodNotSupportedException ->
                 "METHOD_NOT_ALLOWED" to "El método ${ex.method} no está permitido en esta ruta"
-            is HttpMediaTypeNotSupportedException ->
-                "UNSUPPORTED_MEDIA_TYPE" to "Content-Type no soportado: se espera application/json"
+            is HttpMediaTypeNotSupportedException -> {
+                val expected = ex.supportedMediaTypes.takeIf { it.isNotEmpty() }?.joinToString(", ") ?: "application/json"
+                "UNSUPPORTED_MEDIA_TYPE" to "Content-Type no soportado: se espera $expected"
+            }
             is HttpMediaTypeNotAcceptableException ->
                 "NOT_ACCEPTABLE" to "Esta ruta solo responde application/json"
             else -> "REQUEST_ERROR" to "No se pudo procesar la solicitud"

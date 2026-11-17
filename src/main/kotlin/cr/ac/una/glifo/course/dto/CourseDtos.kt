@@ -85,3 +85,13 @@ data class SyllabusTopicResponse(
     val title: String,
     @JsonProperty("order_index") val orderIndex: Int
 )
+
+/** DTO de salida con los metadatos del sílabo publicado y su árbol de temas. */
+data class SyllabusDocumentResponse(
+    @JsonProperty("course_id") val courseId: Long,
+    @JsonProperty("file_name") val fileName: String?,
+    @JsonProperty("size_bytes") val sizeBytes: Long?,
+    @JsonProperty("parsed_at") val parsedAt: Instant?,
+    @JsonProperty("syllabus_version") val syllabusVersion: Int,
+    val topics: List<SyllabusTopicResponse>
+)

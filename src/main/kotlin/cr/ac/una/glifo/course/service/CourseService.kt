@@ -1,5 +1,7 @@
 package cr.ac.una.glifo.course.service
 
+import cr.ac.una.glifo.ai.ledger.AiCallOrigin
+import cr.ac.una.glifo.ai.service.SyllabusParserService
 import cr.ac.una.glifo.common.exception.DuplicateResourceException
 import cr.ac.una.glifo.common.exception.ResourceNotFoundException
 import cr.ac.una.glifo.course.dto.CourseResponse
@@ -7,6 +9,7 @@ import cr.ac.una.glifo.course.dto.CreateCourseRequest
 import cr.ac.una.glifo.course.dto.CreateSyllabusTopicRequest
 import cr.ac.una.glifo.course.dto.EnrollmentResponse
 import cr.ac.una.glifo.course.dto.PublishSyllabusRequest
+import cr.ac.una.glifo.course.dto.SyllabusDocumentResponse
 import cr.ac.una.glifo.course.dto.SyllabusTopicResponse
 import cr.ac.una.glifo.course.entity.Course
 import cr.ac.una.glifo.course.entity.Enrollment
@@ -16,18 +19,23 @@ import cr.ac.una.glifo.course.repository.CourseRepository
 import cr.ac.una.glifo.course.repository.EnrollmentRepository
 import cr.ac.una.glifo.course.repository.SyllabusTopicRepository
 import cr.ac.una.glifo.user.repository.UserRepository
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.support.TransactionOperations
+import org.springframework.web.multipart.MultipartFile
 import java.time.Instant
 import java.util.UUID
 
 @Service
-class CourseService(
+class CourseService @Autowired constructor(
     private val courseRepository: CourseRepository,
     private val enrollmentRepository: EnrollmentRepository,
     private val userRepository: UserRepository,
     private val syllabusTopicRepository: SyllabusTopicRepository,
+    private val syllabusParserService: SyllabusParserService? = null,
+    private val transactions: TransactionOperations = TransactionOperations.withoutTransaction()
 ) {
 
     @Transactional
@@ -92,18 +100,87 @@ class CourseService(
         request: PublishSyllabusRequest,
         userId: Long
     ): List<SyllabusTopicResponse> {
-        val course = courseRepository.findById(courseId)
-            .orElseThrow { ResourceNotFoundException("Curso no encontrado") }
-
-        if (course.owner?.id != userId) {
-            throw AccessDeniedException("Solo el docente dueño del curso puede publicar el temario")
-        }
+        val course = requirePublishableCourse(courseId, userId)
 
         if (course.syllabusParsedAt != null) {
             throw DuplicateResourceException("El temario de este curso ya fue publicado")
         }
 
-        val existingTopics = syllabusTopicRepository.findByCourseIdOrderByOrderIndex(courseId)
+        return applyPublishSyllabus(course, request).second
+    }
+
+    /**
+     * Extrae el temario desde un archivo PDF con la IA (fuera de transacción) y lo publica
+     * en una transacción corta. Como el publish manual, solo vale una vez: así no se borran
+     * coberturas ni ítems de estudio ya ligados a los temas, sin almacenar el binario del PDF.
+     */
+    fun publishSyllabusFromPdf(
+        courseId: Long,
+        file: MultipartFile,
+        userId: Long,
+        isAdmin: Boolean = false
+    ): SyllabusDocumentResponse {
+        val course = requirePublishableCourse(courseId, userId, isAdmin)
+        if (course.syllabusParsedAt != null) {
+            throw DuplicateResourceException("El temario de este curso ya fue publicado")
+        }
+        val parser = syllabusParserService
+            ?: throw IllegalStateException("SyllabusParserService no configurado")
+
+        val publishRequest = parser.extractTopicsFromPdf(
+            courseName = course.name,
+            courseCode = course.code,
+            file = file,
+            origin = AiCallOrigin(userId = userId, courseId = courseId)
+        )
+
+        val (savedCourse, savedTopics) = transactions.execute {
+            val freshCourse = courseRepository.findById(courseId)
+                .orElseThrow { ResourceNotFoundException("Curso no encontrado") }
+            applyPublishSyllabus(freshCourse, publishRequest)
+        }
+
+        return SyllabusDocumentResponse(
+            courseId = savedCourse.id,
+            fileName = savedCourse.syllabusSourceUri,
+            sizeBytes = file.size,
+            parsedAt = savedCourse.syllabusParsedAt,
+            syllabusVersion = savedCourse.syllabusVersion,
+            topics = savedTopics
+        )
+    }
+
+    /** Devuelve los metadatos del sílabo guardado y sus temas sin leer ningún PDF ni llamar a la IA. */
+    @Transactional(readOnly = true)
+    fun getSyllabusDocument(courseId: Long): SyllabusDocumentResponse {
+        val course = courseRepository.findById(courseId)
+            .orElseThrow { ResourceNotFoundException("Curso no encontrado") }
+        val topics = syllabusTopicRepository.findByCourseIdOrderByOrderIndex(courseId).map { it.toResponse() }
+        return SyllabusDocumentResponse(
+            courseId = course.id,
+            fileName = course.syllabusSourceUri,
+            sizeBytes = null,
+            parsedAt = course.syllabusParsedAt,
+            syllabusVersion = course.syllabusVersion,
+            topics = topics
+        )
+    }
+
+    private fun requirePublishableCourse(courseId: Long, userId: Long, isAdmin: Boolean = false): Course {
+        val course = courseRepository.findById(courseId)
+            .orElseThrow { ResourceNotFoundException("Curso no encontrado") }
+
+        if (!isAdmin && course.owner?.id != userId) {
+            throw AccessDeniedException("Solo el docente dueño del curso puede publicar el temario")
+        }
+        return course
+    }
+
+    private fun applyPublishSyllabus(
+        course: Course,
+        request: PublishSyllabusRequest
+    ): Pair<Course, List<SyllabusTopicResponse>> {
+        val existingTopics = syllabusTopicRepository.findByCourseIdOrderByOrderIndex(course.id)
         val savedByCode = existingTopics.associateBy { it.code }.toMutableMap()
         val savedById = existingTopics.associateBy { it.id }.toMutableMap()
 
@@ -134,9 +211,10 @@ class CourseService(
         course.syllabusParsedAt = Instant.now()
         // La app compara esta versión con su copia offline del contexto del curso (D-17).
         course.syllabusVersion += 1
-        courseRepository.save(course)
+        val savedCourse = courseRepository.save(course)
 
-        return syllabusTopicRepository.findByCourseIdOrderByOrderIndex(courseId).map { it.toResponse() }
+        val savedTopics = syllabusTopicRepository.findByCourseIdOrderByOrderIndex(course.id).map { it.toResponse() }
+        return savedCourse to savedTopics
     }
 
     @Transactional(readOnly = true)
