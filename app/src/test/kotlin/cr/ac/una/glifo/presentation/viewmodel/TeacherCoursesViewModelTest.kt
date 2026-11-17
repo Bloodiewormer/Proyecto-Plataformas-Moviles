@@ -68,7 +68,6 @@ class TeacherCoursesViewModelTest {
         override suspend fun addGlossaryEntry(term: String, notation: String, isSymbol: Boolean) = Result.Success(Unit)
         override suspend fun getGlossarySuggestions(): Result<List<GlossarySuggestion>> = Result.Success(emptyList())
         override suspend fun resolveGlossarySuggestion(suggestionId: Long, approve: Boolean) = Result.Success(Unit)
-        override suspend fun getSyllabusFileName() = Result.Success("")
         override suspend fun getSyllabusUnits(): Result<List<SyllabusUnitRow>> = Result.Success(emptyList())
         override suspend fun addSyllabusTopic(label: String) = Result.Success(Unit)
         override suspend fun getGaps(): Result<List<TeacherGapTopic>> = Result.Success(emptyList())
