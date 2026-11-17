@@ -645,4 +645,47 @@
     <string name="capture_error_no_photo">There is no photo to analyze.</string>
     <string name="capture_error_unreadable_photo">Could not read the captured photo.</string>
     <string name="capture_error_local_pipeline_failed">Local processing failed.</string>
+
+    <!-- Study, Glossary, Syllabus, Courses, Notes, Sync & API errors -->
+    <string name="study_tf_true">True</string>
+    <string name="study_tf_false">False</string>
+    <string name="study_topic_fallback">Topic %1$d</string>
+    <string name="study_error_select_topic">Select at least one course topic</string>
+    <string name="study_error_no_quiz">No quiz questions available</string>
+
+    <string name="glossary_tag_symbol">SYMBOL</string>
+    <string name="glossary_tag_notation">NOTATION</string>
+    <string name="glossary_tag_term">TERM</string>
+    <string name="teacher_error_glossary_fields_required">Term and notation are required</string>
+
+    <string name="syllabus_unit_default">1 · Course topics</string>
+
+    <string name="course_error_code_empty">Code cannot be empty</string>
+    <string name="course_error_invalid_code">Invalid course code</string>
+    <string name="course_error_name_code_required">Name and code are required</string>
+
+    <string name="note_default_title_format">Note %1$s</string>
+    <string name="note_error_correction_empty">Correction cannot be empty</string>
+    <string name="note_error_fragment_missing">That fragment no longer exists in the note</string>
+    <string name="note_error_title_required">Title is required</string>
+    <string name="note_error_not_found">Note not found</string>
+
+    <string name="sync_item_page_title">%1$s · p.%2$d</string>
+    <string name="sync_item_note_title">%1$s · note</string>
+    <string name="sync_op_title">Operation %1$s #%2$d</string>
+    <string name="sync_timestamp_recent">Recent</string>
+    <string name="sync_error_no_connection">No connection to the server</string>
+    <string name="sync_error_unexpected">Unexpected error</string>
+    <string name="sync_error_unreadable_analysis">Saved page analysis cannot be read</string>
+    <string name="sync_error_unknown_operation">Unknown operation: %1$s</string>
+    <string name="sync_error_note_rejected_409">Server rejected the note (409)</string>
+    <string name="sync_error_session_expired">Session expired; retrying when signed back in</string>
+    <string name="sync_error_server_wait">Server requested to wait (%1$d)</string>
+    <string name="sync_error_server">Server error (%1$d)</string>
+    <string name="sync_error_rejected">Server rejected the operation (%1$d)</string>
+
+    <string name="error_invalid_request">Invalid request data</string>
+    <string name="error_not_found">Resource not found</string>
+    <string name="error_conflict">Request conflict</string>
+    <string name="error_server_code">Server error (%1$s)</string>
 </resources>

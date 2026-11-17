@@ -40,13 +40,18 @@ class TeacherRepositoryImpl @Inject constructor(
     override suspend fun getGlossaryEntries(): Result<List<GlossaryEntry>> = withActiveCourse { courseId ->
         ApiErrorHandler.safeApiCall(
             apiCall = { api.getCourseGlossary(courseId) },
-            transform = { response -> response.data.entries.map { it.toDomain() } }
+            transform = { response -> response.data.entries.map { it.toDomain(appContext) } }
         )
     }
 
     override suspend fun addGlossaryEntry(term: String, notation: String, isSymbol: Boolean): Result<Unit> {
         if (term.isBlank() || notation.isBlank()) {
-            return Result.Failure(AppError.Validation("term", "Término y notación son obligatorios"))
+            return Result.Failure(
+                AppError.Validation(
+                    "term",
+                    appContext.getString(R.string.teacher_error_glossary_fields_required)
+                )
+            )
         }
         return withActiveCourse { courseId ->
             val request = CreateGlossaryEntryRequest(
@@ -77,7 +82,7 @@ class TeacherRepositoryImpl @Inject constructor(
     override suspend fun getSyllabus(): Result<SyllabusDocument> = withActiveCourse { courseId ->
         ApiErrorHandler.safeApiCall(
             apiCall = { api.getCourseSyllabus(courseId) },
-            transform = { it.data.toDomain() }
+            transform = { it.data.toDomain(context = appContext) }
         )
     }
 
@@ -104,7 +109,7 @@ class TeacherRepositoryImpl @Inject constructor(
             val part = MultipartBody.Part.createFormData("file", safeName, body)
             ApiErrorHandler.safeApiCall(
                 apiCall = { api.uploadSyllabusPdf(courseId, part) },
-                transform = { it.data.toDomain() }
+                transform = { it.data.toDomain(context = appContext) }
             )
         }
     }
@@ -119,7 +124,7 @@ class TeacherRepositoryImpl @Inject constructor(
     override suspend fun getSyllabusUnits(): Result<List<SyllabusUnitRow>> = withActiveCourse { courseId ->
         ApiErrorHandler.safeApiCall(
             apiCall = { api.getCourseTopics(courseId) },
-            transform = { it.data.toSyllabusUnitRows() }
+            transform = { it.data.toSyllabusUnitRows(appContext) }
         )
     }
 

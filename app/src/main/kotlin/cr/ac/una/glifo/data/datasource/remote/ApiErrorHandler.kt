@@ -34,19 +34,19 @@ object ApiErrorHandler {
             401 -> AppError.Unauthorized
             400, 422 -> AppError.Validation(
                 field = defaultValidationField,
-                issue = serverMessage ?: "Datos de solicitud inválidos"
+                issue = serverMessage.orEmpty()
             )
             404 -> AppError.Server(
                 code = "404",
-                message = serverMessage ?: "Recurso no encontrado"
+                message = serverMessage.orEmpty()
             )
             409 -> AppError.Server(
                 code = "409",
-                message = serverMessage ?: "Conflicto en la solicitud"
+                message = serverMessage.orEmpty()
             )
             else -> AppError.Server(
                 code = code().toString(),
-                message = serverMessage ?: "Error del servidor (${code()})"
+                message = serverMessage.orEmpty()
             )
         }
     }

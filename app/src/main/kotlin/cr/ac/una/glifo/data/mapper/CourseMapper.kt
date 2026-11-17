@@ -1,5 +1,7 @@
 package cr.ac.una.glifo.data.mapper
 
+import android.content.Context
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.data.dto.CourseDetailResponse
 import cr.ac.una.glifo.data.dto.CourseResponse
 import cr.ac.una.glifo.data.dto.CreateCourseRequest
@@ -44,7 +46,7 @@ fun Course.toCreateRequest(term: String = "I"): CreateCourseRequest = CreateCour
 )
 
 /** Agrupa la lista plana/jerárquica de temas del backend en unidades y subtemas para la UI (#32). */
-fun List<SyllabusTopicResponse>.toSyllabusUnitRows(): List<SyllabusUnitRow> {
+fun List<SyllabusTopicResponse>.toSyllabusUnitRows(context: Context? = null): List<SyllabusUnitRow> {
     if (isEmpty()) return emptyList()
 
     val sorted = sortedBy { it.orderIndex }
@@ -73,7 +75,7 @@ fun List<SyllabusTopicResponse>.toSyllabusUnitRows(): List<SyllabusUnitRow> {
     }
     return listOf(
         SyllabusUnitRow(
-            label = "1 · Temas del curso",
+            label = context?.getString(R.string.syllabus_unit_default) ?: "1 · Temas del curso",
             topicCount = rows.size,
             topics = rows
         )

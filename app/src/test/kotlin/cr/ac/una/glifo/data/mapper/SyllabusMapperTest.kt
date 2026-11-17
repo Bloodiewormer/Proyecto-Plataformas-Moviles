@@ -105,4 +105,23 @@ class SyllabusMapperTest {
         assertEquals("2.0 KB", SyllabusMapper.formatFileSize(2048L))
         assertEquals("1.0 MB", SyllabusMapper.formatFileSize(1024L * 1024L))
     }
+
+    @Test
+    fun `flat topics use localized default unit label when context is given`() {
+        val context = io.mockk.mockk<android.content.Context> {
+            io.mockk.every { getString(cr.ac.una.glifo.R.string.syllabus_unit_default) } returns "1 · Course topics"
+        }
+        val dto = SyllabusDocumentResponse(
+            courseId = 10L,
+            fileName = null,
+            sizeBytes = null,
+            parsedAt = null,
+            syllabusVersion = 1,
+            topics = listOf(SyllabusTopicResponse(id = 1L, courseId = 10L, parentId = null, code = "1.1", title = "Limits", orderIndex = 1))
+        )
+
+        val domain = SyllabusMapper.toDomain(dto, ZoneId.of("UTC"), context)
+
+        assertEquals("1 · Course topics", domain.units.single().label)
+    }
 }

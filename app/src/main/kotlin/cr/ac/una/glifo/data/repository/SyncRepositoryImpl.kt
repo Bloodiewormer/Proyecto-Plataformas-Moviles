@@ -1,8 +1,10 @@
 package cr.ac.una.glifo.data.repository
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Build
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.datastore.AppPreferences
 import cr.ac.una.glifo.core.push.DevicePushManager
 import cr.ac.una.glifo.core.push.QueueCompletionReportOutcome
@@ -33,6 +35,7 @@ import cr.ac.una.glifo.domain.model.SyncRunOutcome
 import cr.ac.una.glifo.domain.model.SyncRunSummary
 import cr.ac.una.glifo.domain.model.SyncStatus
 import cr.ac.una.glifo.domain.repository.SyncRepository
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -52,19 +55,7 @@ import javax.inject.Singleton
 import kotlin.math.max
 
 /**
- * Cola offline (issue #26): el outbox en Room y el proceso que la vacía contra la API.
- *
- * Cada operación termina en uno de cuatro caminos:
- * - **hecha**: 2xx, o 409 en una página (el servidor ya la tenía: el reintento es idempotente);
- * - **reintentar**: sin red, 5xx, 408/429 o sesión vencida → la pasada se corta y WorkManager
- *   vuelve con backoff exponencial;
- * - **fallida**: otro 4xx que reintentar no arregla → queda FAILED hasta que el estudiante
- *   la reencole;
- * - **en espera**: una página cuyo apunte todavía no existe en el servidor.
- *
- * Cuando la cola queda efectivamente vacía (`pendingCount == 0` y sin fallos) y se subieron
- * operaciones nuevas en este dispositivo, se informa el cierre del lote a `/api/v1/sync/complete`
- * para disparar la notificación push FCM dirigida a este `device_id` (#48).
+ * Cola offline (issue #26): el outbox en Room y el proceso que la vacia contra la API.
  */
 @Singleton
 class SyncRepositoryImpl @Inject constructor(
@@ -74,7 +65,8 @@ class SyncRepositoryImpl @Inject constructor(
     private val scheduler: SyncScheduler,
     private val devicePushManager: DevicePushManager?,
     // null en las pruebas: se comporta como si N2 estuviera permitido.
-    private val appPreferences: AppPreferences? = null
+    private val appPreferences: AppPreferences? = null,
+    @ApplicationContext private val appContext: Context? = null
 ) : SyncRepository {
 
     constructor(
@@ -126,11 +118,18 @@ class SyncRepositoryImpl @Inject constructor(
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (_: IOException) {
-                Step.Retry("Sin conexión con el servidor")
+                Step.Retry(
+                    appContext?.getString(R.string.sync_error_no_connection)
+                        ?: "Sin conexión con el servidor"
+                )
             } catch (http: HttpException) {
                 classify(http, operation)
             } catch (error: Exception) {
-                Step.Retry(error.message ?: "Error inesperado")
+                Step.Retry(
+                    error.message
+                        ?: appContext?.getString(R.string.sync_error_unexpected)
+                        ?: "Error inesperado"
+                )
             }
 
             when (step) {
@@ -210,7 +209,10 @@ class SyncRepositoryImpl @Inject constructor(
             TYPE_UPLOAD_PAGE -> {
                 val serverId = note.serverId ?: return Step.Waiting
                 val page = operation.pageId?.let { noteDao.pageById(it) } ?: return Step.Done
-                val request = page.toUploadRequest() ?: return Step.Fail("El análisis guardado de la página no se puede leer")
+                val request = page.toUploadRequest() ?: return Step.Fail(
+                    appContext?.getString(R.string.sync_error_unreadable_analysis)
+                        ?: "El análisis guardado de la página no se puede leer"
+                )
                 try {
                     api.uploadPage(serverId, request)
                 } catch (http: HttpException) {
@@ -219,7 +221,10 @@ class SyncRepositoryImpl @Inject constructor(
                 uploadedPagesByNote.getOrPut(note.id) { mutableListOf() }.add(page)
                 Step.Done
             }
-            else -> Step.Fail("Operación desconocida: ${operation.entityType}")
+            else -> Step.Fail(
+                appContext?.getString(R.string.sync_error_unknown_operation, operation.entityType)
+                    ?: "Operación desconocida: ${operation.entityType}"
+            )
         }
     }
 
@@ -495,11 +500,30 @@ class SyncRepositoryImpl @Inject constructor(
     }.getOrNull()
 
     private fun classify(http: HttpException, operation: SyncOperationEntity): Step = when (http.code()) {
-        409 -> if (operation.entityType == TYPE_UPLOAD_PAGE) Step.Done else Step.Fail("El servidor rechazó el apunte (409)")
-        401 -> Step.Retry("La sesión venció; se reintenta al volver a iniciar sesión")
-        408, 429 -> Step.Retry("El servidor pidió esperar (${http.code()})")
-        in 500..599 -> Step.Retry("Error del servidor (${http.code()})")
-        else -> Step.Fail("El servidor rechazó la operación (${http.code()})")
+        409 -> if (operation.entityType == TYPE_UPLOAD_PAGE) {
+            Step.Done
+        } else {
+            Step.Fail(
+                appContext?.getString(R.string.sync_error_note_rejected_409)
+                    ?: "El servidor rechazó el apunte (409)"
+            )
+        }
+        401 -> Step.Retry(
+            appContext?.getString(R.string.sync_error_session_expired)
+                ?: "La sesión venció; se reintenta al volver a iniciar sesión"
+        )
+        408, 429 -> Step.Retry(
+            appContext?.getString(R.string.sync_error_server_wait, http.code())
+                ?: "El servidor pidió esperar (${http.code()})"
+        )
+        in 500..599 -> Step.Retry(
+            appContext?.getString(R.string.sync_error_server, http.code())
+                ?: "Error del servidor (${http.code()})"
+        )
+        else -> Step.Fail(
+            appContext?.getString(R.string.sync_error_rejected, http.code())
+                ?: "El servidor rechazó la operación (${http.code()})"
+        )
     }
 
     private suspend fun summary(uploaded: Int, failed: Int, outcome: SyncRunOutcome) =
@@ -507,27 +531,38 @@ class SyncRepositoryImpl @Inject constructor(
 
     private fun now() = System.currentTimeMillis()
 
-    private fun SyncOperationRow.toQueueItem() = SyncQueueItem(
-        noteId = noteId,
-        title = if (entityType == TYPE_UPLOAD_PAGE && pageIndex != null) "$noteTitle · p.${pageIndex + 1}" else "$noteTitle · apunte",
-        timestamp = TIMESTAMP.format(Instant.ofEpochMilli(updatedAt).atZone(ZoneId.systemDefault())),
-        status = when (status) {
-            STATUS_IN_PROGRESS -> SyncStatus.Syncing
-            STATUS_FAILED -> SyncStatus.Failed
-            STATUS_DONE -> SyncStatus.Done
-            else -> SyncStatus.Queued
-        },
-        progress = if (status == STATUS_IN_PROGRESS) 0.5f else 0f,
-        attempts = attempts,
-        lastError = lastError
-    )
+    private fun SyncOperationRow.toQueueItem(): SyncQueueItem {
+        val title = if (entityType == TYPE_UPLOAD_PAGE && pageIndex != null) {
+            appContext?.getString(R.string.sync_item_page_title, noteTitle, pageIndex + 1)
+                ?: "$noteTitle · p.${pageIndex + 1}"
+        } else {
+            appContext?.getString(R.string.sync_item_note_title, noteTitle)
+                ?: "$noteTitle · apunte"
+        }
+        // Build formatter dynamically so switching the in-app language updates timestamps immediately.
+        val timestamp = DateTimeFormatter.ofPattern("d MMM · HH:mm", Locale.getDefault())
+            .format(Instant.ofEpochMilli(updatedAt).atZone(ZoneId.systemDefault()))
+        return SyncQueueItem(
+            noteId = noteId,
+            title = title,
+            timestamp = timestamp,
+            status = when (status) {
+                STATUS_IN_PROGRESS -> SyncStatus.Syncing
+                STATUS_FAILED -> SyncStatus.Failed
+                STATUS_DONE -> SyncStatus.Done
+                else -> SyncStatus.Queued
+            },
+            progress = if (status == STATUS_IN_PROGRESS) 0.5f else 0f,
+            attempts = attempts,
+            lastError = lastError
+        )
+    }
 
     private companion object {
         const val STATUS_READY = "READY"
         const val MAX_REPAIR_PARTS_PER_PAGE = 8
         const val MAX_CROP_BYTES = 950_000
         const val MAX_DECODE_DIMENSION = 1600
-        val TIMESTAMP: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMM · HH:mm", Locale.getDefault())
 
         // PNG 1x1 válido (69 bytes) usado como fallback en tests unitarios JVM donde BitmapFactory es un stub.
         val MINIMAL_PNG_BYTES: ByteArray = byteArrayOf(

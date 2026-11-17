@@ -343,4 +343,33 @@ class StudyItemMapperTest {
         assertEquals(1, quizQuestions.size)
         assertEquals("Enunciado válido", quizQuestions.single().prompt)
     }
+
+    @Test
+    fun `TRUE_FALSE options and missing topic fallback use localized string resources when context is given`() {
+        val context = io.mockk.mockk<android.content.Context> {
+            io.mockk.every { getString(cr.ac.una.glifo.R.string.study_tf_true) } returns "True"
+            io.mockk.every { getString(cr.ac.una.glifo.R.string.study_tf_false) } returns "False"
+            io.mockk.every { getString(cr.ac.una.glifo.R.string.study_topic_fallback, 99L) } returns "Topic 99"
+        }
+        val tfItem = item(
+            id = 20L,
+            topicId = 99L,
+            kind = "TRUE_FALSE",
+            payloadJson = """
+                {
+                  "schemaVersion": 1,
+                  "kind": "TRUE_FALSE",
+                  "statement": "Every differentiable function is continuous.",
+                  "answer": true,
+                  "explanation": "Differentiability implies continuity."
+                }
+            """.trimIndent()
+        )
+
+        val question = StudyItemMapper.toQuizQuestionOrNull(tfItem, topic = null, context = context)!!
+
+        assertEquals(listOf("True", "False"), question.options)
+        assertEquals("Topic 99", question.topicTag)
+        assertEquals("Topic 99", question.topicLabel)
+    }
 }

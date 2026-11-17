@@ -1,6 +1,7 @@
 package cr.ac.una.glifo.data.repository
 
 import android.content.Context
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.AppError
 import cr.ac.una.glifo.core.datastore.ActiveCourseStore
 import cr.ac.una.glifo.data.datasource.remote.GlifoApi
@@ -38,7 +39,12 @@ class TeacherRepositoryImplTest {
     private val api = mockk<GlifoApi>()
     private val activeCourseId = MutableStateFlow<Long?>(10L)
     private val activeCourseStore = mockk<ActiveCourseStore> { every { activeCourseId } returns this@TeacherRepositoryImplTest.activeCourseId }
-    private val context = mockk<Context>(relaxed = true)
+    private val context = mockk<Context>(relaxed = true) {
+        every { getString(R.string.glossary_tag_symbol) } returns "SÍMBOLO"
+        every { getString(R.string.glossary_tag_notation) } returns "NOTACIÓN"
+        every { getString(R.string.glossary_tag_term) } returns "TÉRMINO"
+        every { getString(R.string.syllabus_unit_default) } returns "1 · Temas del curso"
+    }
     private val repository = TeacherRepositoryImpl(context, api, activeCourseStore)
 
     private fun httpException(code: Int, body: String = ""): HttpException {
@@ -65,6 +71,33 @@ class TeacherRepositoryImplTest {
         assertEquals(listOf(true, true, false), entries.map { it.isSymbol })
         assertEquals("\\varepsilon", entries[0].notation)
         assertEquals("TÉRMINO", entries[2].tag)
+    }
+
+    @Test
+    fun `getGlossaryEntries and getSyllabusUnits resolve localized tags when appContext uses English strings`() = runTest {
+        every { context.getString(R.string.glossary_tag_symbol) } returns "SYMBOL"
+        every { context.getString(R.string.glossary_tag_notation) } returns "NOTATION"
+        every { context.getString(R.string.glossary_tag_term) } returns "TERM"
+        every { context.getString(R.string.syllabus_unit_default) } returns "1 · Course topics"
+        coEvery { api.getCourseGlossary(10L) } returns ApiResponse(
+            CourseGlossaryResponse(
+                courseId = 10L, courseName = "Calculus I", syllabusVersion = 1, glossaryVersion = 4,
+                entries = listOf(
+                    GlossaryEntryResponse("ε", "\\varepsilon", "SYMBOL"),
+                    GlossaryEntryResponse("lim", "\\lim_{x \\to a}", "NOTATION"),
+                    GlossaryEntryResponse("compacto", "closed and bounded", "TERM")
+                )
+            )
+        )
+        coEvery { api.getCourseTopics(10L) } returns ApiResponse(
+            listOf(SyllabusTopicResponse(1L, 10L, null, "1.1", "Limits", 1))
+        )
+
+        val entries = (repository.getGlossaryEntries() as Result.Success).value
+        val units = (repository.getSyllabusUnits() as Result.Success).value
+
+        assertEquals(listOf("SYMBOL", "NOTATION", "TERM"), entries.map { it.tag })
+        assertEquals("1 · Course topics", units.single().label)
     }
 
     @Test
