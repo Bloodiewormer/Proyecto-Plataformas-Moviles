@@ -22,6 +22,7 @@ import cr.ac.una.glifo.data.dto.EnrollmentResponse
 import cr.ac.una.glifo.data.dto.GenerateStudyItemsRequest
 import cr.ac.una.glifo.data.dto.GlossaryEntryResponse
 import cr.ac.una.glifo.data.dto.GlossarySuggestionResponse
+import cr.ac.una.glifo.data.dto.HealthResponseDto
 import cr.ac.una.glifo.data.dto.JoinCourseRequest
 import cr.ac.una.glifo.data.dto.LoginRequest
 import cr.ac.una.glifo.data.dto.MathOcrResponseDto
@@ -52,6 +53,9 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface GlifoApi {
+    @GET("health")
+    suspend fun getHealth(): ApiResponse<HealthResponseDto>
+
     // Auth
     @POST("auth/register")
     suspend fun register(@Body request: RegisterRequest): AuthResponse

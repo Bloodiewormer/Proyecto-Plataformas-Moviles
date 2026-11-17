@@ -4,7 +4,8 @@ data class Course(
     val id: Long,
     val name: String,
     val code: String,
-    val joinCode: String
+    val joinCode: String,
+    val term: String = ""
 )
 
 data class CourseDetail(

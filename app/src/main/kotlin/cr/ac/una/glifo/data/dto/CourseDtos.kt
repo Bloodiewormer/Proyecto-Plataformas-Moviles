@@ -12,7 +12,8 @@ data class CourseResponse(
     @SerializedName("id") val id: Long,
     @SerializedName("name") val name: String,
     @SerializedName("code") val code: String,
-    @SerializedName("join_code") val joinCode: String
+    @SerializedName("join_code") val joinCode: String,
+    @SerializedName("term") val term: String = ""
 )
 
 data class CourseDetailResponse(

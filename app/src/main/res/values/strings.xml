@@ -67,10 +67,6 @@
 
     <!-- ForgotPasswordScreen -->
     <string name="forgot_password_title">Reset password</string>
-    <string name="forgot_password_description">Enter your institutional email and we\'ll send you a link to reset your password.</string>
-    <string name="forgot_password_field_email">Institutional email</string>
-    <string name="forgot_password_button_send">Send link</string>
-    <string name="forgot_password_banner">If that address is registered, you\'ll receive the email within 5 minutes. Check your spam folder too.</string>
 
     <!-- ProfileScreen -->
     <string name="profile_title">Profile</string>
@@ -101,13 +97,11 @@
     <string name="settings_language_es">Spanish</string>
     <string name="settings_language_en">English</string>
     <string name="settings_section_capture">CAPTURE</string>
-    <string name="settings_save_original_photo">Save the original photo</string>
     <string name="settings_reject_low_quality">Reject low-quality photos</string>
     <string name="settings_section_processing">PROCESSING</string>
     <string name="settings_confidence_threshold">Confidence threshold</string>
     <string name="settings_confidence_threshold_description">Below this value the region escalates to the next engine. It\'s the value on-device processing uses and can\'t be changed here.</string>
     <string name="settings_allow_vision_escalation">Allow escalation to vision (N2)</string>
-    <string name="settings_confirm_before_n3">Ask for confirmation before N3</string>
     <string name="settings_section_sync">SYNC</string>
     <string name="settings_sync_wifi_only">Sync on Wi-Fi only</string>
     <string name="settings_notify_queue_done">Notify when the queue finishes</string>
@@ -159,15 +153,12 @@
     <!-- CorrectFragmentScreen -->
     <string name="correct_fragment_title">Correct fragment</string>
     <string name="correct_fragment_save">Save</string>
-    <string name="correct_fragment_uncertain_badge">UNCERTAIN</string>
     <string name="correct_fragment_confidence_threshold">confidence %1$s · threshold %2$s</string>
     <string name="correct_fragment_original_crop_placeholder">Original crop of the region</string>
     <string name="correct_fragment_region_counter">Region %1$d of %2$d</string>
     <string name="correct_fragment_engine_read_section">WHAT THE ENGINE READ</string>
     <string name="correct_fragment_recognized_text_label">RECOGNIZED TEXT</string>
     <string name="correct_fragment_glossary_suggestions_section">GLOSSARY SUGGESTIONS</string>
-    <string name="correct_fragment_contribute_glossary_title">Contribute to the course glossary</string>
-    <string name="correct_fragment_contribute_glossary_description">Your correction raises this word\'s confidence for the whole group.</string>
 
     <!-- RegionProvenanceScreen -->
     <string name="region_provenance_title">Region</string>
@@ -175,20 +166,15 @@
     <string name="region_provenance_threshold_configured">Configured threshold: %1$s</string>
     <string name="region_provenance_how_calculated_section">HOW IT WAS CALCULATED</string>
     <string name="region_provenance_pipeline_section">LADDER WALKTHROUGH</string>
-    <string name="region_provenance_send_full_page_title">Send the full page (N3)</string>
-    <string name="region_provenance_send_full_page_description">One additional call to the paid model. Last resort.</string>
 
     <!-- FormulaViewerScreen -->
     <string name="formula_viewer_title">Formula · %1$s</string>
     <string name="formula_viewer_crop_section">ORIGINAL CROP</string>
     <string name="formula_viewer_photo_placeholder">Photo of the region</string>
     <string name="formula_viewer_transcription_section">TRANSCRIPTION</string>
-    <string name="formula_viewer_copied">Copied</string>
     <string name="formula_viewer_latex_generated">LaTeX generated</string>
-    <string name="formula_viewer_copy_description">Copy</string>
     <string name="formula_viewer_compiles_jlatex">Compiles with JLaTeXMath</string>
     <string name="formula_viewer_engine_confidence">Engine confidence</string>
-    <string name="formula_viewer_resolved_by">Resolved by</string>
     <string name="formula_viewer_correct">Correct</string>
     <string name="formula_viewer_looks_good">Looks good</string>
 
@@ -208,14 +194,7 @@
     <string name="join_course_title">Join a course</string>
     <string name="join_course_instructions">Ask your teacher for the code. It\'s eight characters and not case-sensitive.</string>
     <string name="join_course_field_label">Course code</string>
-    <string name="join_course_search_button">Search course</string>
-    <string name="join_course_found_section">COURSE FOUND</string>
-    <string name="join_course_code_name">%1$s — %2$s</string>
-    <string name="join_course_term_instructor">Term II 2026 · %1$s</string>
-    <string name="join_course_student_count">%1$d enrolled</string>
-    <string name="join_course_topic_count">%1$d topics</string>
     <string name="join_course_join_button">Join this course</string>
-    <string name="join_course_not_found">We couldn\'t find a course with that code. Check it with your teacher.</string>
     <string name="join_course_invalid_code">Invalid course code. Check it with your teacher.</string>
     <string name="join_course_already_enrolled">You\'re already enrolled in this course.</string>
     <string name="join_course_privacy_note">Your notes are private. The teacher sees the group\'s coverage, never your photos.</string>
@@ -243,14 +222,12 @@
     <string name="notes_pending_captures">%1$d captures queued</string>
     <string name="notes_empty_no_match">No note matches that search.</string>
     <string name="notes_empty_course">This course has no notes yet. Capture a page with the camera.</string>
-    <string name="notes_date_page_count">%1$s · %2$d pages</string>
 
     <!-- NoteDetailScreen -->
     <string name="note_detail_default_title">Note</string>
     <string name="note_detail_provenance_description">Provenance</string>
     <string name="note_detail_edit_description">Edit</string>
     <string name="note_detail_summary_counts">%1$d verified · %2$d repaired · %3$d escalated · %4$d uncertain</string>
-    <string name="note_detail_repaired_badge">REPAIRED · %1$s</string>
     <string name="note_detail_confidence_label">confidence %1$s</string>
     <string name="note_detail_view_original_crop">View the original crop</string>
 
@@ -263,29 +240,16 @@
     <string name="coverage_partial_count">%1$d partial</string>
     <string name="coverage_doubtful_count">%1$d doubtful</string>
 
-    <!-- CoverageDeltaScreen -->
-    <string name="coverage_delta_points_badge">+%1$d POINTS</string>
-    <string name="coverage_delta_new_notes_pages">%1$d new notes · %2$d pages processed</string>
-    <string name="coverage_delta_improved_section">TOPICS THAT IMPROVED</string>
-    <string name="coverage_delta_still_missing_section">STILL NO EVIDENCE</string>
-    <string name="coverage_delta_needs_review_badge">REVIEW</string>
-    <string name="coverage_delta_view_illegible_note">View the illegible note</string>
-
     <!-- TopicDetailScreen -->
     <string name="topic_detail_why_section">WHY IT\'S IN THIS STATE</string>
     <string name="topic_detail_appears_in_section">WHERE IT APPEARS IN YOUR NOTES</string>
     <string name="topic_detail_no_notes">No notes mention this topic yet.</string>
     <string name="topic_detail_generate_reinforcement">Generate reinforcement for this topic</string>
-    <string name="topic_detail_mark_mastered">Mark as already mastered</string>
 
     <!-- StudyScreen -->
     <string name="study_subtitle">Study for</string>
-    <string name="study_flashcard_count">%1$d flashcards</string>
-    <string name="study_flashcard_description">Generated from the partial topics. 4 are from yesterday\'s correction.</string>
     <string name="study_quiz_title">Quiz</string>
-    <string name="study_quiz_description">On the five gaps with the least evidence, starting with %1$s</string>
     <string name="study_footer_note">Study material comes from coverage, not a generic syllabus: it only asks what your notes don\'t support.</string>
-    <string name="study_empty_course">There is no study material for this course yet. Pick a course or capture notes first.</string>
     <string name="study_no_material_yet">No study material yet. Tap Generate.</string>
     <plurals name="study_flashcards_plural">
         <item quantity="one">%1$d flashcard</item>
@@ -316,7 +280,6 @@
     <string name="flashcard_rating_easy">Easy</string>
 
     <!-- QuizScreen -->
-    <string name="quiz_progress_counter">2 / 5</string>
     <string name="quiz_answer_button">Answer</string>
     <string name="quiz_view_result_button">View result</string>
     <string name="quiz_correct_feedback">Correct!</string>
@@ -330,7 +293,6 @@
     <string name="quiz_result_rescheduled_count">%1$d items rescheduled for tomorrow</string>
     <string name="quiz_result_return_in_days">Correct ones come back in %1$d days.</string>
     <string name="quiz_result_view_coverage">View updated coverage</string>
-    <string name="quiz_result_explain_convergence">Explain the radius of convergence to me</string>
     <string name="quiz_result_all_correct_headline">All correct!</string>
     <string name="quiz_result_review_topic_headline">Review: %1$s</string>
     <string name="quiz_result_failed_of_total">You missed %1$d of %2$d.</string>
@@ -349,7 +311,6 @@
     <string name="ai_cost_title_admin">System usage</string>
     <string name="ai_cost_title_teacher">Course usage</string>
     <string name="ai_cost_title_student">AI usage</string>
-    <string name="ai_cost_toast_august_only">Only August data is available for now.</string>
     <string name="ai_cost_headline_description">of regions were resolved\nwith no paid calls</string>
     <string name="ai_cost_quota_label">%1$d of %2$d tier-2 calls · quota at %3$d%%</string>
     <string name="ai_cost_breakdown_section">WHERE EACH REGION WAS RESOLVED</string>
@@ -360,46 +321,34 @@
     <string name="home_subtitle_active_course">Active course</string>
     <string name="home_pending_captures_banner">%1$d captures queued · sent when the network returns</string>
     <string name="home_coverage_card_title">Course coverage</string>
-    <string name="home_coverage_breakdown">18 solid · 7 partial · 5 absent</string>
     <string name="home_coverage_delta_since">+%1$d this week</string>
     <string name="home_pending_today_section">DUE TODAY</string>
-    <string name="home_flashcard_count">%1$d flashcards</string>
     <string name="home_flashcard_topic">To review today</string>
     <string name="home_quiz_count">%1$d quiz</string>
     <string name="home_quiz_description">From the detected gaps</string>
     <string name="home_recent_notes_section">RECENT NOTES</string>
 
     <!-- TeacherHomeScreen -->
-    <string name="teacher_home_default_course_code">EIF411</string>
     <string name="teacher_home_group_coverage_title">Group coverage</string>
     <string name="teacher_home_enrolled_students">Enrolled: %1$d · course average</string>
     <string name="teacher_home_gaps_section">TOPICS WITH THE MOST GAPS</string>
     <string name="teacher_home_uncovered_fraction">%1$s uncovered</string>
     <string name="teacher_home_attention_section">NEEDS ATTENTION</string>
-    <string name="teacher_home_no_syllabus_title">Linear Algebra has no syllabus</string>
+    <string name="teacher_home_no_syllabus_title">%1$s has no syllabus</string>
     <string name="teacher_home_no_syllabus_description">Without a syllabus, coverage can\'t be calculated.</string>
     <string name="teacher_home_publish_syllabus">Publish syllabus</string>
 
     <!-- AdminHomeScreen -->
     <string name="admin_home_title">Administration</string>
-    <string name="admin_home_users_description">Users</string>
-    <string name="admin_home_active_users">Active users</string>
     <string name="admin_home_published_courses">Published courses</string>
     <string name="admin_home_system_status_section">SYSTEM STATUS</string>
     <string name="admin_home_api_label">API</string>
-    <string name="admin_home_api_latency">142 ms</string>
-    <string name="admin_home_postgres_label">PostgreSQL</string>
-    <string name="admin_home_postgres_status">operational</string>
-    <string name="admin_home_simpletex_label">SimpleTex</string>
-    <string name="admin_home_simpletex_quota">quota at 78%</string>
-    <string name="admin_home_role_distribution_section">ROLE DISTRIBUTION</string>
-    <string name="admin_home_recent_signups_section">RECENT SIGNUPS</string>
-    <string name="admin_home_hours_ago_2">2 h ago</string>
-    <string name="admin_home_hours_ago_5">5 h ago</string>
+    <string name="admin_home_api_unavailable">Unavailable</string>
+    <string name="admin_home_unavailable_notice">User directory, role breakdown, and server database or OCR quotas are not available from the backend yet.</string>
 
     <!-- TeacherCoursesScreen -->
     <string name="teacher_courses_create_description">Create</string>
-    <string name="teacher_courses_code_term">%1$s · Term II 2026</string>
+    <string name="teacher_courses_code_term">%1$s · %2$s</string>
     <string name="teacher_courses_coverage_students">%1$d%% coverage · students: %2$d</string>
     <string name="teacher_courses_no_syllabus_warning">No syllabus · no coverage</string>
     <string name="teacher_courses_create_new">Create new course</string>
@@ -411,9 +360,8 @@
     <string name="teacher_new_course_field_code">Institutional code</string>
     <string name="teacher_new_course_field_code_placeholder">e.g. EIF411</string>
     <string name="teacher_new_course_field_cycle">Term</string>
-    <string name="teacher_new_course_default_cycle">Term II 2026</string>
+    <string name="teacher_new_course_field_cycle_placeholder">e.g. Term II 2026</string>
     <string name="teacher_new_course_join_code_section">ENROLLMENT CODE</string>
-    <string name="teacher_new_course_regenerate_code_description">Generate another code</string>
     <string name="teacher_new_course_copy_code_description">Copy code</string>
     <string name="teacher_new_course_join_code_note">Students write it by hand, so it skips ambiguous letters.</string>
     <string name="teacher_new_course_syllabus_later_title">The syllabus comes later</string>
@@ -465,41 +413,19 @@
     <string name="teacher_gaps_export_description">Export</string>
     <string name="teacher_gaps_student_count">Students: %1$d</string>
     <string name="teacher_gaps_coverage_updated_today">Group average coverage</string>
-    <string name="teacher_gaps_special_case_title">6.1 is a different case</string>
-    <string name="teacher_gaps_special_case_description">11 of the 14 have notes on the topic, but illegible ones. It\'s not that they didn\'t study it.</string>
     <string name="teacher_gaps_privacy_note">Aggregated data. The teacher never sees individual notes.</string>
 
     <!-- AdminUsersScreen -->
     <string name="admin_users_title">Users</string>
-    <string name="admin_users_search_placeholder">Search by name or email</string>
-    <string name="admin_users_filter_all">All</string>
-    <string name="admin_users_filter_teachers">Teachers</string>
-    <string name="admin_users_filter_students">Students</string>
-    <string name="admin_users_filter_admins">Admins</string>
-    <string name="admin_users_filter_chip">%1$s · %2$d</string>
-    <string name="admin_users_no_match">No one matches that search.</string>
-    <string name="admin_users_add_dialog_title">Add user</string>
     <string name="admin_users_field_email_placeholder">user@una.ac.cr</string>
-    <string name="admin_users_role_student">Student</string>
-    <string name="admin_users_role_teacher">Teacher</string>
-    <string name="admin_users_role_admin">Admin</string>
+    <string name="admin_users_unavailable">User listing and account creation are not available yet. You can still reset a user\'s password by email.</string>
 
     <!-- AdminUserDetailScreen -->
-    <string name="admin_user_detail_roles_section">ASSIGNED ROLES</string>
-    <string name="admin_user_detail_role_student_desc">Primary platform role · active</string>
-    <string name="admin_user_detail_role_teacher_desc">Access to syllabi and group metrics</string>
-    <string name="admin_user_detail_role_admin_desc">Full system access</string>
-    <string name="admin_user_detail_privileges_section">EFFECTIVE PRIVILEGES</string>
-    <string name="admin_user_detail_privileges_note">Calculated from user_roles and role_privileges. Not assigned one by one.</string>
-    <string name="admin_user_detail_deactivate">Deactivate the account</string>
-    <string name="admin_user_detail_reactivate">Reactivate the account</string>
+    <string name="admin_user_detail_unavailable">User details and role editing are not available yet.</string>
 
     <!-- AdminRolesScreen -->
     <string name="admin_roles_title">Roles</string>
-    <string name="admin_roles_user_count_badge">%1$d USERS</string>
-    <string name="admin_roles_extra_count">+%1$d</string>
-    <string name="admin_roles_no_shared_access_title">No role reads other people\'s notes</string>
-    <string name="admin_roles_no_shared_access_description">There is no note:read:any privilege. The teacher only sees aggregated data.</string>
+    <string name="admin_roles_unavailable">Role and privilege management is not available from the backend yet.</string>
 
     <!-- AdminCoursesScreen -->
     <string name="admin_courses_title">Courses</string>

@@ -33,7 +33,7 @@ class CourseRepositoryImplTest {
     @Test
     fun `getStudentCourses should return list of courses on success`() = runTest {
         val mockData = listOf(
-            CourseResponse(id = 1L, name = "Cálculo I", code = "MAT-135", joinCode = "GLF-CALC1"),
+            CourseResponse(id = 1L, name = "Cálculo I", code = "MAT-135", joinCode = "GLF-CALC1", term = "II-2026"),
             CourseResponse(id = 2L, name = "Física General", code = "FIS-100", joinCode = "GLF-FIS100")
         )
         coEvery { api.getCourses() } returns ApiResponse(data = mockData)
@@ -43,6 +43,8 @@ class CourseRepositoryImplTest {
         assertTrue(result is Result.Success)
         assertEquals(2, (result as Result.Success).value.size)
         assertEquals("Cálculo I", result.value[0].name)
+        assertEquals("II-2026", result.value[0].term)
+        assertEquals("", result.value[1].term)
     }
 
     @Test

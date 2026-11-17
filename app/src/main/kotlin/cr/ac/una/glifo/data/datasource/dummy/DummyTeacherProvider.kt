@@ -2,8 +2,6 @@ package cr.ac.una.glifo.data.datasource.dummy
 
 import cr.ac.una.glifo.domain.model.SyllabusTopicRow
 import cr.ac.una.glifo.domain.model.SyllabusUnitRow
-import cr.ac.una.glifo.domain.model.TeacherGapTopic
-import cr.ac.una.glifo.domain.model.ConfidenceState
 
 object DummyTeacherProvider {
 
@@ -32,10 +30,4 @@ object DummyTeacherProvider {
         val updatedTopics = first.topics + SyllabusTopicRow(label.trim(), hasIssue = false)
         syllabusUnits[0] = first.copy(topicCount = first.topicCount + 1, topics = updatedTopics)
     }
-
-    fun getGaps(): List<TeacherGapTopic> = listOf(
-        TeacherGapTopic(ConfidenceState.Escalated, "4.3 Sockets e hilos", 70f, "19/27"),
-        TeacherGapTopic(ConfidenceState.Uncertain, "6.1 Seguridad y permisos", 52f, "14/27"),
-        TeacherGapTopic(ConfidenceState.Repaired, "3.2 Jetpack Compose", 30f, "8/27")
-    )
 }
