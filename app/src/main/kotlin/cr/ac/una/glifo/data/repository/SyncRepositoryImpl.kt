@@ -360,7 +360,7 @@ class SyncRepositoryImpl : SyncRepository {
                 }
             }
 
-            // 2. N2 (#41): regiones dudosas / no resueltas con recorte, UNA SOLA VEZ por página (máx. 8 partes).
+            // 2. N2 (#41): regiones dudosas / no resueltas con recorte, UNA SOLA VEZ por página (máx. 24 partes, igual que el backend).
             val repairParts = updatedRegions
                 .filter { it.needsVisionRepair() }
                 .mapNotNull { region ->
@@ -386,10 +386,13 @@ class SyncRepositoryImpl : SyncRepository {
                         val rep = repairedById["r${region.index}"] ?: continue
                         val isResolved = rep.resolvedAt == "N2" && !rep.isUncertain
                         val newValue = rep.resolvedTextOrValue?.takeIf { it.isNotBlank() }
+                        // N2 corrige el tipo cuando el clasificador local se equivocó (p. ej. una fórmula marcada como dibujo).
+                        val kind = repairedRegionKind(rep.kind) ?: region.kind
                         updatedRegions[i] = region.copy(
+                            kind = kind,
                             text = newValue ?: region.text,
-                            latex = if (region.kind == RegionKind.Math) (newValue ?: region.latex) else region.latex,
-                            latexCompiles = if (region.kind == RegionKind.Math) (rep.latexCompiles ?: isResolved) else region.latexCompiles,
+                            latex = if (kind == RegionKind.Math) (newValue ?: region.latex) else region.latex,
+                            latexCompiles = if (kind == RegionKind.Math) (rep.latexCompiles ?: isResolved) else region.latexCompiles,
                             ocrConfidence = rep.confidence,
                             confidenceState = if (isResolved) ConfidenceState.Escalated else ConfidenceState.Uncertain,
                             route = if (isResolved) "N2 · reparación por visión" else region.route,
@@ -605,7 +608,7 @@ class SyncRepositoryImpl : SyncRepository {
 
     private companion object {
         const val STATUS_READY = "READY"
-        const val MAX_REPAIR_PARTS_PER_PAGE = 8
+        const val MAX_REPAIR_PARTS_PER_PAGE = 24
         const val MAX_CROP_BYTES = 950_000
         const val MAX_DECODE_DIMENSION = 1600
 
@@ -622,4 +625,11 @@ class SyncRepositoryImpl : SyncRepository {
             0x44, 0xAE.toByte(), 0x42, 0x60, 0x82.toByte()
         )
     }
+}
+
+internal fun repairedRegionKind(kind: String?): RegionKind? = when (kind?.trim()?.uppercase()) {
+    "MATH" -> RegionKind.Math
+    "TEXT" -> RegionKind.Text
+    "DRAWING" -> RegionKind.Drawing
+    else -> null
 }
