@@ -1,6 +1,9 @@
 package cr.ac.una.glifo.core.pipeline
 
+import android.content.Context
 import android.graphics.Bitmap
+import androidx.annotation.StringRes
+import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.mlkit.OcrResult
 import cr.ac.una.glifo.core.mlkit.TextRecognizerN1
 import cr.ac.una.glifo.core.opencv.ImagePreprocessor
@@ -179,12 +182,17 @@ object CapturePipeline {
         )
     )
 
-    /**
-     * Traduce el resultado del pipeline a la linea de tiempo que dibuja la pantalla de
-     * procesamiento. Los niveles que no se llegaron a ejecutar quedan en "pending" con el
-     * trabajo que les toca, para que se vea por que se activan (o por que no).
-     */
-    fun stepsFor(analysis: PageAnalysis): List<CaptureStep> {
+    enum class CaptureStepId { N0, N1, Classifier, N1_5, N2 }
+
+    data class CaptureStepSpec(
+        val id: CaptureStepId,
+        val state: String,
+        @StringRes val nameRes: Int,
+        @StringRes val descriptionRes: Int,
+        val descriptionArgs: List<Any> = emptyList()
+    )
+
+    fun stepSpecsFor(analysis: PageAnalysis): List<CaptureStepSpec> {
         val escalated = analysis.regions.count {
             it.kind == RegionKind.Drawing ||
                 (it.kind == RegionKind.Text && it.ocrConfidence < RegionClassifier.TEXT_CONFIDENCE_GATE)
@@ -192,39 +200,67 @@ object CapturePipeline {
         val seconds = String.format(Locale.US, "%.1f", analysis.ocrMillis / 1000.0)
 
         return listOf(
-            CaptureStep(
+            CaptureStepSpec(
+                id = CaptureStepId.N0,
                 state = "done",
-                name = "N0 - Preprocesamiento",
-                description = "Perspectiva corregida - contraste normalizado - ${analysis.regionCount} regiones segmentadas"
+                nameRes = R.string.capture_step_n0_name,
+                descriptionRes = R.string.capture_step_n0_desc,
+                descriptionArgs = listOf(analysis.regionCount)
             ),
-            CaptureStep(
+            CaptureStepSpec(
+                id = CaptureStepId.N1,
                 state = "done",
-                name = "N1 - OCR de texto",
-                description = "${analysis.readCount} de ${analysis.regionCount} regiones leidas - ML Kit, en el dispositivo - $seconds s"
+                nameRes = R.string.capture_step_n1_name,
+                descriptionRes = R.string.capture_step_n1_desc,
+                descriptionArgs = listOf(analysis.readCount, analysis.regionCount, seconds)
             ),
-            CaptureStep(
+            CaptureStepSpec(
+                id = CaptureStepId.Classifier,
                 state = "done",
-                name = "Clasificador de region",
-                description = "${analysis.textCount} texto - ${analysis.mathCount} formulas - ${analysis.drawingCount} dibujos"
+                nameRes = R.string.capture_step_classifier_name,
+                descriptionRes = R.string.capture_step_classifier_desc,
+                descriptionArgs = listOf(analysis.textCount, analysis.mathCount, analysis.drawingCount)
             ),
-            CaptureStep(
+            CaptureStepSpec(
+                id = CaptureStepId.N1_5,
                 state = if (analysis.mathCount > 0) "now" else "pending",
-                name = "N1.5 - OCR matematico",
-                description = if (analysis.mathCount > 0) {
-                    "${analysis.mathCount} regiones enrutadas a conversion LaTeX - capa gratuita"
+                nameRes = R.string.capture_step_n15_name,
+                descriptionRes = if (analysis.mathCount > 0) {
+                    R.string.capture_step_n15_desc_active
                 } else {
-                    "No se detectaron formulas en esta pagina."
-                }
+                    R.string.capture_step_n15_desc_empty
+                },
+                descriptionArgs = if (analysis.mathCount > 0) listOf(analysis.mathCount) else emptyList()
             ),
-            CaptureStep(
+            CaptureStepSpec(
+                id = CaptureStepId.N2,
                 state = if (escalated > 0) "now" else "pending",
-                name = "N2 - Reparacion por vision",
-                description = if (escalated > 0) {
-                    "$escalated regiones no superaron la compuerta de N1."
+                nameRes = R.string.capture_step_n2_name,
+                descriptionRes = if (escalated > 0) {
+                    R.string.capture_step_n2_desc_active
                 } else {
-                    "Se activa solo si algo no supera las compuertas."
-                }
+                    R.string.capture_step_n2_desc_idle
+                },
+                descriptionArgs = if (escalated > 0) listOf(escalated) else emptyList()
             )
         )
     }
+
+    /**
+     * Traduce el resultado del pipeline a la linea de tiempo que dibuja la pantalla de
+     * procesamiento. Los niveles que no se llegaron a ejecutar quedan en "pending" con el
+     * trabajo que les toca, para que se vea por que se activan (o por que no).
+     */
+    fun stepsFor(analysis: PageAnalysis, context: Context): List<CaptureStep> =
+        stepSpecsFor(analysis).map { spec ->
+            CaptureStep(
+                state = spec.state,
+                name = context.getString(spec.nameRes),
+                description = if (spec.descriptionArgs.isEmpty()) {
+                    context.getString(spec.descriptionRes)
+                } else {
+                    context.getString(spec.descriptionRes, *spec.descriptionArgs.toTypedArray())
+                }
+            )
+        }
 }

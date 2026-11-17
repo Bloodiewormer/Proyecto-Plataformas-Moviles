@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
+import cr.ac.una.glifo.core.common.asString
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
 import cr.ac.una.glifo.domain.model.ConfidenceState
@@ -324,7 +325,7 @@ private fun TextFragment(fragment: NoteFragment, onClick: () -> Unit) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
                 GlifoConfidenceChip(state = fragment.state)
                 Text(
-                    text = if (fragment.isCorrected) stringResource(R.string.note_detail_corrected_badge) else fragment.route,
+                    text = if (fragment.isCorrected) stringResource(R.string.note_detail_corrected_badge) else fragment.routeText.asString(),
                     fontSize = 11.sp,
                     color = colors.textSecondary,
                     modifier = Modifier.padding(start = 6.dp)

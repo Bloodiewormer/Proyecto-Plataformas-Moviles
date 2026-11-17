@@ -1,14 +1,17 @@
 package cr.ac.una.glifo.domain.model
 
+import androidx.annotation.StringRes
+import cr.ac.una.glifo.R
+
 /**
  * Resultado del enrutador de regiones (Issue #17). Cada fragmento de la página cae en
  * exactamente uno de estos tipos y eso decide a qué nivel del pipeline se manda:
  * texto se queda en N1, matemática escala a N1.5 y dibujo escala a N2.
  */
-enum class RegionKind(val label: String) {
-    Text("Texto"),
-    Math("Matemática"),
-    Drawing("Dibujo")
+enum class RegionKind(val label: String, @StringRes val labelRes: Int) {
+    Text("Texto", R.string.region_kind_text),
+    Math("Matemática", R.string.region_kind_math),
+    Drawing("Dibujo", R.string.region_kind_drawing)
 }
 
 /** Rectángulo de una región, en píxeles de la imagen ya preprocesada por N0. */
@@ -60,6 +63,14 @@ data class RecognizedRegion(
     /** Nivel que resolvió la región ("N1", "N1_5", "N2", "UNRESOLVED"). */
     val resolvedAt: String? = null
 )
+
+@StringRes
+fun RecognizedRegion.routeRes(textConfidenceGate: Float = 0.75f): Int = when {
+    resolvedAt == "N2" || kind == RegionKind.Drawing -> R.string.region_route_n2
+    resolvedAt == "N1_5" || kind == RegionKind.Math -> R.string.region_route_n1_5
+    ocrConfidence < textConfidenceGate -> R.string.region_route_n2_below_gate
+    else -> R.string.region_route_n1_verified
+}
 
 /** De qué página ya procesada salió un análisis reutilizado, y qué tan parecidas eran. */
 data class PageReuse(

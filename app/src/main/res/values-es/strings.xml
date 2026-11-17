@@ -601,4 +601,48 @@
     <string name="ai_cost_breakdown_n2">Enrutadas a N2 · visión</string>
     <string name="ai_cost_breakdown_uncertain">Bajo la compuerta de N1</string>
     <string name="ai_cost_offline_footer">Sin conexión al servidor: los datos de llamadas pagadas, tokens y costos del servidor no están disponibles. Mostrando únicamente métricas locales.</string>
+
+    <!-- Regions & Capture pipeline localized labels -->
+    <string name="region_kind_text">Texto</string>
+    <string name="region_kind_math">Matemática</string>
+    <string name="region_kind_drawing">Dibujo</string>
+    <string name="region_route_n1_5">N1.5 · OCR matemático</string>
+    <string name="region_route_n2">N2 · reparación por visión</string>
+    <string name="region_route_n2_below_gate">N2 · reparación por visión (bajo compuerta)</string>
+    <string name="region_route_n1_verified">N1 · ML Kit verificado</string>
+    <string name="note_fragment_route_server">%1$s · reconstrucción del servidor</string>
+
+    <string name="capture_quality_focus_label">Enfoque y Nitidez</string>
+    <string name="capture_quality_focus_blurry">Imagen borrosa</string>
+    <string name="capture_quality_focus_optimal">Enfoque óptimo</string>
+    <string name="capture_quality_light_label">Iluminación</string>
+    <string name="capture_quality_light_dark">Muy oscuro. Falta iluminación.</string>
+    <string name="capture_quality_light_bright">Sobreexpuesto. Exceso de luz.</string>
+    <string name="capture_quality_light_optimal">Iluminación correcta</string>
+
+    <string name="capture_step_dedup_name">Deduplicación (pHash)</string>
+    <string name="capture_step_dedup_no_course">Sin curso asociado: no se compara contra páginas anteriores.</string>
+    <string name="capture_step_dedup_reused">Página ya procesada (%1$d/64 bits distintos) - se reutiliza el resultado - 0 llamadas</string>
+    <string name="capture_step_dedup_new">Página nueva - hash guardado para detectar repeticiones.</string>
+    <string name="capture_step_reused_skipped">Omitido: resultado reutilizado de la página ya procesada.</string>
+    <string name="capture_step_n0_name">N0 - Preprocesamiento</string>
+    <string name="capture_step_n0_desc">Perspectiva corregida - contraste normalizado - %1$d regiones segmentadas</string>
+    <string name="capture_step_n1_name">N1 - OCR de texto</string>
+    <string name="capture_step_n1_desc">%1$d de %2$d regiones leídas - ML Kit, en el dispositivo - %3$s s</string>
+    <string name="capture_step_classifier_name">Clasificador de región</string>
+    <string name="capture_step_classifier_desc">%1$d texto - %2$d fórmulas - %3$d dibujos</string>
+    <string name="capture_step_glossary_no_course">sin glosario del curso</string>
+    <string name="capture_step_glossary_not_cached">sin glosario en el dispositivo (se descarga al abrir la cámara con conexión)</string>
+    <string name="capture_step_glossary_cached">glosario v%1$d (%2$d términos, copia local)</string>
+    <string name="capture_step_n15_name">N1.5 - OCR matemático</string>
+    <string name="capture_step_n15_desc_active">%1$d regiones enrutadas a conversión LaTeX - capa gratuita</string>
+    <string name="capture_step_n15_desc_empty">No se detectaron fórmulas en esta página.</string>
+    <string name="capture_step_n2_name">N2 - Reparación por visión</string>
+    <string name="capture_step_n2_desc_active">%1$d regiones no superaron la compuerta de N1.</string>
+    <string name="capture_step_n2_desc_idle">Se activa solo si algo no supera las compuertas.</string>
+
+    <string name="capture_error_hash_failed">No se pudo calcular la huella de la página.</string>
+    <string name="capture_error_no_photo">No hay ninguna foto para analizar.</string>
+    <string name="capture_error_unreadable_photo">No se pudo leer la foto capturada.</string>
+    <string name="capture_error_local_pipeline_failed">El procesamiento local falló.</string>
 </resources>
