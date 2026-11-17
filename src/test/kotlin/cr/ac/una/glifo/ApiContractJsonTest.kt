@@ -2,6 +2,8 @@ package cr.ac.una.glifo
 
 import cr.ac.una.glifo.course.dto.CourseResponse
 import cr.ac.una.glifo.course.dto.JoinCourseRequest
+import cr.ac.una.glifo.course.dto.SyllabusDocumentResponse
+import cr.ac.una.glifo.course.dto.SyllabusTopicResponse
 import cr.ac.una.glifo.glossary.dto.CourseGlossaryResponse
 import cr.ac.una.glifo.glossary.dto.CreateGlossarySuggestionRequest
 import cr.ac.una.glifo.glossary.dto.GlossaryEntryResponse
@@ -215,5 +217,38 @@ class ApiContractJsonTest {
         assertEquals(7L, syncJson["device_id"].asLong())
         assertEquals("ACCEPTED", syncJson["notification_status"].asString())
         assertEquals(3, syncJson["uploaded_count"].asInt())
+    }
+
+    @Test
+    fun `SyllabusDocumentResponse serializa sus campos y temas en snake_case`() {
+        val doc = SyllabusDocumentResponse(
+            courseId = 5L,
+            fileName = "silabo.pdf",
+            sizeBytes = 2048L,
+            parsedAt = Instant.parse("2026-11-16T20:00:00Z"),
+            syllabusVersion = 2,
+            topics = listOf(
+                SyllabusTopicResponse(
+                    id = 10L,
+                    courseId = 5L,
+                    parentId = null,
+                    code = "U1",
+                    title = "Límites",
+                    orderIndex = 1
+                )
+            )
+        )
+        val json = mapper.readTree(mapper.writeValueAsString(doc))
+
+        assertEquals(5L, json["course_id"].asLong())
+        assertEquals("silabo.pdf", json["file_name"].asString())
+        assertEquals(2048L, json["size_bytes"].asLong())
+        assertEquals("2026-11-16T20:00:00Z", json["parsed_at"].asString())
+        assertEquals(2, json["syllabus_version"].asInt())
+        assertEquals(1, json["topics"].size())
+        assertEquals(1, json["topics"][0]["order_index"].asInt())
+        assertFalse(json.has("courseId"))
+        assertFalse(json.has("fileName"))
+        assertFalse(json.has("syllabusVersion"))
     }
 }
