@@ -155,7 +155,9 @@ class CourseService @Autowired constructor(
     fun getSyllabusDocument(courseId: Long): SyllabusDocumentResponse {
         val course = courseRepository.findById(courseId)
             .orElseThrow { ResourceNotFoundException("Curso no encontrado") }
-        val topics = syllabusTopicRepository.findByCourseIdOrderByOrderIndex(courseId).map { it.toResponse() }
+        val topics = syllabusTopicRepository.findByCourseIdOrderByOrderIndex(courseId)
+            .sortedHierarchically()
+            .map { it.toResponse() }
         return SyllabusDocumentResponse(
             courseId = course.id,
             fileName = course.syllabusSourceUri,
@@ -213,7 +215,9 @@ class CourseService @Autowired constructor(
         course.syllabusVersion += 1
         val savedCourse = courseRepository.save(course)
 
-        val savedTopics = syllabusTopicRepository.findByCourseIdOrderByOrderIndex(course.id).map { it.toResponse() }
+        val savedTopics = syllabusTopicRepository.findByCourseIdOrderByOrderIndex(course.id)
+            .sortedHierarchically()
+            .map { it.toResponse() }
         return savedCourse to savedTopics
     }
 
@@ -222,7 +226,9 @@ class CourseService @Autowired constructor(
         if (!courseRepository.existsById(courseId)) {
             throw ResourceNotFoundException("Curso no encontrado")
         }
-        return syllabusTopicRepository.findByCourseIdOrderByOrderIndex(courseId).map { it.toResponse() }
+        return syllabusTopicRepository.findByCourseIdOrderByOrderIndex(courseId)
+            .sortedHierarchically()
+            .map { it.toResponse() }
     }
 
     @Transactional

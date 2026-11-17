@@ -13,6 +13,7 @@ import cr.ac.una.glifo.ai.validation.LatexValidator
 import cr.ac.una.glifo.common.exception.ConflictException
 import cr.ac.una.glifo.common.exception.ResourceNotFoundException
 import cr.ac.una.glifo.course.repository.SyllabusTopicRepository
+import cr.ac.una.glifo.course.service.sortedHierarchically
 import cr.ac.una.glifo.glossary.repository.CourseGlossaryRepository
 import cr.ac.una.glifo.note.dto.NoteResponse
 import cr.ac.una.glifo.note.entity.NotePage
@@ -183,7 +184,7 @@ class ReconstructionService @Autowired constructor(
 
         val courseId = note.course.id
         val courseName = runCatching { note.course.name }.getOrDefault("")
-        val courseTopics = syllabusTopicRepository.findByCourseIdOrderByOrderIndex(courseId)
+        val courseTopics = syllabusTopicRepository.findByCourseIdOrderByOrderIndex(courseId).sortedHierarchically()
         val glossaryEntries = courseGlossaryRepository.findByCourseIdOrderByTerm(courseId)
 
         val (systemPrompt, userPrompt) = PromptBuilder()
