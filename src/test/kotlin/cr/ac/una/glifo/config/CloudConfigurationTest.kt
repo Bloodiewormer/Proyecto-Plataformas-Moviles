@@ -100,7 +100,7 @@ class CloudConfigurationTest {
         val sources = MutablePropertySources()
         sources.addLast(ResourcePropertySource("classpath:application.properties"))
         val development = PropertySourcesPropertyResolver(sources)
-        listOf("url.api.v1", "url.health", "url.auth", "url.courses", "url.enrollments", "url.notes", "url.devices", "url.sync", "url.ai-usage")
+        listOf("url.api.v1", "url.health", "url.auth", "url.courses", "url.enrollments", "url.notes", "url.devices", "url.sync", "url.ai-usage", "url.users")
             .forEach { property ->
                 assertEquals(development.getRequiredProperty(property), cloud.getRequiredProperty(property), property)
             }
