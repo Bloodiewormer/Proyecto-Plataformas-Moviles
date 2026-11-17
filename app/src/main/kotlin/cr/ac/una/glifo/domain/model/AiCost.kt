@@ -1,10 +1,13 @@
 package cr.ac.una.glifo.domain.model
 
+import cr.ac.una.glifo.core.common.UiText
+
 data class AiCostBreakdownRow(
     val state: ConfidenceState,
     val label: String,
     val percent: Float,
-    val count: String
+    val count: String,
+    val labelText: UiText = UiText.Plain(label)
 )
 
 data class AiCostPaidCall(
@@ -15,7 +18,8 @@ data class AiCostPaidCall(
     val outputTokens: Long = 0L,
     val totalTokens: Long = 0L,
     val estimatedCostLabel: String = AiCostStats.COST_NOT_CONFIGURED_ES,
-    val isCostConfigured: Boolean = false
+    val isCostConfigured: Boolean = false,
+    val labelText: UiText = UiText.Plain(label)
 )
 
 data class AiCostAvoidedCall(
@@ -43,7 +47,9 @@ data class AiCostStats(
     val outputTokens: Long = 0L,
     val totalTokens: Long = 0L,
     val estimatedCostLabel: String = COST_NOT_CONFIGURED_ES,
-    val isCostConfigured: Boolean = false
+    val isCostConfigured: Boolean = false,
+    val periodText: UiText = UiText.Plain(periodLabel),
+    val footerText: UiText = UiText.Plain(footerNote)
 ) {
     val quotaPercent: Int?
         get() = if (quotaUsed != null && quotaTotal != null && quotaTotal > 0) (quotaUsed * 100 / quotaTotal) else null

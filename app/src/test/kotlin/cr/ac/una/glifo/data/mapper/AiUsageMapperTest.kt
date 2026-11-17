@@ -91,10 +91,32 @@ class AiUsageMapperTest {
         assertEquals("3", ia01.count)
         assertEquals(2140L, ia01.totalTokens)
         assertEquals("$0.0004515 USD", ia01.estimatedCostLabel)
+        assertEquals(cr.ac.una.glifo.core.common.UiText.Resource(cr.ac.una.glifo.R.string.ai_usage_call_ia_01), ia01.labelText)
+        assertEquals(
+            cr.ac.una.glifo.core.common.UiText.Resource(cr.ac.una.glifo.R.string.ai_usage_call_ia_02),
+            stats.paidCalls.first { it.callType == "IA_02" }.labelText
+        )
+        assertEquals(
+            cr.ac.una.glifo.core.common.UiText.Resource(cr.ac.una.glifo.R.string.ai_usage_call_ia_04),
+            stats.paidCalls.first { it.callType == "IA_04" }.labelText
+        )
 
         val ocrM = stats.paidCalls.first { it.callType == "OCR_M" }
         assertEquals("1", ocrM.count)
         assertEquals(620L, ocrM.totalTokens)
+        assertEquals(cr.ac.una.glifo.core.common.UiText.Resource(cr.ac.una.glifo.R.string.ai_usage_call_ocr_m), ocrM.labelText)
+        assertEquals(
+            cr.ac.una.glifo.core.common.UiText.Resource(cr.ac.una.glifo.R.string.ai_usage_call_ia_00),
+            stats.paidCalls.first { it.callType == "IA_00" }.labelText
+        )
+        assertEquals(
+            cr.ac.una.glifo.core.common.UiText.Resource(cr.ac.una.glifo.R.string.ai_cost_period_this_phone, 2, 8),
+            stats.periodText
+        )
+        assertEquals(
+            cr.ac.una.glifo.core.common.UiText.Resource(cr.ac.una.glifo.R.string.ai_cost_footer_summary, 2, 8, 4L, 3L, 2760L),
+            stats.footerText
+        )
 
         assertEquals(2, stats.avoidedCalls.size)
     }

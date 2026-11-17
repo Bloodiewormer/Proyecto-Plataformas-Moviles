@@ -587,4 +587,18 @@
     <string name="coverage_topic_updated_at">Actualizado: %1$s</string>
     <string name="coverage_delta_since">Desde %1$s</string>
     <string name="coverage_error_no_active_course">Selecciona un curso activo primero</string>
+
+    <!-- AI usage & cost localized labels -->
+    <string name="ai_usage_call_ia_01">IA-01 · Reconstrucción de apunte</string>
+    <string name="ai_usage_call_ia_02">IA-02 · Material de estudio</string>
+    <string name="ai_usage_call_ia_04">IA-04 · Cobertura del temario</string>
+    <string name="ai_usage_call_ocr_m">OCR_M (N1.5) · OCR matemático</string>
+    <string name="ai_usage_call_ia_00">IA_00 (N2) · Reparación por visión</string>
+    <string name="ai_cost_period_this_phone">Este teléfono · %1$d página(s) · %2$d regiones</string>
+    <string name="ai_cost_footer_summary">Este teléfono procesó %1$d página(s) (%2$d regiones). Servidor: %3$d llamada(s) pagada(s), %4$d evitada(s), %5$d tokens.</string>
+    <string name="ai_cost_breakdown_n1">N1 · ML Kit, en el teléfono</string>
+    <string name="ai_cost_breakdown_n15">Enrutadas a N1.5 · OCR matemático</string>
+    <string name="ai_cost_breakdown_n2">Enrutadas a N2 · visión</string>
+    <string name="ai_cost_breakdown_uncertain">Bajo la compuerta de N1</string>
+    <string name="ai_cost_offline_footer">Sin conexión al servidor: los datos de llamadas pagadas, tokens y costos del servidor no están disponibles. Mostrando únicamente métricas locales.</string>
 </resources>

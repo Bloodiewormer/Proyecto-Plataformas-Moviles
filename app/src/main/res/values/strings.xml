@@ -587,4 +587,18 @@
     <string name="coverage_topic_updated_at">Updated: %1$s</string>
     <string name="coverage_delta_since">Since %1$s</string>
     <string name="coverage_error_no_active_course">Select an active course first.</string>
+
+    <!-- AI usage & cost localized labels -->
+    <string name="ai_usage_call_ia_01">IA-01 · Note reconstruction</string>
+    <string name="ai_usage_call_ia_02">IA-02 · Study material</string>
+    <string name="ai_usage_call_ia_04">IA-04 · Syllabus coverage</string>
+    <string name="ai_usage_call_ocr_m">OCR_M (N1.5) · Math OCR</string>
+    <string name="ai_usage_call_ia_00">IA_00 (N2) · Vision repair</string>
+    <string name="ai_cost_period_this_phone">This phone · %1$d page(s) · %2$d regions</string>
+    <string name="ai_cost_footer_summary">This phone processed %1$d page(s) (%2$d regions). Server: %3$d paid call(s), %4$d avoided, %5$d tokens.</string>
+    <string name="ai_cost_breakdown_n1">N1 · ML Kit, on device</string>
+    <string name="ai_cost_breakdown_n15">Routed to N1.5 · Math OCR</string>
+    <string name="ai_cost_breakdown_n2">Routed to N2 · vision</string>
+    <string name="ai_cost_breakdown_uncertain">Below N1 gate</string>
+    <string name="ai_cost_offline_footer">No server connection: paid call, token and server cost data are unavailable. Showing local metrics only.</string>
 </resources>

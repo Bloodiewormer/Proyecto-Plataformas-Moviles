@@ -1,5 +1,8 @@
 package cr.ac.una.glifo.data.mapper
 
+import androidx.annotation.StringRes
+import cr.ac.una.glifo.R
+import cr.ac.una.glifo.core.common.UiText
 import cr.ac.una.glifo.data.dto.AiUsageByCallTypeDto
 import cr.ac.una.glifo.data.dto.AiUsageResponseDto
 import cr.ac.una.glifo.domain.model.AiCostAvoidedCall
@@ -14,12 +17,18 @@ import java.math.BigDecimal
  */
 object AiUsageMapper {
 
+    private data class CallTypeSpec(
+        val code: String,
+        val fallbackLabel: String,
+        @param:StringRes val labelRes: Int
+    )
+
     private val ORDERED_CALL_TYPES = listOf(
-        "IA_01" to "IA-01 · Reconstrucción de apunte",
-        "IA_02" to "IA-02 · Material de estudio",
-        "IA_04" to "IA-04 · Cobertura del temario",
-        "OCR_M" to "OCR_M (N1.5) · OCR matemático",
-        "IA_00" to "IA_00 (N2) · Reparación por visión"
+        CallTypeSpec("IA_01", "IA-01 · Reconstrucción de apunte", R.string.ai_usage_call_ia_01),
+        CallTypeSpec("IA_02", "IA-02 · Material de estudio", R.string.ai_usage_call_ia_02),
+        CallTypeSpec("IA_04", "IA-04 · Cobertura del temario", R.string.ai_usage_call_ia_04),
+        CallTypeSpec("OCR_M", "OCR_M (N1.5) · OCR matemático", R.string.ai_usage_call_ocr_m),
+        CallTypeSpec("IA_00", "IA_00 (N2) · Reparación por visión", R.string.ai_usage_call_ia_00)
     )
 
     fun formatCostLabel(estimatedCostUsd: BigDecimal?, unknownCostCalls: Long): Pair<String, Boolean> {
@@ -35,39 +44,48 @@ object AiUsageMapper {
     }
 
     fun labelForCallType(callType: String): String {
-        return ORDERED_CALL_TYPES.firstOrNull { it.first == callType }?.second ?: callType
+        return ORDERED_CALL_TYPES.firstOrNull { it.code == callType }?.fallbackLabel ?: callType
     }
+
+    @StringRes
+    fun callTypeLabelRes(callType: String): Int? =
+        ORDERED_CALL_TYPES.firstOrNull { it.code == callType }?.labelRes
+
+    fun callTypeText(callType: String): UiText =
+        callTypeLabelRes(callType)?.let { UiText.Resource(it) } ?: UiText.Plain(callType)
 
     fun toPaidCalls(byCallType: List<AiUsageByCallTypeDto>): List<AiCostPaidCall> {
         val byKey = byCallType.associateBy { it.callType }
-        val standardRows = ORDERED_CALL_TYPES.map { (code, label) ->
-            val dto = byKey[code]
+        val standardRows = ORDERED_CALL_TYPES.map { spec ->
+            val dto = byKey[spec.code]
             if (dto != null) {
                 val (costLabel, configured) = formatCostLabel(dto.resolvedEstimatedCostUsd, dto.resolvedUnknownCostCalls)
                 AiCostPaidCall(
-                    label = label,
+                    label = spec.fallbackLabel,
                     count = dto.resolvedTotalCalls.toString(),
-                    callType = code,
+                    callType = spec.code,
                     inputTokens = dto.resolvedInputTokens,
                     outputTokens = dto.resolvedOutputTokens,
                     totalTokens = dto.resolvedTotalTokens,
                     estimatedCostLabel = costLabel,
-                    isCostConfigured = configured
+                    isCostConfigured = configured,
+                    labelText = UiText.Resource(spec.labelRes)
                 )
             } else {
                 AiCostPaidCall(
-                    label = label,
+                    label = spec.fallbackLabel,
                     count = "0",
-                    callType = code,
+                    callType = spec.code,
                     inputTokens = 0L,
                     outputTokens = 0L,
                     totalTokens = 0L,
                     estimatedCostLabel = "$0.00 USD",
-                    isCostConfigured = true
+                    isCostConfigured = true,
+                    labelText = UiText.Resource(spec.labelRes)
                 )
             }
         }
-        val knownCodes = ORDERED_CALL_TYPES.map { it.first }.toSet()
+        val knownCodes = ORDERED_CALL_TYPES.map { it.code }.toSet()
         val extraRows = byCallType
             .filter { it.callType !in knownCodes }
             .map { dto ->
@@ -80,7 +98,8 @@ object AiUsageMapper {
                     outputTokens = dto.resolvedOutputTokens,
                     totalTokens = dto.resolvedTotalTokens,
                     estimatedCostLabel = costLabel,
-                    isCostConfigured = configured
+                    isCostConfigured = configured,
+                    labelText = callTypeText(dto.callType)
                 )
             }
         return standardRows + extraRows
@@ -148,7 +167,16 @@ object AiUsageMapper {
             outputTokens = totals.resolvedOutputTokens,
             totalTokens = totals.resolvedTotalTokens,
             estimatedCostLabel = costLabel,
-            isCostConfigured = costConfigured
+            isCostConfigured = costConfigured,
+            periodText = UiText.Resource(R.string.ai_cost_period_this_phone, localPagesCount, localRegionsCount),
+            footerText = UiText.Resource(
+                R.string.ai_cost_footer_summary,
+                localPagesCount,
+                localRegionsCount,
+                totals.totalCalls,
+                totals.avoidedCalls,
+                totals.resolvedTotalTokens
+            )
         )
     }
 }
