@@ -5,6 +5,7 @@ import cr.ac.una.glifo.domain.error.Result
 import cr.ac.una.glifo.domain.model.TeacherGroupCoverage
 import cr.ac.una.glifo.domain.model.GlossaryEntry
 import cr.ac.una.glifo.domain.model.GlossarySuggestion
+import cr.ac.una.glifo.domain.model.SyllabusDocument
 import cr.ac.una.glifo.domain.model.SyllabusUnitRow
 import cr.ac.una.glifo.domain.model.TeacherGapTopic
 
@@ -14,11 +15,13 @@ interface TeacherRepository {
     suspend fun getGlossarySuggestions(): Result<List<GlossarySuggestion>>
     /** [approve] true la agrega al glosario; false la descarta. */
     suspend fun resolveGlossarySuggestion(suggestionId: Long, approve: Boolean): Result<Unit>
-    suspend fun getSyllabusFileName(): Result<String>
+    suspend fun getSyllabus(): Result<SyllabusDocument> = Result.Failure(AppError.Unknown)
+    suspend fun uploadSyllabusPdf(fileName: String, pdfBytes: ByteArray): Result<SyllabusDocument> =
+        Result.Failure(AppError.Unknown)
     suspend fun isSyllabusPublished(): Result<Boolean> = Result.Success(false)
     suspend fun getSyllabusUnits(): Result<List<SyllabusUnitRow>>
     suspend fun addSyllabusTopic(label: String): Result<Unit>
-    suspend fun publishSyllabus(topics: List<String>): Result<Unit> = Result.Success(Unit)
+    suspend fun publishSyllabus(topics: List<String>, sourceUri: String? = null): Result<Unit> = Result.Success(Unit)
     suspend fun getGaps(): Result<List<TeacherGapTopic>>
 
     /** Cobertura y brechas del grupo del curso activo. Por defecto falla (repositorios falsos de pruebas). */

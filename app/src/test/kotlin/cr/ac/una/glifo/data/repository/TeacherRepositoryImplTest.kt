@@ -10,17 +10,23 @@ import cr.ac.una.glifo.data.dto.CourseGlossaryResponse
 import cr.ac.una.glifo.data.dto.CreateGlossaryEntryRequest
 import cr.ac.una.glifo.data.dto.GlossaryEntryResponse
 import cr.ac.una.glifo.data.dto.GlossarySuggestionResponse
+import cr.ac.una.glifo.data.dto.PublishSyllabusRequest
 import cr.ac.una.glifo.data.dto.ResolveGlossarySuggestionRequest
+import cr.ac.una.glifo.data.dto.SyllabusDocumentResponse
+import cr.ac.una.glifo.data.dto.SyllabusTopicResponse
 import cr.ac.una.glifo.domain.error.Result
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import retrofit2.HttpException
@@ -143,5 +149,97 @@ class TeacherRepositoryImplTest {
 
         coVerify { api.resolveGlossarySuggestion(10L, 5L, ResolveGlossarySuggestionRequest("APPROVED")) }
         coVerify { api.resolveGlossarySuggestion(10L, 5L, ResolveGlossarySuggestionRequest("REJECTED")) }
+    }
+
+    @Test
+    fun `getSyllabus lee GET courses id syllabus y mapea documento y temas`() = runTest {
+        coEvery { api.getCourseSyllabus(10L) } returns ApiResponse(
+            SyllabusDocumentResponse(
+                courseId = 10L,
+                fileName = "calculo.pdf",
+                sizeBytes = null,
+                parsedAt = "2026-11-16T18:00:00Z",
+                syllabusVersion = 1,
+                topics = listOf(
+                    SyllabusTopicResponse(1L, 10L, null, "U1", "Límites", 1),
+                    SyllabusTopicResponse(2L, 10L, 1L, "1.1", "Definición", 2)
+                )
+            )
+        )
+
+        val doc = (repository.getSyllabus() as Result.Success).value
+
+        assertEquals("calculo.pdf", doc.fileName)
+        assertNull(doc.formattedSize)
+        assertEquals(1, doc.units.size)
+        assertEquals("U1 · Límites", doc.units.single().label)
+    }
+
+    @Test
+    fun `uploadSyllabusPdf envia parte multipart llamada file con media type application pdf`() = runTest {
+        val partSlot = slot<MultipartBody.Part>()
+        coEvery { api.uploadSyllabusPdf(10L, capture(partSlot)) } returns ApiResponse(
+            SyllabusDocumentResponse(
+                courseId = 10L,
+                fileName = "programa.pdf",
+                sizeBytes = 512L,
+                parsedAt = "2026-11-16T18:00:00Z",
+                syllabusVersion = 1,
+                topics = emptyList()
+            )
+        )
+
+        val result = repository.uploadSyllabusPdf("programa.pdf", ByteArray(512) { 7 })
+
+        assertTrue(result is Result.Success)
+        val headers = partSlot.captured.headers?.toString().orEmpty()
+        assertTrue(headers.contains("name=\"file\""))
+        assertTrue(headers.contains("filename=\"programa.pdf\""))
+        assertEquals("application/pdf", partSlot.captured.body.contentType()?.toString())
+    }
+
+    @Test
+    fun `uploadSyllabusPdf mapea errores 400 y 413 con el mensaje del servidor`() = runTest {
+        coEvery { api.uploadSyllabusPdf(10L, any()) } throws
+            httpException(400, """{"message":"El PDF no tiene texto extraíble"}""")
+
+        val badPdf = repository.uploadSyllabusPdf("scan.pdf", ByteArray(16) { 1 })
+        assertEquals(
+            Result.Failure(AppError.Validation("request", "El PDF no tiene texto extraíble")),
+            badPdf
+        )
+
+        coEvery { api.uploadSyllabusPdf(10L, any()) } throws
+            httpException(413, """{"message":"El archivo supera el límite de 10 MB"}""")
+
+        val tooLarge = repository.uploadSyllabusPdf("big.pdf", ByteArray(16) { 1 })
+        assertEquals(
+            Result.Failure(AppError.Server("413", "El archivo supera el límite de 10 MB")),
+            tooLarge
+        )
+    }
+
+    @Test
+    fun `uploadSyllabusPdf mapea error 409 con el mensaje del servidor`() = runTest {
+        coEvery { api.uploadSyllabusPdf(10L, any()) } throws
+            httpException(409, """{"message":"El temario de este curso ya fue publicado"}""")
+
+        val result = repository.uploadSyllabusPdf("programa.pdf", ByteArray(16) { 1 })
+
+        assertEquals(
+            Result.Failure(AppError.Server("409", "El temario de este curso ya fue publicado")),
+            result
+        )
+    }
+
+    @Test
+    fun `publishSyllabus no inventa sourceUri cuando se publica manualmente`() = runTest {
+        val requestSlot = slot<PublishSyllabusRequest>()
+        coEvery { api.publishSyllabus(10L, capture(requestSlot)) } returns ApiResponse(emptyList())
+
+        val result = repository.publishSyllabus(listOf("1.1 Límites"))
+
+        assertEquals(Result.Success(Unit), result)
+        assertNull(requestSlot.captured.sourceUri)
     }
 }
