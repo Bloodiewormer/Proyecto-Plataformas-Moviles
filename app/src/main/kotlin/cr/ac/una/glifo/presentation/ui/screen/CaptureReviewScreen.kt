@@ -45,6 +45,7 @@ fun CaptureReviewScreen(
     val colors = GlifoTheme.colors
     val context = LocalContext.current
     val uiState by viewModel.state.collectAsState()
+    val rejectLowQuality by viewModel.rejectLowQuality.collectAsState()
 
     androidx.compose.runtime.LaunchedEffect(photoPath) {
         viewModel.load(photoPath)
@@ -194,15 +195,26 @@ fun CaptureReviewScreen(
 
                     Spacer(modifier = Modifier.height(6.dp))
 
-                    GlifoButton(
-                        text = if (hasWarning) {
-                            stringResource(R.string.capture_review_process_anyway)
-                        } else {
-                            stringResource(R.string.capture_review_process)
-                        },
-                        variant = GlifoButtonVariant.Text,
-                        onClick = onProcessAnyway
-                    )
+                    if (hasWarning && rejectLowQuality) {
+                        // Ajustes → "Rechazar fotos de baja calidad" activado: no se procesa una foto mala.
+                        Text(
+                            text = stringResource(R.string.capture_review_rejected_by_setting),
+                            fontSize = 13.sp,
+                            color = colors.textSecondary,
+                            lineHeight = 18.sp,
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 6.dp)
+                        )
+                    } else {
+                        GlifoButton(
+                            text = if (hasWarning) {
+                                stringResource(R.string.capture_review_process_anyway)
+                            } else {
+                                stringResource(R.string.capture_review_process)
+                            },
+                            variant = GlifoButtonVariant.Text,
+                            onClick = onProcessAnyway
+                        )
+                    }
                 }
             }
         }

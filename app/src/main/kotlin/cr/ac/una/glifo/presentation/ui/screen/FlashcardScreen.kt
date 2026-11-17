@@ -60,11 +60,31 @@ private fun FlashcardContent(
     density: androidx.compose.ui.unit.Density
 ) {
     var flipped by remember { mutableStateOf(false) }
-    var cardIdx by remember { mutableIntStateOf(0) }
+    // Cola de la sesión: "Otra vez" manda la tarjeta al final; al vaciarse, la sesión termina.
+    // Antes el índice daba la vuelta (cardIdx % size) y la última tarjeta se repetía sin fin.
+    var queue by remember(cards) { mutableStateOf(cards.indices.toList()) }
+    var reviewed by remember(cards) { mutableIntStateOf(0) }
+    var againCount by remember(cards) { mutableIntStateOf(0) }
 
-    val currentCard = cards[cardIdx % cards.size]
+    if (queue.isEmpty()) {
+        FlashcardSessionDone(
+            reviewed = reviewed,
+            againCount = againCount,
+            colors = colors,
+            onRestart = {
+                queue = cards.indices.toList()
+                reviewed = 0
+                againCount = 0
+                flipped = false
+            },
+            onNavigateBack = onNavigateBack
+        )
+        return
+    }
+
+    val currentCard = cards[queue.first()]
     val total = cards.size
-    val current = (cardIdx % cards.size) + 1
+    val current = (total - queue.distinct().size + 1).coerceIn(1, total)
 
     val rotation by animateFloatAsState(
         targetValue = if (flipped) 180f else 0f,
@@ -72,9 +92,12 @@ private fun FlashcardContent(
         label = "flashcard-rotation"
     )
 
-    fun advance() {
+    fun advance(again: Boolean) {
         flipped = false
-        cardIdx++
+        reviewed++
+        val head = queue.first()
+        queue = queue.drop(1) + if (again) listOf(head) else emptyList()
+        if (again) againCount++
     }
 
     Column(
@@ -169,7 +192,8 @@ private fun FlashcardContent(
                         fontSize = if (showingBack) 16.sp else 19.sp,
                         lineHeight = 26.sp,
                         textAlign = TextAlign.Center,
-                        color = if (showingBack) colors.textSecondary else colors.textPrimary
+                        // La respuesta iba en gris sobre fondo oscuro y se leía poco.
+                        color = colors.textPrimary
                     )
 
                     if (showingBack) {
@@ -199,13 +223,13 @@ private fun FlashcardContent(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     listOf(
-                        Pair(stringResource(R.string.flashcard_rating_again), colors.alert),
-                        Pair(stringResource(R.string.flashcard_rating_hard), colors.escalated),
-                        Pair(stringResource(R.string.flashcard_rating_good), colors.repaired),
-                        Pair(stringResource(R.string.flashcard_rating_easy), colors.verified)
-                    ).forEach { (label, col) ->
+                        Triple(stringResource(R.string.flashcard_rating_again), colors.alert, true),
+                        Triple(stringResource(R.string.flashcard_rating_hard), colors.escalated, false),
+                        Triple(stringResource(R.string.flashcard_rating_good), colors.repaired, false),
+                        Triple(stringResource(R.string.flashcard_rating_easy), colors.verified, false)
+                    ).forEach { (label, col, again) ->
                         Surface(
-                            onClick = { advance() },
+                            onClick = { advance(again) },
                             modifier = Modifier
                                 .weight(1f)
                                 .height(44.dp),
@@ -222,6 +246,60 @@ private fun FlashcardContent(
             } else {
                 Spacer(modifier = Modifier.height(16.dp))
             }
+        }
+    }
+}
+
+/** Cierre de la sesión: cuántas se repasaron y la opción de repetir o volver. */
+@Composable
+private fun FlashcardSessionDone(
+    reviewed: Int,
+    againCount: Int,
+    colors: cr.ac.una.glifo.core.ui.theme.GlifoColorScheme,
+    onRestart: () -> Unit,
+    onNavigateBack: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(colors.background)
+    ) {
+        GlifoTopAppBar(
+            title = stringResource(R.string.flashcard_done_title),
+            isBack = true,
+            onNavigationClick = onNavigateBack
+        )
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .navigationBarsPadding()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = stringResource(R.string.flashcard_done_headline),
+                fontSize = 20.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = colors.textPrimary,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = stringResource(R.string.flashcard_done_summary, reviewed, againCount),
+                fontSize = 14.sp,
+                color = colors.textSecondary,
+                textAlign = TextAlign.Center,
+                lineHeight = 20.sp
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            GlifoButton(text = stringResource(R.string.flashcard_done_restart), onClick = onRestart)
+            Spacer(modifier = Modifier.height(8.dp))
+            GlifoButton(
+                text = stringResource(R.string.flashcard_done_back),
+                variant = GlifoButtonVariant.Secondary,
+                onClick = onNavigateBack
+            )
         }
     }
 }

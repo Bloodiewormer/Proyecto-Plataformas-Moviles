@@ -11,6 +11,9 @@ import cr.ac.una.glifo.domain.model.CoverageSummary
 import cr.ac.una.glifo.domain.model.CoverageTopic
 import cr.ac.una.glifo.domain.model.TopicDetail
 import cr.ac.una.glifo.domain.model.TopicNoteRef
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -22,6 +25,16 @@ import kotlin.math.roundToInt
  * - `UNCERTAIN -> ConfidenceState.Uncertain`
  */
 object CoverageMapper {
+
+    private val displayDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+
+    /**
+     * El backend manda fechas UTC (2026-11-10T00:59:00Z). Cortarlas con take(10) mostraba el día
+     * en UTC: de noche en Costa Rica salía la fecha de mañana. Se pasa a la zona del teléfono.
+     */
+    private fun String.toLocalDisplayDate(): String = runCatching {
+        Instant.parse(this).atZone(ZoneId.systemDefault()).toLocalDate().format(displayDateFormatter)
+    }.getOrElse { take(10) }
 
     fun mapState(state: String?): ConfidenceState = when (state?.uppercase(Locale.ROOT)) {
         "SOLID" -> ConfidenceState.Verified
@@ -64,7 +77,7 @@ object CoverageMapper {
             "TEMARIO DEL CURSO"
         }
 
-        val latestUpdate = dto.topics.mapNotNull { it.updatedAt }.maxOrNull()?.take(10)
+        val latestUpdate = dto.topics.mapNotNull { it.updatedAt }.maxOrNull()?.toLocalDisplayDate()
         val deltaLabel = if (latestUpdate != null) {
             "Última actualización: $latestUpdate · Ver cambios"
         } else {
@@ -95,7 +108,7 @@ object CoverageMapper {
     fun TopicCoverageResponseDto.toDomainTopic(): CoverageTopic {
         val mappedState = mapState(state)
         val fullName = "${code.trim()} ${title.trim()}".trim()
-        val noteText = updatedAt?.takeIf { it.isNotBlank() }?.let { "Actualizado: ${it.take(10)}" }
+        val noteText = updatedAt?.takeIf { it.isNotBlank() }?.let { "Actualizado: ${it.toLocalDisplayDate()}" }
         return CoverageTopic(
             state = mappedState,
             name = fullName,

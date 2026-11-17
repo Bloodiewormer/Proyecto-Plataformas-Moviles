@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -256,7 +257,7 @@ fun HomeScreen(
                                                 modifier = Modifier.size(18.dp)
                                             )
                                             Text(
-                                                text = stringResource(R.string.home_flashcard_count, flashcardCount),
+                                                text = pluralStringResource(R.plurals.study_flashcards_plural, flashcardCount, flashcardCount),
                                                 fontSize = 14.sp,
                                                 fontWeight = FontWeight.Medium,
                                                 color = colors.textPrimary
@@ -339,7 +340,7 @@ fun HomeScreen(
                                                     fontWeight = FontWeight.Normal
                                                 )
                                                 Text(
-                                                    text = stringResource(R.string.notes_date_page_count, meta.displayDate, meta.pageCount),
+                                                    text = pluralStringResource(R.plurals.notes_date_page_count_plural, meta.pageCount, meta.displayDate, meta.pageCount),
                                                     fontSize = 12.sp,
                                                     color = colors.textSecondary
                                                 )

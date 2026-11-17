@@ -24,7 +24,8 @@ class LoginViewModel @Inject constructor(
     val demoAccountHints: StateFlow<List<DemoAccountHint>> = _demoAccountHints.asStateFlow()
 
     init {
-        viewModelScope.launch {
+        // En el APK de release las cuentas demo no se muestran (salvo que se pida en local.properties).
+        if (cr.ac.una.glifo.BuildConfig.SHOW_DEMO_ACCOUNTS) viewModelScope.launch {
             val result = authRepository.getDemoAccountHints()
             if (result is Result.Success) _demoAccountHints.value = result.value
         }

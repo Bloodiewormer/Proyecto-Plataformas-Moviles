@@ -4,8 +4,10 @@ import cr.ac.una.glifo.core.common.AppError
 import cr.ac.una.glifo.core.datastore.TokenManager
 import cr.ac.una.glifo.core.push.DevicePushManager
 import cr.ac.una.glifo.data.datasource.dummy.DummyAuthProvider
+import cr.ac.una.glifo.data.datasource.remote.ApiErrorHandler
 import cr.ac.una.glifo.data.datasource.remote.GlifoApi
 import cr.ac.una.glifo.data.dto.AuthResponse
+import cr.ac.una.glifo.data.dto.ChangePasswordRequest
 import cr.ac.una.glifo.data.dto.LoginRequest
 import cr.ac.una.glifo.data.dto.RegisterRequest
 import cr.ac.una.glifo.data.dto.UserDto
@@ -59,6 +61,16 @@ class AuthRepositoryImpl @Inject constructor(
         )
         return callApi { api.register(request) }
     }
+
+    override suspend fun changePassword(currentPassword: String, newPassword: String): Result<Unit> =
+        ApiErrorHandler.safeApiCall(
+            apiCall = {
+                val response = api.changePassword(ChangePasswordRequest(currentPassword, newPassword))
+                // Response<Unit> no lanza en 4xx: se convierte a HttpException para mapear el error igual que el resto.
+                if (!response.isSuccessful) throw HttpException(response)
+            },
+            transform = {}
+        )
 
     override suspend fun getDemoAccountHints(): Result<List<DemoAccountHint>> =
         Result.Success(DummyAuthProvider.demoAccounts.map { DemoAccountHint(it.email, it.password, it.role) })

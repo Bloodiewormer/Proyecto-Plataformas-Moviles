@@ -3,9 +3,11 @@ package cr.ac.una.glifo.data.datasource.remote
 import cr.ac.una.glifo.data.dto.AiUsageResponseDto
 import cr.ac.una.glifo.data.dto.ApiResponse
 import cr.ac.una.glifo.data.dto.AuthResponse
+import cr.ac.una.glifo.data.dto.ChangePasswordRequest
 import cr.ac.una.glifo.data.dto.CourseDetailResponse
 import cr.ac.una.glifo.data.dto.CourseGlossaryResponse
 import cr.ac.una.glifo.data.dto.CourseResponse
+import cr.ac.una.glifo.data.dto.CourseGapsResponseDto
 import cr.ac.una.glifo.data.dto.CoverageDeltaResponseDto
 import cr.ac.una.glifo.data.dto.CoverageResponseDto
 import cr.ac.una.glifo.data.dto.CreateCourseRequest
@@ -54,6 +56,10 @@ interface GlifoApi {
 
     @POST("auth/login")
     suspend fun login(@Body request: LoginRequest): AuthResponse
+
+    /** Pide token. 204 si cambió; 400 con mensaje si la actual no coincide o la nueva no sirve. */
+    @POST("auth/change-password")
+    suspend fun changePassword(@Body request: ChangePasswordRequest): Response<Unit>
 
     // Courses
     @GET("courses")
@@ -163,6 +169,12 @@ interface GlifoApi {
     suspend fun getCoverage(
         @Path("courseId") courseId: Long
     ): ApiResponse<CoverageResponseDto>
+
+    /** Brechas del grupo (docente dueño, COVERAGE_READ_COURSE). */
+    @GET("courses/{courseId}/coverage/gaps")
+    suspend fun getCourseGaps(
+        @Path("courseId") courseId: Long
+    ): ApiResponse<CourseGapsResponseDto>
 
     @GET("courses/{courseId}/coverage/delta")
     suspend fun getCoverageDelta(

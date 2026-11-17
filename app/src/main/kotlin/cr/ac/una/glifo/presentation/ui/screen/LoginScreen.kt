@@ -56,6 +56,16 @@ fun LoginScreen(
 
     LaunchedEffect(Unit) { visible = true }
 
+    // Si el login tarda, casi siempre es el servidor de Render despertando: se avisa para que no cierren la app.
+    var slowServer by remember { mutableStateOf(false) }
+    LaunchedEffect(isLoading) {
+        slowServer = false
+        if (isLoading) {
+            kotlinx.coroutines.delay(6_000)
+            slowServer = true
+        }
+    }
+
     fun attemptLogin() {
         when {
             email.isBlank() || password.isBlank() -> error = emptyFieldsError
@@ -133,7 +143,8 @@ fun LoginScreen(
                     value = password,
                     onValueChange = { password = it; error = null },
                     label = stringResource(R.string.login_password_label),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    isPassword = true
                 )
 
                 AnimatedVisibility(visible = error != null) {
@@ -149,8 +160,18 @@ fun LoginScreen(
 
                 Crossfade(targetState = isLoading, label = "login-action") { loading ->
                     if (loading) {
-                        Box(modifier = Modifier.fillMaxWidth().height(44.dp), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(color = GlifoTheme.colors.accent)
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                            Box(modifier = Modifier.fillMaxWidth().height(44.dp), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator(color = GlifoTheme.colors.accent)
+                            }
+                            if (slowServer) {
+                                Text(
+                                    text = stringResource(R.string.login_server_waking),
+                                    color = GlifoTheme.colors.textSecondary,
+                                    fontSize = 13.sp,
+                                    modifier = Modifier.padding(top = 8.dp)
+                                )
+                            }
                         }
                     } else {
                         Column {

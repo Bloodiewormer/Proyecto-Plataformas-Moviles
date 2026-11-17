@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 // Firma de release: se lee de gradle.properties del usuario o de variables de entorno, nunca del repo.
 val releaseSigning = listOf(
@@ -17,6 +18,22 @@ plugins {
     alias(libs.plugins.firebase.crashlytics)
 }
 
+// URL del backend para el APK de release: Render por defecto. Se puede cambiar con local.properties
+// (glifo.release.base.url=...), -PGLIFO_RELEASE_BASE_URL=... o la variable de entorno GLIFO_RELEASE_BASE_URL.
+val localProps = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+val debugBaseUrl = "http://10.0.2.2:8080/api/v1/"
+val renderBaseUrl = "https://glifo-api.onrender.com/api/v1/"
+val releaseBaseUrl: String = (
+    localProps.getProperty("glifo.release.base.url")
+        ?: providers.gradleProperty("GLIFO_RELEASE_BASE_URL").orNull
+        ?: System.getenv("GLIFO_RELEASE_BASE_URL")
+    )?.trim()?.takeIf { it.isNotEmpty() }?.let { it.removeSuffix("/") + "/" } ?: renderBaseUrl
+// Las cuentas demo del login se ven en debug; en release solo si se pide (glifo.release.show.demo=true).
+val releaseShowDemo: Boolean = localProps.getProperty("glifo.release.show.demo")?.trim()?.toBoolean() ?: false
+
 android {
     namespace = "cr.ac.una.glifo"
     compileSdk = 37
@@ -29,8 +46,6 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        // Debug: backend local visto desde el emulador. Release: backend desplegado en Render.
-        buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:8080/api/v1/\"")
     }
 
     signingConfigs {
@@ -45,9 +60,20 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField("String", "BASE_URL", "\"$debugBaseUrl\"")
+            buildConfigField("boolean", "SHOW_DEMO_ACCOUNTS", "true")
+        }
         release {
-            signingConfig = signingConfigs.findByName("release")
-            buildConfigField("String", "API_BASE_URL", "\"https://glifo-api.onrender.com/api/v1/\"")
+            buildConfigField("String", "BASE_URL", "\"$releaseBaseUrl\"")
+            buildConfigField("boolean", "SHOW_DEMO_ACCOUNTS", releaseShowDemo.toString())
+            // Con las GLIFO_RELEASE_* se firma con la llave de release; sin ellas, con la debug
+            // para que el APK de prueba siga siendo instalable.
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
+            // Solo teléfonos reales (ARM): saca las librerías x86 de OpenCV y ML Kit del APK.
+            ndk {
+                abiFilters += listOf("arm64-v8a", "armeabi-v7a")
+            }
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

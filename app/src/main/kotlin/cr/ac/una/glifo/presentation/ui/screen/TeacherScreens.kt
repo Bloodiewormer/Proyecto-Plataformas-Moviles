@@ -775,7 +775,9 @@ fun TeacherGapsScreen(
     val context = LocalContext.current
     val user by sessionViewModel.currentUser.collectAsState()
     val uiState by viewModel.state.collectAsState()
-    val shareTitle = stringResource(R.string.teacher_gaps_share_title)
+    // Nombre del curso activo (antes decía EIF411 fijo).
+    val activeCourseName = LocalActiveCourse.current.name ?: stringResource(R.string.teacher_home_default_course_code)
+    val shareTitle = stringResource(R.string.teacher_gaps_share_title, activeCourseName)
     val shareSummaryLineFormat = stringResource(R.string.teacher_gaps_share_summary_line)
     val shareGapLineFormat = stringResource(R.string.teacher_gaps_share_gap_line)
     val shareChooserTitle = stringResource(R.string.teacher_gaps_share_chooser_title)
@@ -826,7 +828,7 @@ fun TeacherGapsScreen(
                 .background(colors.background)
         ) {
             GlifoTopAppBar(
-                title = stringResource(R.string.teacher_home_default_course_code),
+                title = activeCourseName,
                 subtitle = stringResource(R.string.teacher_gaps_subtitle),
                 onNavigationClick = { scope.launch { drawerState.open() } },
                 actions = {
@@ -891,7 +893,9 @@ fun TeacherGapsScreen(
                             modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
                         )
 
-                        GlifoCard(tight = true) {
+                        if (gaps.isEmpty()) {
+                            Text(stringResource(R.string.teacher_gaps_empty), fontSize = 13.sp, color = colors.textSecondary)
+                        } else GlifoCard(tight = true) {
                             gaps.forEachIndexed { i, gap ->
                                 GlifoItem(showBottomBorder = i < gaps.size - 1, onClick = { onNavigateToTopicDetail(gap.label) }) {
                                     GlifoConfidenceChip(state = gap.state)
@@ -920,24 +924,6 @@ fun TeacherGapsScreen(
                                         }
                                     }
                                     Text(text = gap.fraction, fontFamily = FontFamily.Monospace, fontSize = 12.sp, color = colors.textSecondary)
-                                }
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        GlifoCard(
-                            backgroundColor = colors.uncertainFaint,
-                            borderColor = colors.uncertainLine
-                        ) {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                verticalAlignment = Alignment.Top
-                            ) {
-                                GlifoConfidenceChip(state = ConfidenceState.Uncertain, modifier = Modifier.padding(top = 2.dp))
-                                Column {
-                                    Text(stringResource(R.string.teacher_gaps_special_case_title), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                                    Text(stringResource(R.string.teacher_gaps_special_case_description), fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 4.dp))
                                 }
                             }
                         }

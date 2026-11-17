@@ -1,6 +1,8 @@
 package cr.ac.una.glifo.domain.repository
 
+import cr.ac.una.glifo.core.common.AppError
 import cr.ac.una.glifo.domain.error.Result
+import cr.ac.una.glifo.domain.model.TeacherGroupCoverage
 import cr.ac.una.glifo.domain.model.GlossaryEntry
 import cr.ac.una.glifo.domain.model.GlossarySuggestion
 import cr.ac.una.glifo.domain.model.SyllabusUnitRow
@@ -18,5 +20,8 @@ interface TeacherRepository {
     suspend fun addSyllabusTopic(label: String): Result<Unit>
     suspend fun publishSyllabus(topics: List<String>): Result<Unit> = Result.Success(Unit)
     suspend fun getGaps(): Result<List<TeacherGapTopic>>
+
+    /** Cobertura y brechas del grupo del curso activo. Por defecto falla (repositorios falsos de pruebas). */
+    suspend fun getGroupCoverage(): Result<TeacherGroupCoverage> = Result.Failure(AppError.Unknown)
 }
 
