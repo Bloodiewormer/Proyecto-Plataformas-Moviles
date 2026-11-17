@@ -149,6 +149,8 @@ fun SyncQueueScreen(
                     GlifoButton(
                         text = stringResource(R.string.sync_notification_permission_action),
                         variant = GlifoButtonVariant.Secondary,
+                        small = true,
+                        fillMaxWidth = false,
                         onClick = {
                             notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                         }
