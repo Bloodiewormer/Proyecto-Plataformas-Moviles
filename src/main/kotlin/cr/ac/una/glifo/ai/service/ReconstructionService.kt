@@ -54,6 +54,7 @@ data class NoteReconstructionOutcome(
 )
 
 private val ALLOWED_BLOCK_TYPES = setOf("HEADING", "PARAGRAPH", "FORMULA", "FIGURE")
+private val LEGIBILITY_PLACEHOLDER = Regex("^(?:\\[?ilegible]?|sin texto legible(?::.*)?)$", RegexOption.IGNORE_CASE)
 
 private val RECONSTRUCTION_SCHEMA_EXAMPLE = """
 {
@@ -98,13 +99,22 @@ private val RECONSTRUCTION_SCHEMA_EXAMPLE = """
     },
     {
       "id": "b4",
+      "type": "FIGURE",
+      "caption": "Gráfica de la curva en el primer cuadrante",
+      "confidence": 0.65,
+      "resolvedAt": "N2",
+      "regionId": "r4",
+      "isUncertain": false
+    },
+    {
+      "id": "b5",
       "type": "PARAGRAPH",
       "spans": [
         {
           "text": "[ilegible]",
           "confidence": 0.21,
           "resolvedAt": "UNRESOLVED",
-          "regionId": "r4",
+          "regionId": "r5",
           "isUncertain": true
         }
       ]
@@ -195,11 +205,14 @@ class ReconstructionService @Autowired constructor(
             .withRegions(orderedRegions.map { formatRegionForPrompt(it) })
             .withConstraints(
                 listOf(
-                    "Escribí todo el contenido en español respetando fielmente el texto de las regiones.",
-                    "No inventés contenido que no esté en las regiones ni corrijás el contenido matemático.",
+                    "Escribí todo el contenido en español respetando fielmente el texto y las fórmulas de las regiones.",
+                    "Seguí estrictamente el orden de lectura de las regiones recibidas (pageIndex, bboxY, bboxX) e incluí todas las regiones sin omitir ni reordenar bloques.",
                     "Usá únicamente los tipos de bloque HEADING, PARAGRAPH, FORMULA o FIGURE.",
                     "Cada span de un PARAGRAPH y cada bloque FORMULA o FIGURE debe incluir el regionId exacto de la región original.",
-                    "Si una región tiene isUncertain=true o resolvedAt=UNRESOLVED, conservá su incertidumbre (por ejemplo '[ilegible]') sin inventar lo que falta.",
+                    "Toda región kind=MATH o que traiga latex debe emitirse como bloque FORMULA copiando su latex exactamente igual, sin modificar ni simplificar la expresión.",
+                    "Toda región kind=DRAWING debe emitirse como bloque FIGURE con su caption breve en español (o 'Figura manuscrita' si no trae descripción); nunca la reemplaces por '[ilegible]'.",
+                    "Si una región TEXT tiene texto legible, conservalo aunque isUncertain=true o resolvedAt=UNRESOLVED; usá '[ilegible]' únicamente cuando la región no tenga ningún texto legible o ya diga '[ilegible]'.",
+                    "No inventés contenido que no esté en las regiones ni corrijás el contenido matemático.",
                     "Si podés identificar a qué tema del sílabo corresponde el apunte, indicá su id numérico en suggestedTopicId (o null si ninguno aplica) y un título breve en title."
                 )
             )
@@ -489,9 +502,13 @@ class ReconstructionService @Autowired constructor(
             val orig = regionsById[regionId] ?: continue
             val origUncertain = orig.isUncertain || orig.resolvedAt.equals("UNRESOLVED", ignoreCase = true)
 
-            val spanText = spanNode.textOrNull("text")
-                ?: orig.text?.trim()?.ifEmpty { null }
-                ?: if (origUncertain) "[ilegible]" else null
+            val aiText = spanNode.textOrNull("text")
+            val origText = orig.text?.trim()?.ifEmpty { null }
+            val spanText = if (aiText != null && LEGIBILITY_PLACEHOLDER.matches(aiText) && origText != null && !LEGIBILITY_PLACEHOLDER.matches(origText)) {
+                origText
+            } else {
+                aiText ?: origText ?: if (origUncertain) "[ilegible]" else null
+            }
             if (spanText == null) continue
 
             validSpans.add(
@@ -523,9 +540,16 @@ class ReconstructionService @Autowired constructor(
         val orig = regionsById[regionId] ?: return null
         val origUncertain = orig.isUncertain || orig.resolvedAt.equals("UNRESOLVED", ignoreCase = true)
 
-        val latex = node.textOrNull("latex")
-            ?: orig.latex?.trim()?.ifEmpty { null }
-            ?: orig.text?.trim()?.ifEmpty { null }
+        val origLatex = orig.latex?.trim()?.ifEmpty { null }
+            ?.takeUnless { LEGIBILITY_PLACEHOLDER.matches(it) }
+        val aiLatex = node.textOrNull("latex")
+            ?.takeUnless { LEGIBILITY_PLACEHOLDER.matches(it) }
+        val origText = orig.text?.trim()?.ifEmpty { null }
+            ?.takeUnless { LEGIBILITY_PLACEHOLDER.matches(it) }
+        val latex = origLatex
+            ?: aiLatex
+            ?: origText
+            ?: node.textOrNull("latex")
             ?: return null
 
         val compiles = latexValidator.compiles(latex)
@@ -551,10 +575,11 @@ class ReconstructionService @Autowired constructor(
         val orig = regionsById[regionId] ?: return null
         val origUncertain = orig.isUncertain || orig.resolvedAt.equals("UNRESOLVED", ignoreCase = true)
 
-        val caption = node.textOrNull("caption")
-            ?: node.textOrNull("text")
-            ?: orig.text?.trim()?.ifEmpty { null }
-            ?: if (origUncertain) "[ilegible]" else return null
+        val aiCaption = (node.textOrNull("caption") ?: node.textOrNull("text"))
+            ?.takeUnless { LEGIBILITY_PLACEHOLDER.matches(it) }
+        val origCaption = orig.text?.trim()?.ifEmpty { null }
+            ?.takeUnless { LEGIBILITY_PLACEHOLDER.matches(it) }
+        val caption = aiCaption ?: origCaption ?: "Figura manuscrita"
 
         return linkedMapOf(
             "id" to blockId,
@@ -569,12 +594,15 @@ class ReconstructionService @Autowired constructor(
 
     private fun formatRegionForPrompt(region: RegionInput): String {
         val isUncertain = region.isUncertain || region.resolvedAt.equals("UNRESOLVED", ignoreCase = true)
-        val contentValue = if (region.kind.equals("MATH", ignoreCase = true)) {
-            "latex=${region.latex ?: region.text ?: ""}"
-        } else {
-            "text=${region.text ?: region.latex ?: ""}"
+        val cleanText = region.text?.trim()?.takeUnless { it.isEmpty() || LEGIBILITY_PLACEHOLDER.matches(it) }
+        val cleanLatex = region.latex?.trim()?.takeUnless { it.isEmpty() || LEGIBILITY_PLACEHOLDER.matches(it) }
+        val contentValue = when {
+            region.kind.equals("MATH", ignoreCase = true) -> "latex=${cleanLatex ?: cleanText ?: ""}"
+            !cleanLatex.isNullOrBlank() -> "latex=$cleanLatex"
+            region.kind.equals("DRAWING", ignoreCase = true) -> "caption=${cleanText ?: ""}"
+            else -> "text=${cleanText ?: ""}"
         }
-        return "pageIndex=${region.pageIndex} | bboxY=${region.bboxY} | regionId=${region.id} | kind=${region.kind} | resolvedAt=${region.resolvedAt} | confidence=${region.confidence} | isUncertain=$isUncertain | $contentValue"
+        return "pageIndex=${region.pageIndex} | bboxY=${region.bboxY} | bboxX=${region.bboxX} | regionId=${region.id} | kind=${region.kind} | resolvedAt=${region.resolvedAt} | confidence=${region.confidence} | isUncertain=$isUncertain | $contentValue"
     }
 
     private fun JsonNode.textOrNull(fieldName: String): String? {
