@@ -1,6 +1,5 @@
 package cr.ac.una.glifo.presentation.ui.screen
 
-import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -9,7 +8,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.GpsFixed
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -63,7 +61,6 @@ fun AiCostScreen(
         GlifoRole.Teacher -> stringResource(R.string.ai_cost_title_teacher)
         GlifoRole.Student -> stringResource(R.string.ai_cost_title_student)
     }
-    val augustOnlyToast = stringResource(R.string.ai_cost_toast_august_only)
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -108,19 +105,16 @@ fun AiCostScreen(
         ) {
             GlifoTopAppBar(
                 title = title,
-                onNavigationClick = { scope.launch { drawerState.open() } },
-                actions = {
-                    IconButton(onClick = {
-                        Toast.makeText(context, augustOnlyToast, Toast.LENGTH_SHORT).show()
-                    }) {
-                        Icon(imageVector = Icons.Default.CalendarToday, contentDescription = stringResource(R.string.coverage_calendar_description), tint = colors.textSecondary, modifier = Modifier.size(20.dp))
-                    }
-                }
+                onNavigationClick = { scope.launch { drawerState.open() } }
             )
 
             when (val state = uiState) {
                 is UiState.Loading -> GlifoLoadingBox()
-                is UiState.Empty -> GlifoLoadingBox()
+                is UiState.Empty -> GlifoEmptyBox(
+                    message = stringResource(R.string.ai_cost_server_unavailable),
+                    actionText = stringResource(R.string.common_retry),
+                    onAction = { viewModel.load(role) }
+                )
                 is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = { viewModel.load(role) })
                 is UiState.Success -> {
                     val stats = state.data

@@ -299,7 +299,7 @@ fun SettingsScreen(
                 }
                 GlifoItem(compact = true, showBottomBorder = false) {
                     Text(stringResource(R.string.settings_version_label), fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                    Text("1.0.0 · X-Ray", fontFamily = FontFamily.Monospace, fontSize = 13.sp, color = colors.textSecondary)
+                    Text(cr.ac.una.glifo.BuildConfig.VERSION_NAME, fontFamily = FontFamily.Monospace, fontSize = 13.sp, color = colors.textSecondary)
                 }
             }
 
