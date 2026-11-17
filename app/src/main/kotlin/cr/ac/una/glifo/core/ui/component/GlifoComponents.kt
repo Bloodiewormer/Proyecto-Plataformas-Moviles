@@ -27,6 +27,8 @@ import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.launch
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -720,6 +722,19 @@ fun GlifoDrawerContent(
     @Suppress("NAME_SHADOWING")
     val role = LocalSessionRole.current ?: role
     val colors = GlifoTheme.colors
+    val pendingSyncCount = LocalPendingSyncCount.current
+    val logoutScope = androidx.compose.runtime.rememberCoroutineScope()
+    var pendingBeforeLogout by remember { mutableStateOf<Int?>(null) }
+    pendingBeforeLogout?.let { pending ->
+        LogoutPendingSyncDialog(
+            pendingCount = pending,
+            onDismiss = { pendingBeforeLogout = null },
+            onConfirm = {
+                pendingBeforeLogout = null
+                onLogoutClick()
+            }
+        )
+    }
 
     val drawerHome = stringResource(R.string.drawer_item_home)
     val drawerMyCourses = stringResource(R.string.courses_title)
@@ -1003,7 +1018,12 @@ fun GlifoDrawerContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp)
-                    .clickable(onClick = onLogoutClick)
+                    .clickable {
+                        logoutScope.launch {
+                            val pending = pendingSyncCount()
+                            if (pending > 0) pendingBeforeLogout = pending else onLogoutClick()
+                        }
+                    }
                     .padding(horizontal = 16.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(14.dp)
@@ -1091,3 +1111,31 @@ fun GlifoStaggeredEntry(
     }
 }
 
+@Composable
+private fun LogoutPendingSyncDialog(pendingCount: Int, onDismiss: () -> Unit, onConfirm: () -> Unit) {
+    val colors = GlifoTheme.colors
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+        GlifoCard {
+            Text(
+                text = stringResource(R.string.logout_pending_title),
+                fontSize = 17.sp,
+                fontWeight = FontWeight.Medium,
+                color = colors.textPrimary
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = pluralStringResource(R.plurals.logout_pending_message, pendingCount, pendingCount),
+                fontSize = 13.sp,
+                color = colors.textSecondary
+            )
+            Spacer(modifier = Modifier.height(14.dp))
+            GlifoButton(text = stringResource(R.string.logout_pending_cancel), onClick = onDismiss)
+            Spacer(modifier = Modifier.height(8.dp))
+            GlifoButton(
+                text = stringResource(R.string.logout_pending_confirm),
+                variant = GlifoButtonVariant.Secondary,
+                onClick = onConfirm
+            )
+        }
+    }
+}

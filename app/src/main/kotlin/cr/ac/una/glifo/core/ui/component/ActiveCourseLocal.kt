@@ -24,5 +24,8 @@ val LocalActiveCourse = staticCompositionLocalOf { ActiveCourseUi(name = null, o
  */
 val LocalSessionRole = compositionLocalOf<GlifoRole?> { null }
 
+/** Cuántas capturas faltan por sincronizar; el menú lo consulta antes de cerrar sesión, que borra los datos locales. */
+val LocalPendingSyncCount = staticCompositionLocalOf<suspend () -> Int> { { 0 } }
+
 /** Ruta que el menú lateral pide con onNavigate cuando se toca "Cambiar". */
 const val COURSE_SWITCHER_ROUTE = "course_switcher"

@@ -66,4 +66,17 @@ class TokenManagerTest {
         assertEquals(false, remainingPrefs[allowVisionKey])
         assertEquals(true, remainingPrefs[wifiOnlyKey])
     }
+
+    @Test
+    fun `clearToken keeps the user id so a different account can be detected later`() = runTest {
+        val dataStoreFile = tempFolder.newFile("glifo_prefs_token.preferences_pb")
+        val dataStore = PreferenceDataStoreFactory.create(scope = backgroundScope, produceFile = { dataStoreFile })
+        val tokenManager = TokenManager(dataStore)
+        tokenManager.saveToken("jwt", userId = 7L, userEmail = "a@una.ac.cr")
+
+        tokenManager.clearToken()
+
+        assertNull(tokenManager.getToken())
+        assertEquals(7L, tokenManager.getUserId())
+    }
 }

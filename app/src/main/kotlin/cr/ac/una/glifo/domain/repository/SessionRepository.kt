@@ -17,5 +17,8 @@ interface SessionRepository {
 
     fun login(user: User)
     suspend fun logout()
+
+    /** Token vencido: cierra la sesión sin borrar datos locales pendientes de sincronizar. */
+    suspend fun expireSession() = logout()
     fun setProfilePhotoUri(uri: String?)
 }

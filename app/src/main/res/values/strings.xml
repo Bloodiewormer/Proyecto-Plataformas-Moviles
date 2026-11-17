@@ -714,4 +714,11 @@
     <string name="error_not_found">Resource not found</string>
     <string name="error_conflict">Request conflict</string>
     <string name="error_server_code">Server error (%1$s)</string>
+    <string name="logout_pending_title">Unsynced captures</string>
+    <string name="logout_pending_confirm">Log out anyway</string>
+    <string name="logout_pending_cancel">Stay signed in</string>
+    <plurals name="logout_pending_message">
+        <item quantity="one">You have %1$d capture that has not been synced yet. Logging out deletes it from this phone.</item>
+        <item quantity="other">You have %1$d captures that have not been synced yet. Logging out deletes them from this phone.</item>
+    </plurals>
 </resources>

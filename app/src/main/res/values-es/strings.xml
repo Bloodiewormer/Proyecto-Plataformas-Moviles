@@ -714,4 +714,11 @@
     <string name="error_not_found">Recurso no encontrado</string>
     <string name="error_conflict">Conflicto en la solicitud</string>
     <string name="error_server_code">Error del servidor (%1$s)</string>
+    <string name="logout_pending_title">Capturas sin sincronizar</string>
+    <string name="logout_pending_confirm">Cerrar sesión igual</string>
+    <string name="logout_pending_cancel">Seguir con la sesión</string>
+    <plurals name="logout_pending_message">
+        <item quantity="one">Tenés %1$d captura que todavía no se sincronizó. Si cerrás sesión, se borra de este teléfono.</item>
+        <item quantity="other">Tenés %1$d capturas que todavía no se sincronizaron. Si cerrás sesión, se borran de este teléfono.</item>
+    </plurals>
 </resources>

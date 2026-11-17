@@ -75,6 +75,18 @@ class SessionRepositoryImplTest {
     }
 
     @Test
+    fun `expireSession forgets only the token and keeps local data pending sync`() = runTest {
+        repository.login(testUser)
+
+        repository.expireSession()
+
+        assertNull(repository.currentUser.value)
+        coVerify(exactly = 1) { tokenManager.clearToken() }
+        coVerify(exactly = 0) { tokenManager.clearAll() }
+        coVerify(exactly = 0) { localUserDataCleaner.clearUserData() }
+    }
+
+    @Test
     fun `localUserDataCleaner clears Room off caller thread, clears active course, deletes pages dir, and clears caches`() = runTest {
         val callerThreadName = Thread.currentThread().name
         var clearTablesThreadName: String? = null

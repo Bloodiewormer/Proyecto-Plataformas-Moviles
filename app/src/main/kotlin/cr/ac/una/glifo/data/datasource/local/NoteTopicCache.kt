@@ -67,6 +67,13 @@ class NoteTopicCache private constructor(
         _changes.update { it + 1L }
     }
 
+    fun clearAll() {
+        memory.clear()
+        recorded.clear()
+        prefs?.edit()?.clear()?.apply()
+        _changes.update { it + 1L }
+    }
+
     private companion object {
         const val PREFS_NAME = "glifo_note_topics"
         const val KEY_PREFIX = "note_"

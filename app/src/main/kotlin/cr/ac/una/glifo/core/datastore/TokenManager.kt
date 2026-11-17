@@ -180,6 +180,11 @@ class TokenManager private constructor(
      * Limpia el contexto de sesión del usuario autenticado conservando el `installation_id`
      * de la app, el `fcm_token` actual del dispositivo y las preferencias locales.
      */
+    /** Vencimiento de sesión: se olvida solo el token; el id del usuario queda para detectar si después entra otra cuenta. */
+    suspend fun clearToken() {
+        dataStore.edit { preferences -> preferences.remove(TOKEN_KEY) }
+    }
+
     suspend fun clearAll() {
         dataStore.edit { preferences ->
             preferences.remove(TOKEN_KEY)

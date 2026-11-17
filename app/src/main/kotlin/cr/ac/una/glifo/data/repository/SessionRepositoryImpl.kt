@@ -42,6 +42,11 @@ class SessionRepositoryImpl @Inject constructor(
         localUserDataCleaner?.clearUserData()
     }
 
+    override suspend fun expireSession() {
+        _currentUser.value = null
+        tokenManager.clearToken()
+    }
+
     override fun setProfilePhotoUri(uri: String?) {
         _profilePhotoUri.value = uri
     }

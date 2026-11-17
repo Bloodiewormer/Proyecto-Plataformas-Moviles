@@ -3,6 +3,7 @@ package cr.ac.una.glifo.data.repository
 import android.content.Context
 import cr.ac.una.glifo.core.datastore.ActiveCourseStore
 import cr.ac.una.glifo.data.datasource.local.GlifoDatabase
+import cr.ac.una.glifo.data.datasource.local.NoteTopicCache
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -25,6 +26,7 @@ class LocalUserDataCleaner private constructor(
         database: GlifoDatabase,
         activeCourseStore: ActiveCourseStore,
         sessionCacheRegistry: SessionCacheRegistry,
+        noteTopicCache: NoteTopicCache,
         @ApplicationContext appContext: Context
     ) : this(
         database = database,
@@ -32,7 +34,9 @@ class LocalUserDataCleaner private constructor(
         sessionCacheRegistry = sessionCacheRegistry,
         pagesRootDir = File(appContext.filesDir, PAGES_DIR),
         ioDispatcher = Dispatchers.IO
-    )
+    ) {
+        sessionCacheRegistry.register(noteTopicCache::clearAll)
+    }
 
     internal constructor(
         database: GlifoDatabase? = null,
