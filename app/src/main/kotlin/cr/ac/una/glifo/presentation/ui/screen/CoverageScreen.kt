@@ -25,6 +25,7 @@ import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.core.common.asString
 import cr.ac.una.glifo.domain.model.ConfidenceState
+import cr.ac.una.glifo.domain.model.CoverageTopic
 import cr.ac.una.glifo.domain.model.GlifoRole
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
@@ -220,38 +221,49 @@ fun CoverageScreen(
                             }
                         }
 
-                        Text(
-                            text = summary.unitText.asString(),
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            letterSpacing = 0.6.sp,
-                            color = colors.textSecondary,
-                            modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
-                        )
+                        val defaultUnit = summary.unitText.asString()
+                        // Un encabezado por unidad: los temas llegan ordenados padre -> hijos desde el backend.
+                        val unitGroups = topics.fold(mutableListOf<Pair<String, MutableList<CoverageTopic>>>()) { groups, topic ->
+                            val unit = topic.unitLabel ?: defaultUnit
+                            if (groups.lastOrNull()?.first == unit) groups.last().second.add(topic)
+                            else groups.add(unit to mutableListOf(topic))
+                            groups
+                        }
 
-                        GlifoStaggeredEntry(index = 1) {
-                            GlifoCard(tight = true) {
-                                topics.forEachIndexed { i, topic ->
-                                    GlifoItem(
-                                        compact = true,
-                                        showBottomBorder = i < topics.size - 1,
-                                        onClick = { onNavigateToTopicDetail(topic.name) }
-                                    ) {
-                                        GlifoConfidenceChip(state = topic.state)
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(text = topic.name, fontSize = 13.sp, color = colors.textPrimary)
-                                            val topicNote = topic.noteText?.asString() ?: topic.note
-                                            if (topicNote != null) {
-                                                Text(text = topicNote, fontSize = 11.sp, color = colors.textSecondary)
+                        unitGroups.forEachIndexed { groupIndex, (unit, unitTopics) ->
+                            Text(
+                                text = unit,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                letterSpacing = 0.6.sp,
+                                color = colors.textSecondary,
+                                modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                            )
+
+                            GlifoStaggeredEntry(index = groupIndex + 1) {
+                                GlifoCard(tight = true) {
+                                    unitTopics.forEachIndexed { i, topic ->
+                                        GlifoItem(
+                                            compact = true,
+                                            showBottomBorder = i < unitTopics.size - 1,
+                                            onClick = { onNavigateToTopicDetail(topic.name) }
+                                        ) {
+                                            GlifoConfidenceChip(state = topic.state)
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(text = topic.name, fontSize = 13.sp, color = colors.textPrimary)
+                                                val topicNote = topic.noteText?.asString() ?: topic.note
+                                                if (topicNote != null) {
+                                                    Text(text = topicNote, fontSize = 11.sp, color = colors.textSecondary)
+                                                }
                                             }
+                                            Text(
+                                                text = topic.score,
+                                                fontFamily = FontFamily.Monospace,
+                                                fontSize = 11.sp,
+                                                color = colors.textSecondary
+                                            )
+                                            Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(15.dp))
                                         }
-                                        Text(
-                                            text = topic.score,
-                                            fontFamily = FontFamily.Monospace,
-                                            fontSize = 11.sp,
-                                            color = colors.textSecondary
-                                        )
-                                        Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(15.dp))
                                     }
                                 }
                             }

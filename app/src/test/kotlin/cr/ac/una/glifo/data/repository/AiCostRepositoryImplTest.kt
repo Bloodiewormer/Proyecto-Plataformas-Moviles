@@ -98,7 +98,7 @@ class AiCostRepositoryImplTest {
 
     @Test
     fun `getStats for student combines local metrics with getMyAiUsage on success`() = runTest {
-        coEvery { processedPageDao.all() } returns listOf(sampleLocalPage)
+        coEvery { processedPageDao.forCourse(1L) } returns listOf(sampleLocalPage)
         coEvery { api.getMyAiUsage(1L) } returns ApiResponse(data = sampleUsageDto)
 
         val result = repository.getStats(GlifoRole.Student, courseId = 1L)
@@ -111,12 +111,14 @@ class AiCostRepositoryImplTest {
         assertEquals(2L, stats.avoidedCallsCount)
         assertEquals(1500L, stats.totalTokens)
         assertEquals("$0.00036 USD", stats.estimatedCostLabel)
+        coVerify(exactly = 1) { processedPageDao.forCourse(1L) }
+        coVerify(exactly = 0) { processedPageDao.all() }
         coVerify(exactly = 1) { api.getMyAiUsage(1L) }
     }
 
     @Test
     fun `getStats for teacher calls getCourseAiUsage when courseId is provided`() = runTest {
-        coEvery { processedPageDao.all() } returns emptyList()
+        coEvery { processedPageDao.forCourse(1L) } returns emptyList()
         coEvery { api.getCourseAiUsage(1L) } returns ApiResponse(data = sampleUsageDto.copy(scope = "COURSE"))
 
         val result = repository.getStats(GlifoRole.Teacher, courseId = 1L)
@@ -125,7 +127,26 @@ class AiCostRepositoryImplTest {
         val stats = (result as Result.Success).value
         assertTrue(stats.serverDataAvailable)
         assertEquals(3L, stats.totalCalls)
+        coVerify(exactly = 1) { processedPageDao.forCourse(1L) }
+        coVerify(exactly = 0) { processedPageDao.all() }
         coVerify(exactly = 1) { api.getCourseAiUsage(1L) }
+    }
+
+    @Test
+    fun `getStats for teacher with null courseId scopes local metrics to active course`() = runTest {
+        val activeCourseStore = mockk<cr.ac.una.glifo.core.datastore.ActiveCourseStore>()
+        io.mockk.every { activeCourseStore.activeCourseId } returns kotlinx.coroutines.flow.MutableStateFlow(7L)
+        val repoWithStore = AiCostRepositoryImpl(processedPageDao, api, activeCourseStore)
+
+        coEvery { processedPageDao.forCourse(7L) } returns listOf(sampleLocalPage.copy(courseId = 7L))
+        coEvery { api.getCourseAiUsage(7L) } returns ApiResponse(data = sampleUsageDto.copy(scope = "COURSE", courseId = 7L))
+
+        val result = repoWithStore.getStats(GlifoRole.Teacher, courseId = null)
+
+        assertTrue(result is Result.Success)
+        coVerify(exactly = 1) { processedPageDao.forCourse(7L) }
+        coVerify(exactly = 0) { processedPageDao.all() }
+        coVerify(exactly = 1) { api.getCourseAiUsage(7L) }
     }
 
     @Test
@@ -161,7 +182,8 @@ class AiCostRepositoryImplTest {
 
     @Test
     fun `getStats maps HTTP 404 and HTTP 502 to AppError Server`() = runTest {
-        coEvery { processedPageDao.all() } returns emptyList()
+        coEvery { processedPageDao.forCourse(99L) } returns emptyList()
+        coEvery { processedPageDao.forCourse(1L) } returns emptyList()
         coEvery { api.getCourseAiUsage(99L) } throws httpException(404, """{"message":"Curso no encontrado"}""")
 
         val notFoundResult = repository.getStats(GlifoRole.Teacher, courseId = 99L)

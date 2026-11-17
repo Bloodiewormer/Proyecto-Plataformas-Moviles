@@ -181,6 +181,10 @@
     <string name="formula_viewer_photo_placeholder">Photo of the region</string>
     <string name="formula_viewer_transcription_section">TRANSCRIPTION</string>
     <string name="formula_viewer_latex_generated">LaTeX generated</string>
+    <string name="formula_viewer_toggle_latex">LaTeX</string>
+    <string name="formula_viewer_toggle_latex_description">Show or hide raw LaTeX</string>
+    <string name="formula_viewer_copy_latex">Copy LaTeX</string>
+    <string name="formula_viewer_copied">Copied</string>
     <string name="formula_viewer_compiles_jlatex">Compiles with JLaTeXMath</string>
     <string name="formula_viewer_engine_confidence">Engine confidence</string>
     <string name="formula_viewer_correct">Correct</string>
@@ -250,8 +254,8 @@
 
     <!-- TopicDetailScreen -->
     <string name="topic_detail_why_section">WHY IT\'S IN THIS STATE</string>
-    <string name="topic_detail_appears_in_section">WHERE IT APPEARS IN YOUR NOTES</string>
-    <string name="topic_detail_no_notes">No notes mention this topic yet.</string>
+    <string name="topic_detail_appears_in_section">LINKED NOTES</string>
+    <string name="topic_detail_no_notes">No notes are linked to this topic yet.</string>
     <string name="topic_detail_generate_reinforcement">Generate reinforcement for this topic</string>
 
     <!-- StudyScreen -->
@@ -644,7 +648,7 @@
     <string name="capture_step_glossary_not_cached">no glossary on this device (downloaded when opening camera online)</string>
     <string name="capture_step_glossary_cached">glossary v%1$d (%2$d terms, local copy)</string>
     <string name="capture_step_n15_name">N1.5 - Math OCR</string>
-    <string name="capture_step_n15_desc_active">%1$d regions routed to LaTeX conversion - free tier</string>
+    <string name="capture_step_n15_desc_active">%1$d regions routed to LaTeX conversion on the server (low cost)</string>
     <string name="capture_step_n15_desc_empty">No formulas were detected on this page.</string>
     <string name="capture_step_n2_name">N2 - Vision repair</string>
     <string name="capture_step_n2_desc_active">%1$d regions did not pass the N1 gate.</string>
@@ -678,6 +682,19 @@
     <string name="note_error_fragment_missing">That fragment no longer exists in the note</string>
     <string name="note_error_title_required">Title is required</string>
     <string name="note_error_not_found">Note not found</string>
+    <string name="note_topic_section_title">TOPIC</string>
+    <string name="note_topic_unlinked">No topic linked</string>
+    <string name="note_topic_select">Select</string>
+    <string name="note_topic_change">Change</string>
+    <string name="note_topic_fallback_label">Topic #%1$d</string>
+    <string name="note_topic_suggested_label">Suggested topic: %1$s</string>
+    <string name="note_topic_suggested_accept">Accept</string>
+    <string name="note_topic_picker_title">Select syllabus topic</string>
+    <string name="note_topic_picker_empty">No syllabus topics available for this course.</string>
+    <string name="note_topic_picker_retry">Retry</string>
+    <string name="note_topic_picker_clear">Remove topic link</string>
+    <string name="note_topic_error_no_connection">No connection. Connect to the internet to save the note topic.</string>
+    <string name="note_topic_error_not_synced">Wait until the note syncs with the server before linking a topic.</string>
 
     <string name="sync_item_page_title">%1$s · p.%2$d</string>
     <string name="sync_item_note_title">%1$s · note</string>
@@ -697,4 +714,11 @@
     <string name="error_not_found">Resource not found</string>
     <string name="error_conflict">Request conflict</string>
     <string name="error_server_code">Server error (%1$s)</string>
+    <string name="logout_pending_title">Unsynced captures</string>
+    <string name="logout_pending_confirm">Log out anyway</string>
+    <string name="logout_pending_cancel">Stay signed in</string>
+    <plurals name="logout_pending_message">
+        <item quantity="one">You have %1$d capture that has not been synced yet. Logging out deletes it from this phone.</item>
+        <item quantity="other">You have %1$d captures that have not been synced yet. Logging out deletes them from this phone.</item>
+    </plurals>
 </resources>

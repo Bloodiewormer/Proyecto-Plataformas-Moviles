@@ -4,7 +4,9 @@ import android.content.Context
 import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.AppError
 import cr.ac.una.glifo.core.datastore.ActiveCourseStore
+import cr.ac.una.glifo.data.datasource.local.NoteTopicCache
 import cr.ac.una.glifo.data.datasource.local.dao.NoteDao
+import cr.ac.una.glifo.data.datasource.local.entity.NoteEntity
 import cr.ac.una.glifo.data.datasource.remote.ApiErrorHandler
 import cr.ac.una.glifo.data.datasource.remote.GlifoApi
 import cr.ac.una.glifo.data.dto.CoverageResponseDto
@@ -21,6 +23,7 @@ import cr.ac.una.glifo.domain.model.TopicDetail
 import cr.ac.una.glifo.domain.model.TopicNoteRef
 import cr.ac.una.glifo.domain.repository.CoverageRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.concurrent.ConcurrentHashMap
@@ -37,6 +40,7 @@ class CoverageRepositoryImpl : CoverageRepository {
     private val api: GlifoApi
     private val activeCourseStore: ActiveCourseStore?
     private val noteDao: NoteDao?
+    private val noteTopicCache: NoteTopicCache?
     private val appContext: Context?
 
     private val cachedCoverageByCourse = ConcurrentHashMap<Long, CoverageResponseDto>()
@@ -47,23 +51,37 @@ class CoverageRepositoryImpl : CoverageRepository {
         api: GlifoApi,
         activeCourseStore: ActiveCourseStore,
         noteDao: NoteDao,
-        @ApplicationContext appContext: Context
+        noteTopicCache: NoteTopicCache,
+        @ApplicationContext appContext: Context,
+        sessionCacheRegistry: SessionCacheRegistry
     ) {
         this.api = api
         this.activeCourseStore = activeCourseStore
         this.noteDao = noteDao
+        this.noteTopicCache = noteTopicCache
         this.appContext = appContext
+        sessionCacheRegistry.register(::clearCache)
     }
 
     constructor(
         api: GlifoApi,
         activeCourseStore: ActiveCourseStore? = null,
-        appContext: Context? = null
+        appContext: Context? = null,
+        noteDao: NoteDao? = null,
+        noteTopicCache: NoteTopicCache? = null,
+        sessionCacheRegistry: SessionCacheRegistry? = null
     ) {
         this.api = api
         this.activeCourseStore = activeCourseStore
-        this.noteDao = null
+        this.noteDao = noteDao
+        this.noteTopicCache = noteTopicCache
         this.appContext = appContext
+        sessionCacheRegistry?.register(::clearCache)
+    }
+
+    fun clearCache() {
+        cachedCoverageByCourse.clear()
+        lastEvaluationIsoByCourse.clear()
     }
 
     override suspend fun getSummary(courseId: Long): Result<CoverageSummary> {
@@ -166,26 +184,83 @@ class CoverageRepositoryImpl : CoverageRepository {
     }
 
     private suspend fun findNoteRefsForTopic(courseId: Long, topic: CoverageTopic): List<TopicNoteRef> {
-        val dao = noteDao ?: return emptyList()
-        return runCatching {
-            val notes = dao.notesForCourse(courseId)
-            val titleNeedle = topic.title.trim().takeIf { it.length >= 3 }
-            val codeNeedle = topic.code.trim().takeIf { it.isNotEmpty() }
-            notes.filter { entity ->
-                val haystack = "${entity.title} ${entity.contentJson.orEmpty()}"
-                (titleNeedle != null && haystack.contains(titleNeedle, ignoreCase = true)) ||
-                    (codeNeedle != null && haystack.contains(codeNeedle, ignoreCase = true))
-            }.map { entity ->
-                TopicNoteRef(
-                    noteId = entity.id,
-                    title = entity.title,
-                    meta = entity.classDate
-                )
+        if (topic.topicId <= 0L) return emptyList()
+
+        val remoteNotes = try {
+            api.getNotes(courseId).data
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (_: Exception) {
+            null
+        }
+
+        if (remoteNotes != null) {
+            val localNotes = noteDao?.let { dao ->
+                runCatching {
+                    dao.cacheRemoteNotes(
+                        courseId,
+                        remoteNotes.map { dto ->
+                            NoteEntity(
+                                serverId = dto.id,
+                                courseId = dto.courseId,
+                                title = dto.title,
+                                classDate = dto.classDate,
+                                status = dto.status ?: STATUS_READY,
+                                createdAt = System.currentTimeMillis()
+                            )
+                        }
+                    )
+                    dao.notesForCourse(courseId)
+                }.getOrNull()
+            }.orEmpty()
+
+            val localByServerId = localNotes.mapNotNull { entity -> entity.serverId?.let { it to entity } }.toMap()
+            remoteNotes.forEach { dto ->
+                val localEntity = localByServerId[dto.id] ?: return@forEach
+                noteTopicCache?.setTopicId(localEntity.id, dto.syllabusTopicId)
             }
+
+            val remoteRefs = remoteNotes
+                .filter { it.syllabusTopicId == topic.topicId }
+                .map { dto ->
+                    val localEntity = localByServerId[dto.id]
+                    TopicNoteRef(
+                        noteId = localEntity?.id ?: dto.id,
+                        title = localEntity?.title ?: dto.title,
+                        meta = localEntity?.classDate ?: dto.classDate
+                    )
+                }
+
+            val localOnlyRefs = localNotes
+                .filter { it.serverId == null && noteTopicCache?.getTopicId(it.id) == topic.topicId }
+                .map { entity ->
+                    TopicNoteRef(
+                        noteId = entity.id,
+                        title = entity.title,
+                        meta = entity.classDate
+                    )
+                }
+
+            return remoteRefs + localOnlyRefs
+        }
+
+        val dao = noteDao ?: return emptyList()
+        val cache = noteTopicCache ?: return emptyList()
+        return runCatching {
+            dao.notesForCourse(courseId)
+                .filter { cache.getTopicId(it.id) == topic.topicId }
+                .map { entity ->
+                    TopicNoteRef(
+                        noteId = entity.id,
+                        title = entity.title,
+                        meta = entity.classDate
+                    )
+                }
         }.getOrDefault(emptyList())
     }
 
     private companion object {
         const val DEFAULT_DELTA_DAYS = 7L
+        const val STATUS_READY = "READY"
     }
 }

@@ -6,8 +6,10 @@ import cr.ac.una.glifo.core.datastore.ActiveCourseStore
 import cr.ac.una.glifo.core.network.SessionEvent
 import cr.ac.una.glifo.core.network.SessionEventBus
 import cr.ac.una.glifo.core.push.DevicePushManager
+import cr.ac.una.glifo.domain.error.Result
 import cr.ac.una.glifo.domain.model.User
 import cr.ac.una.glifo.domain.repository.SessionRepository
+import cr.ac.una.glifo.domain.repository.SyncRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,7 +27,8 @@ class SessionViewModel @Inject constructor(
     private val sessionRepository: SessionRepository,
     private val activeCourseStore: ActiveCourseStore,
     private val sessionEventBus: SessionEventBus,
-    private val devicePushManager: DevicePushManager?
+    private val devicePushManager: DevicePushManager?,
+    private val syncRepository: SyncRepository? = null
 ) : ViewModel() {
 
     constructor(
@@ -51,6 +54,13 @@ class SessionViewModel @Inject constructor(
             devicePushManager?.unlinkDeviceOnLogout()
             sessionRepository.logout()
         }
+    }
+
+    suspend fun pendingSyncCount(): Int =
+        (syncRepository?.getPendingCount() as? Result.Success)?.value ?: 0
+
+    fun expireSession() {
+        viewModelScope.launch { sessionRepository.expireSession() }
     }
 
     fun setProfilePhotoUri(uri: String?) = sessionRepository.setProfilePhotoUri(uri)

@@ -37,8 +37,20 @@ import javax.inject.Inject
 class AuthRepositoryImpl @Inject constructor(
     private val api: GlifoApi,
     private val tokenManager: TokenManager,
-    private val devicePushManager: DevicePushManager?
+    private val devicePushManager: DevicePushManager?,
+    private val localUserDataCleaner: LocalUserDataCleaner?
 ) : AuthRepository {
+
+    constructor(
+        api: GlifoApi,
+        tokenManager: TokenManager,
+        devicePushManager: DevicePushManager?
+    ) : this(
+        api = api,
+        tokenManager = tokenManager,
+        devicePushManager = devicePushManager,
+        localUserDataCleaner = null
+    )
 
     constructor(
         api: GlifoApi,
@@ -46,7 +58,8 @@ class AuthRepositoryImpl @Inject constructor(
     ) : this(
         api = api,
         tokenManager = tokenManager,
-        devicePushManager = null
+        devicePushManager = null,
+        localUserDataCleaner = null
     )
 
     override suspend fun login(email: String, password: String): Result<User> =
@@ -91,6 +104,12 @@ class AuthRepositoryImpl @Inject constructor(
     private suspend fun callApi(block: suspend () -> AuthResponse): Result<User> {
         return try {
             val response = block()
+            val previousUserId = tokenManager.getUserId()
+            // Cold-starting the app skips logout(), so a different user logging in must wipe the prior account's local state.
+            if (previousUserId != null && previousUserId != response.user.id) {
+                tokenManager.clearAll()
+                localUserDataCleaner?.clearUserData()
+            }
             tokenManager.saveToken(
                 token = response.token,
                 userId = response.user.id,

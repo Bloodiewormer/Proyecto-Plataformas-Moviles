@@ -58,7 +58,7 @@ class AuthInterceptorTest {
     }
 
     @Test
-    fun `intercept emits SessionExpired and clears session when authenticated request receives 401`() {
+    fun `intercept emits SessionExpired and expires the session without wiping local data on 401`() {
         val request = Request.Builder().url("http://10.0.2.2:8080/api/v1/notes").build()
 
         coEvery { tokenManager.getToken() } returns "expired-token"
@@ -68,8 +68,9 @@ class AuthInterceptorTest {
         val response = interceptor.intercept(chain)
 
         assertEquals(401, response.code)
-        coVerify(exactly = 1) { tokenManager.clearAll() }
-        coVerify(exactly = 1) { sessionRepository.logout() }
+        coVerify(exactly = 1) { sessionRepository.expireSession() }
+        coVerify(exactly = 0) { sessionRepository.logout() }
+        coVerify(exactly = 0) { tokenManager.clearAll() }
         verify(exactly = 1) {
             sessionEventBus.emit(match { it is SessionEvent.SessionExpired && it.message == "Tu sesión expiró. Iniciá sesión de nuevo." })
         }

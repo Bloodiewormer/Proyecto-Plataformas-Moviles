@@ -14,6 +14,7 @@ import cr.ac.una.glifo.data.dto.CoverageDeltaResponseDto
 import cr.ac.una.glifo.data.dto.CoverageResponseDto
 import cr.ac.una.glifo.data.dto.CreateCourseRequest
 import cr.ac.una.glifo.data.dto.CreateGlossaryEntryRequest
+import cr.ac.una.glifo.data.dto.CreateGlossarySuggestionRequest
 import cr.ac.una.glifo.data.dto.CreateNotePageRequest
 import cr.ac.una.glifo.data.dto.CreateNoteRequest
 import cr.ac.una.glifo.data.dto.CreateSyllabusTopicRequest
@@ -40,6 +41,7 @@ import cr.ac.una.glifo.data.dto.SyllabusTopicResponse
 import cr.ac.una.glifo.data.dto.SyncCompleteRequest
 import cr.ac.una.glifo.data.dto.SyncCompleteResponse
 import cr.ac.una.glifo.data.dto.UpdateDeviceTokenRequest
+import cr.ac.una.glifo.data.dto.UpdateNoteRequest
 import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.Body
@@ -125,6 +127,12 @@ interface GlifoApi {
     @GET("courses/{id}/glossary/suggestions")
     suspend fun getGlossarySuggestions(@Path("id") courseId: Long): ApiResponse<List<GlossarySuggestionResponse>>
 
+    @POST("courses/{id}/glossary/suggestions")
+    suspend fun suggestGlossaryEntry(
+        @Path("id") courseId: Long,
+        @Body request: CreateGlossarySuggestionRequest
+    ): ApiResponse<GlossarySuggestionResponse>
+
     @PATCH("courses/{id}/glossary/suggestions/{suggestionId}")
     suspend fun resolveGlossarySuggestion(
         @Path("id") courseId: Long,
@@ -141,6 +149,12 @@ interface GlifoApi {
 
     @GET("notes/{id}")
     suspend fun getNote(@Path("id") id: Long): ApiResponse<NoteDetailResponse>
+
+    @PUT("notes/{id}")
+    suspend fun updateNote(
+        @Path("id") id: Long,
+        @Body request: UpdateNoteRequest
+    ): ApiResponse<NoteResponse>
 
     // Reconstrucción IA-01 (#42)
     @POST("notes/{id}/reconstruct")

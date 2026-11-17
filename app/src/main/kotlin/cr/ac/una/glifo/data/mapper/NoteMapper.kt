@@ -9,12 +9,14 @@ fun NoteResponse.toDomain(): Note = Note(
     id = id,
     courseId = courseId,
     title = title,
-    classDate = classDate
+    classDate = classDate,
+    syllabusTopicId = syllabusTopicId
 )
 
 // Domain -> Request DTO
 fun Note.toCreateRequest(): CreateNoteRequest = CreateNoteRequest(
     courseId = courseId,
     title = title,
-    classDate = classDate
+    classDate = classDate,
+    syllabusTopicId = syllabusTopicId
 )

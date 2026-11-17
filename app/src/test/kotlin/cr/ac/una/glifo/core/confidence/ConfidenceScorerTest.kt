@@ -176,4 +176,29 @@ class ConfidenceScorerTest {
 
         assertEquals(ConfidenceScorer.score(ocr, regionMetrics), ConfidenceScorer.score(ocr, regionMetrics))
     }
+
+    @Test
+    fun `should apply glossary boost even when ML Kit reports its own confidence`() {
+        val ocr = cleanFragment("el eje es la asintota").copy(confidence = 0.65f)
+        val regionMetrics = metrics(componentCount = 18)
+
+        val withoutGlossary = ConfidenceScorer.score(ocr, regionMetrics)
+        val withGlossary = ConfidenceScorer.score(ocr, regionMetrics, glossary = listOf("asíntota"))
+
+        assertFalse(withoutGlossary.isAboveThreshold)
+        assertTrue(withGlossary.isAboveThreshold)
+        assertEquals(0.10f, withGlossary.breakdown.getValue("glossaryBoost"), 0.0001f)
+        assertTrue(withGlossary.value > withoutGlossary.value)
+    }
+
+    @Test
+    fun `should cap overconfident ML Kit read when most ink went unread`() {
+        val ocr = cleanFragment("ab").copy(confidence = 0.92f)
+        val denseUnreadInk = metrics(componentCount = 40)
+
+        val result = ConfidenceScorer.score(ocr, denseUnreadInk)
+
+        assertEquals(0.2f, result.breakdown.getValue("inkAgreement"), 0.001f)
+        assertFalse(result.isAboveThreshold)
+    }
 }

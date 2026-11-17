@@ -147,7 +147,9 @@ object CoverageMapper {
         locale: Locale = Locale.getDefault()
     ): List<CoverageTopic> {
         val leafDtos = dto.topics.filter { it.state != null }.ifEmpty { dto.topics }
-        return leafDtos.map { it.toDomainTopic(zoneId, locale) }
+        val unitLabels = dto.topics.filter { it.state == null }
+            .associate { it.topicId to "${it.code} · ${it.title}".uppercase(locale) }
+        return leafDtos.map { it.toDomainTopic(zoneId, locale).copy(unitLabel = it.parentId?.let(unitLabels::get)) }
     }
 
     fun TopicCoverageResponseDto.toDomainTopic(

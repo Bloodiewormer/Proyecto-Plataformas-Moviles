@@ -17,7 +17,13 @@ import cr.ac.una.glifo.domain.model.NotePageInfo
 import cr.ac.una.glifo.domain.model.RegionKind
 import cr.ac.una.glifo.domain.model.routeRes
 
-fun NoteEntity.toDomain(): Note = Note(id = id, courseId = courseId, title = title, classDate = classDate)
+fun NoteEntity.toDomain(syllabusTopicId: Long? = null): Note = Note(
+    id = id,
+    courseId = courseId,
+    title = title,
+    classDate = classDate,
+    syllabusTopicId = syllabusTopicId
+)
 
 /**
  * Contenido de un apunte capturado en este teléfono: una fila por región que devolvió el
@@ -27,7 +33,8 @@ fun buildLocalNoteContent(
     note: NoteEntity,
     pages: List<NotePageEntity>,
     corrections: List<FragmentCorrectionEntity>,
-    hasPendingSync: Boolean
+    hasPendingSync: Boolean,
+    syllabusTopicId: Long? = null
 ): NoteContent {
     val corrected = corrections.associate { it.fragmentId to it.correctedText }
     val pageInfos = mutableListOf<NotePageInfo>()
@@ -66,7 +73,7 @@ fun buildLocalNoteContent(
     }
 
     return NoteContent(
-        note = note.toDomain(),
+        note = note.toDomain(syllabusTopicId),
         source = if (pages.isEmpty()) NoteContentSource.Unavailable else NoteContentSource.LocalPipeline,
         pages = pageInfos,
         fragments = fragments,
@@ -85,10 +92,12 @@ fun buildServerNoteContent(
     note: NoteEntity,
     corrections: List<FragmentCorrectionEntity>,
     hasPendingSync: Boolean,
-    pages: List<NotePageEntity> = emptyList()
+    pages: List<NotePageEntity> = emptyList(),
+    syllabusTopicId: Long? = null
 ): NoteContent {
     val corrected = corrections.associate { it.fragmentId to it.correctedText }
     val fragments = note.contentJson?.let { parseReconstruction(it, corrected) }.orEmpty()
+    val suggestedTopicId = parseSuggestedTopicId(note.contentJson)
     val pageInfos = pages.sortedBy { it.pageIndex }.map { page ->
         val analysis = pageAnalysisFromSnapshotJson(page.analysisJson)
         NotePageInfo(
@@ -101,15 +110,33 @@ fun buildServerNoteContent(
         )
     }
     return NoteContent(
-        note = note.toDomain(),
+        note = note.toDomain(syllabusTopicId),
         source = if (fragments.isEmpty()) NoteContentSource.Unavailable else NoteContentSource.ServerReconstruction,
         pages = pageInfos,
         fragments = fragments,
         hasPendingSync = hasPendingSync,
         threshold = RegionClassifier.TEXT_CONFIDENCE_GATE,
         status = note.status,
-        serverId = note.serverId
+        serverId = note.serverId,
+        suggestedTopicId = suggestedTopicId
     )
+}
+
+internal fun parseSuggestedTopicId(json: String?): Long? {
+    if (json.isNullOrBlank()) return null
+    val root = runCatching { JsonParser.parseString(json).asJsonObject }.getOrNull() ?: return null
+    val raw = root.get("suggestedTopicId")?.takeIf { !it.isJsonNull }
+        ?: root.get("suggested_topic_id")?.takeIf { !it.isJsonNull }
+        ?: return null
+    val parsed = runCatching {
+        val primitive = raw.asJsonPrimitive
+        when {
+            primitive.isNumber -> primitive.asLong
+            primitive.isString -> primitive.asString.trim().toLongOrNull()
+            else -> null
+        }
+    }.getOrNull()
+    return parsed?.takeIf { it > 0L }
 }
 
 /** Recorre `blocks` del documento IA-01; un bloque PARAGRAPH aporta un fragmento por span. */

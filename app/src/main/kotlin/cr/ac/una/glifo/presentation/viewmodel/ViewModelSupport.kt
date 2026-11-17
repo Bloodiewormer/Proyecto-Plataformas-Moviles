@@ -60,6 +60,16 @@ fun AppError.toReconstructMessage(context: Context): String = when (this) {
     else -> toMessage(context)
 }
 
+fun AppError.toTopicUpdateMessage(context: Context): String = when (this) {
+    is AppError.NoConnection -> context.getString(R.string.note_topic_error_no_connection)
+    is AppError.Validation -> if (field == "serverId") {
+        context.getString(R.string.note_topic_error_not_synced)
+    } else {
+        issue
+    }
+    else -> toMessage(context)
+}
+
 /** Straight [Result] → [UiState] mapping for screens that don't need a distinct Empty case. */
 fun <T> Result<T>.toUiState(): UiState<T> = when (this) {
     is Result.Success -> UiState.Success(value)

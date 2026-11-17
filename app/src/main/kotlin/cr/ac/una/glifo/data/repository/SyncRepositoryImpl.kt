@@ -9,6 +9,7 @@ import cr.ac.una.glifo.core.datastore.AppPreferences
 import cr.ac.una.glifo.core.push.DevicePushManager
 import cr.ac.una.glifo.core.push.QueueCompletionReportOutcome
 import cr.ac.una.glifo.core.sync.SyncScheduler
+import cr.ac.una.glifo.data.datasource.local.NoteTopicCache
 import cr.ac.una.glifo.data.datasource.local.dao.NoteDao
 import cr.ac.una.glifo.data.datasource.local.dao.SyncOperationDao
 import cr.ac.una.glifo.data.datasource.local.entity.NotePageEntity
@@ -58,16 +59,57 @@ import kotlin.math.max
  * Cola offline (issue #26): el outbox en Room y el proceso que la vacia contra la API.
  */
 @Singleton
-class SyncRepositoryImpl @Inject constructor(
-    private val api: GlifoApi,
-    private val syncDao: SyncOperationDao,
-    private val noteDao: NoteDao,
-    private val scheduler: SyncScheduler,
-    private val devicePushManager: DevicePushManager?,
+class SyncRepositoryImpl : SyncRepository {
+
+    private val api: GlifoApi
+    private val syncDao: SyncOperationDao
+    private val noteDao: NoteDao
+    private val scheduler: SyncScheduler
+    private val devicePushManager: DevicePushManager?
     // null en las pruebas: se comporta como si N2 estuviera permitido.
-    private val appPreferences: AppPreferences? = null,
-    @ApplicationContext private val appContext: Context? = null
-) : SyncRepository {
+    private val appPreferences: AppPreferences?
+    private val appContext: Context?
+    private val noteTopicCache: NoteTopicCache?
+
+    @Inject
+    constructor(
+        api: GlifoApi,
+        syncDao: SyncOperationDao,
+        noteDao: NoteDao,
+        scheduler: SyncScheduler,
+        devicePushManager: DevicePushManager?,
+        appPreferences: AppPreferences?,
+        @ApplicationContext appContext: Context?,
+        noteTopicCache: NoteTopicCache
+    ) {
+        this.api = api
+        this.syncDao = syncDao
+        this.noteDao = noteDao
+        this.scheduler = scheduler
+        this.devicePushManager = devicePushManager
+        this.appPreferences = appPreferences
+        this.appContext = appContext
+        this.noteTopicCache = noteTopicCache
+    }
+
+    constructor(
+        api: GlifoApi,
+        syncDao: SyncOperationDao,
+        noteDao: NoteDao,
+        scheduler: SyncScheduler,
+        devicePushManager: DevicePushManager?,
+        appPreferences: AppPreferences? = null,
+        appContext: Context? = null
+    ) {
+        this.api = api
+        this.syncDao = syncDao
+        this.noteDao = noteDao
+        this.scheduler = scheduler
+        this.devicePushManager = devicePushManager
+        this.appPreferences = appPreferences
+        this.appContext = appContext
+        this.noteTopicCache = null
+    }
 
     constructor(
         api: GlifoApi,
@@ -79,7 +121,9 @@ class SyncRepositoryImpl @Inject constructor(
         syncDao = syncDao,
         noteDao = noteDao,
         scheduler = scheduler,
-        devicePushManager = null
+        devicePushManager = null,
+        appPreferences = null,
+        appContext = null
     )
 
     // Un solo vaciado a la vez: el worker y el botón "sincronizar ahora" podrían coincidir.
@@ -258,6 +302,7 @@ class SyncRepositoryImpl @Inject constructor(
             val reconstructed = api.reconstructNote(serverId).data
             val contentJson = reconstructed.content?.takeIf { !it.isJsonNull }?.toString()
             noteDao.setServerContent(note.id, contentJson, reconstructed.status ?: STATUS_READY)
+            noteTopicCache?.setTopicId(note.id, reconstructed.syllabusTopicId)
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (_: Exception) {
@@ -315,7 +360,7 @@ class SyncRepositoryImpl @Inject constructor(
                 }
             }
 
-            // 2. N2 (#41): regiones dudosas / no resueltas con recorte, UNA SOLA VEZ por página (máx. 8 partes).
+            // 2. N2 (#41): regiones dudosas / no resueltas con recorte, UNA SOLA VEZ por página (máx. 24 partes, igual que el backend).
             val repairParts = updatedRegions
                 .filter { it.needsVisionRepair() }
                 .mapNotNull { region ->
@@ -341,10 +386,13 @@ class SyncRepositoryImpl @Inject constructor(
                         val rep = repairedById["r${region.index}"] ?: continue
                         val isResolved = rep.resolvedAt == "N2" && !rep.isUncertain
                         val newValue = rep.resolvedTextOrValue?.takeIf { it.isNotBlank() }
+                        // N2 corrige el tipo cuando el clasificador local se equivocó (p. ej. una fórmula marcada como dibujo).
+                        val kind = repairedRegionKind(rep.kind) ?: region.kind
                         updatedRegions[i] = region.copy(
+                            kind = kind,
                             text = newValue ?: region.text,
-                            latex = if (region.kind == RegionKind.Math) (newValue ?: region.latex) else region.latex,
-                            latexCompiles = if (region.kind == RegionKind.Math) (rep.latexCompiles ?: isResolved) else region.latexCompiles,
+                            latex = if (kind == RegionKind.Math) (newValue ?: region.latex) else region.latex,
+                            latexCompiles = if (kind == RegionKind.Math) (rep.latexCompiles ?: isResolved) else region.latexCompiles,
                             ocrConfidence = rep.confidence,
                             confidenceState = if (isResolved) ConfidenceState.Escalated else ConfidenceState.Uncertain,
                             route = if (isResolved) "N2 · reparación por visión" else region.route,
@@ -560,7 +608,7 @@ class SyncRepositoryImpl @Inject constructor(
 
     private companion object {
         const val STATUS_READY = "READY"
-        const val MAX_REPAIR_PARTS_PER_PAGE = 8
+        const val MAX_REPAIR_PARTS_PER_PAGE = 24
         const val MAX_CROP_BYTES = 950_000
         const val MAX_DECODE_DIMENSION = 1600
 
@@ -577,4 +625,11 @@ class SyncRepositoryImpl @Inject constructor(
             0x44, 0xAE.toByte(), 0x42, 0x60, 0x82.toByte()
         )
     }
+}
+
+internal fun repairedRegionKind(kind: String?): RegionKind? = when (kind?.trim()?.uppercase()) {
+    "MATH" -> RegionKind.Math
+    "TEXT" -> RegionKind.Text
+    "DRAWING" -> RegionKind.Drawing
+    else -> null
 }

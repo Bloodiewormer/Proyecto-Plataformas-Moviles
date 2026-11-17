@@ -181,6 +181,10 @@
     <string name="formula_viewer_photo_placeholder">Fotografía de la región</string>
     <string name="formula_viewer_transcription_section">TRANSCRIPCIÓN</string>
     <string name="formula_viewer_latex_generated">LaTeX generado</string>
+    <string name="formula_viewer_toggle_latex">LaTeX</string>
+    <string name="formula_viewer_toggle_latex_description">Mostrar u ocultar LaTeX sin procesar</string>
+    <string name="formula_viewer_copy_latex">Copiar LaTeX</string>
+    <string name="formula_viewer_copied">Copiado</string>
     <string name="formula_viewer_compiles_jlatex">Compila con JLaTeXMath</string>
     <string name="formula_viewer_engine_confidence">Confianza del motor</string>
     <string name="formula_viewer_correct">Corregir</string>
@@ -250,8 +254,8 @@
 
     <!-- TopicDetailScreen -->
     <string name="topic_detail_why_section">POR QUÉ ESTÁ EN ESTE ESTADO</string>
-    <string name="topic_detail_appears_in_section">DÓNDE APARECE EN TUS APUNTES</string>
-    <string name="topic_detail_no_notes">Todavía no hay apuntes que mencionen este tema.</string>
+    <string name="topic_detail_appears_in_section">APUNTES VINCULADOS</string>
+    <string name="topic_detail_no_notes">Todavía no hay apuntes vinculados a este tema.</string>
     <string name="topic_detail_generate_reinforcement">Generar refuerzo de este tema</string>
 
     <!-- StudyScreen -->
@@ -644,7 +648,7 @@
     <string name="capture_step_glossary_not_cached">sin glosario en el dispositivo (se descarga al abrir la cámara con conexión)</string>
     <string name="capture_step_glossary_cached">glosario v%1$d (%2$d términos, copia local)</string>
     <string name="capture_step_n15_name">N1.5 - OCR matemático</string>
-    <string name="capture_step_n15_desc_active">%1$d regiones enrutadas a conversión LaTeX - capa gratuita</string>
+    <string name="capture_step_n15_desc_active">%1$d regiones enrutadas a conversión LaTeX en el servidor (bajo costo)</string>
     <string name="capture_step_n15_desc_empty">No se detectaron fórmulas en esta página.</string>
     <string name="capture_step_n2_name">N2 - Reparación por visión</string>
     <string name="capture_step_n2_desc_active">%1$d regiones no superaron la compuerta de N1.</string>
@@ -678,6 +682,19 @@
     <string name="note_error_fragment_missing">Ese fragmento ya no existe en el apunte</string>
     <string name="note_error_title_required">El título es obligatorio</string>
     <string name="note_error_not_found">Apunte no encontrado</string>
+    <string name="note_topic_section_title">TEMA</string>
+    <string name="note_topic_unlinked">Sin tema vinculado</string>
+    <string name="note_topic_select">Seleccionar</string>
+    <string name="note_topic_change">Cambiar</string>
+    <string name="note_topic_fallback_label">Tema #%1$d</string>
+    <string name="note_topic_suggested_label">Tema sugerido: %1$s</string>
+    <string name="note_topic_suggested_accept">Aceptar</string>
+    <string name="note_topic_picker_title">Seleccionar tema del temario</string>
+    <string name="note_topic_picker_empty">Todavía no hay temas disponibles en este curso.</string>
+    <string name="note_topic_picker_retry">Reintentar</string>
+    <string name="note_topic_picker_clear">Quitar tema vinculado</string>
+    <string name="note_topic_error_no_connection">Sin conexión. Conectate a internet para guardar el tema del apunte.</string>
+    <string name="note_topic_error_not_synced">Esperá a que el apunte se sincronice con el servidor antes de vincular un tema.</string>
 
     <string name="sync_item_page_title">%1$s · p.%2$d</string>
     <string name="sync_item_note_title">%1$s · apunte</string>
@@ -697,4 +714,11 @@
     <string name="error_not_found">Recurso no encontrado</string>
     <string name="error_conflict">Conflicto en la solicitud</string>
     <string name="error_server_code">Error del servidor (%1$s)</string>
+    <string name="logout_pending_title">Capturas sin sincronizar</string>
+    <string name="logout_pending_confirm">Cerrar sesión igual</string>
+    <string name="logout_pending_cancel">Seguir con la sesión</string>
+    <plurals name="logout_pending_message">
+        <item quantity="one">Tenés %1$d captura que todavía no se sincronizó. Si cerrás sesión, se borra de este teléfono.</item>
+        <item quantity="other">Tenés %1$d capturas que todavía no se sincronizaron. Si cerrás sesión, se borran de este teléfono.</item>
+    </plurals>
 </resources>

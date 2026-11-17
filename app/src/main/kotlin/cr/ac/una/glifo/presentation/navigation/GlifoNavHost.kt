@@ -27,6 +27,7 @@ import cr.ac.una.glifo.core.network.SessionEvent
 import cr.ac.una.glifo.core.ui.component.ActiveCourseUi
 import cr.ac.una.glifo.core.ui.component.COURSE_SWITCHER_ROUTE
 import cr.ac.una.glifo.core.ui.component.LocalActiveCourse
+import cr.ac.una.glifo.core.ui.component.LocalPendingSyncCount
 import cr.ac.una.glifo.core.ui.component.LocalSessionRole
 import cr.ac.una.glifo.domain.model.GlifoRole
 import cr.ac.una.glifo.presentation.ui.screen.AdminCoursesScreen
@@ -112,7 +113,7 @@ fun GlifoNavHost(
             when (event) {
                 is SessionEvent.SessionExpired -> {
                     sessionExpiredMessage = sessionExpiredText
-                    sessionViewModel.logout()
+                    sessionViewModel.expireSession()
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
                     }
@@ -141,7 +142,8 @@ fun GlifoNavHost(
     // El menú lateral de cualquier pantalla lee de aquí el curso activo y cómo cambiarlo.
     CompositionLocalProvider(
         LocalActiveCourse provides activeCourseUi,
-        LocalSessionRole provides sessionUser?.role
+        LocalSessionRole provides sessionUser?.role,
+        LocalPendingSyncCount provides sessionViewModel::pendingSyncCount
     ) {
     NavHost(
         navController = navController,

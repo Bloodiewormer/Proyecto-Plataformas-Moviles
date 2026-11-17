@@ -38,6 +38,7 @@ interface NoteRepository {
     suspend fun reconstructNote(localNoteId: Long): Result<NoteContent>
 
     suspend fun saveCorrection(noteId: Long, fragmentId: String, correctedText: String): Result<Unit>
+    suspend fun updateNoteTopic(noteId: Long, topicId: Long?): Result<Note>
     suspend fun createNote(courseId: Long, title: String, classDate: String): Result<Note>
     suspend fun deleteNote(noteId: Long): Result<Unit>
 

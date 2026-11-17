@@ -32,8 +32,7 @@ class AuthInterceptor @Inject constructor(
             val hadToken = !token.isNullOrBlank() || request.header("Authorization") != null
             if (!isLoginRequest && hadToken) {
                 runBlocking {
-                    tokenManager.clearAll()
-                    sessionRepository.logout()
+                    sessionRepository.expireSession()
                 }
                 sessionEventBus.emit(SessionEvent.SessionExpired())
             }
