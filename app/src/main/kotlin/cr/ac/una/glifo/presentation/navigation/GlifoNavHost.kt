@@ -246,10 +246,7 @@ fun GlifoNavHost(
         }
 
         composable(Screen.ForgotPassword.route) {
-            ForgotPasswordScreen(
-                onNavigateBack = { navController.popBackStack() },
-                onSendLink = { navController.popBackStack() }
-            )
+            ForgotPasswordScreen(onNavigateBack = { navController.popBackStack() })
         }
 
         composable(Screen.ChangePassword.route) {

@@ -31,7 +31,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /** Mínimo igual al del registro en la app (el backend acepta desde 6). */
-private const val MIN_PASSWORD_LENGTH = 8
+internal const val MIN_PASSWORD_LENGTH = 8
 
 @Composable
 fun ChangePasswordScreen(
@@ -169,7 +169,7 @@ fun ChangePasswordScreen(
 }
 
 @Composable
-private fun ChangePasswordFieldError(message: String?) {
+internal fun ChangePasswordFieldError(message: String?) {
     if (message == null) return
     val colors = GlifoTheme.colors
     Row(

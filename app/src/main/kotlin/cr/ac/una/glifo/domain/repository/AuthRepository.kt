@@ -17,6 +17,10 @@ interface AuthRepository {
     suspend fun changePassword(currentPassword: String, newPassword: String): Result<Unit> =
         Result.Failure(AppError.Unknown)
 
+    /** "Olvidé mi contraseña": cambia la contraseña sin sesión, solo con el correo. */
+    suspend fun forgotPassword(email: String, newPassword: String): Result<Unit> =
+        Result.Failure(AppError.Unknown)
+
     /** Dummy-phase only — see [DemoAccountHint]. */
     suspend fun getDemoAccountHints(): Result<List<DemoAccountHint>>
 }
