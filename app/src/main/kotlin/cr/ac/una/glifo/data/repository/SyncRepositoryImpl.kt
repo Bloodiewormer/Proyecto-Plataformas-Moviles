@@ -5,11 +5,14 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Build
 import cr.ac.una.glifo.R
+import cr.ac.una.glifo.core.datastore.ActiveCourseStore
 import cr.ac.una.glifo.core.datastore.AppPreferences
 import cr.ac.una.glifo.core.push.DevicePushManager
 import cr.ac.una.glifo.core.push.QueueCompletionReportOutcome
+import cr.ac.una.glifo.core.push.SyncNotificationPresenter
 import cr.ac.una.glifo.core.sync.SyncScheduler
 import cr.ac.una.glifo.data.datasource.local.NoteTopicCache
+import cr.ac.una.glifo.data.datasource.local.dao.LocalCourseContextDao
 import cr.ac.una.glifo.data.datasource.local.dao.NoteDao
 import cr.ac.una.glifo.data.datasource.local.dao.SyncOperationDao
 import cr.ac.una.glifo.data.datasource.local.entity.NotePageEntity
@@ -71,6 +74,9 @@ class SyncRepositoryImpl : SyncRepository {
     private val appPreferences: AppPreferences?
     private val appContext: Context?
     private val noteTopicCache: NoteTopicCache?
+    private val syncNotificationPresenter: SyncNotificationPresenter?
+    private val localCourseContextDao: LocalCourseContextDao?
+    private val activeCourseStore: ActiveCourseStore?
 
     @Inject
     constructor(
@@ -81,7 +87,10 @@ class SyncRepositoryImpl : SyncRepository {
         devicePushManager: DevicePushManager?,
         appPreferences: AppPreferences?,
         @ApplicationContext appContext: Context?,
-        noteTopicCache: NoteTopicCache
+        noteTopicCache: NoteTopicCache,
+        syncNotificationPresenter: SyncNotificationPresenter? = null,
+        localCourseContextDao: LocalCourseContextDao? = null,
+        activeCourseStore: ActiveCourseStore? = null
     ) {
         this.api = api
         this.syncDao = syncDao
@@ -91,6 +100,9 @@ class SyncRepositoryImpl : SyncRepository {
         this.appPreferences = appPreferences
         this.appContext = appContext
         this.noteTopicCache = noteTopicCache
+        this.syncNotificationPresenter = syncNotificationPresenter
+        this.localCourseContextDao = localCourseContextDao
+        this.activeCourseStore = activeCourseStore
     }
 
     constructor(
@@ -100,7 +112,10 @@ class SyncRepositoryImpl : SyncRepository {
         scheduler: SyncScheduler,
         devicePushManager: DevicePushManager?,
         appPreferences: AppPreferences? = null,
-        appContext: Context? = null
+        appContext: Context? = null,
+        syncNotificationPresenter: SyncNotificationPresenter? = null,
+        localCourseContextDao: LocalCourseContextDao? = null,
+        activeCourseStore: ActiveCourseStore? = null
     ) {
         this.api = api
         this.syncDao = syncDao
@@ -110,6 +125,9 @@ class SyncRepositoryImpl : SyncRepository {
         this.appPreferences = appPreferences
         this.appContext = appContext
         this.noteTopicCache = null
+        this.syncNotificationPresenter = syncNotificationPresenter
+        this.localCourseContextDao = localCourseContextDao
+        this.activeCourseStore = activeCourseStore
     }
 
     constructor(
@@ -154,6 +172,7 @@ class SyncRepositoryImpl : SyncRepository {
         var uploaded = 0
         var failed = 0
         val incompleteNoteIds = mutableSetOf<Long>()
+        val completedNoteIds = mutableSetOf<Long>()
         val uploadedPagesByNote = mutableMapOf<Long, MutableList<NotePageEntity>>()
         val operations = syncDao.runnable()
 
@@ -183,6 +202,7 @@ class SyncRepositoryImpl : SyncRepository {
                 Step.Done -> {
                     syncDao.update(operation.id, STATUS_DONE, operation.attempts + 1, null, now())
                     uploaded++
+                    completedNoteIds += operation.noteId
                     if (operation.entityType == TYPE_UPLOAD_PAGE) {
                         val hasMoreInBatch = operations
                             .subList(index + 1, operations.size)
@@ -213,17 +233,22 @@ class SyncRepositoryImpl : SyncRepository {
         }
 
         val remaining = syncDao.pendingCount()
-        if (remaining == 0 && failed == 0 && devicePushManager != null) {
-            val reportOutcome = devicePushManager.reportQueueCompletionIfNeeded(uploaded)
-            if (reportOutcome == QueueCompletionReportOutcome.RetryLater) {
-                return@withLock Result.Success(
-                    SyncRunSummary(
-                        uploaded = uploaded,
-                        failed = failed,
-                        remaining = remaining,
-                        outcome = SyncRunOutcome.RetryLater
+        if (remaining == 0 && failed == 0) {
+            if (uploaded > 0) {
+                notifyLocalSyncCompleteIfNeeded(completedNoteIds.size, completedNoteIds)
+            }
+            if (devicePushManager != null) {
+                val reportOutcome = devicePushManager.reportQueueCompletionIfNeeded(uploaded)
+                if (reportOutcome == QueueCompletionReportOutcome.RetryLater) {
+                    return@withLock Result.Success(
+                        SyncRunSummary(
+                            uploaded = uploaded,
+                            failed = failed,
+                            remaining = remaining,
+                            outcome = SyncRunOutcome.RetryLater
+                        )
                     )
-                )
+                }
             }
         }
 
@@ -234,6 +259,27 @@ class SyncRepositoryImpl : SyncRepository {
                 remaining = remaining,
                 outcome = SyncRunOutcome.Completed
             )
+        )
+    }
+
+    private suspend fun notifyLocalSyncCompleteIfNeeded(uploaded: Int, completedNoteIds: Set<Long>) {
+        val presenter = syncNotificationPresenter ?: return
+        var noteTitle: String? = null
+        var courseName: String? = null
+
+        val noteId = completedNoteIds.firstOrNull()
+        if (noteId != null) {
+            val note = noteDao.noteById(noteId)
+            if (note != null) {
+                noteTitle = note.title
+                courseName = localCourseContextDao?.forCourse(note.courseId)?.courseName
+                    ?: activeCourseStore?.activeCourse?.value?.takeIf { it.id == note.courseId }?.name
+            }
+        }
+        presenter.showLocalSyncCompleteNotification(
+            uploadedCount = uploaded,
+            noteTitle = if (completedNoteIds.size == 1) noteTitle else null,
+            courseName = courseName
         )
     }
 

@@ -104,6 +104,7 @@
     <string name="settings_allow_vision_escalation">Permitir escalar a visión (N2)</string>
     <string name="settings_section_sync">SINCRONIZACIÓN</string>
     <string name="settings_sync_wifi_only">Sincronizar solo con wifi</string>
+    <string name="settings_daily_study_reminder">Recordatorio diario de repaso</string>
     <string name="settings_notify_queue_done">Avisar cuando termine la cola</string>
     <string name="settings_section_about">ACERCA DE</string>
     <string name="settings_sync_queue">Cola de sincronización</string>
@@ -526,13 +527,38 @@
     <string name="note_reconstruct_error_no_pages">Esta nota todavía no tiene páginas subidas en el servidor.</string>
     <string name="note_reconstruct_error_not_synced">El apunte todavía no se ha sincronizado con el servidor.</string>
     <!-- Lab 6: notificaciones push FCM dirigidas por device_id (#48) -->
-    <string name="sync_notification_channel_name">Sincronización de cola offline</string>
+    <string name="sync_notification_channel_name">Sincronización</string>
     <string name="sync_notification_channel_description">Avisos cuando este dispositivo termina de subir su cola sin conexión.</string>
     <string name="sync_notification_title">Sincronización completada</string>
     <string name="sync_notification_body_single">Se subió 1 elemento de la cola sin conexión desde este dispositivo.</string>
     <string name="sync_notification_body_plural">Se subieron %1$d elementos de la cola sin conexión desde este dispositivo.</string>
     <string name="sync_notification_permission_banner">Activá el permiso de notificaciones para recibir el aviso cuando termine la subida.</string>
     <string name="sync_notification_permission_action">Permitir</string>
+
+    <!-- Notificaciones locales -->
+    <string name="sync_local_notification_title">Tu apunte está listo</string>
+    <string name="sync_local_notification_single_title_and_course">Apunte \"%1$s\" subido y procesado en %2$s</string>
+    <string name="sync_local_notification_single_title">Apunte \"%1$s\" subido y procesado</string>
+    <plurals name="sync_local_notification_body">
+        <item quantity="one">%1$d apunte subido y procesado</item>
+        <item quantity="other">%1$d apuntes subidos y procesados</item>
+    </plurals>
+    <plurals name="sync_local_notification_body_with_course">
+        <item quantity="one">%1$d apunte subido y procesado en %2$s</item>
+        <item quantity="other">%1$d apuntes subidos y procesados en %2$s</item>
+    </plurals>
+
+    <string name="study_reminder_channel_name">Recordatorios de estudio</string>
+    <string name="study_reminder_channel_description">Avisos diarios para repasar flashcards y quizzes pendientes.</string>
+    <string name="study_reminder_notification_title">Recordatorio de estudio</string>
+    <plurals name="study_reminder_notification_body_flashcards">
+        <item quantity="one">Tenés %1$d flashcard para repasar hoy en %2$s</item>
+        <item quantity="other">Tenés %1$d flashcards para repasar hoy en %2$s</item>
+    </plurals>
+    <plurals name="study_reminder_notification_body_quiz">
+        <item quantity="one">Tenés %1$d quiz para repasar hoy en %2$s</item>
+        <item quantity="other">Tenés %1$d quizzes para repasar hoy en %2$s</item>
+    </plurals>
     <!-- Lab 6: pantalla de uso de IA (#47) -->
     <string name="ai_cost_tokens_label">Tokens (entrada / salida)</string>
     <string name="ai_cost_tokens_value">%1$d (%2$d / %3$d)</string>

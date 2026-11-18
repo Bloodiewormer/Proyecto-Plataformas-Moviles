@@ -99,7 +99,9 @@ private fun navigateFromDrawer(navController: NavHostController, route: String, 
 @Composable
 fun GlifoNavHost(
     navController: NavHostController = rememberNavController(),
-    startDestination: String = Screen.Splash.route
+    startDestination: String = Screen.Splash.route,
+    targetDestination: String? = null,
+    onClearTargetDestination: () -> Unit = {}
 ) {
     // Obtained once, Activity-scoped: SessionRepositoryImpl backing it is a Hilt
     // @Singleton, so every route below shares the same session state without
@@ -136,6 +138,16 @@ fun GlifoNavHost(
     // Rol real de la sesión: el menú lateral lo usa en vez del rol fijo de cada pantalla.
     val sessionUser by sessionViewModel.currentUser.collectAsState()
     val profilePhotoPath by sessionViewModel.profilePhotoUri.collectAsState()
+
+    LaunchedEffect(targetDestination, sessionUser, activeCourseId) {
+        if (targetDestination == cr.ac.una.glifo.MainActivity.DESTINATION_STUDY && sessionUser != null) {
+            val destination = activeCourseId?.let(Screen.StudyHub::createRoute) ?: Screen.Courses.route
+            navController.navigate(destination) {
+                launchSingleTop = true
+            }
+            onClearTargetDestination()
+        }
+    }
     val activeCourseUi = ActiveCourseUi(
         name = activeCourse?.name,
         onChangeCourse = { navController.navigate(Screen.CourseSwitcher.route) { launchSingleTop = true } }
@@ -192,13 +204,21 @@ fun GlifoNavHost(
                 },
                 onLoginSuccess = { role ->
                     sessionExpiredMessage = null
-                    val homeRoute = when (role) {
-                        GlifoRole.Student -> Screen.Home.route
-                        GlifoRole.Teacher -> Screen.HomeTeacher.route
-                        GlifoRole.Admin -> Screen.HomeAdmin.route
-                    }
-                    navController.navigate(homeRoute) {
-                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    if (targetDestination == cr.ac.una.glifo.MainActivity.DESTINATION_STUDY) {
+                        val destination = activeCourseId?.let(Screen.StudyHub::createRoute) ?: Screen.Courses.route
+                        navController.navigate(destination) {
+                            popUpTo(Screen.Splash.route) { inclusive = true }
+                        }
+                        onClearTargetDestination()
+                    } else {
+                        val homeRoute = when (role) {
+                            GlifoRole.Student -> Screen.Home.route
+                            GlifoRole.Teacher -> Screen.HomeTeacher.route
+                            GlifoRole.Admin -> Screen.HomeAdmin.route
+                        }
+                        navController.navigate(homeRoute) {
+                            popUpTo(Screen.Splash.route) { inclusive = true }
+                        }
                     }
                 }
             )

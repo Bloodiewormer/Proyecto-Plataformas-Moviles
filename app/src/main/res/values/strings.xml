@@ -104,6 +104,7 @@
     <string name="settings_allow_vision_escalation">Allow escalation to vision (N2)</string>
     <string name="settings_section_sync">SYNC</string>
     <string name="settings_sync_wifi_only">Sync on Wi-Fi only</string>
+    <string name="settings_daily_study_reminder">Daily study reminder</string>
     <string name="settings_notify_queue_done">Notify when the queue finishes</string>
     <string name="settings_section_about">ABOUT</string>
     <string name="settings_sync_queue">Sync queue</string>
@@ -526,13 +527,38 @@
     <string name="note_reconstruct_error_no_pages">This note doesn\'t have any pages uploaded to the server yet.</string>
     <string name="note_reconstruct_error_not_synced">This note hasn\'t synced with the server yet.</string>
     <!-- Lab 6: notificaciones push FCM dirigidas por device_id (#48) -->
-    <string name="sync_notification_channel_name">Offline queue sync</string>
+    <string name="sync_notification_channel_name">Synchronization</string>
     <string name="sync_notification_channel_description">Notifications when this device finishes uploading its offline queue.</string>
     <string name="sync_notification_title">Sync completed</string>
     <string name="sync_notification_body_single">1 item from the offline queue was uploaded from this device.</string>
     <string name="sync_notification_body_plural">%1$d items from the offline queue were uploaded from this device.</string>
     <string name="sync_notification_permission_banner">Enable notification permission to receive an alert when the offline queue finishes uploading.</string>
     <string name="sync_notification_permission_action">Allow</string>
+
+    <!-- Notificaciones locales -->
+    <string name="sync_local_notification_title">Your note is ready</string>
+    <string name="sync_local_notification_single_title_and_course">Note \"%1$s\" uploaded and processed in %2$s</string>
+    <string name="sync_local_notification_single_title">Note \"%1$s\" uploaded and processed</string>
+    <plurals name="sync_local_notification_body">
+        <item quantity="one">%1$d note uploaded and processed</item>
+        <item quantity="other">%1$d notes uploaded and processed</item>
+    </plurals>
+    <plurals name="sync_local_notification_body_with_course">
+        <item quantity="one">%1$d note uploaded and processed in %2$s</item>
+        <item quantity="other">%1$d notes uploaded and processed in %2$s</item>
+    </plurals>
+
+    <string name="study_reminder_channel_name">Study reminders</string>
+    <string name="study_reminder_channel_description">Daily reminders to review pending flashcards and quizzes.</string>
+    <string name="study_reminder_notification_title">Study reminder</string>
+    <plurals name="study_reminder_notification_body_flashcards">
+        <item quantity="one">You have %1$d flashcard to review today in %2$s</item>
+        <item quantity="other">You have %1$d flashcards to review today in %2$s</item>
+    </plurals>
+    <plurals name="study_reminder_notification_body_quiz">
+        <item quantity="one">You have %1$d quiz to review today in %2$s</item>
+        <item quantity="other">You have %1$d quizzes to review today in %2$s</item>
+    </plurals>
     <!-- Lab 6: pantalla de uso de IA (#47) -->
     <string name="ai_cost_tokens_label">Tokens (in / out)</string>
     <string name="ai_cost_tokens_value">%1$d (%2$d / %3$d)</string>
