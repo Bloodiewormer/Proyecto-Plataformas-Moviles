@@ -76,6 +76,7 @@ class NoteContentViewModel : ViewModel {
     fun load(noteId: Long, force: Boolean = false) {
         if (!force && loadedFor == noteId) return
         loadedFor = noteId
+        if (force) topicsLoadedForCourseId = null
         observeJob?.cancel()
         observeJob = viewModelScope.launch {
             if (!force) _state.value = UiState.Loading
@@ -114,8 +115,9 @@ class NoteContentViewModel : ViewModel {
         }
         if (result is Result.Success) {
             val courseId = result.value.note.courseId
-            if (topicsLoadedForCourseId != courseId) {
-                loadCourseTopics(courseId)
+            val currentTopics = (_state.value as? UiState.Success)?.data?.courseTopics.orEmpty()
+            if (topicsLoadedForCourseId != courseId || currentTopics.isEmpty()) {
+                loadCourseTopics(courseId, force = currentTopics.isEmpty())
             }
         }
     }
@@ -139,7 +141,10 @@ class NoteContentViewModel : ViewModel {
                         courseTopics = result.value,
                         isTopicsLoading = false
                     )
-                    is Result.Failure -> currentAfter.copy(isTopicsLoading = false)
+                    is Result.Failure -> {
+                        topicsLoadedForCourseId = null
+                        currentAfter.copy(isTopicsLoading = false)
+                    }
                 }
             )
         }

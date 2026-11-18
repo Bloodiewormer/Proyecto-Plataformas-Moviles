@@ -5,6 +5,9 @@ import cr.ac.una.glifo.core.common.AppError
 import cr.ac.una.glifo.domain.error.Result
 import retrofit2.HttpException
 import java.io.IOException
+import java.net.ConnectException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 
 /**
  * Standardized mapping of network and HTTP errors to domain [AppError] / [Result].
@@ -19,6 +22,12 @@ object ApiErrorHandler {
         return try {
             val response = apiCall()
             Result.Success(transform(response))
+        } catch (e: SocketTimeoutException) {
+            Result.Failure(AppError.Timeout)
+        } catch (e: UnknownHostException) {
+            Result.Failure(AppError.NoConnection)
+        } catch (e: ConnectException) {
+            Result.Failure(AppError.NoConnection)
         } catch (e: IOException) {
             Result.Failure(AppError.NoConnection)
         } catch (e: HttpException) {

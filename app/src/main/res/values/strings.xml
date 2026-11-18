@@ -4,6 +4,7 @@
 
     <!-- Shared / cross-screen (AppError messages, common actions) -->
     <string name="error_no_connection">No connection. Try again.</string>
+    <string name="error_timeout">The server is taking too long to respond. Try again in a moment.</string>
     <string name="error_unauthorized">Your session expired. Sign in again.</string>
     <string name="error_unknown">An unexpected error occurred.</string>
     <string name="common_close">Close</string>
@@ -525,7 +526,7 @@
     <string name="note_reconstruct_error_no_connection">No internet connection. Check your network and try again.</string>
     <string name="note_reconstruct_error_ai_unavailable">The AI service isn\'t available right now. Try again later.</string>
     <string name="note_reconstruct_error_no_pages">This note doesn\'t have any pages uploaded to the server yet.</string>
-    <string name="note_reconstruct_error_not_synced">This note hasn\'t synced with the server yet.</string>
+    <string name="note_reconstruct_error_not_synced">This note is still uploading. Try again when it finishes.</string>
     <!-- Lab 6: notificaciones push FCM dirigidas por device_id (#48) -->
     <string name="sync_notification_channel_name">Synchronization</string>
     <string name="sync_notification_channel_description">Notifications when this device finishes uploading its offline queue.</string>
@@ -716,7 +717,7 @@
     <string name="note_topic_unlinked">No topic linked</string>
     <string name="note_topic_select">Select</string>
     <string name="note_topic_change">Change</string>
-    <string name="note_topic_fallback_label">Topic #%1$d</string>
+    <string name="note_topic_fallback_label">Unnamed topic</string>
     <string name="note_topic_suggested_label">Suggested topic: %1$s</string>
     <string name="note_topic_suggested_accept">Accept</string>
     <string name="note_topic_picker_title">Select syllabus topic</string>

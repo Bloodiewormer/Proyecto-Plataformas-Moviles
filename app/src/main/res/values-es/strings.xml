@@ -4,6 +4,7 @@
 
     <!-- Shared / cross-screen (AppError messages, common actions) -->
     <string name="error_no_connection">Sin conexión. Intentá de nuevo.</string>
+    <string name="error_timeout">El servidor está tardando en responder. Intentá de nuevo en un momento.</string>
     <string name="error_unauthorized">Tu sesión expiró. Iniciá sesión de nuevo.</string>
     <string name="error_unknown">Ocurrió un error inesperado.</string>
     <string name="common_close">Cerrar</string>
@@ -525,7 +526,7 @@
     <string name="note_reconstruct_error_no_connection">Sin conexión a internet. Revisá tu red e intentalo de nuevo.</string>
     <string name="note_reconstruct_error_ai_unavailable">El servicio de IA no está disponible en este momento. Intentalo más tarde.</string>
     <string name="note_reconstruct_error_no_pages">Esta nota todavía no tiene páginas subidas en el servidor.</string>
-    <string name="note_reconstruct_error_not_synced">El apunte todavía no se ha sincronizado con el servidor.</string>
+    <string name="note_reconstruct_error_not_synced">Este apunte todavía se está subiendo. Probá de nuevo cuando termine.</string>
     <!-- Lab 6: notificaciones push FCM dirigidas por device_id (#48) -->
     <string name="sync_notification_channel_name">Sincronización</string>
     <string name="sync_notification_channel_description">Avisos cuando este dispositivo termina de subir su cola sin conexión.</string>
@@ -716,7 +717,7 @@
     <string name="note_topic_unlinked">Sin tema vinculado</string>
     <string name="note_topic_select">Seleccionar</string>
     <string name="note_topic_change">Cambiar</string>
-    <string name="note_topic_fallback_label">Tema #%1$d</string>
+    <string name="note_topic_fallback_label">Tema sin nombre</string>
     <string name="note_topic_suggested_label">Tema sugerido: %1$s</string>
     <string name="note_topic_suggested_accept">Aceptar</string>
     <string name="note_topic_picker_title">Seleccionar tema del temario</string>

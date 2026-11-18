@@ -222,7 +222,7 @@ class NoteRepositoryImpl : NoteRepository {
                 AppError.Validation(
                     field = "serverId",
                     issue = appContext?.getString(R.string.note_reconstruct_error_not_synced)
-                        ?: "El apunte todavía no se ha sincronizado con el servidor."
+                        ?: "Este apunte todavía se está subiendo. Probá de nuevo cuando termine."
                 )
             )
 
