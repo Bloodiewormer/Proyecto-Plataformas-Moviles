@@ -444,14 +444,19 @@
     <!-- AdminUsersScreen -->
     <string name="admin_users_title">Users</string>
     <string name="admin_users_field_email_placeholder">user@una.ac.cr</string>
-    <string name="admin_users_unavailable">User listing and account creation are not available yet. You can still reset a user\'s password by email.</string>
+    <string name="admin_users_you">You</string>
+    <string name="admin_users_empty">No accounts to show.</string>
+    <string name="admin_users_change_role">Change role</string>
+    <string name="admin_users_role_hint">The change applies the next time this person signs in.</string>
+    <string name="admin_users_save_role">Save role</string>
 
     <!-- AdminUserDetailScreen -->
     <string name="admin_user_detail_unavailable">User details and role editing are not available yet.</string>
 
     <!-- AdminRolesScreen -->
     <string name="admin_roles_title">Roles</string>
-    <string name="admin_roles_unavailable">Role and privilege management is not available from the backend yet.</string>
+    <string name="admin_roles_user_count">Accounts: %1$d</string>
+    <string name="admin_roles_privileges">Privileges</string>
 
     <!-- AdminCoursesScreen -->
     <string name="admin_courses_title">Courses</string>

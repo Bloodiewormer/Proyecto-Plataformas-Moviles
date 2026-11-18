@@ -22,5 +22,11 @@ data class UserDto(val id: Long, val email: String, val firstName: String?, val 
 /** POST admin/users/reset-password (solo admin). */
 data class AdminResetPasswordRequest(val email: String)
 
+/** PUT admin/users/{id}/role. [role] = "Student", "Teacher" o "Admin". */
+data class AdminChangeRoleRequest(val role: String)
+
+/** GET admin/users/roles. */
+data class AdminRoleDto(val name: String, val description: String?, val privileges: List<String>, val userCount: Int)
+
 /** La temporal llega en claro una sola vez, para que el admin se la pase al usuario. */
 data class AdminResetPasswordResponse(val email: String, val temporaryPassword: String)

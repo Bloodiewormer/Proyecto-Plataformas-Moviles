@@ -8,7 +8,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LockReset
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -27,9 +26,12 @@ import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
 import cr.ac.una.glifo.domain.error.Result
+import cr.ac.una.glifo.domain.model.AdminUser
 import cr.ac.una.glifo.domain.model.GlifoRole
 import cr.ac.una.glifo.presentation.viewmodel.AdminCoursesViewModel
 import cr.ac.una.glifo.presentation.viewmodel.AdminResetPasswordViewModel
+import cr.ac.una.glifo.presentation.viewmodel.AdminRolesViewModel
+import cr.ac.una.glifo.presentation.viewmodel.AdminUsersViewModel
 import cr.ac.una.glifo.presentation.viewmodel.SessionViewModel
 import cr.ac.una.glifo.presentation.viewmodel.toMessage
 import kotlinx.coroutines.launch
@@ -41,13 +43,18 @@ fun AdminUsersScreen(
     onNavigateDrawer: (String) -> Unit,
     onNavigateToSettings: () -> Unit,
     onLogout: () -> Unit,
+    viewModel: AdminUsersViewModel = hiltViewModel(),
     sessionViewModel: SessionViewModel = hiltViewModel()
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val colors = GlifoTheme.colors
+    val context = LocalContext.current
     val user by sessionViewModel.currentUser.collectAsState()
+    val uiState by viewModel.state.collectAsState()
     var showResetDialog by remember { mutableStateOf(false) }
+    var resetEmail by remember { mutableStateOf("") }
+    var selected by remember { mutableStateOf<AdminUser?>(null) }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -105,42 +112,53 @@ fun AdminUsersScreen(
                 }
             )
 
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .navigationBarsPadding()
-                    .padding(24.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        imageVector = Icons.Default.Info,
-                        contentDescription = null,
-                        tint = colors.textSecondary,
-                        modifier = Modifier.size(28.dp)
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Text(
-                        text = stringResource(R.string.admin_users_unavailable),
-                        fontSize = 14.sp,
-                        color = colors.textSecondary,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    GlifoButton(
-                        text = stringResource(R.string.admin_reset_password_title),
-                        icon = Icons.Default.LockReset,
-                        onClick = { showResetDialog = true },
-                        small = true
-                    )
+            when (val state = uiState) {
+                is UiState.Loading -> GlifoLoadingBox()
+                is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
+                is UiState.Empty -> GlifoEmptyBox(stringResource(R.string.admin_users_empty), stringResource(R.string.common_retry), viewModel::load)
+                is UiState.Success -> Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .navigationBarsPadding()
+                        .verticalScroll(rememberScrollState())
+                        .padding(14.dp)
+                ) {
+                    state.data.forEachIndexed { i, account ->
+                        val isMe = account.id == user?.id
+                        GlifoStaggeredEntry(index = i) {
+                            GlifoCard(
+                                onClick = if (isMe) null else ({ selected = account }),
+                                modifier = Modifier.padding(bottom = 10.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(account.fullName, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                                    if (isMe) GlifoBadge(text = stringResource(R.string.admin_users_you), modifier = Modifier.padding(end = 6.dp))
+                                    GlifoBadge(text = roleLabel(account.role))
+                                }
+                                Text(account.email, fontFamily = FontFamily.Monospace, fontSize = 11.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
+                            }
+                        }
+                    }
                 }
             }
         }
     }
 
+    selected?.let { account ->
+        ChangeRoleDialog(
+            account = account,
+            onSave = { role -> viewModel.changeRole(account.id, role) },
+            onResetPassword = { resetEmail = account.email; selected = null; showResetDialog = true },
+            onDismiss = { selected = null }
+        )
+    }
+
     if (showResetDialog) {
-        ResetPasswordDialog(onDismiss = { showResetDialog = false })
+        ResetPasswordDialog(initialEmail = resetEmail, onDismiss = { showResetDialog = false; resetEmail = "" })
     }
 }
 
@@ -151,12 +169,13 @@ fun AdminUsersScreen(
 @Composable
 private fun ResetPasswordDialog(
     onDismiss: () -> Unit,
+    initialEmail: String = "",
     viewModel: AdminResetPasswordViewModel = hiltViewModel()
 ) {
     val colors = GlifoTheme.colors
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var email by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf(initialEmail) }
     var working by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var temporary by remember { mutableStateOf<String?>(null) }
@@ -242,6 +261,88 @@ private fun ResetPasswordDialog(
     }
 }
 
+@Composable
+private fun roleLabel(role: GlifoRole): String = when (role) {
+    GlifoRole.Student -> stringResource(R.string.login_role_student)
+    GlifoRole.Teacher -> stringResource(R.string.login_role_teacher)
+    GlifoRole.Admin -> stringResource(R.string.login_role_admin)
+}
+
+@Composable
+private fun roleNameLabel(name: String): String = when (name) {
+    "ROLE_STUDENT" -> roleLabel(GlifoRole.Student)
+    "ROLE_TEACHER" -> roleLabel(GlifoRole.Teacher)
+    "ROLE_ADMIN" -> roleLabel(GlifoRole.Admin)
+    else -> name
+}
+
+/** Elegir el rol de otra cuenta. El backend no deja cambiar el propio, por eso esa fila no abre el dialogo. */
+@Composable
+private fun ChangeRoleDialog(
+    account: AdminUser,
+    onSave: suspend (GlifoRole) -> Result<AdminUser>,
+    onResetPassword: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    val colors = GlifoTheme.colors
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var role by remember { mutableStateOf(account.role) }
+    var working by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        GlifoCard {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(stringResource(R.string.admin_users_change_role), fontSize = 17.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.common_close), tint = colors.textSecondary, modifier = Modifier.clickable(onClick = onDismiss))
+            }
+            Text(account.fullName, fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.padding(top = 8.dp))
+            Text(account.email, fontFamily = FontFamily.Monospace, fontSize = 11.sp, color = colors.textSecondary)
+            Spacer(modifier = Modifier.height(8.dp))
+            GlifoRole.entries.forEach { option ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { role = option; error = null },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    RadioButton(selected = role == option, onClick = { role = option; error = null })
+                    Text(roleLabel(option), fontSize = 14.sp, color = colors.textPrimary)
+                }
+            }
+            Text(stringResource(R.string.admin_users_role_hint), fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 4.dp))
+            error?.let { Text(it, fontSize = 13.sp, color = colors.alert, modifier = Modifier.padding(top = 6.dp)) }
+            Spacer(modifier = Modifier.height(14.dp))
+            GlifoButton(
+                text = if (working) stringResource(R.string.change_password_saving) else stringResource(R.string.admin_users_save_role),
+                enabled = !working && role != account.role,
+                onClick = {
+                    working = true
+                    scope.launch {
+                        when (val r = onSave(role)) {
+                            is Result.Success -> onDismiss()
+                            is Result.Failure -> error = r.error.toMessage(context)
+                        }
+                        working = false
+                    }
+                }
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            GlifoButton(
+                text = stringResource(R.string.admin_reset_password_title),
+                icon = Icons.Default.LockReset,
+                variant = GlifoButtonVariant.Secondary,
+                onClick = onResetPassword
+            )
+        }
+    }
+}
+
 // ── Screen J2: Detalle Usuario Admin ───────────────────────────────────────
 @Composable
 fun AdminUserDetailScreen(
@@ -268,12 +369,15 @@ fun AdminRolesScreen(
     onNavigateDrawer: (String) -> Unit,
     onNavigateToSettings: () -> Unit,
     onLogout: () -> Unit,
+    viewModel: AdminRolesViewModel = hiltViewModel(),
     sessionViewModel: SessionViewModel = hiltViewModel()
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val colors = GlifoTheme.colors
+    val context = LocalContext.current
     val user by sessionViewModel.currentUser.collectAsState()
+    val uiState by viewModel.state.collectAsState()
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -321,17 +425,45 @@ fun AdminRolesScreen(
                 onNavigationClick = { scope.launch { drawerState.open() } }
             )
 
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .navigationBarsPadding()
-            ) {
-                GlifoEmptyBox(
-                    message = stringResource(R.string.admin_roles_unavailable),
-                    actionText = stringResource(R.string.common_nav_back),
-                    onAction = onNavigateBackOrMenu
-                )
+            when (val state = uiState) {
+                is UiState.Loading -> GlifoLoadingBox()
+                is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
+                is UiState.Empty -> GlifoEmptyBox(stringResource(R.string.admin_users_empty), stringResource(R.string.common_retry), viewModel::load)
+                is UiState.Success -> Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .navigationBarsPadding()
+                        .verticalScroll(rememberScrollState())
+                        .padding(14.dp)
+                ) {
+                    state.data.forEachIndexed { i, role ->
+                        GlifoStaggeredEntry(index = i) {
+                            GlifoCard(modifier = Modifier.padding(bottom = 10.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(roleNameLabel(role.name), fontSize = 16.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                                    GlifoBadge(text = stringResource(R.string.admin_roles_user_count, role.userCount))
+                                }
+                                role.description?.let {
+                                    Text(it, fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
+                                }
+                                Text(
+                                    stringResource(R.string.admin_roles_privileges),
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = colors.textPrimary,
+                                    modifier = Modifier.padding(top = 10.dp, bottom = 4.dp)
+                                )
+                                role.privileges.forEach { privilege ->
+                                    Text(privilege, fontFamily = FontFamily.Monospace, fontSize = 11.sp, color = colors.textSecondary)
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }

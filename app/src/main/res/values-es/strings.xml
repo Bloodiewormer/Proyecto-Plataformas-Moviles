@@ -444,14 +444,19 @@
     <!-- AdminUsersScreen -->
     <string name="admin_users_title">Usuarios</string>
     <string name="admin_users_field_email_placeholder">usuario@una.ac.cr</string>
-    <string name="admin_users_unavailable">El listado y la creación de cuentas aún no están disponibles. Todavía podés restablecer la contraseña de un usuario por correo.</string>
+    <string name="admin_users_you">Vos</string>
+    <string name="admin_users_empty">No hay cuentas para mostrar.</string>
+    <string name="admin_users_change_role">Cambiar rol</string>
+    <string name="admin_users_role_hint">El cambio aplica la próxima vez que esa persona inicie sesión.</string>
+    <string name="admin_users_save_role">Guardar rol</string>
 
     <!-- AdminUserDetailScreen -->
     <string name="admin_user_detail_unavailable">El detalle de usuario y la edición de roles aún no están disponibles.</string>
 
     <!-- AdminRolesScreen -->
     <string name="admin_roles_title">Roles</string>
-    <string name="admin_roles_unavailable">La gestión de roles y privilegios aún no está disponible desde el backend.</string>
+    <string name="admin_roles_user_count">Cuentas: %1$d</string>
+    <string name="admin_roles_privileges">Privilegios</string>
 
     <!-- AdminCoursesScreen -->
     <string name="admin_courses_title">Cursos</string>

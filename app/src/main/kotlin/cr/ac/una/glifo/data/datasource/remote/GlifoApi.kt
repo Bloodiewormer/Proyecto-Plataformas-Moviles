@@ -1,6 +1,9 @@
 package cr.ac.una.glifo.data.datasource.remote
 
+import cr.ac.una.glifo.data.dto.AdminChangeRoleRequest
 import cr.ac.una.glifo.data.dto.AdminResetPasswordRequest
+import cr.ac.una.glifo.data.dto.AdminRoleDto
+import cr.ac.una.glifo.data.dto.UserDto
 import cr.ac.una.glifo.data.dto.AdminResetPasswordResponse
 import cr.ac.una.glifo.data.dto.AiUsageResponseDto
 import cr.ac.una.glifo.data.dto.ApiResponse
@@ -86,6 +89,18 @@ interface GlifoApi {
     suspend fun getAvatar(): Response<ResponseBody>
 
     /** Solo admin (USER_MANAGE). 404 si el correo no existe; 400 si es la propia cuenta o el correo no es válido. */
+    /** Solo admin (USER_MANAGE): todas las cuentas con su rol. */
+    @GET("admin/users")
+    suspend fun getAdminUsers(): ApiResponse<List<UserDto>>
+
+    /** Solo admin (USER_MANAGE): los roles con sus privilegios y cuántas cuentas tiene cada uno. */
+    @GET("admin/users/roles")
+    suspend fun getAdminRoles(): ApiResponse<List<AdminRoleDto>>
+
+    /** Solo admin (ROLE_MANAGE). 400 si el rol no existe o es la propia cuenta. */
+    @PUT("admin/users/{id}/role")
+    suspend fun changeUserRole(@Path("id") userId: Long, @Body request: AdminChangeRoleRequest): ApiResponse<UserDto>
+
     @POST("admin/users/reset-password")
     suspend fun adminResetPassword(@Body request: AdminResetPasswordRequest): ApiResponse<AdminResetPasswordResponse>
 
