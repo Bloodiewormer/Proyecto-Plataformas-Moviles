@@ -3,6 +3,7 @@ package cr.ac.una.glifo.user.controller
 import cr.ac.una.glifo.security.GlifoUserDetails
 import cr.ac.una.glifo.user.dto.AuthResponse
 import cr.ac.una.glifo.user.dto.ChangePasswordRequest
+import cr.ac.una.glifo.user.dto.ForgotPasswordRequest
 import cr.ac.una.glifo.user.dto.LoginRequest
 import cr.ac.una.glifo.user.dto.RegisterRequest
 import cr.ac.una.glifo.user.service.AuthService
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.*
  * | POST   | /auth/register | 201   | 400, 409 (correo ya registrado), 415 |
  * | POST   | /auth/login    | 200   | 400, 401 (credenciales), 415       |
  * | POST   | /auth/change-password | 204 | 400 (actual incorrecta, igual a la actual o inválida), 401 (sin token), 415 |
+ * | POST   | /auth/forgot-password | 204 | 400 (inválida), 404 (correo no registrado), 415 |
  *
  * change-password es la única de estas rutas que pide token (no está en permitAll).
  */
@@ -47,6 +49,12 @@ class AuthController(private val authService: AuthService) {
         @Valid @RequestBody request: ChangePasswordRequest
     ): ResponseEntity<Void> {
         authService.changePassword(user.userId, request)
+        return ResponseEntity.noContent().build()
+    }
+
+    @PostMapping("/forgot-password")
+    fun forgotPassword(@Valid @RequestBody request: ForgotPasswordRequest): ResponseEntity<Void> {
+        authService.forgotPassword(request)
         return ResponseEntity.noContent().build()
     }
 }

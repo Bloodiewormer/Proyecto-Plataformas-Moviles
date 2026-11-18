@@ -53,6 +53,7 @@ class SecurityConfig(
                 auth.requestMatchers(
                     "$authUrl/register",
                     "$authUrl/login",
+                    "$authUrl/forgot-password",
                     healthUrl,
                     "/error"
                 ).permitAll()

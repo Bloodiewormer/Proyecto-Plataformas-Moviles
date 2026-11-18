@@ -6,6 +6,7 @@ import cr.ac.una.glifo.common.exception.ResourceNotFoundException
 import cr.ac.una.glifo.security.JwtProvider
 import cr.ac.una.glifo.user.dto.AuthResponse
 import cr.ac.una.glifo.user.dto.ChangePasswordRequest
+import cr.ac.una.glifo.user.dto.ForgotPasswordRequest
 import cr.ac.una.glifo.user.dto.LoginRequest
 import cr.ac.una.glifo.user.dto.RegisterRequest
 import cr.ac.una.glifo.user.entity.User
@@ -82,6 +83,15 @@ class AuthService(
         if (passwordEncoder.matches(request.newPassword, user.passwordHash)) {
             throw BadRequestException("La contraseña nueva debe ser distinta de la actual")
         }
+        user.passwordHash = passwordEncoder.encode(request.newPassword) ?: ""
+        userRepository.save(user)
+    }
+
+    /** Cambia la contraseña sin sesión, solo con el correo (ver [ForgotPasswordRequest]). */
+    @Transactional
+    fun forgotPassword(request: ForgotPasswordRequest) {
+        val user = userRepository.findByEmail(request.email.trim())
+            ?: throw ResourceNotFoundException("No existe una cuenta con ese correo")
         user.passwordHash = passwordEncoder.encode(request.newPassword) ?: ""
         userRepository.save(user)
     }

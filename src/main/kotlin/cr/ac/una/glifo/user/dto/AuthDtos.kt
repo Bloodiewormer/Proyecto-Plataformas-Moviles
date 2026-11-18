@@ -32,6 +32,19 @@ data class ChangePasswordRequest(
     val newPassword: String
 )
 
+/**
+ * "Olvidé mi contraseña" sin sesión: basta el correo. Decisión del equipo para la demo, sin
+ * verificación por correo; cualquiera que sepa el correo puede cambiarla.
+ */
+data class ForgotPasswordRequest(
+    @field:NotBlank(message = "El correo es obligatorio")
+    @field:Email(message = "El correo no es válido")
+    val email: String,
+    @field:NotBlank(message = "La contraseña nueva es obligatoria")
+    @field:Size(min = 6, max = 72, message = "La contraseña debe tener entre 6 y 72 caracteres")
+    val newPassword: String
+)
+
 /** Se devuelve tal cual, sin el envoltorio `data`: es el formato que espera la app. */
 data class AuthResponse(
     val token: String,
