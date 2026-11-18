@@ -18,7 +18,9 @@ import tools.jackson.databind.json.JsonMapper
 data class TopicInput(
     val id: Long,
     val code: String,
-    val title: String
+    val title: String,
+    val coverageState: String? = null,
+    val notesText: String? = null
 )
 
 data class GeneratedStudyItem(
@@ -111,20 +113,37 @@ class GenerationService @Autowired constructor(
             throw IllegalArgumentException("La lista de temas no puede estar vacía")
         }
 
+        val topicEntries = topics.map { topic ->
+            buildString {
+                append("topicId=${topic.id} | código=${topic.code} | título=${topic.title}")
+                if (!topic.coverageState.isNullOrBlank()) {
+                    append(" | cobertura=${topic.coverageState}")
+                }
+                if (!topic.notesText.isNullOrBlank()) {
+                    val formatted = topic.notesText.take(1500).lines().joinToString("\n  ") { it.trim() }.trim()
+                    append(" | apuntes_estudiante:\n  $formatted")
+                } else {
+                    append(" | (sin apuntes del estudiante para este tema)")
+                }
+            }
+        }
+
+        val constraints = listOf(
+            "Generá exactamente $itemsPerTopic ítems por cada tema de la lista.",
+            "Mezclá los tipos FLASHCARD, MULTIPLE_CHOICE y TRUE_FALSE.",
+            "Escribí todo el contenido en español claro y académico.",
+            "Usá únicamente los topicId entregados en la lista; no inventés temas fuera del lote.",
+            "En MULTIPLE_CHOICE incluí entre 3 y 5 opciones y exactamente una opción con isCorrect=true.",
+            "En difficulty usá solo EASY, MEDIUM o HARD.",
+            "Para temas con apuntes del estudiante: generá flashcards que refuercen lo que el estudiante escribió (usando sus propias definiciones y fórmulas), y preguntas de quiz (MULTIPLE_CHOICE o TRUE_FALSE) enfocadas en lo que falta o está débil según su cobertura.",
+            "Para temas sin apuntes del estudiante: generá material conceptual a partir del título del tema e indicá en la explicación o hint que es material conceptual base."
+        )
+
         val (systemPrompt, userPrompt) = PromptBuilder()
             .withRole("Sos un docente universitario experto creando material de estudio riguroso en español.")
             .withCourse(courseName)
-            .withTopics(topics.map { "topicId=${it.id} | código=${it.code} | título=${it.title}" })
-            .withConstraints(
-                listOf(
-                    "Generá exactamente $itemsPerTopic ítems por cada tema de la lista.",
-                    "Mezclá los tipos FLASHCARD, MULTIPLE_CHOICE y TRUE_FALSE.",
-                    "Escribí todo el contenido en español claro y académico.",
-                    "Usá únicamente los topicId entregados en la lista; no inventés temas fuera del lote.",
-                    "En MULTIPLE_CHOICE incluí entre 3 y 5 opciones y exactamente una opción con isCorrect=true.",
-                    "En difficulty usá solo EASY, MEDIUM o HARD."
-                )
-            )
+            .withTopics(topicEntries)
+            .withConstraints(constraints)
             .withOutputSchema(OUTPUT_SCHEMA_EXAMPLE)
             .build()
 

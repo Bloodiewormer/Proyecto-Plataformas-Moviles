@@ -151,7 +151,7 @@ class StudyItemServiceTest {
 
     @Test
     fun `d - tema que ya tiene items no llama a la IA`() {
-        `when`(studyItemRepository.findByCourseIdAndSyllabusTopicId(10L, 101L))
+        `when`(studyItemRepository.findByUserIdAndCourseIdAndSyllabusTopicId(1L, 10L, 101L))
             .thenReturn(listOf(existingFlashcard(topic101)))
 
         val outcome = service.generate(
@@ -175,9 +175,9 @@ class StudyItemServiceTest {
 
     @Test
     fun `e - mezcla de temas nuevos y existentes envia solo los nuevos a la IA en una sola llamada`() {
-        `when`(studyItemRepository.findByCourseIdAndSyllabusTopicId(10L, 101L))
+        `when`(studyItemRepository.findByUserIdAndCourseIdAndSyllabusTopicId(1L, 10L, 101L))
             .thenReturn(listOf(existingFlashcard(topic101)))
-        `when`(studyItemRepository.findByCourseIdAndSyllabusTopicId(10L, 102L))
+        `when`(studyItemRepository.findByUserIdAndCourseIdAndSyllabusTopicId(1L, 10L, 102L))
             .thenReturn(emptyList())
 
         @Suppress("UNCHECKED_CAST")
@@ -223,11 +223,11 @@ class StudyItemServiceTest {
     }
 
     @Test
-    fun `f - list sin topicId devuelve todos los items del curso y con topicId filtra por tema`() {
+    fun `f - list sin topicId devuelve todos los items del curso del usuario y con topicId filtra por tema`() {
         val item101 = existingFlashcard(topic101, id = 501L)
         val item102 = existingFlashcard(topic102, id = 502L)
-        `when`(studyItemRepository.findByCourseId(10L)).thenReturn(listOf(item101, item102))
-        `when`(studyItemRepository.findByCourseIdAndSyllabusTopicId(10L, 101L)).thenReturn(listOf(item101))
+        `when`(studyItemRepository.findByUserIdAndCourseId(1L, 10L)).thenReturn(listOf(item101, item102))
+        `when`(studyItemRepository.findByUserIdAndCourseIdAndSyllabusTopicId(1L, 10L, 101L)).thenReturn(listOf(item101))
 
         val allItems = service.list(courseId = 10L, topicId = null, userId = 1L)
         assertEquals(2, allItems.size)
@@ -252,9 +252,42 @@ class StudyItemServiceTest {
     fun `h - list permite acceso al admin aunque no este matriculado`() {
         val item101 = existingFlashcard(topic101, id = 501L)
         `when`(enrollmentRepository.existsByUserIdAndCourseIdAndStatus(99L, 10L, "ACTIVE")).thenReturn(false)
-        `when`(studyItemRepository.findByCourseId(10L)).thenReturn(listOf(item101))
+        `when`(studyItemRepository.findByUserIdAndCourseId(99L, 10L)).thenReturn(listOf(item101))
 
         val items = service.list(courseId = 10L, topicId = null, userId = 99L, isAdmin = true)
         assertEquals(1, items.size)
+    }
+
+    @Test
+    fun `i - regenerate true reemplaza items existentes del estudiante y llama a la IA`() {
+        val oldItem = existingFlashcard(topic101, id = 701L)
+        `when`(studyItemRepository.findByUserIdAndCourseIdAndSyllabusTopicIdIn(1L, 10L, listOf(101L)))
+            .thenReturn(listOf(oldItem))
+
+        val newPayload = """{"schemaVersion":1,"kind":"FLASHCARD","front":"Nuevo frente","back":"Nuevo dorso","difficulty":"EASY","sourceNoteIds":[]}"""
+        val generatedBatch = GeneratedBatch(
+            items = listOf(GeneratedStudyItem(topicId = 101L, kind = "FLASHCARD", payload = newPayload)),
+            llmResult = LlmResult(content = "{}", model = "gpt-4o-mini", inputTokens = 40, outputTokens = 60, latencyMs = 150L)
+        )
+        `when`(
+            generationService.generateStudyItems(
+                anyString() ?: "",
+                anyList() ?: emptyList(),
+                anyInt(),
+                anyOrigin()
+            )
+        ).thenReturn(generatedBatch)
+
+        val outcome = service.generate(
+            courseId = 10L,
+            request = GenerateStudyItemsRequest(topicIds = listOf(101L), itemsPerTopic = 1, regenerate = true),
+            userId = 1L
+        )
+
+        verify(generationService, times(1)).generateStudyItems(anyString() ?: "", anyList() ?: emptyList(), anyInt(), anyOrigin())
+        verify(studyItemRepository, times(1)).deleteAll(listOf(oldItem))
+        assertEquals(1, outcome.items.size)
+        assertEquals(1, outcome.generatedTopics)
+        assertEquals(0, outcome.reusedTopics)
     }
 }

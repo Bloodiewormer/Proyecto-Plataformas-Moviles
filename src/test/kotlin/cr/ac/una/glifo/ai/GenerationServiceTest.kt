@@ -251,4 +251,62 @@ class GenerationServiceTest {
         assertEquals(2, batch.items.size)
         verify(llmClient, times(1)).completeJson(captor.value)
     }
+
+    @Test
+    fun `f - prompt incluye texto de apuntes y cobertura del estudiante`() {
+        val topicWithNotes = TopicInput(
+            id = 101L,
+            code = "U1.1",
+            title = "Definición de límite",
+            coverageState = "SOLID",
+            notesText = "lim x->a f(x) = L cuando para todo eps>0 existe del>0"
+        )
+        val topicWithoutNotes = TopicInput(
+            id = 102L,
+            code = "U1.2",
+            title = "Continuidad",
+            coverageState = "ABSENT",
+            notesText = null
+        )
+
+        val json = """
+            {
+              "items": [
+                {
+                  "topicId": 101,
+                  "kind": "FLASHCARD",
+                  "front": "Frente 101",
+                  "back": "Reverso 101"
+                },
+                {
+                  "topicId": 102,
+                  "kind": "FLASHCARD",
+                  "front": "Frente 102",
+                  "back": "Reverso 102"
+                }
+              ]
+            }
+        """.trimIndent()
+
+        val captor = ArgumentCaptor.forClass(LlmRequest::class.java)
+        `when`(llmClient.completeJson(captor.capture() ?: LlmRequest("", ""))).thenReturn(
+            LlmResult(
+                content = json,
+                model = "gpt-4o-mini",
+                inputTokens = 120,
+                outputTokens = 150,
+                latencyMs = 250L
+            )
+        )
+
+        service.generateStudyItems("Cálculo I", listOf(topicWithNotes, topicWithoutNotes), itemsPerTopic = 1, origin = origin)
+
+        val request = captor.value
+        assertTrue(request.userPrompt.contains("cobertura=SOLID"))
+        assertTrue(request.userPrompt.contains("apuntes_estudiante:"))
+        assertTrue(request.userPrompt.contains("lim x->a f(x) = L"))
+        assertTrue(request.userPrompt.contains("(sin apuntes del estudiante para este tema)"))
+        assertTrue(request.systemPrompt.contains("refuercen lo que el estudiante escribió"))
+        assertTrue(request.systemPrompt.contains("preguntas de quiz"))
+    }
 }

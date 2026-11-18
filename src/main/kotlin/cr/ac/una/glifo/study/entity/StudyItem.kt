@@ -2,6 +2,7 @@ package cr.ac.una.glifo.study.entity
 
 import cr.ac.una.glifo.course.entity.Course
 import cr.ac.una.glifo.course.entity.SyllabusTopic
+import cr.ac.una.glifo.user.entity.User
 import jakarta.persistence.*
 import org.hibernate.Hibernate
 import org.hibernate.annotations.CreationTimestamp
@@ -16,6 +17,7 @@ import java.time.Instant
     name = "study_items",
     indexes = [
         Index(name = "idx_study_items_course_topic", columnList = "course_id, syllabus_topic_id"),
+        Index(name = "idx_study_items_user_course", columnList = "user_id, course_id"),
     ],
     check = [
         CheckConstraint(
@@ -39,6 +41,11 @@ class StudyItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = true)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    var user: User? = null
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "course_id", nullable = false)

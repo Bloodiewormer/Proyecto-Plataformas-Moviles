@@ -20,7 +20,10 @@ data class GenerateStudyItemsRequest(
     @JsonAlias("itemsPerTopic")
     @field:Min(value = 1, message = "Se debe generar al menos 1 ítem por tema")
     @field:Max(value = 5, message = "Se pueden generar como máximo 5 ítems por tema")
-    val itemsPerTopic: Int = 3
+    val itemsPerTopic: Int = 3,
+
+    @JsonProperty("regenerate")
+    val regenerate: Boolean = false
 )
 
 data class StudyItemResponse(
@@ -29,5 +32,6 @@ data class StudyItemResponse(
     @JsonProperty("syllabus_topic_id") val syllabusTopicId: Long,
     val kind: String,
     val payload: JsonNode,
-    @JsonProperty("created_at") val createdAt: Instant
+    @JsonProperty("created_at") val createdAt: Instant,
+    @JsonProperty("user_id") val userId: Long? = null
 )

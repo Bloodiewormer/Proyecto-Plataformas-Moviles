@@ -182,7 +182,7 @@ class AiCallAuditTest {
         val syllabusTopic = SyllabusTopic().apply { id = 101L; code = "U1.1"; title = "Límite"; this.course = ownedCourse }
         `when`(courseRepository.findById(10L)).thenReturn(Optional.of(ownedCourse))
         `when`(syllabusTopicRepository.findByCourseIdOrderByOrderIndex(10L)).thenReturn(listOf(syllabusTopic))
-        `when`(studyItemRepository.findByCourseIdAndSyllabusTopicId(10L, 101L)).thenReturn(
+        `when`(studyItemRepository.findByUserIdAndCourseIdAndSyllabusTopicId(2L, 10L, 101L)).thenReturn(
             listOf(StudyItem().apply { id = 900L; this.course = ownedCourse; this.syllabusTopic = syllabusTopic; kind = "FLASHCARD"; payload = "{}" })
         )
         val courseService = cr.ac.una.glifo.course.service.CourseService(
