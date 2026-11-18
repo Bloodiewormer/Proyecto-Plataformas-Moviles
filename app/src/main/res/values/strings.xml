@@ -579,9 +579,9 @@
     <string name="quiz_result_review_flashcards">Review with flashcards</string>
     <string name="password_show">Show password</string>
     <string name="password_hide">Hide password</string>
-    <string name="forgot_password_not_available">Glifo can\'t email you a reset link yet.</string>
-    <string name="forgot_password_how_to">If you still remember it, sign in and change it in Profile → Change password. If you forgot it, ask the Glifo administrator to reset it: they will give you a temporary password.</string>
-    <string name="forgot_password_back_to_login">Back to sign in</string>
+    <string name="forgot_password_description">Enter your account email and the new password. Next time you sign in, use the new one.</string>
+    <string name="forgot_password_error_not_found">There is no account with that email.</string>
+    <string name="forgot_password_success">Password updated. Sign in with the new one.</string>
     <string name="change_password_title">Change password</string>
     <string name="change_password_description">Enter your current password and the new one. Next time you sign in, use the new one.</string>
     <string name="change_password_current">Current password</string>

@@ -7,6 +7,9 @@ data class AuthResponse(val token: String, val user: UserDto)
 /** POST auth/change-password (camelCase, igual que login y registro). Responde 204. */
 data class ChangePasswordRequest(val currentPassword: String, val newPassword: String)
 
+/** POST auth/forgot-password, sin token. 204 si cambió; 404 si el correo no existe. */
+data class ForgotPasswordRequest(val email: String, val newPassword: String)
+
 /**
  * [role] mirrors [cr.ac.una.glifo.domain.model.GlifoRole]'s names ("Student", "Teacher",
  * "Admin") as a plain string — Gson deserializes it straight off the mock's JSON body, and

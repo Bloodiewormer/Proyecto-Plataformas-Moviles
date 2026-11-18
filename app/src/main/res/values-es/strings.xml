@@ -579,9 +579,9 @@
     <string name="quiz_result_review_flashcards">Repasar con flashcards</string>
     <string name="password_show">Mostrar contraseña</string>
     <string name="password_hide">Ocultar contraseña</string>
-    <string name="forgot_password_not_available">Glifo todavía no puede enviarte un enlace por correo para restablecerla.</string>
-    <string name="forgot_password_how_to">Si todavía la recordás, iniciá sesión y cambiala en Perfil → Cambiar contraseña. Si la olvidaste, pedile al administrador de Glifo que te la restablezca: te va a dar una contraseña temporal.</string>
-    <string name="forgot_password_back_to_login">Volver a iniciar sesión</string>
+    <string name="forgot_password_description">Escribí el correo de tu cuenta y la contraseña nueva. La próxima vez que inicies sesión, usá la nueva.</string>
+    <string name="forgot_password_error_not_found">No existe una cuenta con ese correo.</string>
+    <string name="forgot_password_success">Contraseña actualizada. Iniciá sesión con la nueva.</string>
     <string name="change_password_title">Cambiar contraseña</string>
     <string name="change_password_description">Escribí tu contraseña actual y la nueva. La próxima vez que inicies sesión, usá la nueva.</string>
     <string name="change_password_current">Contraseña actual</string>

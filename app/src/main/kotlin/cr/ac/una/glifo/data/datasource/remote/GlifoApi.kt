@@ -6,6 +6,7 @@ import cr.ac.una.glifo.data.dto.AiUsageResponseDto
 import cr.ac.una.glifo.data.dto.ApiResponse
 import cr.ac.una.glifo.data.dto.AuthResponse
 import cr.ac.una.glifo.data.dto.ChangePasswordRequest
+import cr.ac.una.glifo.data.dto.ForgotPasswordRequest
 import cr.ac.una.glifo.data.dto.CourseDetailResponse
 import cr.ac.una.glifo.data.dto.CourseGlossaryResponse
 import cr.ac.una.glifo.data.dto.CourseResponse
@@ -70,6 +71,10 @@ interface GlifoApi {
     /** Pide token. 204 si cambió; 400 con mensaje si la actual no coincide o la nueva no sirve. */
     @POST("auth/change-password")
     suspend fun changePassword(@Body request: ChangePasswordRequest): Response<Unit>
+
+    /** Sin token. 204 si cambió; 404 si el correo no existe; 400 si la nueva no sirve. */
+    @POST("auth/forgot-password")
+    suspend fun forgotPassword(@Body request: ForgotPasswordRequest): Response<Unit>
 
     /** Foto de perfil del usuario con sesión: 204 al subir; JPEG/PNG de hasta 1 MB. */
     @Multipart

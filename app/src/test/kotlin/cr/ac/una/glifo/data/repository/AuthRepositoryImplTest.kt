@@ -4,6 +4,7 @@ import cr.ac.una.glifo.core.common.AppError
 import cr.ac.una.glifo.core.datastore.TokenManager
 import cr.ac.una.glifo.data.datasource.remote.GlifoApi
 import cr.ac.una.glifo.data.dto.AuthResponse
+import cr.ac.una.glifo.data.dto.ForgotPasswordRequest
 import cr.ac.una.glifo.data.dto.UserDto
 import cr.ac.una.glifo.domain.error.Result
 import cr.ac.una.glifo.domain.model.GlifoRole
@@ -209,5 +210,26 @@ class AuthRepositoryImplTest {
         coVerify(exactly = 0) { tokenManager.clearAll() }
         coVerify(exactly = 0) { localUserDataCleaner.clearUserData() }
         coVerify(exactly = 1) { tokenManager.saveToken(token = "jwt-user-1", userId = 1L, userEmail = "est@una.ac.cr") }
+    }
+
+    @Test
+    fun `forgotPassword sends the trimmed email and succeeds on 204`() = runTest {
+        coEvery { api.forgotPassword(any()) } returns Response.success(204, Unit)
+
+        val result = repository.forgotPassword("  est@una.ac.cr ", "NuevaClave456")
+
+        assertTrue(result is Result.Success)
+        coVerify { api.forgotPassword(ForgotPasswordRequest("est@una.ac.cr", "NuevaClave456")) }
+    }
+
+    @Test
+    fun `forgotPassword maps an unknown email 404 to a Server error`() = runTest {
+        val body = """{"message":"No existe una cuenta con ese correo"}""".toResponseBody("application/json".toMediaTypeOrNull())
+        coEvery { api.forgotPassword(any()) } returns Response.error(404, body)
+
+        val result = repository.forgotPassword("nadie@una.ac.cr", "NuevaClave456")
+
+        val error = (result as Result.Failure).error
+        assertTrue(error is AppError.Server && error.code == "404")
     }
 }
