@@ -69,6 +69,20 @@ data class AdminResetPasswordRequest(
     val email: String
 )
 
+/** El admin cambia el rol de otra cuenta. Valores: "Student", "Teacher" o "Admin" (los de UserResponse.role). */
+data class AdminChangeRoleRequest(
+    @field:NotBlank(message = "El rol es obligatorio")
+    val role: String
+)
+
+/** Un rol con sus privilegios y cuántas cuentas lo tienen (pantalla Roles del admin). */
+data class AdminRoleResponse(
+    val name: String,
+    val description: String?,
+    val privileges: List<String>,
+    val userCount: Int
+)
+
 /** La contraseña temporal se muestra una sola vez al admin, para que se la pase al usuario. */
 data class AdminResetPasswordResponse(
     val email: String,
