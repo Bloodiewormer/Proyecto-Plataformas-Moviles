@@ -15,7 +15,8 @@ data class SyncQueueItem(
     val status: SyncStatus,
     val progress: Float = 0f,
     val attempts: Int = 0,
-    val lastError: String? = null
+    val lastError: String? = null,
+    val pageCount: Int? = null
 )
 
 enum class SyncRunOutcome {

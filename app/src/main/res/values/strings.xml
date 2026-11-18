@@ -104,7 +104,7 @@
     <string name="settings_confidence_threshold_description">Below this value the region escalates to the next engine. It\'s the value on-device processing uses and can\'t be changed here.</string>
     <string name="settings_allow_vision_escalation">Allow escalation to vision (N2)</string>
     <string name="settings_section_sync">SYNC</string>
-    <string name="settings_sync_wifi_only">Sync on Wi-Fi only</string>
+    <string name="settings_sync_wifi_only">Upload captures only on wifi</string>
     <string name="settings_daily_study_reminder">Daily study reminder</string>
     <string name="settings_notify_queue_done">Notify when the queue finishes</string>
     <string name="settings_section_about">ABOUT</string>
@@ -120,7 +120,7 @@
     <!-- CaptureScreen -->
     <string name="capture_page_header">%1$s · page 1</string>
     <string name="capture_default_course_name">Course</string>
-    <string name="capture_framing_hint">Fit the page inside the frame</string>
+    <string name="capture_framing_hint">Line up the sheet with the frame: the whole photo is used</string>
     <string name="capture_gallery_description">Gallery</string>
     <string name="capture_permission_title">Glifo needs the camera</string>
     <string name="capture_permission_description">To capture your notes we need access to the device camera. Nothing is ever uploaded without you asking for it.</string>
@@ -751,5 +751,10 @@
     <plurals name="logout_pending_message">
         <item quantity="one">You have %1$d capture that has not been synced yet. Logging out deletes it from this phone.</item>
         <item quantity="other">You have %1$d captures that have not been synced yet. Logging out deletes them from this phone.</item>
+    </plurals>
+    <string name="capture_join_course_hint">Join a course to save your notes</string>
+    <plurals name="sync_queue_note_pages">
+        <item quantity="one">%1$s · %2$d page</item>
+        <item quantity="other">%1$s · %2$d pages</item>
     </plurals>
 </resources>

@@ -52,6 +52,7 @@ fun CaptureScreen(
     courseId: Long,
     onNavigateBack: () -> Unit,
     onCapturePhoto: (String) -> Unit,
+    onNoActiveCourse: (() -> Unit)? = null,
     viewModel: CaptureViewModel = hiltViewModel()
 ) {
     val colors = GlifoTheme.colors
@@ -60,7 +61,13 @@ fun CaptureScreen(
     val uiState by viewModel.state.collectAsState()
     val course = (uiState as? UiState.Success)?.data
 
-    LaunchedEffect(courseId) { viewModel.load(courseId) }
+    LaunchedEffect(courseId) {
+        if (courseId <= 0L) {
+            onNoActiveCourse?.invoke()
+        } else {
+            viewModel.load(courseId)
+        }
+    }
 
     var hasCameraPermission by remember {
         mutableStateOf(
@@ -169,15 +176,18 @@ fun CaptureScreen(
                 // Framing guide (purely a visual aid — not a real detection result)
                 Box(
                     modifier = Modifier
-                        .align(Alignment.Center)
-                        .size(240.dp, 310.dp)
-                        .border(1.dp, colors.accentText.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
+                        .fillMaxSize()
+                        .statusBarsPadding()
+                        .navigationBarsPadding()
+                        .padding(start = 16.dp, end = 16.dp, top = 52.dp, bottom = 112.dp)
+                        .border(1.dp, colors.accentText.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
                 )
 
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-                        .padding(bottom = 24.dp)
+                        .navigationBarsPadding()
+                        .padding(bottom = 118.dp)
                         .background(colors.surface, RoundedCornerShape(999.dp))
                         .border(1.dp, colors.border, RoundedCornerShape(999.dp))
                         .padding(horizontal = 12.dp, vertical = 5.dp)

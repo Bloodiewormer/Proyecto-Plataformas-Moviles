@@ -104,7 +104,7 @@
     <string name="settings_confidence_threshold_description">Por debajo de este valor la región escala al siguiente motor. Es el valor que usa el procesamiento en el teléfono y no se puede cambiar desde aquí.</string>
     <string name="settings_allow_vision_escalation">Permitir escalar a visión (N2)</string>
     <string name="settings_section_sync">SINCRONIZACIÓN</string>
-    <string name="settings_sync_wifi_only">Sincronizar solo con wifi</string>
+    <string name="settings_sync_wifi_only">Subir capturas solo con wifi</string>
     <string name="settings_daily_study_reminder">Recordatorio diario de repaso</string>
     <string name="settings_notify_queue_done">Avisar cuando termine la cola</string>
     <string name="settings_section_about">ACERCA DE</string>
@@ -120,7 +120,7 @@
     <!-- CaptureScreen -->
     <string name="capture_page_header">%1$s · página 1</string>
     <string name="capture_default_course_name">Curso</string>
-    <string name="capture_framing_hint">Encuadrá la página dentro del marco</string>
+    <string name="capture_framing_hint">Alineá la hoja con el marco: se usa la foto completa</string>
     <string name="capture_gallery_description">Galería</string>
     <string name="capture_permission_title">Glifo necesita la cámara</string>
     <string name="capture_permission_description">Para capturar tus apuntes necesitamos acceso a la cámara del dispositivo. Nunca se sube nada sin que vos lo pidas.</string>
@@ -751,5 +751,10 @@
     <plurals name="logout_pending_message">
         <item quantity="one">Tenés %1$d captura que todavía no se sincronizó. Si cerrás sesión, se borra de este teléfono.</item>
         <item quantity="other">Tenés %1$d capturas que todavía no se sincronizaron. Si cerrás sesión, se borran de este teléfono.</item>
+    </plurals>
+    <string name="capture_join_course_hint">Unite a un curso para guardar tus apuntes</string>
+    <plurals name="sync_queue_note_pages">
+        <item quantity="one">%1$s · %2$d página</item>
+        <item quantity="other">%1$s · %2$d páginas</item>
     </plurals>
 </resources>

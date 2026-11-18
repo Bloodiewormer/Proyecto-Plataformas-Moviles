@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -230,7 +231,12 @@ fun SyncQueueScreen(
                                         Icon(imageVector = Icons.AutoMirrored.Filled.Notes, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
                                     }
                                     Column(modifier = Modifier.weight(1f)) {
-                                        Text(text = item.title, fontSize = 13.sp, color = colors.textPrimary)
+                                        val rowTitle = if (item.pageCount != null && item.pageCount > 0) {
+                                            pluralStringResource(R.plurals.sync_queue_note_pages, item.pageCount, item.title, item.pageCount)
+                                        } else {
+                                            item.title
+                                        }
+                                        Text(text = rowTitle, fontSize = 13.sp, color = colors.textPrimary)
                                         Text(
                                             text = if (item.attempts > 0 && item.status != SyncStatus.Done) {
                                                 stringResource(R.string.sync_queue_attempts, item.attempts, item.timestamp)
