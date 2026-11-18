@@ -12,5 +12,6 @@ fun StudyItem.toResponse(): StudyItemResponse = StudyItemResponse(
     syllabusTopicId = syllabusTopic?.id ?: 0L,
     kind = kind,
     payload = jsonMapper.readTree(payload),
-    createdAt = createdAt
+    createdAt = createdAt,
+    userId = user?.id
 )
