@@ -28,16 +28,17 @@ object PerceptualHasher {
     private const val LOW_FREQ = 8
 
     /**
-     * Distancia máxima (de 64 bits) para considerar dos capturas la misma página. Medido en
-     * GlifoDatabaseTest con hojas de apuntes dibujadas: volver a fotografiar la misma hoja dio
-     * 0 (otra luz), 6 (rotada 1,5°) y 14 (corrida ~1,5 %); hojas distintas dieron 24–32.
+     * Distancia máxima (de 64 bits) para considerar dos capturas la misma página.
+     * Originalmente en 16, pero pruebas en campo mostraron que páginas distintas con la misma
+     * maquetación dieron 14 y 16 bits distintos, solapándose con las repeticiones y provocando
+     * que la app reutilizara análisis erróneamente (el estudiante perdía la página).
      *
-     * El error caro es confundir dos hojas distintas (el estudiante perdería una), así que el
-     * umbral queda más cerca de las repeticiones que de las hojas distintas. pHash no es
-     * invariante a encuadres muy distintos: detecta dobles disparos, reintentos con un
-     * encuadre parecido y la misma foto importada dos veces, no una hoja reencuadrada de cero.
+     * Con el umbral en 10, solo se pretende atrapar dobles disparos y reimportaciones de la
+     * misma foto (o variaciones mínimas de luz y rotación de ~1,5° que dan 0 a 6 bits). Fotos
+     * corridas o con encuadres diferentes quedan por fuera para garantizar que no se confundan
+     * páginas distintas.
      */
-    const val DUPLICATE_THRESHOLD = 16
+    const val DUPLICATE_THRESHOLD = 10
 
     fun hash(bitmap: Bitmap): String {
         val scaled = downsample(bitmap)

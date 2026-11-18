@@ -9,7 +9,8 @@ interface StudyRepository {
     suspend fun generateStudyItems(
         courseId: Long,
         topicIds: List<Long>,
-        itemsPerTopic: Int = 3
+        itemsPerTopic: Int = 3,
+        regenerate: Boolean = false
     ): Result<Unit> = Result.Success(Unit)
 
     suspend fun getFlashcards(courseId: Long): Result<List<Flashcard>>

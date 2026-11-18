@@ -41,10 +41,18 @@ class CaptureReviewViewModelTest {
         override suspend fun hasQualityWarning(photoPath: String?): Result<Boolean> =
             Result.Success(warning)
 
-        override suspend fun analyzePage(photoPath: String?, courseId: Long?): Result<PageAnalysis> =
+        override suspend fun analyzePage(
+            photoPath: String?,
+            courseId: Long?,
+            skipDedup: Boolean
+        ): Result<PageAnalysis> =
             throw UnsupportedOperationException()
 
-        override suspend fun getProcessingSteps(photoPath: String?, courseId: Long?): Result<List<CaptureStep>> =
+        override suspend fun getProcessingSteps(
+            photoPath: String?,
+            courseId: Long?,
+            skipDedup: Boolean
+        ): Result<List<CaptureStep>> =
             throw UnsupportedOperationException()
 
         override suspend fun saveAsNote(photoPath: String, courseId: Long): Result<Long> =

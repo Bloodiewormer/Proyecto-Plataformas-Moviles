@@ -73,13 +73,13 @@ fun NoteTopicSection(
     val linkedTopic = linkedTopicId?.let { topicsById[it] }
     val linkedLabel = when {
         linkedTopic != null -> linkedTopic.displayLabel()
-        linkedTopicId != null -> stringResource(R.string.note_topic_fallback_label, linkedTopicId)
+        linkedTopicId != null -> stringResource(R.string.note_topic_fallback_label)
         else -> stringResource(R.string.note_topic_unlinked)
     }
 
     val showSuggestion = suggestedTopicId != null && linkedTopicId == null
     val suggestedLabel = suggestedTopicId?.let { id ->
-        topicsById[id]?.displayLabel() ?: stringResource(R.string.note_topic_fallback_label, id)
+        topicsById[id]?.displayLabel() ?: stringResource(R.string.note_topic_fallback_label)
     }
 
     Column(modifier = modifier.fillMaxWidth()) {

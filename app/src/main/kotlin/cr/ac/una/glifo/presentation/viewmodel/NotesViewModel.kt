@@ -28,17 +28,38 @@ class NotesViewModel @Inject constructor(
 
     private var courseId: Long? = null
     private var loadJob: Job? = null
+    private var lastPendingCount: Int? = null
+
+    init {
+        viewModelScope.launch {
+            syncRepository.observePendingCount().collect { count ->
+                val prev = lastPendingCount
+                lastPendingCount = count
+
+                val current = _state.value
+                if (current is UiState.Success && current.data.pendingSyncCount != count) {
+                    _state.value = UiState.Success(current.data.copy(pendingSyncCount = count))
+                }
+
+                if (prev != null && count < prev) {
+                    load(showLoading = false)
+                }
+            }
+        }
+    }
 
     /** Apuntes del curso: del servidor si hay red, de Room si no (#25). */
-    fun load(courseId: Long) {
+    fun load(courseId: Long, showLoading: Boolean = true) {
         this.courseId = courseId
         // Al cambiar de curso se cancela la carga anterior: si terminara después, pisaría la del nuevo.
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
-            _state.value = UiState.Loading
+            if (showLoading || _state.value !is UiState.Success) {
+                _state.value = UiState.Loading
+            }
             when (val result = noteRepository.getNoteMetaList(courseId)) {
                 is Result.Success -> {
-                    val pending = (syncRepository.getPendingCount() as? Result.Success)?.value ?: 0
+                    val pending = lastPendingCount ?: (syncRepository.getPendingCount() as? Result.Success)?.value ?: 0
                     _state.value = UiState.Success(NotesUiData(result.value, pending))
                 }
                 is Result.Failure -> _state.value = UiState.Error(result.error)
@@ -48,5 +69,9 @@ class NotesViewModel @Inject constructor(
 
     fun load() {
         courseId?.let { load(it) }
+    }
+
+    fun load(showLoading: Boolean) {
+        courseId?.let { load(it, showLoading) }
     }
 }

@@ -57,6 +57,7 @@ fun SettingsScreen(
     val allowN2 by viewModel.allowVisionEscalation.collectAsState()
     val wifiOnly by viewModel.syncWifiOnly.collectAsState()
     val notifyDone by viewModel.notifySyncDone.collectAsState()
+    val dailyReminder by viewModel.dailyStudyReminder.collectAsState()
     // Umbral real del pipeline (ConfidenceScorer / RegionClassifier); se muestra, no se edita.
     val confidenceThreshold = cr.ac.una.glifo.core.confidence.ConfidenceScorer.DEFAULT_THRESHOLD
     val pendingCountState by viewModel.pendingCount.collectAsState()
@@ -66,6 +67,12 @@ fun SettingsScreen(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted ->
         viewModel.setNotifySyncDone(granted)
+    }
+
+    val reminderPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        viewModel.setDailyStudyReminder(granted)
     }
 
     @Composable
@@ -261,6 +268,24 @@ fun SettingsScreen(
                 GlifoItem(compact = true) {
                     Text(stringResource(R.string.settings_sync_wifi_only), fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
                     GlifoSwitch(wifiOnly) { viewModel.setSyncWifiOnly(it) }
+                }
+                GlifoItem(compact = true) {
+                    Text(stringResource(R.string.settings_daily_study_reminder), fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                    GlifoSwitch(dailyReminder) { enabled ->
+                        if (enabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            val granted = ContextCompat.checkSelfPermission(
+                                context,
+                                Manifest.permission.POST_NOTIFICATIONS
+                            ) == PackageManager.PERMISSION_GRANTED
+                            if (!granted) {
+                                reminderPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                            } else {
+                                viewModel.setDailyStudyReminder(true)
+                            }
+                        } else {
+                            viewModel.setDailyStudyReminder(enabled)
+                        }
+                    }
                 }
                 GlifoItem(compact = true, showBottomBorder = false) {
                     Text(stringResource(R.string.settings_notify_queue_done), fontSize = 15.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))

@@ -14,8 +14,11 @@ import cr.ac.una.glifo.domain.repository.StudyRepository
 import cr.ac.una.glifo.domain.repository.SyncRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
@@ -49,20 +52,44 @@ class HomeViewModel @Inject constructor(
     private val _state = MutableStateFlow<UiState<HomeUiData>>(UiState.Loading)
     val state: StateFlow<UiState<HomeUiData>> = _state.asStateFlow()
 
+    private val _syncCompletedEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val syncCompletedEvent: SharedFlow<Unit> = _syncCompletedEvent.asSharedFlow()
+
     private var loadJob: Job? = null
+    private var lastPendingCount: Int? = null
 
     init {
         // Se recarga sola cuando el usuario elige otro curso en el selector.
         viewModelScope.launch { activeCourseStore.activeCourseId.drop(1).distinctUntilChanged().collect { load() } }
+        viewModelScope.launch {
+            syncRepository.observePendingCount().collect { count ->
+                val prev = lastPendingCount
+                lastPendingCount = count
+
+                val current = _state.value
+                if (current is UiState.Success && current.data.pendingSyncCount != count) {
+                    _state.value = UiState.Success(current.data.copy(pendingSyncCount = count))
+                }
+
+                if (prev != null && count < prev) {
+                    load(showLoading = false)
+                    if (prev > 0 && count == 0) {
+                        _syncCompletedEvent.tryEmit(Unit)
+                    }
+                }
+            }
+        }
         load()
     }
 
-    fun load() {
+    fun load(showLoading: Boolean = true) {
         // Al cambiar de curso se cancela la carga anterior: si terminara después, pisaría la del nuevo.
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
-            _state.value = UiState.Loading
-            val pending = (syncRepository.getPendingCount() as? Result.Success)?.value ?: 0
+            if (showLoading || _state.value !is UiState.Success) {
+                _state.value = UiState.Loading
+            }
+            val pending = lastPendingCount ?: (syncRepository.getPendingCount() as? Result.Success)?.value ?: 0
 
             val courseId = activeCourseStore.activeCourseId.value ?: when (val courses = courseRepository.getStudentCourses()) {
                 is Result.Success -> courses.value.firstOrNull()?.also { activeCourseStore.set(it.id, it.name) }?.id

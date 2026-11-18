@@ -28,6 +28,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.coVerifyOrder
 import io.mockk.mockk
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.ResponseBody.Companion.toResponseBody
@@ -406,5 +407,12 @@ class SyncRepositoryImplTest {
 
         assertEquals(listOf("Derivadas · note", "Derivadas · p.2"), queue.map { it.title })
         coVerify { syncDao.update(1L, SyncOperationEntity.STATUS_PENDING, 1, "Server error (500)", any()) }
+    }
+
+    @Test
+    fun `observePendingCount delegates directly to syncDao`() = runTest {
+        io.mockk.every { syncDao.observePendingCount() } returns kotlinx.coroutines.flow.flowOf(4)
+        val count = repository.observePendingCount().first()
+        assertEquals(4, count)
     }
 }

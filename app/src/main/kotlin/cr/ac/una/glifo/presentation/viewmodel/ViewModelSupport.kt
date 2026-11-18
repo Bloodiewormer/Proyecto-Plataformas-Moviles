@@ -16,6 +16,7 @@ import cr.ac.una.glifo.domain.error.Result
  */
 fun AppError.toMessage(context: Context): String = when (this) {
     is AppError.NoConnection -> context.getString(R.string.error_no_connection)
+    is AppError.Timeout -> context.getString(R.string.error_timeout)
     is AppError.Unauthorized -> context.getString(R.string.error_unauthorized)
     is AppError.Validation -> issue.ifBlank { context.getString(R.string.error_invalid_request) }
     is AppError.Server -> when (code) {
@@ -45,6 +46,7 @@ fun AppError.toLoginMessage(context: Context): String = when (this) {
 /** Mensajes en español específicos para la reconstrucción IA-01 de apuntes (#42). */
 fun AppError.toReconstructMessage(context: Context): String = when (this) {
     is AppError.NoConnection -> context.getString(R.string.note_reconstruct_error_no_connection)
+    is AppError.Timeout -> context.getString(R.string.error_timeout)
     is AppError.Validation -> if (field == "serverId") {
         context.getString(R.string.note_reconstruct_error_not_synced)
     } else {
@@ -62,6 +64,7 @@ fun AppError.toReconstructMessage(context: Context): String = when (this) {
 
 fun AppError.toTopicUpdateMessage(context: Context): String = when (this) {
     is AppError.NoConnection -> context.getString(R.string.note_topic_error_no_connection)
+    is AppError.Timeout -> context.getString(R.string.error_timeout)
     is AppError.Validation -> if (field == "serverId") {
         context.getString(R.string.note_topic_error_not_synced)
     } else {

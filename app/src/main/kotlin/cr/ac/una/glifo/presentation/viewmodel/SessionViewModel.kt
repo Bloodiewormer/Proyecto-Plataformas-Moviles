@@ -6,6 +6,7 @@ import cr.ac.una.glifo.core.datastore.ActiveCourseStore
 import cr.ac.una.glifo.core.network.SessionEvent
 import cr.ac.una.glifo.core.network.SessionEventBus
 import cr.ac.una.glifo.core.push.DevicePushManager
+import cr.ac.una.glifo.core.reminder.StudyReminderScheduler
 import cr.ac.una.glifo.domain.error.Result
 import cr.ac.una.glifo.domain.model.User
 import cr.ac.una.glifo.domain.repository.SessionRepository
@@ -28,7 +29,8 @@ class SessionViewModel @Inject constructor(
     private val activeCourseStore: ActiveCourseStore,
     private val sessionEventBus: SessionEventBus,
     private val devicePushManager: DevicePushManager?,
-    private val syncRepository: SyncRepository? = null
+    private val syncRepository: SyncRepository? = null,
+    private val studyReminderScheduler: StudyReminderScheduler? = null
 ) : ViewModel() {
 
     constructor(
@@ -39,17 +41,25 @@ class SessionViewModel @Inject constructor(
         sessionRepository = sessionRepository,
         activeCourseStore = activeCourseStore,
         sessionEventBus = sessionEventBus,
-        devicePushManager = null
+        devicePushManager = null,
+        syncRepository = null,
+        studyReminderScheduler = null
     )
 
     val currentUser: StateFlow<User?> = sessionRepository.currentUser
     val profilePhotoUri: StateFlow<String?> = sessionRepository.profilePhotoUri
     val sessionEvents: Flow<SessionEvent> = sessionEventBus.events
 
-    fun login(user: User) = sessionRepository.login(user)
+    fun login(user: User) {
+        sessionRepository.login(user)
+        studyReminderScheduler?.scheduleIfEnabled()
+    }
+
+    suspend fun restoreSession(): User? = sessionRepository.restoreSession()
 
     fun logout() {
         activeCourseStore.clear()
+        studyReminderScheduler?.cancel()
         viewModelScope.launch {
             devicePushManager?.unlinkDeviceOnLogout()
             sessionRepository.logout()

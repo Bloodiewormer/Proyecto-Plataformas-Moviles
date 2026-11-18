@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,7 +38,7 @@ import cr.ac.una.glifo.presentation.viewmodel.TeacherHomeViewModel
 import cr.ac.una.glifo.presentation.viewmodel.toMessage
 import kotlinx.coroutines.launch
 
-// ── Screen B2: Inicio Estudiante ──────────────────────────────────────────────
+// ── Screen B2: Inicio Estudiante ────────────────────────────────────────────
 @Composable
 fun HomeScreen(
     onNavigateToCourse: (Long) -> Unit,
@@ -65,8 +66,15 @@ fun HomeScreen(
     val context = LocalContext.current
     val user by sessionViewModel.currentUser.collectAsState()
     val uiState by viewModel.state.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val syncSuccessMessage = stringResource(R.string.home_sync_completed)
 
     LaunchedEffect(Unit) { viewModel.load() }
+    LaunchedEffect(Unit) {
+        viewModel.syncCompletedEvent.collect {
+            snackbarHostState.showSnackbar(syncSuccessMessage)
+        }
+    }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -373,6 +381,20 @@ fun HomeScreen(
                     .navigationBarsPadding()
                     .padding(end = 14.dp, bottom = 20.dp)
             )
+
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .navigationBarsPadding()
+                    .padding(bottom = 16.dp)
+            ) { data ->
+                Snackbar(
+                    snackbarData = data,
+                    containerColor = colors.surfaceHigh,
+                    contentColor = colors.textPrimary
+                )
+            }
         }
     }
 }

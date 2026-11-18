@@ -65,9 +65,43 @@ class SessionRepositoryImplTest {
     }
 
     @Test
-    fun `login stores user in memory`() {
+    fun `login stores user in memory and persists user to tokenManager`() {
         repository.login(testUser)
         assertEquals(testUser, repository.currentUser.value)
+        coVerify(exactly = 1) { tokenManager.saveUser(testUser) }
+    }
+
+    @Test
+    fun `restoreSession restores user and activates session when token and user are present`() = runTest {
+        coEvery { tokenManager.getToken() } returns "jwt-valid"
+        coEvery { tokenManager.getUser() } returns testUser
+
+        val restored = repository.restoreSession()
+
+        assertEquals(testUser, restored)
+        assertEquals(testUser, repository.currentUser.value)
+    }
+
+    @Test
+    fun `restoreSession returns null and does not restore when token is missing`() = runTest {
+        coEvery { tokenManager.getToken() } returns null
+        coEvery { tokenManager.getUser() } returns testUser
+
+        val restored = repository.restoreSession()
+
+        assertNull(restored)
+        assertNull(repository.currentUser.value)
+    }
+
+    @Test
+    fun `restoreSession returns null when user is missing`() = runTest {
+        coEvery { tokenManager.getToken() } returns "jwt-valid"
+        coEvery { tokenManager.getUser() } returns null
+
+        val restored = repository.restoreSession()
+
+        assertNull(restored)
+        assertNull(repository.currentUser.value)
     }
 
     @Test

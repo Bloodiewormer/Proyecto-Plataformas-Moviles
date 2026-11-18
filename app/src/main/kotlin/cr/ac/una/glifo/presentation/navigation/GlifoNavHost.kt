@@ -99,7 +99,9 @@ private fun navigateFromDrawer(navController: NavHostController, route: String, 
 @Composable
 fun GlifoNavHost(
     navController: NavHostController = rememberNavController(),
-    startDestination: String = Screen.Splash.route
+    startDestination: String = Screen.Splash.route,
+    targetDestination: String? = null,
+    onClearTargetDestination: () -> Unit = {}
 ) {
     // Obtained once, Activity-scoped: SessionRepositoryImpl backing it is a Hilt
     // @Singleton, so every route below shares the same session state without
@@ -124,10 +126,18 @@ fun GlifoNavHost(
     }
     val activeCourseViewModel: ActiveCourseViewModel = hiltViewModel()
     val activeCourseId by activeCourseViewModel.activeCourseId.collectAsState()
+    val noActiveCourseText = stringResource(R.string.capture_join_course_hint)
+    var coursesInfoMessage by remember { mutableStateOf<String?>(null) }
 
-    // Las rutas por curso usan el curso activo; si todavía no hay ninguno, se elige en Cursos.
+    // Las rutas por curso usan el curso activo; si todavía no hay ninguno, se lleva a Cursos con aviso.
     fun navigateToCourseRoute(route: (Long) -> String) {
-        navController.navigate(activeCourseId?.let(route) ?: Screen.Courses.route)
+        val courseId = activeCourseId
+        if (courseId != null && courseId > 0L) {
+            navController.navigate(route(courseId))
+        } else {
+            coursesInfoMessage = noActiveCourseText
+            navController.navigate(Screen.Courses.route)
+        }
     }
 
     // A single, consistent motion for every screen transition in the app instead of
@@ -136,6 +146,16 @@ fun GlifoNavHost(
     // Rol real de la sesión: el menú lateral lo usa en vez del rol fijo de cada pantalla.
     val sessionUser by sessionViewModel.currentUser.collectAsState()
     val profilePhotoPath by sessionViewModel.profilePhotoUri.collectAsState()
+
+    LaunchedEffect(targetDestination, sessionUser, activeCourseId) {
+        if (targetDestination == cr.ac.una.glifo.MainActivity.DESTINATION_STUDY && sessionUser != null) {
+            val destination = activeCourseId?.let(Screen.StudyHub::createRoute) ?: Screen.Courses.route
+            navController.navigate(destination) {
+                launchSingleTop = true
+            }
+            onClearTargetDestination()
+        }
+    }
     val activeCourseUi = ActiveCourseUi(
         name = activeCourse?.name,
         onChangeCourse = { navController.navigate(Screen.CourseSwitcher.route) { launchSingleTop = true } }
@@ -160,8 +180,21 @@ fun GlifoNavHost(
         // ── A: Acceso ────────────────────────────────────────────────────────
         composable(Screen.Splash.route) {
             SplashScreen(
+                onNavigateToHome = { role ->
+                    val homeRoute = when (role) {
+                        GlifoRole.Student -> Screen.Home.route
+                        GlifoRole.Teacher -> Screen.HomeTeacher.route
+                        GlifoRole.Admin -> Screen.HomeAdmin.route
+                    }
+                    navController.navigate(homeRoute) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
+                },
                 onNavigateToLogin = {
                     navController.navigate(Screen.Login.route)
+                },
+                restoreSession = {
+                    sessionViewModel.restoreSession()?.role
                 }
             )
         }
@@ -179,13 +212,21 @@ fun GlifoNavHost(
                 },
                 onLoginSuccess = { role ->
                     sessionExpiredMessage = null
-                    val homeRoute = when (role) {
-                        GlifoRole.Student -> Screen.Home.route
-                        GlifoRole.Teacher -> Screen.HomeTeacher.route
-                        GlifoRole.Admin -> Screen.HomeAdmin.route
-                    }
-                    navController.navigate(homeRoute) {
-                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    if (targetDestination == cr.ac.una.glifo.MainActivity.DESTINATION_STUDY) {
+                        val destination = activeCourseId?.let(Screen.StudyHub::createRoute) ?: Screen.Courses.route
+                        navController.navigate(destination) {
+                            popUpTo(Screen.Splash.route) { inclusive = true }
+                        }
+                        onClearTargetDestination()
+                    } else {
+                        val homeRoute = when (role) {
+                            GlifoRole.Student -> Screen.Home.route
+                            GlifoRole.Teacher -> Screen.HomeTeacher.route
+                            GlifoRole.Admin -> Screen.HomeAdmin.route
+                        }
+                        navController.navigate(homeRoute) {
+                            popUpTo(Screen.Splash.route) { inclusive = true }
+                        }
                     }
                 }
             )
@@ -280,6 +321,8 @@ fun GlifoNavHost(
         // ── C: Cursos ────────────────────────────────────────────────────────
         composable(Screen.Courses.route) {
             CoursesScreen(
+                infoMessage = coursesInfoMessage,
+                onDismissInfoMessage = { coursesInfoMessage = null },
                 onNavigateBackOrMenu = { navController.popBackStack() },
                 onNavigateToCourseDetail = { courseId -> navController.navigate(Screen.CourseDetail.createRoute(courseId)) },
                 onNavigateToJoinCourse = { navController.navigate(Screen.JoinCourse.route) },
@@ -336,10 +379,25 @@ fun GlifoNavHost(
             route = Screen.Capture.route,
             arguments = listOf(navArgument("courseId") { type = NavType.LongType })
         ) { backStackEntry ->
-            val courseId = backStackEntry.arguments?.getLong("courseId") ?: return@composable
+            val courseId = backStackEntry.arguments?.getLong("courseId") ?: 0L
+            if (courseId <= 0L) {
+                LaunchedEffect(Unit) {
+                    coursesInfoMessage = noActiveCourseText
+                    navController.navigate(Screen.Courses.route) {
+                        popUpTo(Screen.Capture.route) { inclusive = true }
+                    }
+                }
+                return@composable
+            }
             CaptureScreen(
                 courseId = courseId,
                 onNavigateBack = { navController.popBackStack() },
+                onNoActiveCourse = {
+                    coursesInfoMessage = noActiveCourseText
+                    navController.navigate(Screen.Courses.route) {
+                        popUpTo(Screen.Capture.route) { inclusive = true }
+                    }
+                },
                 onCapturePhoto = { photoPath ->
                     navController.navigate(Screen.CaptureReview.createRoute(photoPath, courseId))
                 }

@@ -4,6 +4,7 @@
 
     <!-- Shared / cross-screen (AppError messages, common actions) -->
     <string name="error_no_connection">Sin conexión. Intentá de nuevo.</string>
+    <string name="error_timeout">El servidor está tardando en responder. Intentá de nuevo en un momento.</string>
     <string name="error_unauthorized">Tu sesión expiró. Iniciá sesión de nuevo.</string>
     <string name="error_unknown">Ocurrió un error inesperado.</string>
     <string name="common_close">Cerrar</string>
@@ -103,7 +104,8 @@
     <string name="settings_confidence_threshold_description">Por debajo de este valor la región escala al siguiente motor. Es el valor que usa el procesamiento en el teléfono y no se puede cambiar desde aquí.</string>
     <string name="settings_allow_vision_escalation">Permitir escalar a visión (N2)</string>
     <string name="settings_section_sync">SINCRONIZACIÓN</string>
-    <string name="settings_sync_wifi_only">Sincronizar solo con wifi</string>
+    <string name="settings_sync_wifi_only">Subir capturas solo con wifi</string>
+    <string name="settings_daily_study_reminder">Recordatorio diario de repaso</string>
     <string name="settings_notify_queue_done">Avisar cuando termine la cola</string>
     <string name="settings_section_about">ACERCA DE</string>
     <string name="settings_sync_queue">Cola de sincronización</string>
@@ -118,7 +120,7 @@
     <!-- CaptureScreen -->
     <string name="capture_page_header">%1$s · página 1</string>
     <string name="capture_default_course_name">Curso</string>
-    <string name="capture_framing_hint">Encuadrá la página dentro del marco</string>
+    <string name="capture_framing_hint">Alineá la hoja con el marco: se usa la foto completa</string>
     <string name="capture_gallery_description">Galería</string>
     <string name="capture_permission_title">Glifo necesita la cámara</string>
     <string name="capture_permission_description">Para capturar tus apuntes necesitamos acceso a la cámara del dispositivo. Nunca se sube nada sin que vos lo pidas.</string>
@@ -132,6 +134,7 @@
     <string name="capture_processing_summary">%1$d regiones detectadas · %2$d ms en el dispositivo</string>
     <string name="capture_processing_no_photo">Sin foto: mostrando el recorrido del pipeline</string>
     <string name="capture_processing_view_results">Ver resultados</string>
+    <string name="capture_processing_process_as_new">Procesar como página nueva</string>
     <string name="capture_processing_regions_section">REGIONES Y ENRUTAMIENTO</string>
     <string name="capture_processing_text_count">%1$d TEXTO</string>
     <string name="capture_processing_math_count">%1$d MATEMÁTICA</string>
@@ -261,7 +264,7 @@
     <!-- StudyScreen -->
     <string name="study_subtitle">Estudio de</string>
     <string name="study_quiz_title">Quiz</string>
-    <string name="study_footer_note">El material de estudio sale de la cobertura, no de un temario genérico: solo pregunta lo que tus apuntes no sostienen.</string>
+    <string name="study_footer_note">El material de estudio sale de tus apuntes y de tus vacíos: refuerza lo que escribiste y practica lo que aún te falta dominar.</string>
     <string name="study_no_material_yet">Todavía no hay material. Tocá Generar.</string>
     <plurals name="study_flashcards_plural">
         <item quantity="one">%1$d flashcard</item>
@@ -332,6 +335,7 @@
     <!-- HomeScreen (Student) -->
     <string name="home_subtitle_active_course">Curso activo</string>
     <string name="home_pending_captures_banner">%1$d capturas en cola · se envían al volver la red</string>
+    <string name="home_sync_completed">Apuntes subidos</string>
     <string name="home_coverage_card_title">Cobertura del curso</string>
     <string name="home_coverage_delta_since">+%1$d esta semana</string>
     <string name="home_pending_today_section">PENDIENTES DE HOY</string>
@@ -506,6 +510,8 @@
     <string name="drawer_no_active_course">Ningún curso elegido</string>
     <!-- Lab 6: generación de material de estudio IA-02 (#44) -->
     <string name="study_generate_button">Generar material de estudio</string>
+    <string name="study_regenerate_button">Regenerar con mis apuntes nuevos</string>
+    <string name="study_notice_no_linked_notes">El material sale de tus apuntes de los temas del curso.</string>
     <string name="study_generating_ai">Generando con IA…</string>
     <string name="study_quiz_count_title">Quiz de %1$d preguntas</string>
     <string name="quiz_progress_format">%1$d de %2$d</string>
@@ -520,15 +526,40 @@
     <string name="note_reconstruct_error_no_connection">Sin conexión a internet. Revisá tu red e intentalo de nuevo.</string>
     <string name="note_reconstruct_error_ai_unavailable">El servicio de IA no está disponible en este momento. Intentalo más tarde.</string>
     <string name="note_reconstruct_error_no_pages">Esta nota todavía no tiene páginas subidas en el servidor.</string>
-    <string name="note_reconstruct_error_not_synced">El apunte todavía no se ha sincronizado con el servidor.</string>
+    <string name="note_reconstruct_error_not_synced">Este apunte todavía se está subiendo. Probá de nuevo cuando termine.</string>
     <!-- Lab 6: notificaciones push FCM dirigidas por device_id (#48) -->
-    <string name="sync_notification_channel_name">Sincronización de cola offline</string>
+    <string name="sync_notification_channel_name">Sincronización</string>
     <string name="sync_notification_channel_description">Avisos cuando este dispositivo termina de subir su cola sin conexión.</string>
     <string name="sync_notification_title">Sincronización completada</string>
     <string name="sync_notification_body_single">Se subió 1 elemento de la cola sin conexión desde este dispositivo.</string>
     <string name="sync_notification_body_plural">Se subieron %1$d elementos de la cola sin conexión desde este dispositivo.</string>
     <string name="sync_notification_permission_banner">Activá el permiso de notificaciones para recibir el aviso cuando termine la subida.</string>
     <string name="sync_notification_permission_action">Permitir</string>
+
+    <!-- Notificaciones locales -->
+    <string name="sync_local_notification_title">Tu apunte está listo</string>
+    <string name="sync_local_notification_single_title_and_course">Apunte \"%1$s\" subido y procesado en %2$s</string>
+    <string name="sync_local_notification_single_title">Apunte \"%1$s\" subido y procesado</string>
+    <plurals name="sync_local_notification_body">
+        <item quantity="one">%1$d apunte subido y procesado</item>
+        <item quantity="other">%1$d apuntes subidos y procesados</item>
+    </plurals>
+    <plurals name="sync_local_notification_body_with_course">
+        <item quantity="one">%1$d apunte subido y procesado en %2$s</item>
+        <item quantity="other">%1$d apuntes subidos y procesados en %2$s</item>
+    </plurals>
+
+    <string name="study_reminder_channel_name">Recordatorios de estudio</string>
+    <string name="study_reminder_channel_description">Avisos diarios para repasar flashcards y quizzes pendientes.</string>
+    <string name="study_reminder_notification_title">Recordatorio de estudio</string>
+    <plurals name="study_reminder_notification_body_flashcards">
+        <item quantity="one">Tenés %1$d flashcard para repasar hoy en %2$s</item>
+        <item quantity="other">Tenés %1$d flashcards para repasar hoy en %2$s</item>
+    </plurals>
+    <plurals name="study_reminder_notification_body_quiz">
+        <item quantity="one">Tenés %1$d quiz para repasar hoy en %2$s</item>
+        <item quantity="other">Tenés %1$d quizzes para repasar hoy en %2$s</item>
+    </plurals>
     <!-- Lab 6: pantalla de uso de IA (#47) -->
     <string name="ai_cost_tokens_label">Tokens (entrada / salida)</string>
     <string name="ai_cost_tokens_value">%1$d (%2$d / %3$d)</string>
@@ -686,7 +717,7 @@
     <string name="note_topic_unlinked">Sin tema vinculado</string>
     <string name="note_topic_select">Seleccionar</string>
     <string name="note_topic_change">Cambiar</string>
-    <string name="note_topic_fallback_label">Tema #%1$d</string>
+    <string name="note_topic_fallback_label">Tema sin nombre</string>
     <string name="note_topic_suggested_label">Tema sugerido: %1$s</string>
     <string name="note_topic_suggested_accept">Aceptar</string>
     <string name="note_topic_picker_title">Seleccionar tema del temario</string>
@@ -720,5 +751,10 @@
     <plurals name="logout_pending_message">
         <item quantity="one">Tenés %1$d captura que todavía no se sincronizó. Si cerrás sesión, se borra de este teléfono.</item>
         <item quantity="other">Tenés %1$d capturas que todavía no se sincronizaron. Si cerrás sesión, se borran de este teléfono.</item>
+    </plurals>
+    <string name="capture_join_course_hint">Unite a un curso para guardar tus apuntes</string>
+    <plurals name="sync_queue_note_pages">
+        <item quantity="one">%1$s · %2$d página</item>
+        <item quantity="other">%1$s · %2$d páginas</item>
     </plurals>
 </resources>

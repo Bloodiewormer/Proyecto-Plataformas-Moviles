@@ -68,15 +68,21 @@ object SyncNotificationPayloadValidator {
  * Crea el canal de notificaciones y muestra el aviso de fin de sincronización de la cola offline
  * tanto en foreground como en background (#48).
  *
- * Se emplean mensajes FCM `data-only` para que Android entregue el evento siempre a
- * [GlifoFirebaseMessagingService.onMessageReceived], evitando notificaciones duplicadas del
- * sistema y permitiendo validar sesión activa, preferencia del usuario y deduplicación por `event_id`.
+ * Muestra también la notificación local "Tu apunte está listo" cuando el dispositivo termina
+ * de procesar y subir apuntes fuera de primer plano, deduplicando con el aviso de FCM mediante
+ * el identificador fijo [NOTIFICATION_ID_SYNC].
  */
 @Singleton
 class SyncNotificationPresenter @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val tokenManager: TokenManager
+    private val tokenManager: TokenManager,
+    private val appVisibilityChecker: AppVisibilityChecker? = null
 ) {
+
+    constructor(
+        context: Context,
+        tokenManager: TokenManager
+    ) : this(context, tokenManager, null)
 
     fun ensureChannelCreated() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -106,6 +112,56 @@ class SyncNotificationPresenter @Inject constructor(
         return try {
             NotificationManagerCompat.from(context).areNotificationsEnabled()
         } catch (_: Exception) {
+            false
+        }
+    }
+
+    suspend fun showLocalSyncCompleteNotification(
+        uploadedCount: Int,
+        noteTitle: String? = null,
+        courseName: String? = null
+    ): Boolean {
+        if (uploadedCount <= 0) return false
+        val notifyEnabled = tokenManager.isNotifySyncDoneEnabled()
+        if (!notifyEnabled) return false
+
+        if (appVisibilityChecker?.isAppInForeground() == true) {
+            return false
+        }
+
+        if (!hasNotificationPermission()) {
+            return false
+        }
+
+        ensureChannelCreated()
+        val localized = localizedContext()
+        val title = localized.getString(R.string.sync_local_notification_title)
+        val body = buildLocalNotificationBody(localized, uploadedCount, noteTitle, courseName)
+
+        val launchIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            NOTIFICATION_ID_SYNC,
+            launchIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_glifo_notification)
+            .setContentTitle(title)
+            .setContentText(body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+            .build()
+
+        return try {
+            NotificationManagerCompat.from(context).notify(NOTIFICATION_ID_SYNC, notification)
+            true
+        } catch (_: SecurityException) {
             false
         }
     }
@@ -142,7 +198,7 @@ class SyncNotificationPresenter @Inject constructor(
         }
         val pendingIntent = PendingIntent.getActivity(
             context,
-            validated.eventId.hashCode(),
+            NOTIFICATION_ID_SYNC,
             launchIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -158,7 +214,7 @@ class SyncNotificationPresenter @Inject constructor(
             .build()
 
         return try {
-            NotificationManagerCompat.from(context).notify(validated.eventId.hashCode(), notification)
+            NotificationManagerCompat.from(context).notify(NOTIFICATION_ID_SYNC, notification)
             true
         } catch (_: SecurityException) {
             false
@@ -175,6 +231,7 @@ class SyncNotificationPresenter @Inject constructor(
 
     companion object {
         const val CHANNEL_ID = "glifo_sync_channel"
+        const val NOTIFICATION_ID_SYNC = 4801
         const val EXTRA_NOTIFICATION_EVENT_ID = "glifo_sync_event_id"
 
         fun buildNotificationBody(context: Context, uploadedCount: Int): String {
@@ -182,6 +239,32 @@ class SyncNotificationPresenter @Inject constructor(
                 context.getString(R.string.sync_notification_body_single)
             } else {
                 context.getString(R.string.sync_notification_body_plural, uploadedCount)
+            }
+        }
+
+        fun buildLocalNotificationBody(
+            context: Context,
+            uploadedCount: Int,
+            noteTitle: String? = null,
+            courseName: String? = null
+        ): String {
+            return if (uploadedCount == 1) {
+                when {
+                    !noteTitle.isNullOrBlank() && !courseName.isNullOrBlank() ->
+                        context.getString(R.string.sync_local_notification_single_title_and_course, noteTitle, courseName)
+                    !noteTitle.isNullOrBlank() ->
+                        context.getString(R.string.sync_local_notification_single_title, noteTitle)
+                    !courseName.isNullOrBlank() ->
+                        context.resources.getQuantityString(R.plurals.sync_local_notification_body_with_course, 1, 1, courseName)
+                    else ->
+                        context.resources.getQuantityString(R.plurals.sync_local_notification_body, 1, 1)
+                }
+            } else {
+                if (!courseName.isNullOrBlank()) {
+                    context.resources.getQuantityString(R.plurals.sync_local_notification_body_with_course, uploadedCount, uploadedCount, courseName)
+                } else {
+                    context.resources.getQuantityString(R.plurals.sync_local_notification_body, uploadedCount, uploadedCount)
+                }
             }
         }
     }

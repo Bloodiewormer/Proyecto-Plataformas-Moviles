@@ -39,6 +39,8 @@ fun CoursesScreen(
     onNavigateToSettings: () -> Unit,
     onNavigateToProfile: () -> Unit,
     onLogout: () -> Unit,
+    infoMessage: String? = null,
+    onDismissInfoMessage: (() -> Unit)? = null,
     viewModel: CoursesViewModel = hiltViewModel(),
     sessionViewModel: SessionViewModel = hiltViewModel()
 ) {
@@ -52,6 +54,10 @@ fun CoursesScreen(
 
     var searchOpen by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf("") }
+
+    DisposableEffect(Unit) {
+        onDispose { onDismissInfoMessage?.invoke() }
+    }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -107,6 +113,13 @@ fun CoursesScreen(
                     }
                 }
             )
+
+            if (!infoMessage.isNullOrBlank()) {
+                GlifoBanner(
+                    text = infoMessage,
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
+                )
+            }
 
             AnimatedVisibility(visible = searchOpen) {
                 Box(modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)) {

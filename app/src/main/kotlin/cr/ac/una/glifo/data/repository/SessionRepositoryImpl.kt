@@ -60,7 +60,18 @@ class SessionRepositoryImpl internal constructor(
     override fun login(user: User) {
         _currentUser.value = user
         _profilePhotoUri.value = profilePhotoStore?.find(user.id)
-        scope.launch { syncProfilePhoto(user.id) }
+        scope.launch {
+            tokenManager.saveUser(user)
+            syncProfilePhoto(user.id)
+        }
+    }
+
+    override suspend fun restoreSession(): User? {
+        val token = tokenManager.getToken()
+        if (token.isNullOrBlank()) return null
+        val user = tokenManager.getUser() ?: return null
+        login(user)
+        return user
     }
 
     override suspend fun logout() {

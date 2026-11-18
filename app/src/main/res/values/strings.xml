@@ -4,6 +4,7 @@
 
     <!-- Shared / cross-screen (AppError messages, common actions) -->
     <string name="error_no_connection">No connection. Try again.</string>
+    <string name="error_timeout">The server is taking too long to respond. Try again in a moment.</string>
     <string name="error_unauthorized">Your session expired. Sign in again.</string>
     <string name="error_unknown">An unexpected error occurred.</string>
     <string name="common_close">Close</string>
@@ -103,7 +104,8 @@
     <string name="settings_confidence_threshold_description">Below this value the region escalates to the next engine. It\'s the value on-device processing uses and can\'t be changed here.</string>
     <string name="settings_allow_vision_escalation">Allow escalation to vision (N2)</string>
     <string name="settings_section_sync">SYNC</string>
-    <string name="settings_sync_wifi_only">Sync on Wi-Fi only</string>
+    <string name="settings_sync_wifi_only">Upload captures only on wifi</string>
+    <string name="settings_daily_study_reminder">Daily study reminder</string>
     <string name="settings_notify_queue_done">Notify when the queue finishes</string>
     <string name="settings_section_about">ABOUT</string>
     <string name="settings_sync_queue">Sync queue</string>
@@ -118,7 +120,7 @@
     <!-- CaptureScreen -->
     <string name="capture_page_header">%1$s · page 1</string>
     <string name="capture_default_course_name">Course</string>
-    <string name="capture_framing_hint">Fit the page inside the frame</string>
+    <string name="capture_framing_hint">Line up the sheet with the frame: the whole photo is used</string>
     <string name="capture_gallery_description">Gallery</string>
     <string name="capture_permission_title">Glifo needs the camera</string>
     <string name="capture_permission_description">To capture your notes we need access to the device camera. Nothing is ever uploaded without you asking for it.</string>
@@ -132,6 +134,7 @@
     <string name="capture_processing_summary">%1$d regions detected · %2$d ms on-device</string>
     <string name="capture_processing_no_photo">No photo: showing the pipeline walkthrough</string>
     <string name="capture_processing_view_results">View results</string>
+    <string name="capture_processing_process_as_new">Process as new page</string>
     <string name="capture_processing_regions_section">REGIONS AND ROUTING</string>
     <string name="capture_processing_text_count">%1$d TEXT</string>
     <string name="capture_processing_math_count">%1$d MATH</string>
@@ -261,7 +264,7 @@
     <!-- StudyScreen -->
     <string name="study_subtitle">Study for</string>
     <string name="study_quiz_title">Quiz</string>
-    <string name="study_footer_note">Study material comes from coverage, not a generic syllabus: it only asks what your notes don\'t support.</string>
+    <string name="study_footer_note">Study material comes from your notes and your learning gaps, reinforcing what you wrote and practicing what you still need to master.</string>
     <string name="study_no_material_yet">No study material yet. Tap Generate.</string>
     <plurals name="study_flashcards_plural">
         <item quantity="one">%1$d flashcard</item>
@@ -332,6 +335,7 @@
     <!-- HomeScreen (Student) -->
     <string name="home_subtitle_active_course">Active course</string>
     <string name="home_pending_captures_banner">%1$d captures queued · sent when the network returns</string>
+    <string name="home_sync_completed">Notes uploaded</string>
     <string name="home_coverage_card_title">Course coverage</string>
     <string name="home_coverage_delta_since">+%1$d this week</string>
     <string name="home_pending_today_section">DUE TODAY</string>
@@ -506,6 +510,8 @@
     <string name="drawer_no_active_course">No course selected</string>
     <!-- Lab 6: generación de material de estudio IA-02 (#44) -->
     <string name="study_generate_button">Generate study material</string>
+    <string name="study_regenerate_button">Regenerate with my new notes</string>
+    <string name="study_notice_no_linked_notes">Study material comes from your notes on the course topics.</string>
     <string name="study_generating_ai">Generating with AI…</string>
     <string name="study_quiz_count_title">%1$d-question quiz</string>
     <string name="quiz_progress_format">%1$d of %2$d</string>
@@ -520,15 +526,40 @@
     <string name="note_reconstruct_error_no_connection">No internet connection. Check your network and try again.</string>
     <string name="note_reconstruct_error_ai_unavailable">The AI service isn\'t available right now. Try again later.</string>
     <string name="note_reconstruct_error_no_pages">This note doesn\'t have any pages uploaded to the server yet.</string>
-    <string name="note_reconstruct_error_not_synced">This note hasn\'t synced with the server yet.</string>
+    <string name="note_reconstruct_error_not_synced">This note is still uploading. Try again when it finishes.</string>
     <!-- Lab 6: notificaciones push FCM dirigidas por device_id (#48) -->
-    <string name="sync_notification_channel_name">Offline queue sync</string>
+    <string name="sync_notification_channel_name">Synchronization</string>
     <string name="sync_notification_channel_description">Notifications when this device finishes uploading its offline queue.</string>
     <string name="sync_notification_title">Sync completed</string>
     <string name="sync_notification_body_single">1 item from the offline queue was uploaded from this device.</string>
     <string name="sync_notification_body_plural">%1$d items from the offline queue were uploaded from this device.</string>
     <string name="sync_notification_permission_banner">Enable notification permission to receive an alert when the offline queue finishes uploading.</string>
     <string name="sync_notification_permission_action">Allow</string>
+
+    <!-- Notificaciones locales -->
+    <string name="sync_local_notification_title">Your note is ready</string>
+    <string name="sync_local_notification_single_title_and_course">Note \"%1$s\" uploaded and processed in %2$s</string>
+    <string name="sync_local_notification_single_title">Note \"%1$s\" uploaded and processed</string>
+    <plurals name="sync_local_notification_body">
+        <item quantity="one">%1$d note uploaded and processed</item>
+        <item quantity="other">%1$d notes uploaded and processed</item>
+    </plurals>
+    <plurals name="sync_local_notification_body_with_course">
+        <item quantity="one">%1$d note uploaded and processed in %2$s</item>
+        <item quantity="other">%1$d notes uploaded and processed in %2$s</item>
+    </plurals>
+
+    <string name="study_reminder_channel_name">Study reminders</string>
+    <string name="study_reminder_channel_description">Daily reminders to review pending flashcards and quizzes.</string>
+    <string name="study_reminder_notification_title">Study reminder</string>
+    <plurals name="study_reminder_notification_body_flashcards">
+        <item quantity="one">You have %1$d flashcard to review today in %2$s</item>
+        <item quantity="other">You have %1$d flashcards to review today in %2$s</item>
+    </plurals>
+    <plurals name="study_reminder_notification_body_quiz">
+        <item quantity="one">You have %1$d quiz to review today in %2$s</item>
+        <item quantity="other">You have %1$d quizzes to review today in %2$s</item>
+    </plurals>
     <!-- Lab 6: pantalla de uso de IA (#47) -->
     <string name="ai_cost_tokens_label">Tokens (in / out)</string>
     <string name="ai_cost_tokens_value">%1$d (%2$d / %3$d)</string>
@@ -686,7 +717,7 @@
     <string name="note_topic_unlinked">No topic linked</string>
     <string name="note_topic_select">Select</string>
     <string name="note_topic_change">Change</string>
-    <string name="note_topic_fallback_label">Topic #%1$d</string>
+    <string name="note_topic_fallback_label">Unnamed topic</string>
     <string name="note_topic_suggested_label">Suggested topic: %1$s</string>
     <string name="note_topic_suggested_accept">Accept</string>
     <string name="note_topic_picker_title">Select syllabus topic</string>
@@ -720,5 +751,10 @@
     <plurals name="logout_pending_message">
         <item quantity="one">You have %1$d capture that has not been synced yet. Logging out deletes it from this phone.</item>
         <item quantity="other">You have %1$d captures that have not been synced yet. Logging out deletes them from this phone.</item>
+    </plurals>
+    <string name="capture_join_course_hint">Join a course to save your notes</string>
+    <plurals name="sync_queue_note_pages">
+        <item quantity="one">%1$s · %2$d page</item>
+        <item quantity="other">%1$s · %2$d pages</item>
     </plurals>
 </resources>

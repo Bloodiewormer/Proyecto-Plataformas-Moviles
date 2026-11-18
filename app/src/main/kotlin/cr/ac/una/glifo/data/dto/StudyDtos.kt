@@ -8,7 +8,8 @@ import com.google.gson.annotations.SerializedName
  */
 data class GenerateStudyItemsRequest(
     @SerializedName("topic_ids") val topicIds: List<Long>,
-    @SerializedName("items_per_topic") val itemsPerTopic: Int = 3
+    @SerializedName("items_per_topic") val itemsPerTopic: Int = 3,
+    @SerializedName("regenerate") val regenerate: Boolean = false
 )
 
 /**

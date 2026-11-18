@@ -15,6 +15,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import cr.ac.una.glifo.domain.model.groupSyncQueueItems
+
 data class SyncQueueUiData(
     val items: List<SyncQueueItem>,
     val syncingCount: Int,
@@ -62,13 +64,16 @@ class SyncQueueViewModel @Inject constructor(
 
     private suspend fun refresh() {
         when (val result = syncRepository.getQueueItems()) {
-            is Result.Success -> _state.value = UiState.Success(
-                SyncQueueUiData(
-                    items = result.value,
-                    syncingCount = result.value.count { it.status == SyncStatus.Syncing },
-                    lastRun = lastRun
+            is Result.Success -> {
+                val grouped = groupSyncQueueItems(result.value)
+                _state.value = UiState.Success(
+                    SyncQueueUiData(
+                        items = grouped,
+                        syncingCount = grouped.count { it.status == SyncStatus.Syncing },
+                        lastRun = lastRun
+                    )
                 )
-            )
+            }
             is Result.Failure -> _state.value = UiState.Error(result.error)
         }
     }

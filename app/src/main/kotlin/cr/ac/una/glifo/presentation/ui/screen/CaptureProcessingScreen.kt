@@ -83,7 +83,7 @@ fun CaptureProcessingScreen(
 
                 // Steps reveal themselves over time instead of appearing pre-finished, so the
                 // "processing" screen actually reads as processing.
-                var revealedCount by remember { mutableStateOf(0) }
+                var revealedCount by remember(steps) { mutableStateOf(0) }
                 LaunchedEffect(steps) {
                     while (revealedCount < revealTarget) {
                         delay(450)
@@ -248,6 +248,15 @@ fun CaptureProcessingScreen(
                             if (photoPath != null && courseId != null) viewModel.saveAsNote(photoPath, courseId, onViewResults)
                         }
                     )
+                    if (analysis?.reusedFrom != null) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        GlifoButton(
+                            text = stringResource(R.string.capture_processing_process_as_new),
+                            onClick = viewModel::processAsNewPage,
+                            variant = GlifoButtonVariant.Secondary,
+                            enabled = revealedCount >= revealTarget && !saving
+                        )
+                    }
                 }
             }
         }

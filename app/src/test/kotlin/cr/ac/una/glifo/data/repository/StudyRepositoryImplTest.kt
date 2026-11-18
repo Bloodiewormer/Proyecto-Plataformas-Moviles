@@ -21,6 +21,7 @@ import kotlinx.coroutines.test.runTest
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -190,7 +191,24 @@ class StudyRepositoryImplTest {
         assertEquals(Result.Success(Unit), result)
         assertEquals(listOf(1L, 2L), requestSlot.captured.topicIds)
         assertEquals(3, requestSlot.captured.itemsPerTopic)
+        assertFalse(requestSlot.captured.regenerate)
         coVerify(exactly = 1) { dao.upsertAll(match { it.size == 2 }) }
+    }
+
+    @Test
+    fun `generateStudyItems with regenerate true clears Room course cache and passes flag to API`() = runTest {
+        val requestSlot = slot<GenerateStudyItemsRequest>()
+        coEvery { api.generateStudyItems(1L, capture(requestSlot)) } returns ApiResponse(
+            data = listOf(remoteFlashcard),
+            meta = mapOf("generatedTopics" to 1, "reusedTopics" to 0, "generatedItems" to 1)
+        )
+
+        val result = repository.generateStudyItems(1L, listOf(1L), itemsPerTopic = 1, regenerate = true)
+
+        assertEquals(Result.Success(Unit), result)
+        assertTrue(requestSlot.captured.regenerate)
+        coVerify(exactly = 1) { dao.deleteForCourse(1L) }
+        coVerify(exactly = 1) { dao.upsertAll(match { it.size == 1 }) }
     }
 
     @Test

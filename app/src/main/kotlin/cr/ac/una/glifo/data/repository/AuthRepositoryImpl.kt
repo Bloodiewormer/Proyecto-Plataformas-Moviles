@@ -12,6 +12,7 @@ import cr.ac.una.glifo.data.dto.ChangePasswordRequest
 import cr.ac.una.glifo.data.dto.LoginRequest
 import cr.ac.una.glifo.data.dto.RegisterRequest
 import cr.ac.una.glifo.data.dto.UserDto
+import cr.ac.una.glifo.core.reminder.StudyReminderScheduler
 import cr.ac.una.glifo.domain.error.Result
 import cr.ac.una.glifo.domain.model.DemoAccountHint
 import cr.ac.una.glifo.domain.model.GlifoRole
@@ -38,7 +39,8 @@ class AuthRepositoryImpl @Inject constructor(
     private val api: GlifoApi,
     private val tokenManager: TokenManager,
     private val devicePushManager: DevicePushManager?,
-    private val localUserDataCleaner: LocalUserDataCleaner?
+    private val localUserDataCleaner: LocalUserDataCleaner?,
+    private val studyReminderScheduler: StudyReminderScheduler? = null
 ) : AuthRepository {
 
     constructor(
@@ -49,7 +51,8 @@ class AuthRepositoryImpl @Inject constructor(
         api = api,
         tokenManager = tokenManager,
         devicePushManager = devicePushManager,
-        localUserDataCleaner = null
+        localUserDataCleaner = null,
+        studyReminderScheduler = null
     )
 
     constructor(
@@ -59,7 +62,8 @@ class AuthRepositoryImpl @Inject constructor(
         api = api,
         tokenManager = tokenManager,
         devicePushManager = null,
-        localUserDataCleaner = null
+        localUserDataCleaner = null,
+        studyReminderScheduler = null
     )
 
     override suspend fun login(email: String, password: String): Result<User> =
@@ -116,6 +120,7 @@ class AuthRepositoryImpl @Inject constructor(
                 userEmail = response.user.email
             )
             devicePushManager?.reconcileDeviceOnSessionStart()
+            studyReminderScheduler?.scheduleIfEnabled()
             Result.Success(response.user.toDomain())
         } catch (e: IOException) {
             Result.Failure(AppError.NoConnection)

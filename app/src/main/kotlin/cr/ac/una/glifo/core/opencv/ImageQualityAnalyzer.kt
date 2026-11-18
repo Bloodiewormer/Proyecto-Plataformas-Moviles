@@ -170,7 +170,9 @@ object ImageQualityAnalyzer {
         scoreLabel = context.getString(scoreLabelRes),
         percent = percent,
         isWarning = isWarning,
-        issue = issue
+        issue = issue,
+        labelRes = labelRes,
+        scoreLabelRes = scoreLabelRes
     )
 
     private fun checkBlurriness(grayMat: Mat, context: Context): CaptureQualityCheck {

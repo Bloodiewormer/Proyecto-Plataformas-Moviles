@@ -9,6 +9,7 @@ import cr.ac.una.glifo.domain.repository.AdminRepository
 import cr.ac.una.glifo.domain.repository.CourseRepository
 import cr.ac.una.glifo.domain.repository.SyncRepository
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -47,6 +48,7 @@ class AdminHomeViewModelTest {
         }
         val syncRepo = mockk<SyncRepository> {
             coEvery { getPendingCount() } returns Result.Success(3)
+            every { observePendingCount() } returns kotlinx.coroutines.flow.flowOf(3)
         }
 
         val vm = AdminHomeViewModel(adminRepo, courseRepo, syncRepo)
@@ -70,6 +72,7 @@ class AdminHomeViewModelTest {
         }
         val syncRepo = mockk<SyncRepository> {
             coEvery { getPendingCount() } returns Result.Success(0)
+            every { observePendingCount() } returns kotlinx.coroutines.flow.flowOf(0)
         }
 
         val vm = AdminHomeViewModel(adminRepo, courseRepo, syncRepo)

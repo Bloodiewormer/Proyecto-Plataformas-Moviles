@@ -16,11 +16,14 @@ import retrofit2.Response
 class ErrorLocalizationTest {
 
     private val englishContext = mockk<Context> {
+        every { getString(R.string.error_no_connection) } returns "No connection. Try again."
+        every { getString(R.string.error_timeout) } returns "The server is taking too long to respond. Try again in a moment."
         every { getString(R.string.error_invalid_request) } returns "Invalid request data"
         every { getString(R.string.error_not_found) } returns "Resource not found"
         every { getString(R.string.error_conflict) } returns "Request conflict"
         every { getString(R.string.error_server_code, "500") } returns "Server error (500)"
         every { getString(R.string.error_unknown) } returns "Something went wrong. Please try again."
+        every { getString(R.string.note_reconstruct_error_not_synced) } returns "This note is still uploading. Try again when it finishes."
     }
 
     private fun httpException(code: Int, body: String = ""): HttpException =
@@ -40,5 +43,26 @@ class ErrorLocalizationTest {
         val error = httpException(409, """{"message":"Duplicate entry"}""").toAppError()
 
         assertEquals("Duplicate entry", error.toMessage(englishContext))
+    }
+
+    @Test
+    fun `timeout error resolves to localized timeout message`() {
+        assertEquals(
+            "The server is taking too long to respond. Try again in a moment.",
+            AppError.Timeout.toMessage(englishContext)
+        )
+        assertEquals(
+            "The server is taking too long to respond. Try again in a moment.",
+            AppError.Timeout.toReconstructMessage(englishContext)
+        )
+    }
+
+    @Test
+    fun `reconstruct with unsynced note resolves to uploading message`() {
+        val error = AppError.Validation("serverId", "ignored")
+        assertEquals(
+            "This note is still uploading. Try again when it finishes.",
+            error.toReconstructMessage(englishContext)
+        )
     }
 }

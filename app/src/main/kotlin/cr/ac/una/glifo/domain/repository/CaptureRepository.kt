@@ -15,11 +15,20 @@ interface CaptureRepository {
      *
      * Con [courseId], el scorer usa el glosario del curso guardado en Room (#27) y, si la
      * pagina ya se habia procesado para ese curso, se reutiliza ese resultado (#28).
+     * Con [skipDedup] en true se fuerza el analisis completo de la foto omitiendo deduplicacion.
      */
-    suspend fun analyzePage(photoPath: String?, courseId: Long? = null): Result<PageAnalysis>
+    suspend fun analyzePage(
+        photoPath: String?,
+        courseId: Long? = null,
+        skipDedup: Boolean = false
+    ): Result<PageAnalysis>
 
     /** Linea de tiempo del procesamiento, derivada del analisis real cuando hay foto. */
-    suspend fun getProcessingSteps(photoPath: String? = null, courseId: Long? = null): Result<List<CaptureStep>>
+    suspend fun getProcessingSteps(
+        photoPath: String? = null,
+        courseId: Long? = null,
+        skipDedup: Boolean = false
+    ): Result<List<CaptureStep>>
 
     /**
      * Guarda la captura ya analizada como apunte del curso (#25) y la deja en la cola de

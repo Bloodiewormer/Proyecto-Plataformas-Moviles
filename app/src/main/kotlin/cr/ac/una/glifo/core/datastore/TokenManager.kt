@@ -11,6 +11,8 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import cr.ac.una.glifo.domain.model.GlifoRole
+import cr.ac.una.glifo.domain.model.User
 import java.util.UUID
 import javax.inject.Inject
 
@@ -31,6 +33,8 @@ class TokenManager private constructor(
         private val TOKEN_KEY = stringPreferencesKey("jwt_token")
         private val USER_ID_KEY = longPreferencesKey("user_id")
         private val USER_EMAIL_KEY = stringPreferencesKey("user_email")
+        private val USER_FULL_NAME_KEY = stringPreferencesKey("user_full_name")
+        private val USER_ROLE_KEY = stringPreferencesKey("user_role")
 
         // Identidad estable de la instalación de la app y token FCM (#48)
         private val INSTALLATION_ID_KEY = stringPreferencesKey("installation_id")
@@ -61,6 +65,25 @@ class TokenManager private constructor(
 
     suspend fun getUserId(): Long? {
         return dataStore.data.first()[USER_ID_KEY]
+    }
+
+    suspend fun saveUser(user: User) {
+        dataStore.edit { preferences ->
+            preferences[USER_ID_KEY] = user.id
+            preferences[USER_EMAIL_KEY] = user.email
+            preferences[USER_FULL_NAME_KEY] = user.fullName
+            preferences[USER_ROLE_KEY] = user.role.name
+        }
+    }
+
+    suspend fun getUser(): User? {
+        val preferences = dataStore.data.first()
+        val id = preferences[USER_ID_KEY] ?: return null
+        val email = preferences[USER_EMAIL_KEY] ?: return null
+        val fullName = preferences[USER_FULL_NAME_KEY] ?: return null
+        val roleStr = preferences[USER_ROLE_KEY] ?: return null
+        val role = runCatching { GlifoRole.valueOf(roleStr) }.getOrNull() ?: return null
+        return User(id = id, fullName = fullName, email = email, role = role)
     }
 
     suspend fun getOrCreateInstallationId(): String {
@@ -182,7 +205,11 @@ class TokenManager private constructor(
      */
     /** Vencimiento de sesión: se olvida solo el token; el id del usuario queda para detectar si después entra otra cuenta. */
     suspend fun clearToken() {
-        dataStore.edit { preferences -> preferences.remove(TOKEN_KEY) }
+        dataStore.edit { preferences ->
+            preferences.remove(TOKEN_KEY)
+            preferences.remove(USER_FULL_NAME_KEY)
+            preferences.remove(USER_ROLE_KEY)
+        }
     }
 
     suspend fun clearAll() {
@@ -190,6 +217,8 @@ class TokenManager private constructor(
             preferences.remove(TOKEN_KEY)
             preferences.remove(USER_ID_KEY)
             preferences.remove(USER_EMAIL_KEY)
+            preferences.remove(USER_FULL_NAME_KEY)
+            preferences.remove(USER_ROLE_KEY)
             preferences.remove(REGISTERED_DEVICE_ID_KEY)
             preferences.remove(REGISTERED_DEVICE_USER_ID_KEY)
             preferences.remove(LAST_SYNCED_FCM_TOKEN_KEY)

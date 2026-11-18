@@ -12,6 +12,7 @@ import cr.ac.una.glifo.domain.model.CourseDetail
 import cr.ac.una.glifo.domain.model.Flashcard
 import cr.ac.una.glifo.domain.model.QuizQuestion
 import cr.ac.una.glifo.domain.repository.CourseRepository
+import cr.ac.una.glifo.domain.repository.NoteRepository
 import cr.ac.una.glifo.domain.repository.StudyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -30,8 +31,12 @@ data class StudyHomeUiData(
     val quizQuestionCount: Int = 0,
     val quizTopicCodes: List<String> = emptyList(),
     val isGenerating: Boolean = false,
-    val generationError: AppError? = null
+    val generationError: AppError? = null,
+    val noticeMessage: String? = null
 ) {
+    val hasMaterial: Boolean
+        get() = flashcardCount > 0 || quizQuestionCount > 0
+
     /**
      * Resumen de códigos de temas del quiz (máximo 3 códigos separados por ", " y "…" si hay más).
      */
@@ -56,19 +61,20 @@ class StudyHomeViewModel @Inject constructor(
     private val courseRepository: CourseRepository,
     private val studyRepository: StudyRepository,
     private val activeCourseStore: ActiveCourseStore?,
-    @ApplicationContext private val appContext: Context?
+    @ApplicationContext private val appContext: Context?,
+    private val noteRepository: NoteRepository? = null
 ) : ViewModel() {
 
     constructor(
         courseRepository: CourseRepository,
         studyRepository: StudyRepository,
         activeCourseStore: ActiveCourseStore?
-    ) : this(courseRepository, studyRepository, activeCourseStore, null)
+    ) : this(courseRepository, studyRepository, activeCourseStore, null, null)
 
     constructor(
         courseRepository: CourseRepository,
         studyRepository: StudyRepository
-    ) : this(courseRepository, studyRepository, null, null)
+    ) : this(courseRepository, studyRepository, null, null, null)
 
     private val _state = MutableStateFlow<UiState<StudyHomeUiData>>(UiState.Loading)
     val state: StateFlow<UiState<StudyHomeUiData>> = _state.asStateFlow()
@@ -135,8 +141,12 @@ class StudyHomeViewModel @Inject constructor(
                 return@launch
             }
 
+            val notesResult = noteRepository?.getNotesForCourse(courseId)
+            val notedTopicIds = (notesResult as? Result.Success)?.value
+                ?.mapNotNull { it.syllabusTopicId }?.toSet().orEmpty()
+            // Los temas con apuntes del estudiante van primero: el lote tiene tope y no deben quedar afuera.
             val topicIds = (topicsResult as Result.Success).value
-                .sortedBy { it.orderIndex }
+                .sortedWith(compareBy({ it.id !in notedTopicIds }, { it.orderIndex }))
                 .map { it.id }
                 .distinct()
                 .take(MAX_TOPICS)
@@ -155,15 +165,25 @@ class StudyHomeViewModel @Inject constructor(
                 return@launch
             }
 
-            when (val genResult = studyRepository.generateStudyItems(courseId, topicIds)) {
+            val shouldRegenerate = base.hasMaterial
+            val hasLinkedNotes = if (notesResult is Result.Success) topicIds.any { it in notedTopicIds } else true
+
+            when (val genResult = studyRepository.generateStudyItems(courseId, topicIds, regenerate = shouldRegenerate)) {
                 is Result.Success -> {
                     val flashcards = (studyRepository.getFlashcards(courseId) as? Result.Success)?.value.orEmpty()
                     val quizQuestions = (studyRepository.getQuizQuestions(courseId) as? Result.Success)?.value.orEmpty()
+                    val notice = if (!hasLinkedNotes) {
+                        appContext?.getString(R.string.study_notice_no_linked_notes)
+                            ?: "El material sale de tus apuntes de los temas del curso."
+                    } else {
+                        null
+                    }
                     _state.value = UiState.Success(
                         buildUiData(
                             course = base.course,
                             flashcards = flashcards,
-                            quizQuestions = quizQuestions
+                            quizQuestions = quizQuestions,
+                            noticeMessage = notice
                         )
                     )
                 }
@@ -215,7 +235,8 @@ class StudyHomeViewModel @Inject constructor(
     private fun buildUiData(
         course: CourseDetail?,
         flashcards: List<Flashcard>,
-        quizQuestions: List<QuizQuestion>
+        quizQuestions: List<QuizQuestion>,
+        noticeMessage: String? = null
     ): StudyHomeUiData {
         val flashcardTopicCount = flashcards
             .map { it.source.trim() }
@@ -235,7 +256,8 @@ class StudyHomeViewModel @Inject constructor(
             quizQuestionCount = quizQuestions.size,
             quizTopicCodes = quizTopicCodes,
             isGenerating = false,
-            generationError = null
+            generationError = null,
+            noticeMessage = noticeMessage
         )
     }
 

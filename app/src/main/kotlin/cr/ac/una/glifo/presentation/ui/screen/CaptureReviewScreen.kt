@@ -173,7 +173,8 @@ fun CaptureReviewScreen(
                                     tint = barColor,
                                     modifier = Modifier.size(16.dp)
                                 )
-                                Text(text = check.label, fontSize = 13.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                                val labelText = check.labelRes?.let { stringResource(it) } ?: check.label
+                                Text(text = labelText, fontSize = 13.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
                                 Box(
                                     modifier = Modifier
                                         .width(64.dp)
@@ -188,8 +189,9 @@ fun CaptureReviewScreen(
                                             .background(barColor)
                                     )
                                 }
+                                val scoreText = check.scoreLabelRes?.let { stringResource(it) } ?: check.scoreLabel
                                 Text(
-                                    text = check.scoreLabel,
+                                    text = scoreText,
                                     fontSize = 11.sp,
                                     fontFamily = FontFamily.Monospace,
                                     color = colors.textSecondary

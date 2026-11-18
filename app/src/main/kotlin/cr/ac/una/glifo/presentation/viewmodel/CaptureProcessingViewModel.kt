@@ -39,10 +39,10 @@ class CaptureProcessingViewModel @Inject constructor(
     /**
      * Corre el pipeline local sobre la foto. Se ignora la recarga si ya se analizo esa misma
      * foto con exito, porque N0+N1 sobre una pagina completa cuesta segundos y la pantalla
-     * se recompone varias veces.
+     * se recompone varias veces. Con [skipDedup] se fuerza el reprocesamiento omitiendo deduplicacion.
      */
-    fun load(photoPath: String?, courseId: Long? = null) {
-        if (hasLoaded && loadedFor == photoPath && loadedCourse == courseId && _state.value is UiState.Success) return
+    fun load(photoPath: String?, courseId: Long? = null, skipDedup: Boolean = false) {
+        if (!skipDedup && hasLoaded && loadedFor == photoPath && loadedCourse == courseId && _state.value is UiState.Success) return
         loadedFor = photoPath
         loadedCourse = courseId
         hasLoaded = true
@@ -52,9 +52,9 @@ class CaptureProcessingViewModel @Inject constructor(
 
             // El analisis se pide primero para que el repositorio lo cachee y los pasos se
             // deriven de ese mismo resultado en lugar de volver a procesar la imagen.
-            val analysis = photoPath?.let { captureRepository.analyzePage(it, courseId) }
+            val analysis = photoPath?.let { captureRepository.analyzePage(it, courseId, skipDedup) }
 
-            when (val steps = captureRepository.getProcessingSteps(photoPath, courseId)) {
+            when (val steps = captureRepository.getProcessingSteps(photoPath, courseId, skipDedup)) {
                 is Result.Success -> _state.value = UiState.Success(
                     CaptureProcessingUiData(
                         steps = steps.value,
@@ -65,6 +65,9 @@ class CaptureProcessingViewModel @Inject constructor(
             }
         }
     }
+
+    /** Reprocesa la captura actual forzando el analisis completo sin deduplicacion. */
+    fun processAsNewPage() = load(loadedFor, loadedCourse, skipDedup = true)
 
     fun retry() = load(loadedFor, loadedCourse)
 

@@ -81,7 +81,8 @@ class StudyRepositoryImpl : StudyRepository {
     override suspend fun generateStudyItems(
         courseId: Long,
         topicIds: List<Long>,
-        itemsPerTopic: Int
+        itemsPerTopic: Int,
+        regenerate: Boolean
     ): Result<Unit> {
         val sanitizedTopics = topicIds.distinct().take(MAX_TOPICS_PER_BATCH)
         if (sanitizedTopics.isEmpty()) {
@@ -99,7 +100,8 @@ class StudyRepositoryImpl : StudyRepository {
                     courseId = courseId,
                     request = GenerateStudyItemsRequest(
                         topicIds = sanitizedTopics,
-                        itemsPerTopic = itemsPerTopic
+                        itemsPerTopic = itemsPerTopic,
+                        regenerate = regenerate
                     )
                 )
             },
@@ -107,6 +109,9 @@ class StudyRepositoryImpl : StudyRepository {
         )
         return when (remote) {
             is Result.Success -> {
+                if (regenerate) {
+                    studyItemDao.deleteForCourse(courseId)
+                }
                 cacheRemoteItems(remote.value)
                 Result.Success(Unit)
             }

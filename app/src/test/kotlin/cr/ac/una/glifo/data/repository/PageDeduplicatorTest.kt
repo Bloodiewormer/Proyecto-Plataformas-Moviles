@@ -104,6 +104,46 @@ class PageDeduplicatorTest {
     }
 
     @Test
+    fun `reuses page within threshold 10 and rejects distance 11 and 16`() = runTest {
+        val baseHash = "0000000000000000"
+        val hashDist10 = "00000000000003ff"
+        val hashDist11 = "00000000000007ff"
+        val hashDist16 = "000000000000ffff"
+
+        coEvery { dao.hashesForCourse(1L) } returns listOf(
+            PageHashRow(10L, hashDist10),
+            PageHashRow(11L, hashDist11),
+            PageHashRow(16L, hashDist16)
+        )
+        coEvery { dao.getById(10L) } returns storedPage(10L, hashDist10)
+
+        val reused = deduplicator.findSamePage(1L, baseHash)
+
+        assertNotNull(reused)
+        assertEquals(10, reused?.reusedFrom?.hammingDistance)
+        coVerify(exactly = 1) { dao.getById(10L) }
+        coVerify(exactly = 0) { dao.getById(11L) }
+        coVerify(exactly = 0) { dao.getById(16L) }
+    }
+
+    @Test
+    fun `returns null when closest pages are at distance 11 or 16`() = runTest {
+        val baseHash = "0000000000000000"
+        val hashDist11 = "00000000000007ff"
+        val hashDist16 = "000000000000ffff"
+
+        coEvery { dao.hashesForCourse(1L) } returns listOf(
+            PageHashRow(11L, hashDist11),
+            PageHashRow(16L, hashDist16)
+        )
+
+        val reused = deduplicator.findSamePage(1L, baseHash)
+
+        assertNull(reused)
+        coVerify(exactly = 0) { dao.getById(any()) }
+    }
+
+    @Test
     fun `picks the closest page when several are within the threshold`() = runTest {
         coEvery { dao.hashesForCourse(1L) } returns listOf(
             PageHashRow(5L, "000000000000003f"),

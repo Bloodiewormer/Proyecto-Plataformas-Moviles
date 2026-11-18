@@ -29,6 +29,7 @@ class CaptureViewModel @Inject constructor(
     private var loadedFor: Long? = null
 
     fun load(courseId: Long) {
+        if (courseId <= 0L) return
         if (loadedFor == courseId) return
         loadedFor = courseId
         activeCourseStore.set(courseId)

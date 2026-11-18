@@ -19,4 +19,7 @@ interface SessionRepository {
 
     /** Copia la imagen elegida (URI del selector) como foto del usuario actual. */
     suspend fun saveProfilePhoto(sourceUri: String)
+
+    /** Restaura la sesión persistida si hay token y usuario guardados. */
+    suspend fun restoreSession(): User?
 }
