@@ -48,6 +48,8 @@ class SessionViewModel @Inject constructor(
 
     fun login(user: User) = sessionRepository.login(user)
 
+    suspend fun restoreSession(): User? = sessionRepository.restoreSession()
+
     fun logout() {
         activeCourseStore.clear()
         viewModelScope.launch {

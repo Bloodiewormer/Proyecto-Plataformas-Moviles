@@ -25,11 +25,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
+import cr.ac.una.glifo.domain.model.GlifoRole
 import kotlinx.coroutines.delay
 
 @Composable
 fun SplashScreen(
-    onNavigateToLogin: () -> Unit
+    onNavigateToLogin: () -> Unit,
+    onNavigateToHome: (GlifoRole) -> Unit = {},
+    restoreSession: suspend () -> GlifoRole? = { null }
 ) {
     var animateIn by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(
@@ -45,8 +48,13 @@ fun SplashScreen(
 
     LaunchedEffect(key1 = true) {
         animateIn = true
+        val role = restoreSession()
         delay(2200L)
-        onNavigateToLogin()
+        if (role != null) {
+            onNavigateToHome(role)
+        } else {
+            onNavigateToLogin()
+        }
     }
 
     Column(

@@ -38,6 +38,7 @@ import cr.ac.una.glifo.domain.model.SyncStatus
 import cr.ac.una.glifo.domain.repository.SyncRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import okhttp3.MediaType.Companion.toMediaType
@@ -140,6 +141,8 @@ class SyncRepositoryImpl : SyncRepository {
         Result.Success(syncDao.queueRows().map { it.toQueueItem() })
 
     override suspend fun getPendingCount(): Result<Int> = Result.Success(syncDao.pendingCount())
+
+    override fun observePendingCount(): Flow<Int> = syncDao.observePendingCount()
 
     override suspend fun retryFailed(): Result<Int> {
         val requeued = syncDao.requeueFailed(System.currentTimeMillis())

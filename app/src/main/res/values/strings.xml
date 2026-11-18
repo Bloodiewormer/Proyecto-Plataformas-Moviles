@@ -333,6 +333,7 @@
     <!-- HomeScreen (Student) -->
     <string name="home_subtitle_active_course">Active course</string>
     <string name="home_pending_captures_banner">%1$d captures queued · sent when the network returns</string>
+    <string name="home_sync_completed">Notes uploaded</string>
     <string name="home_coverage_card_title">Course coverage</string>
     <string name="home_coverage_delta_since">+%1$d this week</string>
     <string name="home_pending_today_section">DUE TODAY</string>

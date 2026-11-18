@@ -27,6 +27,9 @@ interface SyncOperationDao {
     @Query("SELECT COUNT(*) FROM sync_operations WHERE status != 'DONE'")
     suspend fun pendingCount(): Int
 
+    @Query("SELECT COUNT(*) FROM sync_operations WHERE status != 'DONE'")
+    fun observePendingCount(): Flow<Int>
+
     @Query("SELECT COUNT(*) FROM sync_operations WHERE note_id = :noteId AND status != 'DONE'")
     suspend fun pendingForNote(noteId: Long): Int
 

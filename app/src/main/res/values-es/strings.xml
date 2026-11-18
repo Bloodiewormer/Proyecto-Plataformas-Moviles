@@ -333,6 +333,7 @@
     <!-- HomeScreen (Student) -->
     <string name="home_subtitle_active_course">Curso activo</string>
     <string name="home_pending_captures_banner">%1$d capturas en cola · se envían al volver la red</string>
+    <string name="home_sync_completed">Apuntes subidos</string>
     <string name="home_coverage_card_title">Cobertura del curso</string>
     <string name="home_coverage_delta_since">+%1$d esta semana</string>
     <string name="home_pending_today_section">PENDIENTES DE HOY</string>

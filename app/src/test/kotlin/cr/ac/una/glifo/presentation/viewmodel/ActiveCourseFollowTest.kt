@@ -100,7 +100,10 @@ class ActiveCourseFollowTest {
             coEvery { getCourseStats(any()) } returns Result.Success(mockk<CourseStats>(relaxed = true))
         }
         val notes = mockk<NoteRepository> { coEvery { getNoteMetaList(any()) } returns Result.Success(emptyList()) }
-        val sync = mockk<SyncRepository> { coEvery { getPendingCount() } returns Result.Success(0) }
+        val sync = mockk<SyncRepository> {
+            coEvery { getPendingCount() } returns Result.Success(0)
+            every { observePendingCount() } returns kotlinx.coroutines.flow.flowOf(0)
+        }
         val study = mockk<StudyRepository> {
             coEvery { getFlashcards(any()) } returns Result.Success(emptyList())
             coEvery { getQuizQuestion(any()) } returns Result.Success(quiz("x"))

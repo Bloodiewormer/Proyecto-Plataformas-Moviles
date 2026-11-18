@@ -5,6 +5,8 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import cr.ac.una.glifo.domain.model.GlifoRole
+import cr.ac.una.glifo.domain.model.User
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -41,6 +43,7 @@ class TokenManagerTest {
         }
 
         tokenManager.saveToken("jwt-user-1", userId = 42L, userEmail = "ana@una.ac.cr")
+        tokenManager.saveUser(User(42L, "Ana Perez", "ana@una.ac.cr", GlifoRole.Student))
         tokenManager.saveRegisteredDevice(deviceId = 77L, userId = 42L, syncedToken = "fcm-device-token")
         tokenManager.setLastReportedSyncOpId(userId = 42L, opId = 15L)
         tokenManager.setLastReportedSyncOpId(userId = 99L, opId = 8L)
@@ -50,6 +53,7 @@ class TokenManagerTest {
 
         assertNull(tokenManager.getToken())
         assertNull(tokenManager.getUserId())
+        assertNull(tokenManager.getUser())
         assertNull(tokenManager.getRegisteredDeviceId())
         assertNull(tokenManager.getRegisteredDeviceUserId())
         assertNull(tokenManager.getLastSyncedFcmToken())
@@ -68,15 +72,32 @@ class TokenManagerTest {
     }
 
     @Test
-    fun `clearToken keeps the user id so a different account can be detected later`() = runTest {
+    fun `clearToken keeps the user id so a different account can be detected later but clears user details`() = runTest {
         val dataStoreFile = tempFolder.newFile("glifo_prefs_token.preferences_pb")
         val dataStore = PreferenceDataStoreFactory.create(scope = backgroundScope, produceFile = { dataStoreFile })
         val tokenManager = TokenManager(dataStore)
         tokenManager.saveToken("jwt", userId = 7L, userEmail = "a@una.ac.cr")
+        tokenManager.saveUser(User(7L, "Carlos Ruiz", "a@una.ac.cr", GlifoRole.Teacher))
 
         tokenManager.clearToken()
 
         assertNull(tokenManager.getToken())
+        assertNull(tokenManager.getUser())
         assertEquals(7L, tokenManager.getUserId())
+    }
+
+    @Test
+    fun `saveUser and getUser persist and restore complete user model`() = runTest {
+        val dataStoreFile = tempFolder.newFile("glifo_prefs_user.preferences_pb")
+        val dataStore = PreferenceDataStoreFactory.create(scope = backgroundScope, produceFile = { dataStoreFile })
+        val tokenManager = TokenManager(dataStore)
+
+        assertNull(tokenManager.getUser())
+
+        val user = User(id = 12L, fullName = "Elena Mora", email = "elena@una.ac.cr", role = GlifoRole.Admin)
+        tokenManager.saveUser(user)
+
+        val restored = tokenManager.getUser()
+        assertEquals(user, restored)
     }
 }

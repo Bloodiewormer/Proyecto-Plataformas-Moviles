@@ -160,8 +160,21 @@ fun GlifoNavHost(
         // ── A: Acceso ────────────────────────────────────────────────────────
         composable(Screen.Splash.route) {
             SplashScreen(
+                onNavigateToHome = { role ->
+                    val homeRoute = when (role) {
+                        GlifoRole.Student -> Screen.Home.route
+                        GlifoRole.Teacher -> Screen.HomeTeacher.route
+                        GlifoRole.Admin -> Screen.HomeAdmin.route
+                    }
+                    navController.navigate(homeRoute) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
+                },
                 onNavigateToLogin = {
                     navController.navigate(Screen.Login.route)
+                },
+                restoreSession = {
+                    sessionViewModel.restoreSession()?.role
                 }
             )
         }
