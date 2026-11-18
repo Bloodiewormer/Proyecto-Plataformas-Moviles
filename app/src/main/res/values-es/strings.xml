@@ -262,7 +262,7 @@
     <!-- StudyScreen -->
     <string name="study_subtitle">Estudio de</string>
     <string name="study_quiz_title">Quiz</string>
-    <string name="study_footer_note">El material de estudio sale de la cobertura, no de un temario genérico: solo pregunta lo que tus apuntes no sostienen.</string>
+    <string name="study_footer_note">El material de estudio sale de tus apuntes y de tus vacíos: refuerza lo que escribiste y practica lo que aún te falta dominar.</string>
     <string name="study_no_material_yet">Todavía no hay material. Tocá Generar.</string>
     <plurals name="study_flashcards_plural">
         <item quantity="one">%1$d flashcard</item>
@@ -508,6 +508,8 @@
     <string name="drawer_no_active_course">Ningún curso elegido</string>
     <!-- Lab 6: generación de material de estudio IA-02 (#44) -->
     <string name="study_generate_button">Generar material de estudio</string>
+    <string name="study_regenerate_button">Regenerar con mis apuntes nuevos</string>
+    <string name="study_notice_no_linked_notes">El material sale de tus apuntes de los temas del curso.</string>
     <string name="study_generating_ai">Generando con IA…</string>
     <string name="study_quiz_count_title">Quiz de %1$d preguntas</string>
     <string name="quiz_progress_format">%1$d de %2$d</string>

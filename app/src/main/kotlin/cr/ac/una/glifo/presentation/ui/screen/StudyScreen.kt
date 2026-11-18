@@ -170,12 +170,14 @@ fun StudyScreen(
                             .verticalScroll(rememberScrollState())
                             .padding(14.dp)
                     ) {
+                        val generateButtonText = when {
+                            data.isGenerating -> stringResource(R.string.study_generating_ai)
+                            data.hasMaterial -> stringResource(R.string.study_regenerate_button)
+                            else -> stringResource(R.string.study_generate_button)
+                        }
+
                         GlifoButton(
-                            text = if (data.isGenerating) {
-                                stringResource(R.string.study_generating_ai)
-                            } else {
-                                stringResource(R.string.study_generate_button)
-                            },
+                            text = generateButtonText,
                             enabled = !data.isGenerating,
                             onClick = { viewModel.generateStudyMaterial(courseId) },
                             modifier = Modifier.padding(bottom = 12.dp)
@@ -203,6 +205,13 @@ fun StudyScreen(
                         if (data.generationError != null) {
                             GlifoBanner(
                                 text = data.generationError.toMessage(context),
+                                modifier = Modifier.padding(bottom = 12.dp)
+                            )
+                        }
+
+                        if (data.noticeMessage != null) {
+                            GlifoBanner(
+                                text = data.noticeMessage,
                                 modifier = Modifier.padding(bottom = 12.dp)
                             )
                         }

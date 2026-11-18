@@ -262,7 +262,7 @@
     <!-- StudyScreen -->
     <string name="study_subtitle">Study for</string>
     <string name="study_quiz_title">Quiz</string>
-    <string name="study_footer_note">Study material comes from coverage, not a generic syllabus: it only asks what your notes don\'t support.</string>
+    <string name="study_footer_note">Study material comes from your notes and your learning gaps, reinforcing what you wrote and practicing what you still need to master.</string>
     <string name="study_no_material_yet">No study material yet. Tap Generate.</string>
     <plurals name="study_flashcards_plural">
         <item quantity="one">%1$d flashcard</item>
@@ -508,6 +508,8 @@
     <string name="drawer_no_active_course">No course selected</string>
     <!-- Lab 6: generación de material de estudio IA-02 (#44) -->
     <string name="study_generate_button">Generate study material</string>
+    <string name="study_regenerate_button">Regenerate with my new notes</string>
+    <string name="study_notice_no_linked_notes">Study material comes from your notes on the course topics.</string>
     <string name="study_generating_ai">Generating with AI…</string>
     <string name="study_quiz_count_title">%1$d-question quiz</string>
     <string name="quiz_progress_format">%1$d of %2$d</string>
