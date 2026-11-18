@@ -94,14 +94,21 @@ class CaptureRepositoryImpl @Inject constructor(
         return noPhoto()
     }
 
-    override suspend fun analyzePage(photoPath: String?, courseId: Long?): Result<PageAnalysis> {
+    override suspend fun analyzePage(
+        photoPath: String?,
+        courseId: Long?,
+        skipDedup: Boolean
+    ): Result<PageAnalysis> {
         if (photoPath == null) {
             return noPhoto()
         }
 
         return pipelineLock.withLock {
             val key = photoPath to courseId
-            lastAnalysis?.takeIf { lastKey == key }?.let { return@withLock Result.Success(it) }
+            // Si se pide omitir deduplicacion y el analisis cacheado era reutilizado, se recalcula de cero.
+            if (!skipDedup || lastAnalysis?.reusedFrom == null) {
+                lastAnalysis?.takeIf { lastKey == key }?.let { return@withLock Result.Success(it) }
+            }
 
             val bitmap = decode(photoPath)
                 ?: return@withLock Result.Failure(
@@ -119,7 +126,7 @@ class CaptureRepositoryImpl @Inject constructor(
                 } else {
                     null
                 }
-                val reused = if (courseId != null && hash != null) {
+                val reused = if (!skipDedup && courseId != null && hash != null) {
                     pageDeduplicator.findSamePage(courseId, hash)
                 } else {
                     null
@@ -151,11 +158,15 @@ class CaptureRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getProcessingSteps(photoPath: String?, courseId: Long?): Result<List<CaptureStep>> {
+    override suspend fun getProcessingSteps(
+        photoPath: String?,
+        courseId: Long?,
+        skipDedup: Boolean
+    ): Result<List<CaptureStep>> {
         if (photoPath == null) {
             return noPhoto()
         }
-        return when (val analysis = analyzePage(photoPath, courseId)) {
+        return when (val analysis = analyzePage(photoPath, courseId, skipDedup)) {
             is Result.Success -> Result.Success(stepsWithOfflineContext(analysis.value, courseId))
             is Result.Failure -> Result.Failure(analysis.error)
         }

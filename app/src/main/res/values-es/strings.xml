@@ -132,6 +132,7 @@
     <string name="capture_processing_summary">%1$d regiones detectadas · %2$d ms en el dispositivo</string>
     <string name="capture_processing_no_photo">Sin foto: mostrando el recorrido del pipeline</string>
     <string name="capture_processing_view_results">Ver resultados</string>
+    <string name="capture_processing_process_as_new">Procesar como página nueva</string>
     <string name="capture_processing_regions_section">REGIONES Y ENRUTAMIENTO</string>
     <string name="capture_processing_text_count">%1$d TEXTO</string>
     <string name="capture_processing_math_count">%1$d MATEMÁTICA</string>

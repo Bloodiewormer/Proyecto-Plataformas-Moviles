@@ -183,15 +183,20 @@ class GlifoDatabaseTest {
         val original = PerceptualHasher.hash(notesPage(layout = 1))
         val retakes = mapOf(
             "dim" to notesPage(layout = 1, brightness = 215),
+            "rotate" to notesPage(layout = 1, rotation = 1.5f)
+        ).mapValues { (_, bitmap) -> PerceptualHasher.hammingDistance(original, PerceptualHasher.hash(bitmap)) }
+        val shifted = mapOf(
             "shift" to notesPage(layout = 1, dx = 15f, dy = 20f),
-            "rotate" to notesPage(layout = 1, rotation = 1.5f),
             "all" to notesPage(layout = 1, dx = -12f, dy = 18f, brightness = 225, rotation = -1f)
         ).mapValues { (_, bitmap) -> PerceptualHasher.hammingDistance(original, PerceptualHasher.hash(bitmap)) }
         val others = (2..6).map { PerceptualHasher.hammingDistance(original, PerceptualHasher.hash(notesPage(layout = it))) }
-        // Medido: retakes = {dim=0, shift=14, rotate=6, all=14}, others = 24..32.
-        val info = "retakes=$retakes others=$others"
+        // Medido: retakes = {dim=0, rotate=6}, shifted = {shift=14, all=14}, others = 24..32.
+        // Con umbral = 10, solo dobles disparos / reimportaciones (dim=0, rotate=6) se consideran duplicados;
+        // desplazamientos (14) y paginas distintas con misma maquetacion (14-16) quedan por fuera.
+        val info = "retakes=$retakes shifted=$shifted others=$others"
 
         retakes.values.forEach { assertTrue(info, it <= PerceptualHasher.DUPLICATE_THRESHOLD) }
+        shifted.values.forEach { assertFalse(info, it <= PerceptualHasher.DUPLICATE_THRESHOLD) }
         others.forEach { assertFalse(info, it <= PerceptualHasher.DUPLICATE_THRESHOLD) }
     }
 }

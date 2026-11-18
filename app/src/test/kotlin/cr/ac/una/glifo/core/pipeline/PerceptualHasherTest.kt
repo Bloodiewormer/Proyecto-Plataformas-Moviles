@@ -106,6 +106,22 @@ class PerceptualHasherTest {
         )
     }
 
+    @Test
+    fun `duplicate threshold accepts distance 10 and rejects 11 and 16`() {
+        val base = "0000000000000000"
+        val dist10 = "00000000000003ff"
+        val dist11 = "00000000000007ff"
+        val dist16 = "000000000000ffff"
+
+        assertEquals(10, PerceptualHasher.hammingDistance(base, dist10))
+        assertEquals(11, PerceptualHasher.hammingDistance(base, dist11))
+        assertEquals(16, PerceptualHasher.hammingDistance(base, dist16))
+
+        assertTrue(PerceptualHasher.isSamePage(base, dist10))
+        assertFalse(PerceptualHasher.isSamePage(base, dist11))
+        assertFalse(PerceptualHasher.isSamePage(base, dist16))
+    }
+
     @Test(expected = IllegalArgumentException::class)
     fun `rejects input that is not 32 by 32`() {
         PerceptualHasher.hashFromLuminance(DoubleArray(10))
