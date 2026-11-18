@@ -2,7 +2,11 @@ package cr.ac.una.glifo.data.repository
 
 import cr.ac.una.glifo.core.common.AppError
 import cr.ac.una.glifo.data.datasource.remote.GlifoApi
+import cr.ac.una.glifo.data.dto.AdminChangeRoleRequest
 import cr.ac.una.glifo.data.dto.AdminResetPasswordRequest
+import cr.ac.una.glifo.data.dto.UserDto
+import cr.ac.una.glifo.domain.model.AdminUser
+import cr.ac.una.glifo.domain.model.GlifoRole
 import cr.ac.una.glifo.data.dto.AdminResetPasswordResponse
 import cr.ac.una.glifo.data.dto.ApiResponse
 import cr.ac.una.glifo.data.dto.HealthResponseDto
@@ -75,5 +79,32 @@ class AdminRepositoryImplTest {
         assertTrue(result is Result.Failure)
         val error = (result as Result.Failure).error as AppError.Server
         assertEquals("Usuario no encontrado", error.message)
+    }
+
+    @Test
+    fun `getUsers maps the role and falls back to the email when there is no name`() = runTest {
+        coEvery { api.getAdminUsers() } returns ApiResponse(
+            listOf(
+                UserDto(id = 1L, email = "ana@una.ac.cr", firstName = "Ana", lastName = "Mora", role = "Teacher"),
+                UserDto(id = 2L, email = "x@est.una.ac.cr", firstName = null, lastName = null, role = "Unknown")
+            )
+        )
+
+        val users = (repository.getUsers() as Result.Success).value
+
+        assertEquals(AdminUser(1L, "ana@una.ac.cr", "Ana Mora", GlifoRole.Teacher), users[0])
+        assertEquals(AdminUser(2L, "x@est.una.ac.cr", "x@est.una.ac.cr", GlifoRole.Student), users[1])
+    }
+
+    @Test
+    fun `changeUserRole sends the role name the backend expects`() = runTest {
+        coEvery { api.changeUserRole(5L, any()) } returns ApiResponse(
+            UserDto(id = 5L, email = "e@est.una.ac.cr", firstName = "Eva", lastName = null, role = "Admin")
+        )
+
+        val result = repository.changeUserRole(5L, GlifoRole.Admin)
+
+        assertEquals(GlifoRole.Admin, (result as Result.Success).value.role)
+        coVerify { api.changeUserRole(5L, AdminChangeRoleRequest("Admin")) }
     }
 }
