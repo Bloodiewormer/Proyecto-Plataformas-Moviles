@@ -1,0 +1,10 @@
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- Glifo brand (D-12). Gold is the colour of action, not of the brand. -->
+    <color name="glifo_slate">#2E3B4B</color>
+    <color name="glifo_bone">#D7D1B9</color>
+    <color name="glifo_night">#161E27</color>
+    <color name="glifo_day">#EDEAE0</color>
+</resources>

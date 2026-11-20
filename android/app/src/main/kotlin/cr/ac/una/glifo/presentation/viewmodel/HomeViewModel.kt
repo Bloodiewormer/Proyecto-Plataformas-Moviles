@@ -1,0 +1,122 @@
+package cr.ac.una.glifo.presentation.viewmodel
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import cr.ac.una.glifo.core.common.UiState
+import cr.ac.una.glifo.core.datastore.ActiveCourseStore
+import cr.ac.una.glifo.domain.error.Result
+import cr.ac.una.glifo.domain.model.CourseDetail
+import cr.ac.una.glifo.domain.model.CourseStats
+import cr.ac.una.glifo.domain.model.NoteMeta
+import cr.ac.una.glifo.domain.repository.CourseRepository
+import cr.ac.una.glifo.domain.repository.NoteRepository
+import cr.ac.una.glifo.domain.repository.StudyRepository
+import cr.ac.una.glifo.domain.repository.SyncRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+data class HomeUiData(
+    val course: CourseDetail?,
+    /** Métricas de cobertura y estudio; null mientras esos módulos (Lab 5/6) no respondan. */
+    val stats: CourseStats?,
+    val recentNotes: List<NoteMeta>,
+    val pendingSyncCount: Int,
+    /** Material de estudio del curso activo (0 si todavía no hay). */
+    val flashcardCount: Int = 0,
+    val quizCount: Int = 0
+)
+
+/**
+ * Screen B2: Inicio Estudiante. El curso activo es el último que abrió el estudiante o, la
+ * primera vez, el primero de sus cursos; ya no hay un id fijo.
+ */
+@HiltViewModel
+class HomeViewModel @Inject constructor(
+    private val courseRepository: CourseRepository,
+    private val noteRepository: NoteRepository,
+    private val syncRepository: SyncRepository,
+    private val studyRepository: StudyRepository,
+    private val activeCourseStore: ActiveCourseStore
+) : ViewModel() {
+
+    private val _state = MutableStateFlow<UiState<HomeUiData>>(UiState.Loading)
+    val state: StateFlow<UiState<HomeUiData>> = _state.asStateFlow()
+
+    private val _syncCompletedEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val syncCompletedEvent: SharedFlow<Unit> = _syncCompletedEvent.asSharedFlow()
+
+    private var loadJob: Job? = null
+    private var lastPendingCount: Int? = null
+
+    init {
+        // Se recarga sola cuando el usuario elige otro curso en el selector.
+        viewModelScope.launch { activeCourseStore.activeCourseId.drop(1).distinctUntilChanged().collect { load() } }
+        viewModelScope.launch {
+            syncRepository.observePendingCount().collect { count ->
+                val prev = lastPendingCount
+                lastPendingCount = count
+
+                val current = _state.value
+                if (current is UiState.Success && current.data.pendingSyncCount != count) {
+                    _state.value = UiState.Success(current.data.copy(pendingSyncCount = count))
+                }
+
+                if (prev != null && count < prev) {
+                    load(showLoading = false)
+                    if (prev > 0 && count == 0) {
+                        _syncCompletedEvent.tryEmit(Unit)
+                    }
+                }
+            }
+        }
+        load()
+    }
+
+    fun load(showLoading: Boolean = true) {
+        // Al cambiar de curso se cancela la carga anterior: si terminara después, pisaría la del nuevo.
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
+            if (showLoading || _state.value !is UiState.Success) {
+                _state.value = UiState.Loading
+            }
+            val pending = lastPendingCount ?: (syncRepository.getPendingCount() as? Result.Success)?.value ?: 0
+
+            val courseId = activeCourseStore.activeCourseId.value ?: when (val courses = courseRepository.getStudentCourses()) {
+                is Result.Success -> courses.value.firstOrNull()?.also { activeCourseStore.set(it.id, it.name) }?.id
+                is Result.Failure -> {
+                    // Sin red y sin curso guardado todavía no hay nada que mostrar del curso,
+                    // pero la cola offline sí es real.
+                    _state.value = UiState.Success(HomeUiData(null, null, emptyList(), pending))
+                    return@launch
+                }
+            }
+
+            if (courseId == null) {
+                _state.value = UiState.Success(HomeUiData(null, null, emptyList(), pending))
+                return@launch
+            }
+
+            _state.value = UiState.Success(
+                HomeUiData(
+                    course = (courseRepository.getCourseDetail(courseId) as? Result.Success)?.value
+                        ?.also { activeCourseStore.set(it.id, it.name) },
+                    stats = (courseRepository.getCourseStats(courseId) as? Result.Success)?.value,
+                    recentNotes = (noteRepository.getNoteMetaList(courseId) as? Result.Success)?.value.orEmpty().take(2),
+                    pendingSyncCount = pending,
+                    flashcardCount = (studyRepository.getFlashcards(courseId) as? Result.Success)?.value?.size ?: 0,
+                    quizCount = if (studyRepository.getQuizQuestion(courseId) is Result.Success) 1 else 0
+                )
+            )
+        }
+    }
+}
