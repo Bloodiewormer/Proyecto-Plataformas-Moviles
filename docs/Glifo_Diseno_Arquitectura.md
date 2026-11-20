@@ -321,7 +321,7 @@ ai_calls            (id, user_id, course_id, call_type, level, cost, tokens)
 sync_queue          (id, user_id, device_id, entity_type, payload JSONB, status)
 devices             (id, user_id, fcm_token, platform)
 notifications       (id, user_id, kind, payload JSONB, sent_at, read_at)
-coverage_snapshots  (id, user_id, course_id, taken_at, summary JSONB)
+coverage_snapshots  (id, user_id, course_id, coverage_pct, taken_at)
 ```
 
 **Count.** 16 core tables (access control, academic domain, ingestion, study) + 5 operations tables = **21**. Only the 16 core tables appear on the diagram defended in class; the annex is shown if asked. The reduction from 23 to 16 is justified in `Glifo_UML_Modeling.md` §4.2, and every merge rests on strict 1:1 cardinality.
@@ -341,9 +341,8 @@ Applied selectively, not generalized.
 | `attempts.response` | Response format depends on the question type. |
 | `sync_queue.payload` | Serialized outbox operation; opaque to the server until replayed. |
 | `notifications.payload` | Payload shape depends on the notification kind. |
-| `coverage_snapshots.summary` | Reporting-only freeze of a coverage state; never queried by field. |
 
-Eight JSONB columns. The one that carries the most weight is `study_items.payload`: collapsing questions, options, and correct answers into it removed **four normalized tables** from the quiz model. A `CHECK` constraint keeps the `kind` discriminator and the payload honest.
+Seven JSONB columns. The one that carries the most weight is `study_items.payload`: collapsing questions, options, and correct answers into it removed **four normalized tables** from the quiz model. A `CHECK` constraint keeps the `kind` discriminator and the payload honest.
 
 | Does NOT use JSONB | Justification |
 |---|---|

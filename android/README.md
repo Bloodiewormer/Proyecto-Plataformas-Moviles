@@ -1,58 +1,41 @@
-# Glifo — Android Client
+# Glifo · App Android
 
-The mobile application for **Glifo**, a resilient ingestion engine for handwritten notes, built with Kotlin and Jetpack Compose.
+App de Glifo en Kotlin y Jetpack Compose: captura apuntes, los procesa en el teléfono, sincroniza con el backend y arma el estudio.
 
-## Architecture
+## Arquitectura
 
-Following the **Screaming Architecture** principle, the project is organized by domain and capability:
+Capas al estilo Clean Architecture, con MVVM en la presentación:
 
-- `cr.ac.una.glifo.pipeline`: The core ingestion engine (N0–N3 escalation).
-- `cr.ac.una.glifo.feature`: Functional capabilities (auth, capture, note, coverage, study, course, admin).
-- `cr.ac.una.glifo.core`: Cross-cutting concerns (network, database, sync, push notifications, UI theme).
-- `cr.ac.una.glifo.di`: Hilt dependency injection modules.
+| Paquete | Contenido |
+|---|---|
+| `presentation` | Pantallas Compose (`ui/screen`), ViewModels y navegación (`GlifoNavHost`, barra inferior por rol en `GlifoBottomBar`) |
+| `domain` | Modelos, interfaces de repositorio y errores (`AppError`, `Result`) |
+| `data` | Repositorios, Retrofit (`GlifoApi`), DTOs, mappers y Room (`GlifoDatabase`) |
+| `core/pipeline` | Pipeline de captura: calidad (N0), OCR local (N1), clasificación de regiones y hash perceptual |
+| `core/opencv`, `core/mlkit`, `core/confidence` | Segmentación con OpenCV, ML Kit y puntaje de confianza por fragmento |
+| `core/sync` | Cola sin conexión (`sync_operations`) procesada por WorkManager con reintentos |
+| `core/push`, `core/reminder`, `core/telemetry` | FCM, recordatorios locales de estudio y Crashlytics |
+| `core/ui` | Tema, tokens de color y componentes compartidos (`GlifoComponents`) |
 
-## Tech Stack
+## Stack
 
-- **UI:** Jetpack Compose (MVVM)
-- **Dependency Injection:** Hilt
-- **Networking:** Retrofit + OkHttp + Gson
-- **Persistence:** Room (Local Cache + Offline Queue)
-- **Background Work:** WorkManager
-- **Image Processing:** OpenCV Android SDK
-- **OCR:** ML Kit Text Recognition
-- **Camera:** CameraX
-- **Push Notifications:** Firebase Cloud Messaging (`firebase-messaging` via Firebase BoM `33.10.0`)
+Jetpack Compose (Material 3), Hilt, Retrofit con OkHttp y Gson, Room, WorkManager, CameraX, ML Kit Text Recognition, OpenCV, KaTeX (sin conexión, en `assets`), Firebase Crashlytics y Cloud Messaging.
 
-## Mock API (Lab 3)
+## Correr
 
-`NetworkModule.kt` points Retrofit at `http://127.0.0.1:3000/api/v1/`, served locally by
-[Mockoon](https://mockoon.com/). Import `mockoon/Glifo.json` into Mockoon and start the
-environment before running the app, or its `AuthRepositoryImpl` calls (and the network
-security config) will get `AppError.NoConnection`.
+1. Levantá el backend local (ver la [guía de despliegue](../docs/Guia_Despliegue.md#2-backend-en-tu-máquina)).
+2. Abrí esta carpeta (`android/`) en Android Studio y corré el build **debug** en un emulador. Apunta a `http://10.0.2.2:8080/api/v1/`, que es tu PC vista desde el emulador.
+3. Pruebas unitarias: `./gradlew :app:testDebugUnitTest`.
 
-`GlifoApi` also declares `courses`, `courses/{id}`, `enrollments`, and `notes` routes, and
-the mock has matching responses for all of them — but no repository consumes them yet.
-Every repository except `AuthRepositoryImpl` is still backed by `data/datasource/dummy/`
-on purpose (see the KDoc on `AuthRepositoryImpl` and `GlifoApi`): Lab 3 only grades the
-auth path, so the rest stays dummy-backed until there's a real backend to point at instead
-of a hand-maintained mock.
+El build **release** apunta a Render y se firma con el keystore del proyecto. La guía explica cómo cambiar la URL, conectar un teléfono físico y publicar una versión nueva.
 
-Deterministic error triggers for exercising `AppError` mapping:
+El APK de release incluye solo `arm64-v8a` y `armeabi-v7a`. Funciona en teléfonos y en emuladores x86_64 recientes que traducen ARM.
 
-| Call | Trigger | Response |
-|---|---|---|
-| `POST auth/login` | `password: "wrong-password"` | `401` |
-| `POST courses` | blank/missing `name` or `code` | `400` |
-| `GET courses/{id}` | `id = 999` | `404` |
-| `POST enrollments` | `join_code: "INVALID"` | `404` |
-| `POST enrollments` | `join_code: "ALREADY"` | `409` |
-| `POST notes` | blank/missing `title` | `400` |
-| `GET notes/{id}` | `id = 999` | `404` |
-| `DELETE notes/{id}` | `id = 999` | `404` |
+## Sincronización sin conexión
 
-Anything else on those routes falls through to the happy-path response.
+Cada captura se guarda primero en Room y crea operaciones en `sync_operations` (`CREATE_NOTE`, `UPLOAD_PAGE`) con una clave de idempotencia. WorkManager procesa la cola en orden cuando hay red, con reintentos exponenciales. Una página espera a que su apunte tenga id del servidor, y un `409` al subirla se toma como éxito, así que un corte de red nunca duplica páginas.
 
-## Notificaciones Push FCM Dirigidas por `device_id` (Lab 6 — Issue #48)
+## Notificaciones push por dispositivo (FCM)
 
 ### Identidad de instalación, `device_id` y token FCM
 - `TokenManager` genera y conserva un `installation_id` estable (UUID de instalación de la app en `DataStore`, sin leer identificadores físicos sensibles del dispositivo).
@@ -75,36 +58,8 @@ Anything else on those routes falls through to the happy-path response.
   - Se requiere un dispositivo o emulador con **Google Play Services** configurado y conectado a internet para recibir mensajes de FCM.
   - Si el usuario fuerza la detención de la aplicación (*Force Stop*) desde los ajustes del sistema o si el fabricante aplica restricciones agresivas de segundo plano (*Doze* / *App Standby*), el sistema operativo retendrá o descartará la entrega hasta que el usuario vuelva a abrir la aplicación.
 
-## Distribución del APK con Firebase App Distribution (Proyecto final — Issue #55)
+## Documentación
 
-### URL del backend por tipo de build
-- `debug`: `http://10.0.2.2:8080/api/v1/` (backend local o Mockoon visto desde el emulador).
-- `release`: `https://glifo-api.onrender.com/api/v1/` (backend desplegado en Render).
-- Se define con `BuildConfig.BASE_URL` en `app/build.gradle.kts`; `NetworkModule` lo usa. Para otro backend en release: `glifo.release.base.url=...` en `local.properties`, `-PGLIFO_RELEASE_BASE_URL=...` o la variable de entorno `GLIFO_RELEASE_BASE_URL`.
-- Las cuentas demo del login solo se muestran en debug (en release, con `glifo.release.show.demo=true` en `local.properties`).
-
-### Firma de release
-La firma nunca se versiona. `app/build.gradle.kts` lee estas cuatro claves de `~/.gradle/gradle.properties` o de variables de entorno; si falta alguna, `assembleRelease` firma con la llave debug (sirve para pruebas, no para una tienda):
-
-```properties
-GLIFO_RELEASE_STORE_FILE=C:/ruta/privada/glifo-release.jks
-GLIFO_RELEASE_STORE_PASSWORD=...
-GLIFO_RELEASE_KEY_ALIAS=glifo-release
-GLIFO_RELEASE_KEY_PASSWORD=...
-```
-
-Guardá una copia de respaldo del keystore y su contraseña fuera del repositorio: sin ellos no se pueden publicar actualizaciones que se instalen encima de la versión distribuida.
-
-### Generar, verificar y distribuir
-1. Subí `versionCode` (y `versionName`) en `app/build.gradle.kts` antes de cada entrega nueva.
-2. Desde la raíz del workspace: `gradlew.bat -p <ruta-del-frontend> :app:assembleRelease`.
-3. Verificá la firma: `apksigner verify --print-certs app/build/outputs/apk/release/app-release.apk`.
-4. En la consola de Firebase (proyecto `glifoapp`) → App Distribution → app `cr.ac.una.glifo`: subí `app-release.apk`, agregá testers o un grupo y notas de versión, y distribuí.
-
-### Limitaciones
-- El APK de release solo incluye `arm64-v8a` y `armeabi-v7a` (teléfonos reales); no se instala en emuladores x86.
-- Render en plan gratuito tarda hasta ~75 s en despertar (medido el 2026-11-16): la primera petición tras un periodo inactivo puede acercarse al tiempo de espera de la app (90 s de lectura); reintentar funciona.
-
-## Documentation
-
-See `docs/Glifo_Arquitectura_Estandares.md` and `docs/claude_Glifo_UML_Modeling.md` for detailed technical specifications.
+- [Guía de despliegue](../docs/Guia_Despliegue.md): backend, URL del APK, firma y releases.
+- [Estándares de arquitectura](../docs/Glifo_Arquitectura_Estandares.md): capas, tokens de diseño y componentes.
+- [Modelado UML](../docs/Glifo_UML_Modeling.md).

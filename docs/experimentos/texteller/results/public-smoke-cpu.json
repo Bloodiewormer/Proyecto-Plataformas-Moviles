@@ -1,0 +1,115 @@
+{
+  "model_id": "OleehyO/TexTeller",
+  "model_revision": "7b96df06b9d81cdb129c3bef68b7250bc3e2b0ea",
+  "provider": "CPUExecutionProvider",
+  "model_file_sha256": {
+    "config.json": "ae1df4b712a25df6cbf0441d0e5602cee139f3f371c1b3555274db7aed2c0135",
+    "generation_config.json": "dce3cbe591ed7fc9d9ea9c588697e9e3a05248446343cf1682df309c013d5ab7",
+    "tokenizer.json": "3fd70ac72edab8213b7dd13271b3c69b6c2252ab3e04f8045939dad0847309be",
+    "tokenizer_config.json": "e29bfc0a816ca61b2752c1ce9bfcaea633324ea418fa7ead6feba0d1e8f8efe0",
+    "special_tokens_map.json": "f23c8e6099631c233c16d9bf8dab198f610826cdd1b358f270f6d55c1863e857",
+    "encoder_model.onnx": "071afc0a0c92b2ee3847612127eb9e82b1c39413725e692f4405e5ea9e265bf0",
+    "decoder_model.onnx": "288cb8e37cdda66f725f2739efd2e7846636666a815e27533891c68389ec3659"
+  },
+  "preprocessing_source_revision": "9b88cec77bda735aa16f9fc7e4ccb4eb1500a8b2",
+  "preprocessing_packages": {
+    "torch": "2.14.1+cpu",
+    "torchvision": "0.29.1+cpu",
+    "opencv-python-headless": "5.0.0.93"
+  },
+  "onnx_optimization": "ORT_ENABLE_BASIC; CPU arena and memory pattern disabled",
+  "latency_excludes_separate_preprocessing": true,
+  "upstream_postprocessing_applied": false,
+  "python": "3.12.13",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "threads": 2,
+  "max_new_tokens": 256,
+  "per_image_timeout_seconds": 180.0,
+  "model_load_seconds": 5.397,
+  "decoding": "greedy_without_cache",
+  "sample_origin": "upstream_public_examples",
+  "accuracy_measured": false,
+  "not_a_calibrated_confidence": true,
+  "packages": {
+    "numpy": "2.5.4",
+    "onnxruntime": "1.31.1",
+    "pillow": "13.0.0",
+    "psutil": "7.2.2",
+    "tokenizers": "0.23.3"
+  },
+  "requested_images": [
+    "formula3.png",
+    "hw-formula1.png",
+    "hw-formula2.png",
+    "hw-formula3.png"
+  ],
+  "batch_complete": true,
+  "results": [
+    {
+      "file": "formula3.png",
+      "sha256": "302a93b057a904c5cb2af727ecdf1236fe07e446572198237d2f2487f025ab57",
+      "image_size": [
+        544,
+        64
+      ],
+      "latex": "\\[m}}F(z)\\ =\\ F(0)\\,+\\,\\sum_{m=1}^{\\infty}}\\,\\left\\{\\frac{b_{m}}{z}}{z-a_{m}}+ \\frac{b_{m}}{z-a_{m}} \\right\\right\\ +\\, \\sum_{m=1}^{\\infty}\\,\\left\\{\\infty}\\right\\right\\right\\left\\{\\infty}\\right\\right\\right\\left\\{\\infty\\right\\right\\left\\{ \\infty\\right\\right\\right\\left\\{\\infty\\right\\right\\left\\{\\infty\\right\\left\\right\\left\\left\\right\\left\\left\\{\\right\\right \\Gamma\\left\\{\\infty\\left\\left\\left\\left\\left\\left",
+      "status": "time_limit",
+      "generated_tokens": 153,
+      "seconds": 180.08,
+      "preprocessing_seconds": 4.747,
+      "reference_latex": null,
+      "confidence": null,
+      "latex_compilation_checked": false
+    },
+    {
+      "file": "hw-formula1.png",
+      "sha256": "a68e0a2797612d0192737c6251683be3b396fbcfae630518201502fe5df358f7",
+      "image_size": [
+        187,
+        89
+      ],
+      "latex": "\\[s_{2}-s_{1}= \\int_{t_{1}}^{t_{2}}vdt\\]",
+      "status": "complete",
+      "generated_tokens": 24,
+      "seconds": 18.691,
+      "preprocessing_seconds": 0.08,
+      "reference_latex": null,
+      "confidence": null,
+      "latex_compilation_checked": false
+    },
+    {
+      "file": "hw-formula2.png",
+      "sha256": "39d7726a23c0c046e385bccfaac73e64a4b919c3f1e4bddeb7ebf44b6de336e0",
+      "image_size": [
+        502,
+        108
+      ],
+      "latex": "\\[\\int_{- \\infty}^{+ \\infty}e^{-t(s+ \\frac{ix_{j}}{2t})^{2}}ds= \\int_{- \\infty}^{+ \\infty}e^{-ts^{2}}ds\\]",
+      "status": "complete",
+      "generated_tokens": 47,
+      "seconds": 38.305,
+      "preprocessing_seconds": 0.009,
+      "reference_latex": null,
+      "confidence": null,
+      "latex_compilation_checked": false
+    },
+    {
+      "file": "hw-formula3.png",
+      "sha256": "bd1dc50b26b33bb62b9682fc35fc14f44ec0591d17f2eedae09c544a04101c8d",
+      "image_size": [
+        1252,
+        462
+      ],
+      "latex": "\\[\\frac{A}^{2}( \\frac{x}^{2}))\\]",
+      "status": "complete",
+      "generated_tokens": 15,
+      "seconds": 12.141,
+      "preprocessing_seconds": 0.054,
+      "reference_latex": null,
+      "confidence": null,
+      "latex_compilation_checked": false
+    }
+  ],
+  "process_rss_bytes": 1342033920,
+  "process_peak_working_set_bytes": 1466494976
+}

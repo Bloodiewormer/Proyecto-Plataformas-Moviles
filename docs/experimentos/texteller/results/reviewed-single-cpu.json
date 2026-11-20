@@ -1,0 +1,83 @@
+{
+  "model_id": "OleehyO/TexTeller",
+  "model_revision": "7b96df06b9d81cdb129c3bef68b7250bc3e2b0ea",
+  "provider": "CPUExecutionProvider",
+  "model_file_sha256": {
+    "config.json": "ae1df4b712a25df6cbf0441d0e5602cee139f3f371c1b3555274db7aed2c0135",
+    "generation_config.json": "dce3cbe591ed7fc9d9ea9c588697e9e3a05248446343cf1682df309c013d5ab7",
+    "tokenizer.json": "3fd70ac72edab8213b7dd13271b3c69b6c2252ab3e04f8045939dad0847309be",
+    "tokenizer_config.json": "e29bfc0a816ca61b2752c1ce9bfcaea633324ea418fa7ead6feba0d1e8f8efe0",
+    "special_tokens_map.json": "f23c8e6099631c233c16d9bf8dab198f610826cdd1b358f270f6d55c1863e857",
+    "encoder_model.onnx": "071afc0a0c92b2ee3847612127eb9e82b1c39413725e692f4405e5ea9e265bf0",
+    "decoder_model.onnx": "288cb8e37cdda66f725f2739efd2e7846636666a815e27533891c68389ec3659"
+  },
+  "preprocessing_source_revision": "9b88cec77bda735aa16f9fc7e4ccb4eb1500a8b2",
+  "raw_generation_config": {
+    "_from_model_config": true,
+    "bos_token_id": 0,
+    "eos_token_id": 2,
+    "pad_token_id": 1,
+    "transformers_version": "4.41.2",
+    "use_cache": false
+  },
+  "effective_generation_config": {
+    "_from_model_config": true,
+    "bos_token_id": 0,
+    "eos_token_id": 2,
+    "pad_token_id": 1,
+    "transformers_version": "4.41.2",
+    "use_cache": false,
+    "decoder_start_token_id": 0
+  },
+  "decoder_start_token_source": "fallback_to_generation_config.json.bos_token_id",
+  "preprocessing_packages": {
+    "torch": "2.14.1+cpu",
+    "torchvision": "0.29.1+cpu",
+    "opencv-python-headless": "5.0.0.93"
+  },
+  "onnx_optimization": "ORT_ENABLE_BASIC; CPU arena and memory pattern disabled",
+  "latency_excludes_separate_preprocessing": true,
+  "upstream_postprocessing_applied": false,
+  "python": "3.12.13",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "threads": 2,
+  "max_new_tokens": 256,
+  "per_image_timeout_seconds": 180.0,
+  "model_load_seconds": 4.992,
+  "decoding": "greedy_without_cache",
+  "sample_origin": "upstream_public_examples",
+  "accuracy_measured": false,
+  "not_a_calibrated_confidence": true,
+  "packages": {
+    "numpy": "2.5.4",
+    "onnxruntime": "1.31.1",
+    "pillow": "13.0.0",
+    "psutil": "7.2.2",
+    "tokenizers": "0.23.3"
+  },
+  "requested_images": [
+    "hw-formula1.png"
+  ],
+  "batch_complete": true,
+  "results": [
+    {
+      "file": "hw-formula1.png",
+      "sha256": "a68e0a2797612d0192737c6251683be3b396fbcfae630518201502fe5df358f7",
+      "image_size": [
+        187,
+        89
+      ],
+      "tensor_sha256": "42981630d5909e694dabe59cccd4f738b1b779f05c66cd634469f79e8c5b2510",
+      "latex": "\\[s_{2}-s_{1}= \\int_{t_{1}}^{t_{2}}vdt\\]",
+      "status": "complete",
+      "generated_tokens": 24,
+      "seconds": 20.298,
+      "preprocessing_seconds": 0.014,
+      "reference_latex": null,
+      "confidence": null,
+      "latex_compilation_checked": false
+    }
+  ],
+  "process_rss_bytes": 1342869504,
+  "process_peak_working_set_bytes": 1434509312
+}

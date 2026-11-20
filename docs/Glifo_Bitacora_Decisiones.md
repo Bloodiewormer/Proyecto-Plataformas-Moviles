@@ -33,6 +33,12 @@ Working documents (`Glifo_Alcance.md`, `Glifo_Arquitectura_Estandares.md`) are w
 | D-21 | `ai_calls` view and targeted push are Must-have | Closed |
 | D-22 | LaTeX validation runs on the backend | Closed |
 | D-23 | Sync operation ordering: CREATE_NOTE before UPLOAD_PAGE | Closed |
+| D-24 | Android package structure: Clean layer-first, screaming architecture discarded | Closed |
+| D-25 | Mock API tool for Lab 3: Mockoon | Closed |
+| D-26 | Lab 3 fully wired to Mockoon, gallery capture, language selector | Closed |
+| D-27 | Database schema generated from JPA entities + `import.sql`; Flyway dropped | Closed |
+| D-28 | Room activated for the offline pipeline: `LocalCourseContext` (#27) and pHash deduplication (#28) | Closed |
+| D-29 | Room v2 with notes + outbox; results and sync screens on real data (#25, #26) | Closed |
 
 ---
 
@@ -291,6 +297,182 @@ Also discarded: the geometric-figure encoding (filled circle, square, triangle, 
 
 ---
 
+## D-24 · Android package structure: Clean layer-first, screaming architecture discarded
+
+**Decision.** The Android package structure drops the feature-first ("screaming architecture") layout described in an earlier version of `Glifo_UML_Modeling.md` §11, specifically the `feature/<capability>/{data,domain,presentation}` duplication. `feature/` is removed; `data/`, `domain/`, and `presentation/` become root packages, each holding `model` / `dto` / `mapper` / `repository` / `viewmodel` etc. for every screen, with no per-capability subdivision. `pipeline/`, `engine/`, `core/`, and `di/` are unaffected — they are cross-cutting engines and infrastructure with no UI screens attached, outside the CRUD-screen structure the professor's rubric addresses. `Glifo_Arquitectura_Estandares.md` §2 reflects the flat version going forward.
+
+**Reason.** Lab 2 scored 80/100, and the professor's stated deduction was structural non-compliance: he grades the Android package layout against his own TaskApp reference material, which is Clean Architecture applied flat — three root packages, no feature grouping. The feature-first layout in §11 is a legitimate pattern (it cites Robert Martin's own screaming-architecture essay and was adopted deliberately, including a recent `feature/teacher/` → `feature/course/` + `feature/admin/` refactor), but the professor never taught the hybrid of screaming-at-the-top with Clean-inside-each-feature, so his rubric treats the two patterns as mutually exclusive. The team chose to match the taught pattern rather than defend the hybrid, given the grading stakes and the imminent Lab 3 defense.
+
+**Scope of the reversal.** This closes over the Android front end only. The backend (`cr.ac.una.glifo`, organized by aggregate per `Glifo_Arquitectura_Estandares.md` §3) is untouched — the professor's objection was specific to the mobile client structure shown in his course material.
+
+**DAO / Room stays out of scope for now, separately from this decision.** Local persistence (Room) is calendared for Module 5 / Applied Research in `Contexto_Curso.md`, not Lab 2 or Lab 3, and "Local storage implementation and data synchronization" is X-Ray's own assigned Applied Research topic. No `data/local/` package or DAO exists in the Android code until that milestone; this is a scheduling fact, not a consequence of the layer-first flattening.
+
+**Future re-evaluation.** Once the app grows past the handful of screens graded in Labs 2–3, the flat structure may become unwieldy (all repositories, all view models, and all domain models sharing one folder regardless of capability). If that becomes a real maintenance cost, the feature-first hybrid documented in the pre-D-24 version of §11 remains the candidate to revisit — but only after the course's structural grading window has closed.
+
+---
+
+## D-25 · Mock API tool for Lab 3
+
+**Decision.** Mockoon serves the Lab 3 mock API. The environment is versioned at
+`mockoon/Glifo.json` in the frontend repo, port 3000, prefix `api/v1`.
+
+**Reason.** The professor's own "API de Prueba (Mock API)" lesson lists Mockoon, Beeceptor,
+Mocky, JSON Server, and Postman Mock Server as acceptable options. Mockoon was picked
+because it runs locally — matching Glifo's local-first, offline-capable principle (D-01,
+D-10) — and its response rules can simulate arbitrary status codes and latency
+deterministically, which the Lab 3 rubric's error-handling requirement needs without a live
+network dependency during the defense.
+
+**Scope.** Only `AuthRepositoryImpl` (`login`/`register`) is wired to the mock — that is
+what Lab 3 grades (`Contexto_Curso.md`, "Error handling, Hilt, Retrofit, mock API"). `GlifoApi`
+also declares `courses`, `courses/{id}`, `enrollments`, and `notes` routes with matching mock
+responses (happy path plus deterministic 400/404/409 triggers), kept ready for whichever
+repository is the next one moved off `data/datasource/dummy/` — but none of them are consumed
+yet. Every other repository stays dummy-backed under the standing "temporary until there's a
+real backend" decision; wiring them to Mockoon would front-run Lab 4/5 backend work for no
+grading benefit.
+
+---
+
+## D-26 · Conexión completa de Lab 3 a Mockoon, Captura desde Galería y Selector de Idioma
+
+**Decisión.** Se completa la integración técnica de Laboratorio 3 en el frontend Android de Glifo:
+1. **Consumo de Mockoon extendido**: `CourseRepositoryImpl` y `NoteRepositoryImpl` sustituyen a los providers en memoria para los flujos principales de consulta, detalle, creación y matrícula (`POST /enrollments`). Se integró el manejador uniforme de errores `ApiErrorHandler` mapeando excepciones HTTP y de red a `AppError` (`NoConnection`, `Unauthorized`, `Validation`, `Server`), extrayendo el mensaje del JSON del servidor.
+2. **Flujo de Matrícula (Enrollments)**: `JoinCourseViewModel` y `JoinCourseScreen` se conectaron de extremo a extremo a `POST /enrollments`. Si el código es inválido o el usuario ya está matriculado, Mockoon responde con 404 o 409 y la UI muestra el banner de error correspondiente sin saltar a éxito incondicional.
+3. **Captura desde Galería**: Se implementó el contrato `ActivityResultContracts.GetContent()` en `CaptureScreen`, permitiendo seleccionar imágenes desde el almacenamiento del dispositivo, copiándolas de forma segura a un archivo temporal en `context.cacheDir` y redirigiéndolas al mismo flujo de revisión y procesamiento (`CaptureReviewScreen`).
+4. **Selector de Idioma Dinámico**: Se creó `LanguageManager` persistido en `SharedPreferences` con soporte para Sistema, Español e Inglés, aprovechando los catálogos existentes `values/strings.xml` y `values-es/strings.xml`, inyectando `LocalContext` y `LocalConfiguration` en Compose para recomposición inmediata sin reiniciar la aplicación.
+5. **Estado de Room / DAO**: Se verificó rigurosamente que ninguna entidad, DAO o base de datos Room está activa ni compila en el frontend. Los archivos de persistencia local permanecen en cuarentena (`.kt.txt` en `_deferred_module5/`) conforme al calendario del Módulo 5 / Lab 4.
+
+---
+
+## D-27 · Database schema: generated from the JPA entities, seeded by `import.sql`
+
+**Decision.** The PostgreSQL schema is created by Hibernate from the JPA entities
+(`spring.jpa.hibernate.ddl-auto=create` while the entities change) and seeded by
+`src/main/resources/import.sql`. Flyway and `db/migration/V1__baseline.sql` are removed from
+the backend. Every rule the baseline script carried is now declared on the entities, so the
+generated schema is the complete model:
+
+| Rule | Declared as |
+|---|---|
+| Enum `CHECK`s (`Glifo_UML_Modeling.md` §5.7) and `payload ->> 'kind' = kind` | `@Table(check = [CheckConstraint(...)])` |
+| Composite `UNIQUE`s (§4.3) | `@Table(uniqueConstraints = ...)` |
+| Indexes | `@Table(indexes = ...)` |
+| `ON DELETE CASCADE / SET NULL` | `@OnDelete` on the child foreign key |
+| JSONB columns (7) | `String` + `@JdbcTypeCode(SqlTypes.JSON)` |
+
+The generated DDL is kept at `docs/db/schema.sql` in the backend as a readable reference; it
+is never executed. `DatabaseSchemaTest` asserts the 21 tables, the seven JSONB columns, and
+that the constraints reject invalid rows. `docker-compose.yml` offers a local PostgreSQL
+equivalent to the pgAdmin setup.
+
+**Reason.** The professor's DataLayer lessons (Loom 20–23) build the data layer exactly this
+way: role and database created in pgAdmin, entities as the source of the schema, `ddl-auto`
+explained as `create` during development and `update` once data must survive, and
+`import.sql` for seed rows. Flyway was only ever a proposal (`Glifo_UML_Modeling.md` §3.2,
+open item 9) and no course material uses it. As with D-24, the team matches the taught
+pattern because it is what the lab is graded against.
+
+**Corrections applied with this decision.**
+1. **JSONB columns could not be written.** They were mapped as `String` with
+   `columnDefinition = "jsonb"` but without `@JdbcTypeCode`, so PostgreSQL rejected every
+   INSERT (`varchar` into `jsonb`). Fixed on all seven columns.
+2. **`course_glossary` had no entity**, so with a generated schema the table did not exist.
+   Added `CourseGlossary` + `CourseGlossaryRepository`.
+3. **Enum values drifted.** The removed baseline script disagreed with §5.7 in five sets
+   (`topic_coverage.state`, `glossary_suggestions.status` `ACCEPTED`→`APPROVED`,
+   `note_pages.level_reached` without `UNRESOLVED`, `sync_queue.status` `PROCESSING`→`IN_PROGRESS`,
+   `notifications.kind`). §5.7 is the source of truth; the entities follow it.
+   `ai_calls.level` uses `ProcessingLevel` as §5.7 states (the script had invented
+   `BATCH`/`ON_DEMAND`).
+4. **Course owners were enrolled with status `OWNER`**, a value outside `EnrollmentStatus`.
+   Ownership is `courses.owner_user_id`; `CourseService.createCourse` no longer creates that
+   enrollment.
+5. `coverage_snapshots.summary` (JSONB) was listed in `Glifo_Arquitectura_Estandares.md` §6.2
+   and `Glifo_Diseno_Arquitectura.md` §11 but never existed in the ERD, which has
+   `coverage_pct`. Removed from both documents; the JSONB count is **seven**, not eight.
+
+**Cost accepted.** `ddl-auto=create` wipes the data on every start. Before the cloud
+deployment (Lab 6) it must move to `update`, which never drops or alters existing
+constraints; if the schema still changes after that point, a migration tool comes back as a
+new decision.
+
+---
+
+## D-28 · Room activated for the offline pipeline (#27, #28)
+
+**Decision.** Room leaves the `_deferred_module5/` quarantine (D-24, D-26) in Lab 4, but only
+with the two tables the offline pipeline needs, in `data/datasource/local/`:
+
+| Table | Issue | Content |
+|---|---|---|
+| `local_course_context` | #27 | One row per course: glossary (JSON) + `syllabus_version` + `glossary_version` (D-17) |
+| `processed_pages` | #28 | Perceptual hash + serialized `PageAnalysis` of every page that went through the pipeline |
+
+- **#27.** Opening the camera calls `GET /courses/{id}/glossary`. If both versions match the
+  local row, nothing is rewritten; if either changed, the row is replaced. Without a network
+  the local copy is used. The pipeline reads **only Room** when it processes a capture, so it
+  behaves the same online and offline. The endpoint exists in the Mockoon mock; the backend
+  implements it with the glossary module (Lab 5).
+- **#28.** DCT pHash (64 bits, 16 hex characters, same format as `note_pages.perceptual_hash`)
+  compared by Hamming distance within the same course. A match reuses the stored analysis and
+  skips N0 + N1. The image is downsampled by successive halvings before hashing; a single
+  resize to 32×32 aliased the lines of text.
+- **Threshold `DUPLICATE_THRESHOLD = 16`**, measured on drawn note pages: re-photographing
+  the same page gave 0–14 differing bits, different pages 24–32. The costly error is merging
+  two different pages, so the threshold sits closer to the retakes. pHash is not invariant to
+  a very different framing: it catches double shots, similar retakes and the same image
+  imported twice. Hashing after N0's perspective correction is the candidate improvement.
+
+**Verified on the emulator against Mockoon.** The glossary reached Room when the camera
+opened. The same gallery image processed after restarting the app was reused
+(0/64 bits). With the server unreachable, the pipeline still used glossary v3 from Room.
+
+**Still deferred (at the time).** Notes, outbox (`SyncOperation`) and the rest of the Room modeling in
+`_deferred_module5/`. Done later under D-29; the folder was deleted.
+
+---
+
+## D-29 · Room v2: notes and outbox; screens on real data (#25, #26)
+
+**Decision.** Room grows to v2 with `notes`, `note_pages`, `fragment_corrections` and the `sync_operations` outbox. Room is what the app shows. The server's notes are cached there, and a capture is saved there first, then queued. A real `SyncWorker` (WorkManager, network constraint, exponential backoff) drains the queue in order, `CREATE_NOTE` before `UPLOAD_PAGE` (D-23). The backend's `POST /notes/{id}/pages` stores the result of the pipeline, not the image.
+
+**Why.** #25 and #26 had been closed while Room was still quarantined and the worker was an empty scaffold. Without them, "View results" always opened a fixed example note, and the sync screen showed invented items.
+
+**Rules adopted.**
+- The note-reading screens show only real content: the pipeline analysis stored in Room, or the IA-01 reconstruction from the server. When neither exists they say so instead of showing an example.
+- Retries are idempotent on pages: a 409 counts as uploaded. `POST /notes` still lacks an idempotency key, which is a known gap.
+- The v1 → v2 schema change was destructive because v1 held only caches. From v2 on there is user data, so the next change needs a real `Migration`.
+- The active course is the last one opened, kept in SharedPreferences. It is no longer a fixed id.
+
+**Still dummy after this decision** (their backend features are Lab 5/6): coverage, study, teacher syllabus, glossary and gaps, and admin. The frontend PR for #25/#26 lists each one with its issue.
+
+---
+
+## D-30 · Monorepo with full history (2026-11-20)
+
+**Decision.** The backend and Android repositories from the course organization are merged into this repository as `backend/` and `android/` with a subtree merge. All 243 commits are kept. The early prototype modules of this repository were removed; `prototype/` stays because GitHub Pages builds the demo from it.
+
+**Why.** Glifo continues as a personal project, and the course repositories could be deleted at the end of the term. A single repository keeps the history, the docs and the release APKs in one place.
+
+**Rules adopted.**
+- Render deploys from `main` with `backend` as its root directory.
+- A change that touches both sides ships in order: database migration, backend, APK (`docs/Guia_Despliegue.md` §5.3).
+
+---
+
+## D-31 · Bottom navigation bar instead of the drawer (2026-11-20)
+
+**Decision.** The navigation drawer is replaced by a Material 3 `NavigationBar` with five tabs per role, rendered once by the `GlifoNavHost` scaffold. Student: Home, Notes, Coverage, Study, Profile. Teacher: Home, Courses, Gaps, Glossary, Profile. Admin: Home, Users, Courses, Roles, Profile. Profile takes over Settings, Sync and the logout warning for unsynced captures.
+
+**Why.** The hamburger menu was flagged as an outdated Android pattern in the final review. A bottom bar keeps the main destinations one tap away, and rendering it once removed a drawer copy from fifteen screens.
+
+**Rules adopted.**
+- A screen shows the bar only when its route is one of the role's tabs. Any other screen gets a back arrow.
+- Tabs scoped to a course use the active course. If there is none, they send the user to Courses with a hint.
+
+---
+
 ## Features evaluated and excluded from scope
 
 Record of what is **not** built, with the reason each was rejected, so it does not reappear in later planning.
@@ -327,6 +509,8 @@ Record of facts that were corrected after verification, so they are not reintrod
 | Effective dates | The calendar's closing dates | **The last Wednesday class before the closing date** |
 | Lab 2 duration | 3 weeks | **2 effective weeks**, one of them shared with the Lab 1 correction |
 | Lab 2 scope | Full implementation | Activities only: menu, authentication, navigation, and lists. AI does not appear until Lab 6 |
+| Lab 4 defense | Wed Sep 23 | **Wed Sep 30** |
+| Schema tooling | Flyway migrations (`Glifo_UML_Modeling.md` §11.5, earlier revision) | **Hibernate `ddl-auto` + `import.sql`**, as taught in the DataLayer lessons (D-27) |
 
 ---
 

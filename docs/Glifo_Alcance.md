@@ -326,13 +326,13 @@ All labs are defended live during Wednesday classes. **The operative date is the
 | **19 Aug** | Lab 1 Corr. | Access tables · JSON rationale · bounded model | Teacher role in prototype · ladder screens |
 | **26 Aug** | Lab 2 | Menu, auth, navigation, lists · two role flows | OpenCV compiling · CameraX · **N0** · rejection reasons |
 | **9 Sep** | Lab 3 | Hilt · Retrofit · errors · Mock API | **N1** · segmentation · **ConfidenceScorer** · **confidence map** |
-| **23 Sep** | Lab 4 | Backend · PostgreSQL · Repository | Full schema · **Room and offline queue** · deduplication |
+| **30 Sep** | Lab 4 | Backend · PostgreSQL · Repository | Full schema · **Room and offline queue** · deduplication |
 | **14 Oct** | Lab 5 | Services · REST · DTOs · Postman | Syllabus · coverage pre-filter · **sync with retries** · glossary |
 | **28 Oct** | Lab 6 | JWT · Spring Security · **AI API** · cloud | **N1.5 and N2** · IA-01/02/04 · LaTeX · `ai_calls` · push |
 | 1–10 Nov | — | No open deliverables | Integration · survey · article · defense rehearsal |
 | **11 Nov** | Final | APK · JWT · survey | Defense and applied research with Q&A round |
 
-**Critical week: September 23** — Lab 4 defense while Labs 5 and 6 are already open.
+**Critical week: September 30** — Lab 4 defense while Labs 5 and 6 are already open.
 
 ---
 

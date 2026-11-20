@@ -1,4 +1,4 @@
-# Glifo — Backend API
+# Glifo · Backend API
 
 Backend **monolítico** de Glifo en **Kotlin + Spring Boot**. Es el servidor del modelo
 **cliente-servidor**: la app Android (cliente) le hace peticiones HTTP/JSON y el backend
@@ -38,17 +38,20 @@ cr.ac.una.glifo
 ├── study/                   ítems de estudio, intentos, repaso
 ├── glossary/                sugerencias de glosario
 ├── ops/                     dispositivos, cola de sync, notificaciones push FCM, costos de IA
-├── ai/                      orquestación de IA (pendiente de labs posteriores)
+├── ai/                      IA: reconstrucción, OCR matemático, estudio, telemetría de llamadas
+├── coverage/                cobertura del temario: pre-filtro determinístico y adjudicación IA-04
+├── usage/                   consumo de IA por usuario y por curso
 ├── security/                JWT + Spring Security
 ├── config/                  CORS
 └── common/                  respuesta estándar (ApiResponse), errores, health
 ```
 
-## Cloud deployment
+## Despliegue
 
-See [the cloud deployment runbook](docs/cloud-deployment.md) for the Docker artifact,
-required environment variables, non-destructive cloud profile and pending deployment gates.
-This preparation does not imply a live deployment.
+El backend corre en Render como imagen Docker (perfil `cloud`) sobre PostgreSQL en Neon,
+en `https://glifo-api.onrender.com/api/v1/`. Los pasos para desplegarlo, las variables de entorno y
+las migraciones están en la [guía de despliegue](../docs/Guia_Despliegue.md). El
+[runbook original](docs/cloud-deployment.md) conserva el registro de cómo se preparó y verificó la imagen.
 
 ## Cómo correrlo
 
