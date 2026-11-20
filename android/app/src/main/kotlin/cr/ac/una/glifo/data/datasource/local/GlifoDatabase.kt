@@ -35,7 +35,7 @@ import cr.ac.una.glifo.data.datasource.local.entity.SyncOperationEntity
         SyncOperationEntity::class,
         StudyItemEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class GlifoDatabase : RoomDatabase() {
@@ -68,6 +68,13 @@ abstract class GlifoDatabase : RoomDatabase() {
                 db.execSQL(
                     "CREATE INDEX IF NOT EXISTS `index_study_items_course_id` ON `study_items` (`course_id`)"
                 )
+            }
+        }
+
+        /** 3 -> 4: page count the server reports, for notes whose pages were captured on another device. */
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `notes` ADD COLUMN `remote_page_count` INTEGER NOT NULL DEFAULT 0")
             }
         }
     }

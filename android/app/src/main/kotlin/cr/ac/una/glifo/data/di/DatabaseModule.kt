@@ -30,7 +30,7 @@ object DatabaseModule {
     fun provideGlifoDatabase(@ApplicationContext context: Context): GlifoDatabase =
         Room.databaseBuilder(context, GlifoDatabase::class.java, "glifo.db")
             .fallbackToDestructiveMigrationFrom(dropAllTables = true, 1)
-            .addMigrations(GlifoDatabase.MIGRATION_2_3)
+            .addMigrations(GlifoDatabase.MIGRATION_2_3, GlifoDatabase.MIGRATION_3_4)
             .build()
 
     @Provides

@@ -157,13 +157,15 @@ fun TopicDetailScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    if (cr.ac.una.glifo.core.ui.component.LocalSessionRole.current == cr.ac.una.glifo.domain.model.GlifoRole.Student) {
+                        Spacer(modifier = Modifier.height(16.dp))
 
-                    GlifoButton(
-                        text = stringResource(R.string.topic_detail_generate_reinforcement),
-                        icon = Icons.Default.Psychology,
-                        onClick = onNavigateToStudy
-                    )
+                        GlifoButton(
+                            text = stringResource(R.string.topic_detail_generate_reinforcement),
+                            icon = Icons.Default.Psychology,
+                            onClick = onNavigateToStudy
+                        )
+                    }
                 }
             }
         }

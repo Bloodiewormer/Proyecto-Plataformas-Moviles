@@ -74,6 +74,8 @@ data class NoteResponse(
     val title: String,
     val status: String,
     @JsonProperty("created_at") val createdAt: String,
+    /** Pages stored on the server; only the list fills it. */
+    @JsonProperty("page_count") val pageCount: Int? = null,
     /**
      * Reconstrucción IA-01 (notes.content, JSONB) tal cual está guardada. Solo va en el
      * detalle; en el listado queda en null para no arrastrar el documento de cada apunte.

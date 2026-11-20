@@ -36,7 +36,9 @@ data class NoteEntity(
     @ColumnInfo(name = "content_json")
     val contentJson: String? = null,
     @ColumnInfo(name = "created_at")
-    val createdAt: Long
+    val createdAt: Long,
+    @ColumnInfo(name = "remote_page_count", defaultValue = "0")
+    val remotePageCount: Int = 0
 )
 
 /** Página capturada y procesada en el teléfono: la foto se queda en el almacenamiento de la app. */

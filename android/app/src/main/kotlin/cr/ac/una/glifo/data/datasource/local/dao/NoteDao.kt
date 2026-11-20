@@ -35,6 +35,9 @@ interface NoteDao {
     @Query("UPDATE notes SET title = :title, class_date = :classDate, course_id = :courseId WHERE id = :id")
     suspend fun updateNoteHeader(id: Long, title: String, classDate: String, courseId: Long)
 
+    @Query("UPDATE notes SET created_at = :createdAt, remote_page_count = :remotePageCount WHERE id = :id")
+    suspend fun updateRemoteMeta(id: Long, createdAt: Long, remotePageCount: Int)
+
     @Query("UPDATE notes SET server_id = :serverId WHERE id = :id")
     suspend fun setServerId(id: Long, serverId: Long)
 
@@ -96,6 +99,7 @@ interface NoteDao {
                 insertNote(note)
             } else {
                 updateNoteHeader(existing.id, note.title, note.classDate, note.courseId)
+                updateRemoteMeta(existing.id, note.createdAt, note.remotePageCount)
             }
         }
         deleteStaleRemoteNotes(courseId, remote.mapNotNull { it.serverId })

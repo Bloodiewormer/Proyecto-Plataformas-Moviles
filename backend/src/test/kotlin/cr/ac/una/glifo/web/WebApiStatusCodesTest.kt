@@ -93,6 +93,16 @@ class WebApiStatusCodesTest {
     }
 
     @Test
+    fun `GET lista los apuntes con la cantidad de paginas guardadas`() {
+        val token = student()
+        val id = createNote(token)
+        mvc.get("$notes?courseId=${calculusId()}") { header("Authorization", token) }.andExpect {
+            status { isOk() }
+            jsonPath("$.data[?(@.id == $id)].page_count") { value(org.hamcrest.Matchers.contains(0)) }
+        }
+    }
+
+    @Test
     fun `PUT actualiza el apunte y responde 200`() {
         val token = student()
         val id = createNote(token)

@@ -1,5 +1,6 @@
 package cr.ac.una.glifo.data.repository
 
+import cr.ac.una.glifo.data.mapper.toCachedEntity
 import android.content.Context
 import androidx.room.withTransaction
 import cr.ac.una.glifo.R
@@ -456,16 +457,7 @@ class NoteRepositoryImpl : NoteRepository {
             is Result.Success -> {
                 noteDao.cacheRemoteNotes(
                     courseId,
-                    remote.value.map { dto ->
-                        NoteEntity(
-                            serverId = dto.id,
-                            courseId = dto.courseId,
-                            title = dto.title,
-                            classDate = dto.classDate,
-                            status = dto.status ?: STATUS_READY,
-                            createdAt = System.currentTimeMillis()
-                        )
-                    }
+                    remote.value.map { it.toCachedEntity(STATUS_READY) }
                 )
                 val localIdByServerId = noteDao.notesForCourse(courseId)
                     .mapNotNull { entity -> entity.serverId?.let { it to entity.id } }
@@ -490,7 +482,7 @@ class NoteRepositoryImpl : NoteRepository {
         return NoteMeta(
             note = toDomain(topicId),
             chips = content?.chips().orEmpty(),
-            pageCount = pages.size,
+            pageCount = maxOf(pages.size, remotePageCount),
             displayDate = displayDate(classDate)
         )
     }

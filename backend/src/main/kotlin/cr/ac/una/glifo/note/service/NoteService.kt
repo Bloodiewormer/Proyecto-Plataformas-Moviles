@@ -111,7 +111,10 @@ class NoteService @Autowired constructor(
         } else {
             noteRepository.findByUserId(userId)
         }
-        return notes.map { it.toResponse() }
+        val pageCounts = if (notes.isEmpty()) emptyMap() else
+            notePageRepository.countPagesByNoteIds(notes.map { it.id })
+                .associate { (noteId, count) -> noteId as Long to (count as Long).toInt() }
+        return notes.map { it.toResponse(pageCount = pageCounts[it.id] ?: 0) }
     }
 
     @Transactional(readOnly = true)

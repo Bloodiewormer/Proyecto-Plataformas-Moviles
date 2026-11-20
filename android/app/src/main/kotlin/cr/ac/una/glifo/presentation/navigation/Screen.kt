@@ -62,7 +62,7 @@ sealed class Screen(val route: String) {
         fun createRoute(courseId: Long) = "coverage/$courseId"
     }
     data object TopicDetail : Screen("topic_detail/{topicName}") {
-        fun createRoute(topicName: String) = "topic_detail/${java.net.URLEncoder.encode(topicName, "UTF-8")}"
+        fun createRoute(topicName: String) = "topic_detail/${android.net.Uri.encode(topicName)}"
     }
     data object CoverageDelta : Screen("coverage_delta")
 

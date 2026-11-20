@@ -48,7 +48,9 @@ data class NoteResponse(
     @SerializedName("class_date") val classDate: String,
     /** DRAFT · PROCESSING · READY · ARCHIVED; el mock no lo manda. */
     @SerializedName("status") val status: String? = null,
-    @SerializedName("syllabus_topic_id") val syllabusTopicId: Long? = null
+    @SerializedName("syllabus_topic_id") val syllabusTopicId: Long? = null,
+    @SerializedName("created_at") val createdAt: String? = null,
+    @SerializedName("page_count") val pageCount: Int? = null
 )
 
 data class NoteDetailResponse(

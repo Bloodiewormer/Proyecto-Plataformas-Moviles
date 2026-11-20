@@ -130,6 +130,7 @@ fun CovBar(
             .fillMaxWidth()
             .height(height)
             .clip(RoundedCornerShape(999.dp))
+            .background(colors.border)
     ) {
         if (vW > 0) {
             Box(
@@ -147,13 +148,9 @@ fun CovBar(
                     .background(colors.repaired)
             )
         }
+        // Absent topics stay as empty track so a course with nothing covered reads as an empty bar.
         if (eW > 0) {
-            Box(
-                modifier = Modifier
-                    .weight(eW)
-                    .fillMaxHeight()
-                    .background(colors.escalated)
-            )
+            Spacer(modifier = Modifier.weight(eW))
         }
         if (uW > 0) {
             Box(

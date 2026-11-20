@@ -6,7 +6,7 @@ import cr.ac.una.glifo.note.entity.Note
 import cr.ac.una.glifo.note.entity.NotePage
 
 /** [includeContent] solo en el detalle: el listado no arrastra el documento IA-01. */
-fun Note.toResponse(includeContent: Boolean = false) = NoteResponse(
+fun Note.toResponse(includeContent: Boolean = false, pageCount: Int? = null) = NoteResponse(
     id = id,
     courseId = course.id,
     syllabusTopicId = syllabusTopic?.id,
@@ -14,6 +14,7 @@ fun Note.toResponse(includeContent: Boolean = false) = NoteResponse(
     title = title,
     status = status,
     createdAt = createdAt.toString(),
+    pageCount = pageCount,
     content = if (includeContent) content else null
 )
 

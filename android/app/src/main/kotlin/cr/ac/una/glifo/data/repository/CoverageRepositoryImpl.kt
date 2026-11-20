@@ -1,12 +1,12 @@
 package cr.ac.una.glifo.data.repository
 
+import cr.ac.una.glifo.data.mapper.toCachedEntity
 import android.content.Context
 import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.AppError
 import cr.ac.una.glifo.core.datastore.ActiveCourseStore
 import cr.ac.una.glifo.data.datasource.local.NoteTopicCache
 import cr.ac.una.glifo.data.datasource.local.dao.NoteDao
-import cr.ac.una.glifo.data.datasource.local.entity.NoteEntity
 import cr.ac.una.glifo.data.datasource.remote.ApiErrorHandler
 import cr.ac.una.glifo.data.datasource.remote.GlifoApi
 import cr.ac.una.glifo.data.dto.CoverageResponseDto
@@ -199,16 +199,7 @@ class CoverageRepositoryImpl : CoverageRepository {
                 runCatching {
                     dao.cacheRemoteNotes(
                         courseId,
-                        remoteNotes.map { dto ->
-                            NoteEntity(
-                                serverId = dto.id,
-                                courseId = dto.courseId,
-                                title = dto.title,
-                                classDate = dto.classDate,
-                                status = dto.status ?: STATUS_READY,
-                                createdAt = System.currentTimeMillis()
-                            )
-                        }
+                        remoteNotes.map { it.toCachedEntity(STATUS_READY) }
                     )
                     dao.notesForCourse(courseId)
                 }.getOrNull()
