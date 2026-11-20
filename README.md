@@ -1,71 +1,101 @@
-# Glifo 
+<div align="center">
 
-Aplicación Android que reconstruye notas manuscritas de estudiantes en conocimiento estructurado por materia, detecta vacíos frente al syllabus del curso, y guía el estudio adaptativo (flashcards, quizzes, repetición espaciada, plan de examen).
+# Glifo
 
-Nació como proyecto del curso EIF411 (Plataformas Móviles, UNA) y ahora sigue como proyecto personal.
-**Equipo original:** Grupo X-Ray — Brandon Brenes, David González, Felipe Ugalde
+**Convierte apuntes manuscritos en conocimiento estructurado, detecta qué falta frente al temario y arma tu repaso.**
 
-Este repositorio reúne el backend y la app Android con el historial completo de los repositorios del curso.
+[![Release](https://img.shields.io/github/v/release/Bloodiewormer/Proyecto-Plataformas-Moviles?label=APK&color=f5c451)](https://github.com/Bloodiewormer/Proyecto-Plataformas-Moviles/releases/latest)
+[![License: MIT](https://img.shields.io/badge/license-MIT-2b3a4a)](LICENSE)
+![Android](https://img.shields.io/badge/Android-Jetpack%20Compose-3ddc84?logo=android&logoColor=white)
+![Backend](https://img.shields.io/badge/Spring%20Boot-Kotlin-6db33f?logo=springboot&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-JSONB-336791?logo=postgresql&logoColor=white)
 
----
+[Descargar APK](https://github.com/Bloodiewormer/Proyecto-Plataformas-Moviles/releases/latest) · [Guía de despliegue](docs/Guia_Despliegue.md) · [Prototipo interactivo](https://bloodiewormer.github.io/Proyecto-Plataformas-Moviles/)
 
-## Demo en vivo
+</div>
 
-**[Ver prototipo interactivo en GitHub Pages](https://bloodiewormer.github.io/Proyecto-Plataformas-Moviles/)**
+<table>
+  <tr>
+    <td align="center"><img src="docs/images/screenshots/home.png" width="200" alt="Inicio"><br><sub>Inicio</sub></td>
+    <td align="center"><img src="docs/images/screenshots/notes.png" width="200" alt="Apuntes"><br><sub>Apuntes</sub></td>
+    <td align="center"><img src="docs/images/screenshots/coverage.png" width="200" alt="Cobertura"><br><sub>Cobertura del temario</sub></td>
+    <td align="center"><img src="docs/images/screenshots/study.png" width="200" alt="Estudio"><br><sub>Estudio</sub></td>
+  </tr>
+</table>
 
----
+## Qué hace
+
+- **Captura y reconstruye.** Le tomás foto a tus apuntes. La app revisa la calidad, segmenta texto, fórmulas y figuras, y los reconstruye con LaTeX.
+- **Muestra la confianza de cada fragmento.** Cada parte del apunte indica si se verificó, se reparó o es dudosa, y la podés corregir a mano.
+- **Mide la cobertura del temario.** Compara tus apuntes con el syllabus del curso y marca cada tema como sólido, parcial o ausente.
+- **Arma el repaso.** Genera flashcards y quizzes a partir de los temas que te faltan.
+- **Funciona sin conexión.** Las capturas quedan en una cola local y se sincronizan cuando vuelve la red, sin duplicar páginas.
+- **Tiene un rol para cada persona.** Los estudiantes capturan y estudian. Los docentes publican el temario y ven las brechas del grupo. El admin gestiona usuarios, roles y el consumo de IA.
 
 ## Principio de diseño
 
-> **"La IA no debe hacer todo."**
+> **La IA no debe hacer todo.**
 
-El máximo procesamiento posible ocurre local y de forma determinística (OpenCV, ML Kit, reglas, repetición espaciada SM-2) antes de invocar un LLM. Toda llamada a IA produce un resultado persistente y reutilizable — nunca se recalcula con IA algo que ya fue guardado.
-
-Ver `docs/Glifo_Alcance.md` para el detalle completo del flujo de procesamiento y las 4 funciones de IA (IA-01 a IA-04).
-
----
-
-## Estructura del repositorio
+Todo lo que se puede resolver en el teléfono se resuelve ahí, de forma determinística, con OpenCV, ML Kit, reglas y hash perceptual. Un modelo de lenguaje entra solo en los casos que quedan ambiguos, y su resultado se guarda para no volver a pagarlo. La pantalla de uso de IA muestra cuántas llamadas se hicieron y cuántas se evitaron.
 
 ```
-glifo/
-├── docs/           # Documentación de arquitectura, alcance, UML, decisiones
-├── prototype/       # Prototipo interactivo (Figma Make / React+Vite) — 39 pantallas, tandas T1-T5
-├── android/         # App Android (Kotlin, Jetpack Compose); se abre como proyecto Gradle propio
-├── backend/         # API (Spring Boot en Kotlin, PostgreSQL); Dockerfile para Render
-└── .github/         # Plantillas de issues para asignación de tareas
+Foto ─► N0 calidad ─► N1 OCR local (ML Kit) ─► N1.5 OCR matemático ─► N2 reparación con visión ─► IA-01 reconstrucción
+          en el teléfono     resuelve la mayoría      solo fórmulas            solo regiones dudosas
 ```
 
-## Documentación (`docs/`)
+## Estructura
+
+```
+.
+├── android/    App Android: Kotlin, Jetpack Compose, Hilt, Room, WorkManager, CameraX, ML Kit, OpenCV
+├── backend/    API REST: Spring Boot en Kotlin, PostgreSQL (JSONB), JWT, Dockerfile para Render
+├── docs/       Alcance, arquitectura, decisiones, UML, guía de despliegue y experimentos de OCR
+├── prototype/  Prototipo interactivo (React + Vite), publicado en GitHub Pages
+└── scripts/    Utilidades de desarrollo (levantar PostgreSQL local)
+```
+
+## Empezar
+
+**Probar la app:** descargá el APK del [último release](https://github.com/Bloodiewormer/Proyecto-Plataformas-Moviles/releases/latest). Usa el backend público en Render. Si estuvo inactivo, el primer inicio de sesión puede tardar un minuto.
+
+**Correr todo en tu máquina:**
+
+```powershell
+.\scripts\db-up.ps1                 # PostgreSQL en Docker
+cd backend; .\gradlew.bat bootRun   # API en http://localhost:8080/api/v1/
+```
+
+Después abrí `android/` en Android Studio y corré el build **debug** en un emulador, que ya apunta al backend local.
+
+La [guía de despliegue](docs/Guia_Despliegue.md) explica cómo publicar el backend en Render con Neon, conectar un teléfono físico, cambiar la URL del APK y firmar y publicar versiones nuevas.
+
+## Stack
+
+| Capa | Tecnologías |
+|---|---|
+| Android | Kotlin, Jetpack Compose (Material 3), Hilt, Room, WorkManager, Retrofit, CameraX, ML Kit Text Recognition, OpenCV, KaTeX, Firebase Crashlytics y FCM |
+| Backend | Spring Boot 4 en Kotlin, Spring Security con JWT, JPA/Hibernate, PostgreSQL con JSONB |
+| IA | OpenAI (`gpt-4o-mini`) para reconstrucción, OCR matemático, material de estudio y adjudicación de cobertura |
+| Infraestructura | Render (Docker), Neon (PostgreSQL), GitHub Pages (prototipo) |
+
+## Documentación
 
 | Documento | Contenido |
 |---|---|
-| `Glifo_Alcance.md` | Alcance funcional, flujo de procesamiento, funciones de IA |
-| `Glifo_Diseno_Arquitectura.md` | Diseño de arquitectura general |
-| `Glifo_Arquitectura_Estandares.md` | Estándares de arquitectura, tokens de diseño, UML (§4/§4.1/§4.3) |
-| `Glifo_Bitacora_Decisiones.md` | Bitácora de decisiones tomadas y valores deprecados |
-| `Glifo_Contexto_Competitivo.md` | Análisis de contexto competitivo |
-| `Contexto_Curso.md` | Contexto y requisitos del curso EIF411 |
-| `Glifo_UML_Modeling.md` | Modelado UML (diagramas de clase, etc.) |
+| [Guía de despliegue](docs/Guia_Despliegue.md) | Backend local y en Render, conexión del APK, firma y releases |
+| [Alcance](docs/Glifo_Alcance.md) | Funcionalidad, flujo de procesamiento y funciones de IA |
+| [Diseño de arquitectura](docs/Glifo_Diseno_Arquitectura.md) | Visión general de la arquitectura |
+| [Estándares](docs/Glifo_Arquitectura_Estandares.md) | Capas, convenciones y tokens de diseño |
+| [Bitácora de decisiones](docs/Glifo_Bitacora_Decisiones.md) | Decisiones tomadas y su porqué |
+| [Modelado UML](docs/Glifo_UML_Modeling.md) | Diagramas de clases, secuencia y despliegue |
+| [Backend](backend/README.md) | API, contrato con la app y base de datos |
+| [Android](android/README.md) | Arquitectura de la app |
+| [Experimentos de OCR](docs/experimentos/) | Evaluación de modelos de OCR matemático (TexTeller, Pix2Text) |
 
-## Stack técnico
+## Historia
 
-- **Android:** Kotlin, Android Studio, CameraX, Room, OpenCV, Google ML Kit Text Recognition, Retrofit, Hilt, WorkManager
-- **Backend:** Spring Boot (Kotlin), PostgreSQL, Spring Security, JWT, JPA
-- **OCR matemático:** SimpleTex API (primario) con fallback a modelo de visión LLM
-- **IA generativa externa:** Claude / GPT-4o-mini
+Glifo nació como proyecto del curso EIF411 Diseño y Programación de Plataformas Móviles de la Universidad Nacional de Costa Rica, en 2026. Lo hizo el Grupo X-Ray: Brandon Brenes, David González y Felipe Ugalde. Este repositorio reúne el backend y la app con el historial completo de los repositorios del curso, y el proyecto sigue como proyecto personal.
 
-## Frentes de trabajo
+## Licencia
 
-1. **Cliente Android** — UI, cámara, Room, pipeline local
-2. **Backend Spring Boot** — API, autenticación, persistencia
-3. **Visión por computadora / pipeline** — OpenCV, OCR, detección de gaps vs. syllabus
-
-## Cómo correrlo
-
-- **Backend:** `cd backend && ./gradlew bootRun` con PostgreSQL local (ver `backend/README.md`).
-- **Android:** abrir `android/` en Android Studio. El build de release apunta a `https://glifo-api.onrender.com/api/v1/`.
-
-## Cómo contribuir
-
-Ver `CONTRIBUTING.md`.
+[MIT](LICENSE)

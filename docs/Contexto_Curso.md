@@ -4,7 +4,7 @@
 >
 > It does not contain the team's design, architecture, or scope decisions. Those live in the project's technical documentation, which is maintained separately.
 >
-> **Last update:** August 16, 2026 — Document translated to English (per D-14), backend stack updated to Kotlin (D-13), serialization locked to Gson (D-19).
+> **Last update:** September 30, 2026 — Lab 4 defense date corrected to Sep 30, Lab 2 result recorded, and §8.2 added with the conventions taught in the course material (D-27). Previous: August 16 — translated to English (D-14), Kotlin backend (D-13), Gson (D-19).
 
 ---
 
@@ -113,9 +113,9 @@ Each of the 15 sessions includes a lab, a research task, and a short evaluation.
 | # | Deliverable | Open | Official Close | **Real Defense (Wed)** | Status |
 |---|---|---|---|---|---|
 | Lab 1 | Wireframes (Figma) + ERD/Class diagram | Wed Jul 29 | Thu Aug 13 | **Defended Wed Aug 12** | **85** — correction **Wed Aug 19** |
-| Lab 2 | Android/Kotlin Activities | Sat Aug 8 | Sat Aug 29 | **Wed Aug 26** | Open |
+| Lab 2 | Android/Kotlin Activities | Sat Aug 8 | Sat Aug 29 | **Wed Aug 26** | **80** (D-24) |
 | Lab 3 | Error handling, Hilt, Retrofit, mock API | Wed Aug 26 | Sun Sep 13 | **Wed Sep 9** | — |
-| Lab 4 | Backend fundamentals & data persistence | Wed Sep 9 | Sat Sep 26 | **Wed Sep 23** | — |
+| Lab 4 | Backend fundamentals & data persistence | Wed Sep 9 | Sat Sep 26 | **Wed Sep 30** | In defense |
 | Lab 5 | Services, Web API, DTO & testing | Wed Sep 23 | Sat Oct 17 | **Wed Oct 14** | — |
 | Lab 6 | Security, AI & Cloud | Wed Sep 30 | Sat Oct 31 | **Wed Oct 28** | — |
 | — | Applied Research | Wed Nov 11 | Sun Nov 15 | **Wed Nov 11** | — |
@@ -370,6 +370,72 @@ Applicable to all nine groups, not found in written briefs:
 - [ ] **Monolithic architecture** at this stage; serverless elements come later.
 - [ ] Persistence can be **fragmented**: main is relational, but a specific section can use NoSQL.
 - [ ] It is **explicitly permitted to take inspiration from other groups' proposals**.
+
+### 8.2 Conventions Taught in the Course Material
+
+*Source: the professor's TaskApp reference project and lessons (mikeguzman.dev — Loom series
+and the Compose/Clean "TaskApp v2" videos).* The labs are graded against this material: D-24
+(Android package structure) and D-27 (database schema) both exist because the team's first
+design diverged from it. When a project document disagrees with this section, the document
+is the one to revisit.
+
+**Architecture concepts (heavily evaluated)**
+
+- **Tier ≠ Layer.** A *tier* is physical (Android device · API server on a PaaS · PostgreSQL
+  server); a *layer* is a logical code division (Presentation · Service · Data Access). Be
+  ready to draw both for Glifo.
+- Monolithic backend at this stage; the client never talks to the database.
+
+**Backend — Data Access Layer (Lab 4)**
+
+- Create the login role and the database in **pgAdmin** before running the backend.
+- **The entities generate the schema:** `spring.jpa.hibernate.ddl-auto` = `create` while the
+  entities are changing, `update` once data must be kept; `show-sql=true` during development.
+- **Seed data in `src/main/resources/import.sql`**, executed by Hibernate after creating the
+  tables.
+- Entities with `@Entity`, `@Id` + `@GeneratedValue(IDENTITY)`, `@ManyToOne` + `@JoinColumn`,
+  `@ManyToMany` + `@JoinTable` for bridge tables. `users` in plural (Postgres reserves `user`).
+- **Repository pattern with Spring Data** (`JpaRepository<Entity, Long>`): derived query
+  methods (`findByUserId`), and native/JPQL `@Query` only when needed.
+- Data layer tested with `@SpringBootTest` against the real database, preloading data.
+
+**Backend — Services and Web API (Lab 5)**
+
+- `@Service` + `@Transactional` holds the business rules; controllers only translate HTTP.
+- **Entities never reach the client:** request/response **DTOs** plus mappers.
+- `@RestController` returning `ResponseEntity` with proper codes (`201` on create, `204` on
+  delete, `404` when missing); a central exception handler.
+- **Postman:** an exported collection with environment variables (`{{baseUrl}}`,
+  `{{jwt_token}}`), a login test script that stores the token, and status-code tests.
+
+**Backend — Security and Cloud (Lab 6)**
+
+- JWT stateless auth: login checks the **BCrypt** hash and issues a token; a
+  `OncePerRequestFilter` validates `Authorization: Bearer <token>` and fills the
+  `SecurityContextHolder`.
+- **Credentials come from environment variables, never from the repository** (DB password,
+  JWT secret, AI keys). PaaS deployment with a `Procfile`, the Java version pinned, and the
+  database injected as `DATABASE_URL`. *Gap today: `application.properties` still hardcodes
+  the DB password and JWT secret — must move to env vars before Lab 6.*
+
+**Android (Labs 2–3)**
+
+- Clean Architecture, **flat** `data/` · `domain/` · `presentation/` (D-24). Use cases with
+  a single responsibility (`operator fun invoke`); **the UI never calls a repository
+  directly** — Composable → ViewModel → use case/repository.
+- `private val _uiState = MutableStateFlow(...)` exposed as `StateFlow` via `asStateFlow()`;
+  screen state as a `sealed interface` with `Loading` / `Success` / `Error`, each shown
+  visibly.
+- Retrofit with `suspend` functions and Gson; an OkHttp **authorization interceptor** adds
+  the Bearer token; the token lives in a `SessionManager` over (Encrypted)SharedPreferences.
+- Navigation Compose with typed arguments; Material 3 `Scaffold` / `TopAppBar` / FAB.
+
+**Process and delivery**
+
+- Branches `main` (stable) · `develop` (integration) · `feature/<name>`; every change enters
+  through a **Pull Request with at least one peer review**.
+- Descriptive commit history showing each member's work (the final grade is individual).
+- `README.md` with installation, **database setup** and local run instructions.
 
 ---
 

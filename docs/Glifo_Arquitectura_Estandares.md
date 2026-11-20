@@ -97,6 +97,11 @@ Presentation → Domain ← Data
 
 ## 2. Package Structure — Android
 
+> **Per D-24:** flat Clean layering, no per-capability (`feature/`) subdivision. Matches the
+> pattern taught in the course's TaskApp reference material. `pipeline/`, `engine/`, `core/`,
+> and `di/` are unaffected by D-24 — they hold no UI screens and sit outside the CRUD-screen
+> structure the professor's rubric addresses.
+
 Root package: `cr.ac.una.glifo`
 
 ~~~text
@@ -105,12 +110,35 @@ cr.ac.una.glifo/
 ├── GlifoApplication.kt              @HiltAndroidApp
 ├── MainActivity.kt
 │
-├── di/                              Hilt Modules
+├── data/
+│   ├── datasource/                  remote/ (Retrofit) · dummy/ (mock Providers) ·
+│   │                                local/ — Room: GlifoDatabase · dao/ · entity/ (D-28)
+│   ├── dto/                         Data Transfer Objects — one data class per external entity
+│   ├── mapper/                      Manual DTO ↔ domain model mapping, no framework
+│   ├── repository/                  <X>RepositoryImpl.kt — implements the domain interface
+│   └── di/                          NetworkModule.kt · RepositoryModule.kt · DatabaseModule.kt (Hilt)
+│
+├── domain/
+│   ├── model/                       Domain models — pure Kotlin data classes
+│   ├── repository/                  <X>Repository.kt — the interface (the contract)
+│   ├── error/                       Domain error types, shared across layers
+│   └── usecase/                     One file per use case, when business logic exists
+│
+├── presentation/
+│   ├── ui/
+│   │   ├── screen/
+│   │   ├── components/              Reusable composables
+│   │   ├── theme/
+│   │   └── layout/                  MainLayout, etc.
+│   ├── viewmodel/                   <X>ViewModel.kt — depends on the domain repository
+│   │                                interface only, never on the data-layer implementation
+│   ├── factory/                     ViewModelFactory — manual DI until Hilt lands (Lab 3);
+│   │                                drops once @HiltViewModel + @AndroidEntryPoint are in place
+│   └── navigation/
 │
 ├── core/                            Cross-cutting, no business logic
 │   ├── common/                      Result.kt · AppError.kt · Constants.kt
 │   ├── network/                     ApiClient.kt · AuthInterceptor.kt · ErrorMapper.kt
-│   ├── database/                    GlifoDatabase.kt · Converters.kt · dao/ · entity/
 │   ├── sync/                        SyncManager.kt · SyncWorker.kt · RetryPolicy.kt · SyncOperation.kt
 │   └── ui/                          theme/ · component/
 │
@@ -124,39 +152,15 @@ cr.ac.una.glifo/
 │   ├── escalation/                  EscalationPolicy.kt · EscalationStep.kt
 │   └── hash/                        PerceptualHasher.kt
 │
-├── engine/                          Deterministic local engines, outside the pipeline
-│   ├── coverage/                    CoverageEngine.kt      local coverage pre-filter
-│   └── srs/                         SrsScheduler.kt        deterministic spaced repetition
-│
-└── feature/                         One package per capability
-    ├── auth/
-    ├── capture/
-    ├── note/
-    ├── coverage/
-    ├── study/
-    ├── course/                      Teacher-side courses, syllabus, glossary
-    └── admin/                       Users, roles
+└── engine/                          Deterministic local engines, outside the pipeline
+    ├── coverage/                    CoverageEngine.kt      local coverage pre-filter
+    └── srs/                         SrsScheduler.kt        deterministic spaced repetition
 ~~~
 
-### Feature Module Convention
-
-Every package under `feature/` replicates the same three-layer structure:
-
-~~~text
-feature/<n>/
-├── data/
-│   ├── remote/      <X>Api.kt + DTOs + mappers
-│   ├── local/       DAO + Room entities
-│   └── <X>RepositoryImpl.kt
-├── domain/
-│   ├── model/       Domain models (pure data classes)
-│   ├── <X>Repository.kt
-│   └── usecase/     One file per use case
-└── presentation/
-    ├── <X>Screen.kt
-    ├── <X>ViewModel.kt
-    └── <X>UiState.kt
-~~~
+**Local persistence (D-28, D-29).** Room lives in `data/datasource/local/`, not in a top-level
+`core/database/`: `local_course_context` (#27), `processed_pages` (#28), `notes`, `note_pages`,
+`fragment_corrections` (#25) and the `sync_operations` outbox (#26). The old quarantined
+modeling in `_deferred_module5/` was deleted once this replaced it.
 
 ---
 
@@ -183,9 +187,11 @@ cr.ac.una.glifo/
 │   ├── dto/UserRequest.kt · UserResponse.kt
 │   └── mapper/UserMappers.kt        (top-level extension functions)
 │
-├── course/                          courses · enrollments · syllabus_topics · glossary · glossary_suggestions
+├── course/                          courses · enrollments · syllabus_topics
+├── glossary/                        course_glossary · glossary_suggestions
 ├── note/                            notes · pages
 ├── study/                           coverage · items · attempts · schedule
+├── ops/                             ai_calls · devices · sync_queue · notifications · coverage_snapshots
 │
 ├── ai/                              ◄── ORCHESTRATION
 │   ├── AiOrchestrator.kt            Facade
@@ -628,6 +634,8 @@ end note
 | Audit | `created_at`, `updated_at` on mutable entities |
 | Booleans | Prefix `is_` or `has_` |
 | Enums | `VARCHAR` with `CHECK` constraints |
+| Schema source | The JPA entities. Hibernate creates the schema (`ddl-auto`), `import.sql` seeds it — as taught in the course (D-27). No migration scripts |
+| Constraints in code | `CHECK`, composite `UNIQUE`, indexes → `@Table(...)`; cascades → `@OnDelete`; JSONB → `String` + `@JdbcTypeCode(SqlTypes.JSON)` |
 
 **Size.** 16 core tables on the defended diagram plus a 5-table operations annex, 21 total. The reduction from 23 is justified merge by merge in `Glifo_UML_Modeling.md` §4.2.
 
@@ -644,7 +652,6 @@ JSONB is used **only** when the structure is variable **and** no internal field 
 | `attempts.response` | Response format depends on question type. |
 | `sync_queue.payload` | Serialized outbox operation. |
 | `notifications.payload` | Payload shape depends on notification kind. |
-| `coverage_snapshots.summary` | Reporting-only freeze; never queried by field. |
 
 **Not used for:** `topic_coverage`, `users`, `roles`, `privileges`, `ai_calls` — these require strict referential integrity or are aggregated constantly.
 

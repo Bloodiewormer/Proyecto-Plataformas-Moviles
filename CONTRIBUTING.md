@@ -1,43 +1,33 @@
-# Guía de contribución — Grupo X-Ray
+# Cómo contribuir
 
-## Flujo de ramas
+## Ramas y pull requests
 
-- `main` — siempre estable, es lo que se defiende en clase.
-- `feature/<frente>-<descripcion>` — una rama por tarea, ej: `feature/android-camerax-captura`, `feature/backend-auth-jwt`, `feature/cv-preprocesamiento-opencv`.
-- Nada se hace commit directo a `main`. Todo entra vía Pull Request, aunque sea auto-aprobado por el mismo equipo (deja registro de qué se hizo y cuándo).
+- `main` siempre compila y es lo que despliega Render.
+- Cada cambio va en su propia rama (`feat/...`, `fix/...`, `docs/...`, `chore/...`) y entra a `main` por pull request.
+- Un PR que toca el backend y la app a la vez debe poder desplegarse en orden: primero la migración de base, después el backend y al final el APK (ver [la guía de despliegue](docs/Guia_Despliegue.md#53-orden-cuando-cambian-el-backend-y-la-app-a-la-vez)).
 
-## Convención de commits
+## Commits
+
+[Conventional Commits](https://www.conventionalcommits.org/), en inglés:
 
 ```
-<tipo>(<frente>): <descripción corta>
+<tipo>(<alcance>): <descripción corta>
 
 tipo: feat | fix | docs | refactor | test | chore
-frente: android | backend | cv | docs
+alcance: android | backend | coverage | sync | auth | ...
 ```
 
-Ejemplos:
-- `feat(android): captura de foto con CameraX`
-- `feat(backend): endpoint de creación de nota estructurada`
-- `docs(arquitectura): resuelve conflicto de tokens escalated/alert`
+Ejemplos: `feat(android): bottom navigation by role`, `fix(backend): return page_count in the note list`.
 
-## Asignación de tareas
+## Antes de abrir un PR
 
-Se usan **GitHub Issues** con las plantillas en `.github/ISSUE_TEMPLATE/`. Cada tarea nueva:
+- **Backend:** `cd backend && ./gradlew test` contra la base `glifo_test` (ver la [guía](docs/Guia_Despliegue.md#23-pruebas)).
+- **Android:** `cd android && ./gradlew :app:testDebugUnitTest`.
+- **Cambios en una entidad JPA:** agregar el script `.psql` incremental en `backend/docs/db/`. El perfil `cloud` valida el esquema y no arranca sin la migración.
+- **Cambios en una entidad Room:** subir la versión de `GlifoDatabase` y agregar la `Migration`.
+- **Pipeline de IA:** se respeta el principio de que la IA no debe hacer todo. Primero se procesa en el teléfono, la llamada a IA es el último recurso y su resultado se guarda.
+- **Decisiones de diseño:** se registran en `docs/Glifo_Bitacora_Decisiones.md`. Si una reemplaza a otra, la anterior se archiva, no se borra.
 
-1. Se crea como Issue usando la plantilla correspondiente (`Tarea Android`, `Tarea Backend`, `Tarea CV/Pipeline`, `Tarea Documentación`).
-2. Se asigna a la persona responsable (`Assignees`).
-3. Se etiqueta con la tanda/lab correspondiente si aplica (ej. `lab-3`).
-4. Se referencia en el PR que la resuelve con `Closes #<numero>`.
+## Secretos
 
-Opcional: usar **GitHub Projects** (tablero Kanban del repo) para visualizar To Do / In Progress / Done por frente.
-
-## Antes de un PR
-
-- Verificar que el código compila (Android Studio / IntelliJ) sin warnings nuevos.
-- Si se toca el pipeline de IA, confirmar que se respeta el principio "la IA no debe hacer todo": procesamiento local primero, llamada a IA es último recurso, resultado persistido.
-- Si se toca el esquema de base de datos, validar con `@dbml/core` y actualizar `docs/Glifo_Diseno_Arquitectura.md` si aplica.
-- Actualizar `docs/Glifo_Bitacora_Decisiones.md` si la tarea implica una decisión de diseño nueva o cambia una existente (archivar el valor anterior, no borrarlo).
-
-## Documentos de referencia obligatorios
-
-Antes de implementar UI o estilos, revisar `docs/Glifo_Arquitectura_Estandares.md` (especialmente §4, §4.1, §4.3) para tokens de color, tipografía y componentes. El prototipo (`prototype/`) tiene prioridad sobre la documentación cuando divergen — si eso pasa, se actualiza el documento, no el prototipo.
+Nunca se suben claves, contraseñas, keystores ni archivos `.env`. Los valores de producción viven en Render y en el gestor de contraseñas del mantenedor. Las plantillas (`backend/.env.example`, `backend/render.env.example`) solo llevan los nombres de las variables.
