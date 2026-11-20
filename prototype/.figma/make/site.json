@@ -1,0 +1,10 @@
+{
+  "description": "Transforms design mockups into interactive prototypes, enabling designers to visualize and test user flows efficiently.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

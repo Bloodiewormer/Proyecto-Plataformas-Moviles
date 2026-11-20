@@ -1,0 +1,445 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Glifo — Paleta y modos</title><style>
+.night{
+  --background:#161E27; --surface:#2E3B4B; --surfaceHigh:#3B4A5C; --border:#4A5A6E;
+  --accent:#FFD372; --onAccent:#1A1206;
+  --textPrimary:#D7D1B9; --textSecondary:#959595;
+  --alert:#E0693A; --alertFill:rgba(185,65,23,.18); --alertBorder:rgba(224,105,58,.45);
+  --verified:#5FA88C; --repaired:#8FB7DC; --escalated:#F59E0B; --uncertain:#959595;
+  --accentSoft:rgba(255,211,114,.14);
+}
+.day{
+  --background:#EDEAE0; --surface:#F7F4EC; --surfaceHigh:#D7D1B9; --border:#C4BCA3;
+  --accent:#FFD372; --onAccent:#2E3B4B;
+  --textPrimary:#2E3B4B; --textSecondary:#63666A;
+  --alert:#B94117; --alertFill:rgba(185,65,23,.12); --alertBorder:rgba(185,65,23,.4);
+  --verified:#2F7D62; --repaired:#3E6E9E; --escalated:#D97706; --uncertain:#63666A;
+  --accentSoft:rgba(185,131,15,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0C1219;color:#D7D1B9;font-family:Inter,-apple-system,"Segoe UI",Roboto,sans-serif;padding:36px 24px 72px}
+.doc{max-width:1240px;margin:0 auto 32px}
+.doc .eyebrow{font-size:12px;letter-spacing:1.2px;font-weight:600;color:#FFD372;text-transform:uppercase;margin-bottom:10px}
+.doc h1{font-size:30px;font-weight:600;letter-spacing:-.6px}
+.doc .sub{color:#959595;font-size:14px;margin-top:8px;max-width:68ch;line-height:1.6}
+h3.blk{max-width:1240px;margin:44px auto 18px;font-size:13px;letter-spacing:1px;font-weight:600;
+  color:#959595;text-transform:uppercase;border-top:1px solid #2E3B4B;padding-top:18px}
+.sw{max-width:1240px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.sw .c{border-radius:12px;overflow:hidden;border:1px solid #2E3B4B}
+.sw .c .chip{height:84px}
+.sw .c .lb{padding:11px 12px;background:#1A222C}
+.sw .c .lb b{display:block;font-size:13px;font-weight:600}
+.sw .c .lb span{display:block;font-size:11px;color:#959595;font-family:ui-monospace,monospace;margin-top:3px}
+.sw .c .lb i{display:block;font-style:normal;font-size:11px;color:#959595;margin-top:5px;line-height:1.4}
+.pair{max-width:1240px;margin:0 auto;display:flex;flex-wrap:wrap;gap:30px}
+.cell{width:390px}
+.cap{font-size:12px;letter-spacing:.5px;font-weight:500;color:#959595;margin-bottom:10px;text-transform:uppercase}
+.cap b{color:#FFD372;font-weight:600}
+.cap em{font-style:normal;padding:2px 7px;border-radius:6px;margin-left:6px;font-size:11px}
+.cap em.n{background:rgba(46,59,75,.9);color:#D7D1B9}
+.cap em.d{background:#D7D1B9;color:#2E3B4B}
+.device{width:390px;height:846px;background:#000;border-radius:40px;padding:11px;
+  box-shadow:0 0 0 1px #2E3B4B,0 24px 60px rgba(0,0,0,.6);position:relative}
+.screen{width:368px;height:824px;background:var(--background);color:var(--textPrimary);
+  border-radius:30px;overflow:hidden;display:flex;flex-direction:column;position:relative}
+.punch{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:11px;height:11px;border-radius:999px;background:#000;z-index:6}
+.sysbar{height:30px;display:flex;align-items:center;padding:0 18px;flex:0 0 auto}
+.sysbar .hora{font-size:13px;font-weight:600}
+.sysbar .sys{display:flex;align-items:center;gap:6px}
+.gest{height:26px;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.gest i{display:block;width:118px;height:4px;border-radius:999px;background:var(--textSecondary);opacity:.7}
+.appbar{height:56px;background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 8px 0 12px;gap:10px;flex:0 0 auto}
+.appbar .tap{width:40px;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:var(--textSecondary)}
+.appbar .t{font-size:22px;font-weight:500;padding-left:4px}
+.appbar .t.sm{font-size:18px}
+.appbar .swx{display:flex;flex-direction:column;line-height:1.2;padding-left:4px}
+.appbar .swx .lbl{font-size:11px;color:var(--textSecondary)}
+.appbar .swx .val{font-size:18px;font-weight:500;display:flex;align-items:center;gap:3px}
+.sp{flex:1}
+.body{flex:1;overflow:hidden;padding:16px}
+h2.sec{font-size:11px;letter-spacing:.6px;font-weight:600;color:var(--textSecondary);text-transform:uppercase;margin:22px 0 10px}
+h2.sec:first-child{margin-top:0}
+.meta{font-size:14px;color:var(--textSecondary)}
+.meta.sm{font-size:12px}
+.mono{font-family:ui-monospace,"JetBrains Mono",monospace}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px}
+.card.tight{padding:0;overflow:hidden}
+.card .name{font-size:18px;font-weight:500}
+.row{display:flex;align-items:center;gap:8px}
+.betw{display:flex;align-items:center;justify-content:space-between}
+.covbar{display:flex;height:6px;border-radius:999px;overflow:hidden;margin:14px 0 8px}
+.covbar.big{height:12px}
+.covbar i{display:block;height:100%}
+.btn{height:48px;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:16px;font-weight:500;width:100%}
+.btn.pri{background:var(--accent);color:var(--onAccent)}
+.btn.sec{border:1px solid var(--accent);color:var(--textPrimary)}
+.btn.txt{color:var(--textPrimary);height:40px;opacity:.85}
+.item{display:flex;align-items:center;gap:14px;padding:12px 16px;border-bottom:1px solid var(--border);min-height:72px}
+.item:last-child{border-bottom:none}
+.item.compact{min-height:56px;padding:10px 16px}
+.thumb{width:48px;height:48px;border-radius:8px;background:var(--surfaceHigh);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;color:var(--textSecondary);flex:0 0 auto}
+.item .tt{font-size:16px}
+.item .st{font-size:14px;color:var(--textSecondary);margin-top:2px}
+.chips{display:flex;gap:5px;align-items:center}
+.badge{font-size:11px;font-weight:600;letter-spacing:.5px;padding:3px 7px;border-radius:8px;display:inline-block}
+.banner{min-height:40px;display:flex;align-items:center;gap:10px;padding:8px 16px;font-size:14px;
+  background:var(--accentSoft);color:var(--textPrimary);flex:0 0 auto}
+.quad{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.quad .q{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;min-height:96px;
+  display:flex;flex-direction:column;justify-content:space-between}
+.quad .q .qn{font-size:16px;font-weight:500;display:flex;align-items:center;gap:8px}
+.quad .q .qm{font-size:12px;color:var(--textSecondary);line-height:1.35}
+.fab{position:absolute;right:16px;bottom:42px;width:56px;height:56px;border-radius:18px;background:var(--accent);
+  color:var(--onAccent);display:flex;align-items:center;justify-content:center;z-index:4}
+.crop{background:repeating-linear-gradient(45deg,var(--surfaceHigh),var(--surfaceHigh) 6px,var(--border) 6px,var(--border) 12px);
+  border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;
+  color:var(--textSecondary);font-size:12px}
+.metrow{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);font-size:14px}
+.metrow:last-child{border-bottom:none}
+.bar{height:6px;border-radius:999px;background:var(--surfaceHigh);overflow:hidden;flex:1}
+.bar i{display:block;height:100%;background:var(--accent)}
+.frag{border-radius:3px;padding:1px 0}
+.fv{border-bottom:2px solid var(--verified)}
+.fe{border-bottom:2px solid var(--escalated);background:var(--alertFill)}
+.fu{border-bottom:2px dashed var(--uncertain);background:rgba(149,149,149,.18)}
+.ic{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+.ic.s20{width:20px;height:20px}.ic.s18{width:18px;height:18px}
+.icf{fill:currentColor;stroke:none;flex:0 0 auto}
+.note{max-width:1240px;margin:16px auto 0;font-size:13px;line-height:1.6;color:#959595}
+.note b{color:#FFD372;font-weight:600}
+</style></head><body>
+
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+<symbol id="menu" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></symbol>
+<symbol id="back" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></symbol>
+<symbol id="search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5L16.2 16.2"/></symbol>
+<symbol id="add" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="camera" viewBox="0 0 24 24"><path d="M3 8.5A2.5 2.5 0 015.5 6H8l1.4-2.2h5.2L16 6h2.5A2.5 2.5 0 0121 8.5v9A2.5 2.5 0 0118.5 20h-13A2.5 2.5 0 013 17.5z"/><circle cx="12" cy="13" r="3.8"/></symbol>
+<symbol id="home" viewBox="0 0 24 24"><path d="M3.5 10.6L12 3.5l8.5 7.1V20a1 1 0 01-1 1h-15a1 1 0 01-1-1z"/><path d="M9.5 21v-6.5h5V21"/></symbol>
+<symbol id="school" viewBox="0 0 24 24"><path d="M12 4L2.5 8.6 12 13.2l9.5-4.6z"/><path d="M6.5 10.8v4.4c0 1.8 2.5 3.1 5.5 3.1s5.5-1.3 5.5-3.1v-4.4"/></symbol>
+<symbol id="notes" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5"/><path d="M8.8 13h6.4M8.8 16.6h4.2"/></symbol>
+<symbol id="coverage" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v8.5h8.5"/></symbol>
+<symbol id="study" viewBox="0 0 24 24"><path d="M12 3.2l8.8 4.6L12 12.4 3.2 7.8z"/><path d="M3.2 13.4L12 18l8.8-4.6"/></symbol>
+<symbol id="cost" viewBox="0 0 24 24"><path d="M3.5 20.5h17"/><path d="M6.6 20.5v-5.4M11.4 20.5V6.2M16.2 20.5v-8.8"/></symbol>
+<symbol id="sync" viewBox="0 0 24 24"><path d="M20.2 11a8.2 8.2 0 00-14-5.4L3.8 8"/><path d="M3.8 13a8.2 8.2 0 0014 5.4L20.2 16"/><path d="M3.8 3.6V8h4.4M20.2 20.4V16h-4.4"/></symbol>
+<symbol id="person" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.8"/><path d="M4.5 20.6v-.8a5.4 5.4 0 015.4-5.4h4.2a5.4 5.4 0 015.4 5.4v.8"/></symbol>
+<symbol id="settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.1"/><path d="M12 2.6v3M12 18.4v3M2.6 12h3M18.4 12h3M5.4 5.4l2.1 2.1M16.5 16.5l2.1 2.1M18.6 5.4l-2.1 2.1M7.5 16.5l-2.1 2.1"/></symbol>
+<symbol id="logout" viewBox="0 0 24 24"><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/><path d="M9 3.4H5.4a2 2 0 00-2 2v13.2a2 2 0 002 2H9"/></symbol>
+<symbol id="syllabus" viewBox="0 0 24 24"><path d="M8.5 6.5h12M8.5 12h12M8.5 17.5h12"/><path d="M3.8 6.5h.02M3.8 12h.02M3.8 17.5h.02" stroke-width="2.4"/></symbol>
+<symbol id="glossary" viewBox="0 0 24 24"><path d="M18.5 4.5H6l6.6 7.5L6 19.5h12.5"/></symbol>
+<symbol id="gaps" viewBox="0 0 24 24"><path d="M3.4 17.2l5.4-5.4 3.6 3.6 6.4-7.4"/><path d="M15.4 7.4h4.4v4.4"/></symbol>
+<symbol id="copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5.6 15H4.8a1.8 1.8 0 01-1.8-1.8V4.8A1.8 1.8 0 014.8 3h8.4A1.8 1.8 0 0115 4.8v.8"/></symbol>
+<symbol id="down" viewBox="0 0 24 24"><path d="M6.5 9.5l5.5 5.5 5.5-5.5"/></symbol>
+<symbol id="up" viewBox="0 0 24 24"><path d="M6.5 14.5l5.5-5.5 5.5 5.5"/></symbol>
+<symbol id="right" viewBox="0 0 24 24"><path d="M9.5 5.5L16 12l-6.5 6.5"/></symbol>
+<symbol id="warn" viewBox="0 0 24 24"><path d="M12 3.6L21.2 19.8H2.8z"/><path d="M12 10v4M12 16.8h.02" stroke-width="2"/></symbol>
+<symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><path d="M12 7v5.2l3.2 2"/></symbol>
+<symbol id="close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+<symbol id="check" viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-11"/></symbol>
+<symbol id="users" viewBox="0 0 24 24"><circle cx="9.5" cy="8.4" r="3.4"/><path d="M3 20.4v-.9a4.9 4.9 0 014.9-4.9h3.2a4.9 4.9 0 014.9 4.9v.9"/><path d="M16.4 5.6a3.2 3.2 0 010 6.2M17.6 14.8h.7a4 4 0 014 4v1.6"/></symbol>
+<symbol id="image" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="15" rx="2"/><circle cx="8.4" cy="9.6" r="1.8"/><path d="M3.6 17.4l5-5 4.4 4.4 3-2.8 4.4 4.2"/></symbol>
+<symbol id="flash" viewBox="0 0 24 24"><path d="M13.5 2.5L5 13.5h5.5L10 21.5 19 10.5h-5.5z"/></symbol>
+<symbol id="edit" viewBox="0 0 24 24"><path d="M4 20h4.2L19.4 8.8a2.1 2.1 0 00-3-3L5.2 17z"/><path d="M14.6 6.2l3.2 3.2"/></symbol>
+<symbol id="upload" viewBox="0 0 24 24"><path d="M12 16V4"/><path d="M7.5 8.5L12 4l4.5 4.5"/><path d="M4 15v3.5a2 2 0 002 2h12a2 2 0 002-2V15"/></symbol>
+<symbol id="refresh" viewBox="0 0 24 24"><path d="M20.5 12a8.5 8.5 0 11-2.6-6.1"/><path d="M20.5 4v5h-5"/></symbol>
+<symbol id="shield" viewBox="0 0 24 24"><path d="M12 3l7.5 3v5.5c0 4.4-3 8.4-7.5 9.7-4.5-1.3-7.5-5.3-7.5-9.7V6z"/><path d="M9 12.2l2.2 2.2 4-4.2"/></symbol>
+<symbol id="pdf" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5"/><path d="M8.6 16.4c2-1.4 3.2-3.4 3.6-5.2.3-1.5-1.4-1.9-1.7-.5-.4 2 1.4 5.2 4.9 5.6"/></symbol>
+<symbol id="target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><circle cx="12" cy="12" r="4.4"/><circle cx="12" cy="12" r=".8" stroke-width="2"/></symbol>
+<symbol id="calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.6h17M8.2 3v4M15.8 3v4"/></symbol>
+<symbol id="sys-wifi" viewBox="0 0 24 18"><path d="M12 17.4L23.2 4.2A17.4 17.4 0 00.8 4.2z"/></symbol>
+<symbol id="sys-signal" viewBox="0 0 24 18"><path d="M22 1.2v15.4a.9.9 0 01-.9.9H2.6c-.8 0-1.2-1-.6-1.5L20.5.6c.6-.5 1.5-.1 1.5.6z"/></symbol>
+<symbol id="sys-batt" viewBox="0 0 26 14"><rect x=".8" y=".8" width="21.4" height="12.4" rx="3.4" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="3.2" y="3.2" width="14" height="7.6" rx="1.8"/><path d="M24.2 5.2v3.6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></symbol>
+</svg>
+
+<div class="doc">
+  <div class="eyebrow">Propuesta de paleta · doble modo</div>
+  <h1>Piedra y ámbar</h1>
+  <p class="sub">Los cinco colores de la paleta base, repartidos entre modo noche y modo día de forma que cada hex aparezca de forma nativa en al menos un modo. El azul pizarra y el hueso intercambian papeles entre modos: superficie y texto en noche, texto y campo en día.</p>
+</div>
+
+<h3 class="blk">Modo noche · el pizarra sostiene la superficie</h3>
+<div class="sw"><div class="c"><div class="chip" style="background:#161E27"></div><div class="lb"><b>background</b><span>#161E27 · derivado</span><i>Fondo · derivado de #2e3b4b</i></div></div><div class="c"><div class="chip" style="background:#2E3B4B"></div><div class="lb"><b>surface</b><span>#2E3B4B · nativo</span><i>Tarjetas y barra superior</i></div></div><div class="c"><div class="chip" style="background:#FFD372"></div><div class="lb"><b>accent</b><span>#FFD372 · nativo</span><i>Acción y estado activo</i></div></div><div class="c"><div class="chip" style="background:#D7D1B9"></div><div class="lb"><b>textPrimary</b><span>#D7D1B9 · nativo</span><i>Texto principal</i></div></div><div class="c"><div class="chip" style="background:#959595"></div><div class="lb"><b>textSecondary</b><span>#959595 · nativo</span><i>Texto secundario e incierto</i></div></div></div>
+
+<h3 class="blk">Modo día · el hueso sostiene el fondo</h3>
+<div class="sw"><div class="c"><div class="chip" style="background:#EDEAE0"></div><div class="lb"><b>background</b><span>#EDEAE0 · derivado</span><i>Fondo · derivado de #d7d1b9</i></div></div><div class="c"><div class="chip" style="background:#F7F4EC"></div><div class="lb"><b>surface</b><span>#F7F4EC · derivado</span><i>Tarjetas y barra superior</i></div></div><div class="c"><div class="chip" style="background:#D7D1B9"></div><div class="lb"><b>surfaceHigh</b><span>#D7D1B9 · nativo</span><i>Campos y superficies hundidas</i></div></div><div class="c"><div class="chip" style="background:#2E3B4B"></div><div class="lb"><b>textPrimary</b><span>#2E3B4B · nativo</span><i>Texto principal</i></div></div><div class="c"><div class="chip" style="background:#B94117"></div><div class="lb"><b>alert</b><span>#B94117 · nativo</span><i>Error y destructivo</i></div></div></div>
+
+<h3 class="blk">Escala de confianza · valores de modo noche</h3>
+<div class="sw"><div class="c"><div class="chip" style="background:#5FA88C"></div><div class="lb"><b>Verificado</b><span>#5FA88C · derivado</span><i>Círculo lleno · N1 · añadido</i></div></div><div class="c"><div class="chip" style="background:#8FB7DC"></div><div class="lb"><b>Reparado</b><span>#8FB7DC · derivado</span><i>Cuadrado · N1.5 · de #2e3b4b</i></div></div><div class="c"><div class="chip" style="background:#F59E0B"></div><div class="lb"><b>Escalado</b><span>#F59E0B · ámbar propio</span><i>Triángulo · N2 · ≠ alert</i></div></div><div class="c"><div class="chip" style="background:#959595"></div><div class="lb"><b>Incierto</b><span>#959595 · nativo</span><i>Círculo punteado · ausencia</i></div></div><div class="c"><div class="chip" style="background:#FFD372"></div><div class="lb"><b>Accent</b><span>#FFD372 · nativo</span><i>Nunca dentro del mapa</i></div></div></div>
+<p class="note"><b>Escalado y alert ya no comparten token (D-12).</b> Una revisión anterior los unificó en el rust, con el argumento de que escalar cuesta dinero y el triángulo ya avisa. El argumento se cayó al revisar el discurso del producto: <i>escalar a visión es funcionamiento normal del pipeline, no una falla</i>, y presentarlo con el color del error contradice la tesis central del proyecto. <b>Escalado</b> pasa a un ámbar propio —<code>#F59E0B</code> en noche, <code>#D97706</code> en día—, distinguible de <i>verified</i> y de <i>alert</i> en ambos modos; el rust queda exclusivamente para lo destructivo. El verde salvia sigue siendo la única incorporación ajena a la paleta: sin él, «lo leí bien» y «me costó dinero» caerían en la misma familia cálida, que es justamente la distinción que sostiene el proyecto.</p>
+
+<h3 class="blk">Cuatro pantallas en los dos modos</h3>
+<div class="pair">
+
+<div class="cell"><div class="cap"><b>B2</b> · Inicio <em class="n">NOCHE</em></div><div class="device"><div class="screen night"><div class=punch></div><div class="sysbar"><span class="hora">9:41</span><span class="sp"></span><span class="sys"><svg class="icf" width="15" height="11"><use href="#sys-wifi"/></svg><svg class="icf" width="15" height="11"><use href="#sys-signal"/></svg><svg class="icf" width="24" height="13"><use href="#sys-batt"/></svg></span></div>
+<div class="appbar"><span class="tap"><svg class="ic"><use href="#menu"/></svg></span>
+  <div class="swx"><span class="lbl">Curso activo</span>
+    <span class="val">Cálculo II <svg class="ic s18" style="stroke-width:2"><use href="#down"/></svg></span></div>
+  <span class="sp"></span><span class="tap"><svg class="ic"><use href="#clock"/></svg></span></div>
+<div class="banner"><svg class="ic s18"><use href="#sync"/></svg>2 capturas en cola · se envían al volver la red</div>
+<div class="body">
+  <div class="card">
+    <div class="betw"><span class="name">Cobertura del curso</span>
+      <span style="font-size:24px;font-weight:600;color:var(--accent)">68%</span></div>
+    <div class="covbar"><i style="width:54%;background:var(--verified)"></i>
+      <i style="width:20%;background:var(--repaired)"></i>
+      <i style="width:14%;background:var(--escalated)"></i>
+      <i style="width:12%;background:var(--uncertain)"></i></div>
+    <div class="betw"><span class="meta">18 sólidos · 7 parciales · 5 ausentes</span>
+      <span style="color:var(--verified);font-size:14px;font-weight:600">+2</span></div>
+  </div>
+  <h2 class="sec">Pendientes de hoy</h2>
+  <div class="quad">
+    <div class="q"><span class="qn"><svg class="ic s20" style="color:var(--accent)"><use href="#study"/></svg>12 flashcards</span>
+      <span class="qm">Series · Integrales impropias</span></div>
+    <div class="q"><span class="qn"><svg class="ic s20" style="color:var(--accent)"><use href="#coverage"/></svg>1 quiz</span>
+      <span class="qm">De los vacíos detectados</span></div>
+  </div>
+  <h2 class="sec">Últimos apuntes</h2>
+  <div class="card tight">
+    <div class="item"><div class="thumb"><svg class="ic s20"><use href="#notes"/></svg></div>
+      <div style="flex:1"><div class="tt">Integrales impropias</div><div class="st">12 ago · 3 páginas</div></div>
+      <div class="chips"><svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="var(--verified)"/></svg><svg width="12" height="12"><rect width="11" height="11" rx="2" fill="var(--repaired)"/></svg><svg width="14" height="12"><polygon points="7,0 14,12 0,12" fill="var(--escalated)"/></svg></div></div>
+    <div class="item"><div class="thumb"><svg class="ic s20"><use href="#notes"/></svg></div>
+      <div style="flex:1"><div class="tt">Criterio de comparación</div><div class="st">7 ago · 2 páginas</div></div>
+      <div class="chips"><svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="var(--verified)"/></svg><svg width="12" height="12"><circle cx="6" cy="6" r="5.2" fill="none" stroke="var(--uncertain)" stroke-width="1.5" stroke-dasharray="2 2"/></svg></div></div>
+  </div>
+</div>
+<div class="fab"><svg class="ic"><use href="#camera"/></svg></div><div class="gest"><i></i></div></div></div></div>
+<div class="cell"><div class="cap"><b>B2</b> · Inicio <em class="d">DÍA</em></div><div class="device"><div class="screen day"><div class=punch></div><div class="sysbar"><span class="hora">9:41</span><span class="sp"></span><span class="sys"><svg class="icf" width="15" height="11"><use href="#sys-wifi"/></svg><svg class="icf" width="15" height="11"><use href="#sys-signal"/></svg><svg class="icf" width="24" height="13"><use href="#sys-batt"/></svg></span></div>
+<div class="appbar"><span class="tap"><svg class="ic"><use href="#menu"/></svg></span>
+  <div class="swx"><span class="lbl">Curso activo</span>
+    <span class="val">Cálculo II <svg class="ic s18" style="stroke-width:2"><use href="#down"/></svg></span></div>
+  <span class="sp"></span><span class="tap"><svg class="ic"><use href="#clock"/></svg></span></div>
+<div class="banner"><svg class="ic s18"><use href="#sync"/></svg>2 capturas en cola · se envían al volver la red</div>
+<div class="body">
+  <div class="card">
+    <div class="betw"><span class="name">Cobertura del curso</span>
+      <span style="font-size:24px;font-weight:600;color:var(--accent)">68%</span></div>
+    <div class="covbar"><i style="width:54%;background:var(--verified)"></i>
+      <i style="width:20%;background:var(--repaired)"></i>
+      <i style="width:14%;background:var(--escalated)"></i>
+      <i style="width:12%;background:var(--uncertain)"></i></div>
+    <div class="betw"><span class="meta">18 sólidos · 7 parciales · 5 ausentes</span>
+      <span style="color:var(--verified);font-size:14px;font-weight:600">+2</span></div>
+  </div>
+  <h2 class="sec">Pendientes de hoy</h2>
+  <div class="quad">
+    <div class="q"><span class="qn"><svg class="ic s20" style="color:var(--accent)"><use href="#study"/></svg>12 flashcards</span>
+      <span class="qm">Series · Integrales impropias</span></div>
+    <div class="q"><span class="qn"><svg class="ic s20" style="color:var(--accent)"><use href="#coverage"/></svg>1 quiz</span>
+      <span class="qm">De los vacíos detectados</span></div>
+  </div>
+  <h2 class="sec">Últimos apuntes</h2>
+  <div class="card tight">
+    <div class="item"><div class="thumb"><svg class="ic s20"><use href="#notes"/></svg></div>
+      <div style="flex:1"><div class="tt">Integrales impropias</div><div class="st">12 ago · 3 páginas</div></div>
+      <div class="chips"><svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="var(--verified)"/></svg><svg width="12" height="12"><rect width="11" height="11" rx="2" fill="var(--repaired)"/></svg><svg width="14" height="12"><polygon points="7,0 14,12 0,12" fill="var(--escalated)"/></svg></div></div>
+    <div class="item"><div class="thumb"><svg class="ic s20"><use href="#notes"/></svg></div>
+      <div style="flex:1"><div class="tt">Criterio de comparación</div><div class="st">7 ago · 2 páginas</div></div>
+      <div class="chips"><svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="var(--verified)"/></svg><svg width="12" height="12"><circle cx="6" cy="6" r="5.2" fill="none" stroke="var(--uncertain)" stroke-width="1.5" stroke-dasharray="2 2"/></svg></div></div>
+  </div>
+</div>
+<div class="fab"><svg class="ic"><use href="#camera"/></svg></div><div class="gest"><i></i></div></div></div></div>
+
+<div class="cell"><div class="cap"><b>E2</b> · Mapa de confianza <em class="n">NOCHE</em></div><div class="device"><div class="screen night"><div class=punch></div><div class="sysbar"><span class="hora">9:41</span><span class="sp"></span><span class="sys"><svg class="icf" width="15" height="11"><use href="#sys-wifi"/></svg><svg class="icf" width="15" height="11"><use href="#sys-signal"/></svg><svg class="icf" width="24" height="13"><use href="#sys-batt"/></svg></span></div>
+<div class="appbar"><span class="tap"><svg class="ic"><use href="#back"/></svg></span><span class="t sm">Integrales impropias</span>
+  <span class="sp"></span><span class="tap"><svg class="ic"><use href="#image"/></svg></span><span class="tap"><svg class="ic"><use href="#edit"/></svg></span></div>
+<div class="banner"><span class="chips"><svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="var(--verified)"/></svg><svg width="12" height="12"><rect width="11" height="11" rx="2" fill="var(--repaired)"/></svg><svg width="14" height="12"><polygon points="7,0 14,12 0,12" fill="var(--escalated)"/></svg><svg width="12" height="12"><circle cx="6" cy="6" r="5.2" fill="none" stroke="var(--uncertain)" stroke-width="1.5" stroke-dasharray="2 2"/></svg></span>
+  14 verificados · 2 reparados · 1 escalado · 1 incierto</div>
+<div class="body">
+  <div class="meta sm" style="margin-bottom:12px">Clase del 12 de agosto · página 1 de 3</div>
+  <div style="font-size:18px;font-weight:500;margin-bottom:10px">
+    <span class="frag fv">Integrales impropias de primera especie</span></div>
+  <p style="font-size:16px;line-height:1.75;margin-bottom:14px">
+    <span class="frag fv">Una integral es impropia cuando el intervalo no está acotado, o cuando la función presenta una</span>
+    <span class="frag fe">discontinuidad infinita</span>
+    <span class="frag fv">dentro del intervalo.</span></p>
+  <div style="background:var(--surfaceHigh);border:1px solid var(--border);border-left:3px solid var(--repaired);
+              border-radius:8px;padding:14px;margin-bottom:14px">
+    <div class="betw" style="margin-bottom:10px">
+      <span class="badge" style="background:rgba(143,183,220,.20);color:var(--repaired)">REPARADO · N1.5</span>
+      <span class="meta sm">confianza 0.86</span></div>
+    <div style="text-align:center;font-size:21px;padding:8px 0">
+      ∫<sub style="font-size:11px">a</sub><sup style="font-size:11px">∞</sup> f(x) dx = lim<sub style="font-size:11px">b→∞</sub> ∫<sub style="font-size:11px">a</sub><sup style="font-size:11px">b</sup> f(x) dx</div>
+    <div class="row" style="gap:8px"><svg class="ic s18" style="color:var(--textSecondary)"><use href="#image"/></svg>
+      <span class="meta sm">Ver el recorte original</span></div>
+  </div>
+  <p style="font-size:16px;line-height:1.75">
+    <span class="frag fv">Si el límite existe y es finito, la integral</span>
+    <span class="frag fu">converge; en caso contrario dvierge</span>
+    <span class="frag fv">.</span></p>
+  <div class="card" style="margin-top:16px;border-color:var(--border);background:rgba(149,149,149,.10)">
+    <div class="row" style="gap:10px"><svg width="12" height="12"><circle cx="6" cy="6" r="5.2" fill="none" stroke="var(--uncertain)" stroke-width="1.5" stroke-dasharray="2 2"/></svg>
+      <span style="font-size:15px;flex:1">1 fragmento sin leer con certeza</span>
+      <svg class="ic s18" style="color:var(--textSecondary)"><use href="#right"/></svg></div></div>
+</div><div class="gest"><i></i></div></div></div></div>
+<div class="cell"><div class="cap"><b>E2</b> · Mapa de confianza <em class="d">DÍA</em></div><div class="device"><div class="screen day"><div class=punch></div><div class="sysbar"><span class="hora">9:41</span><span class="sp"></span><span class="sys"><svg class="icf" width="15" height="11"><use href="#sys-wifi"/></svg><svg class="icf" width="15" height="11"><use href="#sys-signal"/></svg><svg class="icf" width="24" height="13"><use href="#sys-batt"/></svg></span></div>
+<div class="appbar"><span class="tap"><svg class="ic"><use href="#back"/></svg></span><span class="t sm">Integrales impropias</span>
+  <span class="sp"></span><span class="tap"><svg class="ic"><use href="#image"/></svg></span><span class="tap"><svg class="ic"><use href="#edit"/></svg></span></div>
+<div class="banner"><span class="chips"><svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="var(--verified)"/></svg><svg width="12" height="12"><rect width="11" height="11" rx="2" fill="var(--repaired)"/></svg><svg width="14" height="12"><polygon points="7,0 14,12 0,12" fill="var(--escalated)"/></svg><svg width="12" height="12"><circle cx="6" cy="6" r="5.2" fill="none" stroke="var(--uncertain)" stroke-width="1.5" stroke-dasharray="2 2"/></svg></span>
+  14 verificados · 2 reparados · 1 escalado · 1 incierto</div>
+<div class="body">
+  <div class="meta sm" style="margin-bottom:12px">Clase del 12 de agosto · página 1 de 3</div>
+  <div style="font-size:18px;font-weight:500;margin-bottom:10px">
+    <span class="frag fv">Integrales impropias de primera especie</span></div>
+  <p style="font-size:16px;line-height:1.75;margin-bottom:14px">
+    <span class="frag fv">Una integral es impropia cuando el intervalo no está acotado, o cuando la función presenta una</span>
+    <span class="frag fe">discontinuidad infinita</span>
+    <span class="frag fv">dentro del intervalo.</span></p>
+  <div style="background:var(--surfaceHigh);border:1px solid var(--border);border-left:3px solid var(--repaired);
+              border-radius:8px;padding:14px;margin-bottom:14px">
+    <div class="betw" style="margin-bottom:10px">
+      <span class="badge" style="background:rgba(143,183,220,.20);color:var(--repaired)">REPARADO · N1.5</span>
+      <span class="meta sm">confianza 0.86</span></div>
+    <div style="text-align:center;font-size:21px;padding:8px 0">
+      ∫<sub style="font-size:11px">a</sub><sup style="font-size:11px">∞</sup> f(x) dx = lim<sub style="font-size:11px">b→∞</sub> ∫<sub style="font-size:11px">a</sub><sup style="font-size:11px">b</sup> f(x) dx</div>
+    <div class="row" style="gap:8px"><svg class="ic s18" style="color:var(--textSecondary)"><use href="#image"/></svg>
+      <span class="meta sm">Ver el recorte original</span></div>
+  </div>
+  <p style="font-size:16px;line-height:1.75">
+    <span class="frag fv">Si el límite existe y es finito, la integral</span>
+    <span class="frag fu">converge; en caso contrario dvierge</span>
+    <span class="frag fv">.</span></p>
+  <div class="card" style="margin-top:16px;border-color:var(--border);background:rgba(149,149,149,.10)">
+    <div class="row" style="gap:10px"><svg width="12" height="12"><circle cx="6" cy="6" r="5.2" fill="none" stroke="var(--uncertain)" stroke-width="1.5" stroke-dasharray="2 2"/></svg>
+      <span style="font-size:15px;flex:1">1 fragmento sin leer con certeza</span>
+      <svg class="ic s18" style="color:var(--textSecondary)"><use href="#right"/></svg></div></div>
+</div><div class="gest"><i></i></div></div></div></div>
+
+<div class="cell"><div class="cap"><b>D2</b> · Rechazo con motivo <em class="n">NOCHE</em></div><div class="device"><div class="screen night"><div class=punch></div><div class="sysbar"><span class="hora">9:41</span><span class="sp"></span><span class="sys"><svg class="icf" width="15" height="11"><use href="#sys-wifi"/></svg><svg class="icf" width="15" height="11"><use href="#sys-signal"/></svg><svg class="icf" width="24" height="13"><use href="#sys-batt"/></svg></span></div>
+<div class="appbar"><span class="tap"><svg class="ic"><use href="#close"/></svg></span><span class="t sm">Revisá la foto</span></div>
+<div class="body">
+  <div class="crop" style="height:186px;margin-bottom:14px"><span>Vista previa</span></div>
+  <div class="card" style="border-color:var(--alertBorder);background:var(--alertFill)">
+    <div class="row" style="gap:10px"><svg class="ic s20" style="color:var(--alert)"><use href="#warn"/></svg>
+      <span style="font-size:18px;font-weight:500">La foto está movida</span></div>
+    <div class="meta" style="margin-top:8px;line-height:1.5;color:var(--textPrimary);opacity:.85">
+      Con este desenfoque el reconocimiento inventaría texto. Apoyá el codo y repetí la toma.</div>
+  </div>
+  <h2 class="sec">Diagnóstico de calidad</h2>
+  <div class="card">
+    <div class="metrow"><svg class="ic s18" style="color:var(--alert)"><use href="#warn"/></svg><span style="flex:1">Nitidez</span>
+      <div class="bar" style="max-width:76px"><i style="width:24%;background:var(--alert)"></i></div>
+      <span class="meta sm mono">12 / 35</span></div>
+    <div class="metrow"><svg class="ic s18" style="color:var(--verified)"><use href="#check"/></svg><span style="flex:1">Iluminación</span>
+      <div class="bar" style="max-width:76px"><i style="width:78%;background:var(--verified)"></i></div>
+      <span class="meta sm mono">78</span></div>
+    <div class="metrow"><svg class="ic s18" style="color:var(--verified)"><use href="#check"/></svg><span style="flex:1">Sin reflejos</span>
+      <div class="bar" style="max-width:76px"><i style="width:91%;background:var(--verified)"></i></div>
+      <span class="meta sm mono">91</span></div>
+    <div class="metrow"><svg class="ic s18" style="color:var(--verified)"><use href="#check"/></svg><span style="flex:1">Perspectiva</span>
+      <span class="meta sm">corregida −4.2°</span></div>
+  </div>
+  <div class="btn pri"><svg class="ic s20"><use href="#camera"/></svg>Repetir la foto</div>
+  <div style="height:8px"></div>
+  <div class="btn txt">Procesarla igual, sé que va a fallar</div>
+</div><div class="gest"><i></i></div></div></div></div>
+<div class="cell"><div class="cap"><b>D2</b> · Rechazo con motivo <em class="d">DÍA</em></div><div class="device"><div class="screen day"><div class=punch></div><div class="sysbar"><span class="hora">9:41</span><span class="sp"></span><span class="sys"><svg class="icf" width="15" height="11"><use href="#sys-wifi"/></svg><svg class="icf" width="15" height="11"><use href="#sys-signal"/></svg><svg class="icf" width="24" height="13"><use href="#sys-batt"/></svg></span></div>
+<div class="appbar"><span class="tap"><svg class="ic"><use href="#close"/></svg></span><span class="t sm">Revisá la foto</span></div>
+<div class="body">
+  <div class="crop" style="height:186px;margin-bottom:14px"><span>Vista previa</span></div>
+  <div class="card" style="border-color:var(--alertBorder);background:var(--alertFill)">
+    <div class="row" style="gap:10px"><svg class="ic s20" style="color:var(--alert)"><use href="#warn"/></svg>
+      <span style="font-size:18px;font-weight:500">La foto está movida</span></div>
+    <div class="meta" style="margin-top:8px;line-height:1.5;color:var(--textPrimary);opacity:.85">
+      Con este desenfoque el reconocimiento inventaría texto. Apoyá el codo y repetí la toma.</div>
+  </div>
+  <h2 class="sec">Diagnóstico de calidad</h2>
+  <div class="card">
+    <div class="metrow"><svg class="ic s18" style="color:var(--alert)"><use href="#warn"/></svg><span style="flex:1">Nitidez</span>
+      <div class="bar" style="max-width:76px"><i style="width:24%;background:var(--alert)"></i></div>
+      <span class="meta sm mono">12 / 35</span></div>
+    <div class="metrow"><svg class="ic s18" style="color:var(--verified)"><use href="#check"/></svg><span style="flex:1">Iluminación</span>
+      <div class="bar" style="max-width:76px"><i style="width:78%;background:var(--verified)"></i></div>
+      <span class="meta sm mono">78</span></div>
+    <div class="metrow"><svg class="ic s18" style="color:var(--verified)"><use href="#check"/></svg><span style="flex:1">Sin reflejos</span>
+      <div class="bar" style="max-width:76px"><i style="width:91%;background:var(--verified)"></i></div>
+      <span class="meta sm mono">91</span></div>
+    <div class="metrow"><svg class="ic s18" style="color:var(--verified)"><use href="#check"/></svg><span style="flex:1">Perspectiva</span>
+      <span class="meta sm">corregida −4.2°</span></div>
+  </div>
+  <div class="btn pri"><svg class="ic s20"><use href="#camera"/></svg>Repetir la foto</div>
+  <div style="height:8px"></div>
+  <div class="btn txt">Procesarla igual, sé que va a fallar</div>
+</div><div class="gest"><i></i></div></div></div></div>
+
+<div class="cell"><div class="cap"><b>F1</b> · Cobertura <em class="n">NOCHE</em></div><div class="device"><div class="screen night"><div class=punch></div><div class="sysbar"><span class="hora">9:41</span><span class="sp"></span><span class="sys"><svg class="icf" width="15" height="11"><use href="#sys-wifi"/></svg><svg class="icf" width="15" height="11"><use href="#sys-signal"/></svg><svg class="icf" width="24" height="13"><use href="#sys-batt"/></svg></span></div>
+<div class="appbar"><span class="tap"><svg class="ic"><use href="#menu"/></svg></span>
+  <div class="swx"><span class="lbl">Cobertura de</span>
+    <span class="val">Cálculo II <svg class="ic s18" style="stroke-width:2"><use href="#down"/></svg></span></div>
+  <span class="sp"></span><span class="tap"><svg class="ic"><use href="#calendar"/></svg></span></div>
+<div class="banner"><svg class="ic s18"><use href="#gaps"/></svg><span style="flex:1">+2 temas desde el 8 de agosto</span><svg class="ic s18"><use href="#right"/></svg></div>
+<div class="body">
+  <div class="card">
+    <div class="betw" style="margin-bottom:2px"><span class="name">33 temas</span>
+      <span style="font-size:26px;font-weight:600;color:var(--accent)">68%</span></div>
+    <div class="covbar big"><i style="width:54%;background:var(--verified)"></i>
+      <i style="width:20%;background:var(--repaired)"></i>
+      <i style="width:14%;background:var(--escalated)"></i>
+      <i style="width:12%;background:var(--uncertain)"></i></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin-top:12px">
+      <span class="meta row" style="gap:7px"><svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="var(--verified)"/></svg>18 sólidos</span>
+      <span class="meta row" style="gap:7px"><svg width="12" height="12"><rect width="11" height="11" rx="2" fill="var(--repaired)"/></svg>7 parciales</span>
+      <span class="meta row" style="gap:7px"><svg width="14" height="12"><polygon points="7,0 14,12 0,12" fill="var(--escalated)"/></svg>5 ausentes</span>
+      <span class="meta row" style="gap:7px"><svg width="12" height="12"><circle cx="6" cy="6" r="5.2" fill="none" stroke="var(--uncertain)" stroke-width="1.5" stroke-dasharray="2 2"/></svg>3 dudosos</span></div>
+  </div>
+  <h2 class="sec">Unidad 3 · Series</h2>
+  <div class="card tight">
+    <div class="item compact"><svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="var(--verified)"/></svg><div style="flex:1"><div class="tt" style="font-size:15px">3.1 Sucesiones</div></div>
+      <span class="meta sm mono">0.92</span><svg class="ic s18" style="color:var(--textSecondary)"><use href="#right"/></svg></div>
+    <div class="item compact"><svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="var(--verified)"/></svg><div style="flex:1"><div class="tt" style="font-size:15px">3.2 Series geométricas</div></div>
+      <span class="meta sm mono">0.88</span><svg class="ic s18" style="color:var(--textSecondary)"><use href="#right"/></svg></div>
+    <div class="item compact"><svg width="12" height="12"><rect width="11" height="11" rx="2" fill="var(--repaired)"/></svg><div style="flex:1"><div class="tt" style="font-size:15px">3.3 Comparación</div>
+      <div class="st" style="font-size:12px">Falta el caso del límite</div></div>
+      <span class="meta sm mono">0.54</span><svg class="ic s18" style="color:var(--textSecondary)"><use href="#right"/></svg></div>
+    <div class="item compact"><svg width="14" height="12"><polygon points="7,0 14,12 0,12" fill="var(--escalated)"/></svg><div style="flex:1"><div class="tt" style="font-size:15px">3.4 Series de potencias</div>
+      <div class="st" style="font-size:12px">Sin evidencia en tus apuntes</div></div>
+      <span class="meta sm mono">0.11</span><svg class="ic s18" style="color:var(--textSecondary)"><use href="#right"/></svg></div>
+    <div class="item compact"><svg width="12" height="12"><circle cx="6" cy="6" r="5.2" fill="none" stroke="var(--uncertain)" stroke-width="1.5" stroke-dasharray="2 2"/></svg><div style="flex:1"><div class="tt" style="font-size:15px">3.5 Radio de convergencia</div>
+      <div class="st" style="font-size:12px">Apunte ilegible en esa sección</div></div>
+      <span class="meta sm mono">—</span><svg class="ic s18" style="color:var(--textSecondary)"><use href="#right"/></svg></div>
+  </div>
+</div><div class="gest"><i></i></div></div></div></div>
+<div class="cell"><div class="cap"><b>F1</b> · Cobertura <em class="d">DÍA</em></div><div class="device"><div class="screen day"><div class=punch></div><div class="sysbar"><span class="hora">9:41</span><span class="sp"></span><span class="sys"><svg class="icf" width="15" height="11"><use href="#sys-wifi"/></svg><svg class="icf" width="15" height="11"><use href="#sys-signal"/></svg><svg class="icf" width="24" height="13"><use href="#sys-batt"/></svg></span></div>
+<div class="appbar"><span class="tap"><svg class="ic"><use href="#menu"/></svg></span>
+  <div class="swx"><span class="lbl">Cobertura de</span>
+    <span class="val">Cálculo II <svg class="ic s18" style="stroke-width:2"><use href="#down"/></svg></span></div>
+  <span class="sp"></span><span class="tap"><svg class="ic"><use href="#calendar"/></svg></span></div>
+<div class="banner"><svg class="ic s18"><use href="#gaps"/></svg><span style="flex:1">+2 temas desde el 8 de agosto</span><svg class="ic s18"><use href="#right"/></svg></div>
+<div class="body">
+  <div class="card">
+    <div class="betw" style="margin-bottom:2px"><span class="name">33 temas</span>
+      <span style="font-size:26px;font-weight:600;color:var(--accent)">68%</span></div>
+    <div class="covbar big"><i style="width:54%;background:var(--verified)"></i>
+      <i style="width:20%;background:var(--repaired)"></i>
+      <i style="width:14%;background:var(--escalated)"></i>
+      <i style="width:12%;background:var(--uncertain)"></i></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin-top:12px">
+      <span class="meta row" style="gap:7px"><svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="var(--verified)"/></svg>18 sólidos</span>
+      <span class="meta row" style="gap:7px"><svg width="12" height="12"><rect width="11" height="11" rx="2" fill="var(--repaired)"/></svg>7 parciales</span>
+      <span class="meta row" style="gap:7px"><svg width="14" height="12"><polygon points="7,0 14,12 0,12" fill="var(--escalated)"/></svg>5 ausentes</span>
+      <span class="meta row" style="gap:7px"><svg width="12" height="12"><circle cx="6" cy="6" r="5.2" fill="none" stroke="var(--uncertain)" stroke-width="1.5" stroke-dasharray="2 2"/></svg>3 dudosos</span></div>
+  </div>
+  <h2 class="sec">Unidad 3 · Series</h2>
+  <div class="card tight">
+    <div class="item compact"><svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="var(--verified)"/></svg><div style="flex:1"><div class="tt" style="font-size:15px">3.1 Sucesiones</div></div>
+      <span class="meta sm mono">0.92</span><svg class="ic s18" style="color:var(--textSecondary)"><use href="#right"/></svg></div>
+    <div class="item compact"><svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="var(--verified)"/></svg><div style="flex:1"><div class="tt" style="font-size:15px">3.2 Series geométricas</div></div>
+      <span class="meta sm mono">0.88</span><svg class="ic s18" style="color:var(--textSecondary)"><use href="#right"/></svg></div>
+    <div class="item compact"><svg width="12" height="12"><rect width="11" height="11" rx="2" fill="var(--repaired)"/></svg><div style="flex:1"><div class="tt" style="font-size:15px">3.3 Comparación</div>
+      <div class="st" style="font-size:12px">Falta el caso del límite</div></div>
+      <span class="meta sm mono">0.54</span><svg class="ic s18" style="color:var(--textSecondary)"><use href="#right"/></svg></div>
+    <div class="item compact"><svg width="14" height="12"><polygon points="7,0 14,12 0,12" fill="var(--escalated)"/></svg><div style="flex:1"><div class="tt" style="font-size:15px">3.4 Series de potencias</div>
+      <div class="st" style="font-size:12px">Sin evidencia en tus apuntes</div></div>
+      <span class="meta sm mono">0.11</span><svg class="ic s18" style="color:var(--textSecondary)"><use href="#right"/></svg></div>
+    <div class="item compact"><svg width="12" height="12"><circle cx="6" cy="6" r="5.2" fill="none" stroke="var(--uncertain)" stroke-width="1.5" stroke-dasharray="2 2"/></svg><div style="flex:1"><div class="tt" style="font-size:15px">3.5 Radio de convergencia</div>
+      <div class="st" style="font-size:12px">Apunte ilegible en esa sección</div></div>
+      <span class="meta sm mono">—</span><svg class="ic s18" style="color:var(--textSecondary)"><use href="#right"/></svg></div>
+  </div>
+</div><div class="gest"><i></i></div></div></div></div>
+</div>
+<p class="note">Estas cuatro ejercitan todo: superficies apiladas, la escala de confianza completa, el estado de error y las barras segmentadas. Si funcionan en ambos modos, las 39 restantes también.</p>
+</body></html>

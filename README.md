@@ -2,9 +2,10 @@
 
 Aplicación Android que reconstruye notas manuscritas de estudiantes en conocimiento estructurado por materia, detecta vacíos frente al syllabus del curso, y guía el estudio adaptativo (flashcards, quizzes, repetición espaciada, plan de examen).
 
-**Curso:** EIF411 - Plataformas Móviles
-**Profesor:** Maikol Guzmán
-**Equipo:** Grupo X-Ray — Brandon Brenes, David González, Felipe Ugalde
+Nació como proyecto del curso EIF411 (Plataformas Móviles, UNA) y ahora sigue como proyecto personal.
+**Equipo original:** Grupo X-Ray — Brandon Brenes, David González, Felipe Ugalde
+
+Este repositorio reúne el backend y la app Android con el historial completo de los repositorios del curso.
 
 ---
 
@@ -30,8 +31,8 @@ Ver `docs/Glifo_Alcance.md` para el detalle completo del flujo de procesamiento 
 glifo/
 ├── docs/           # Documentación de arquitectura, alcance, UML, decisiones
 ├── prototype/       # Prototipo interactivo (Figma Make / React+Vite) — 39 pantallas, tandas T1-T5
-├── android/         # Cliente Android (Kotlin, Android Studio)
-├── backend/         # Backend (Spring Boot, Java, PostgreSQL)
+├── android/         # App Android (Kotlin, Jetpack Compose); se abre como proyecto Gradle propio
+├── backend/         # API (Spring Boot en Kotlin, PostgreSQL); Dockerfile para Render
 └── .github/         # Plantillas de issues para asignación de tareas
 ```
 
@@ -60,7 +61,10 @@ glifo/
 2. **Backend Spring Boot** — API, autenticación, persistencia
 3. **Visión por computadora / pipeline** — OpenCV, OCR, detección de gaps vs. syllabus
 
-Ver issues del repositorio para la asignación específica por persona.
+## Cómo correrlo
+
+- **Backend:** `cd backend && ./gradlew bootRun` con PostgreSQL local (ver `backend/README.md`).
+- **Android:** abrir `android/` en Android Studio. El build de release apunta a `https://glifo-api.onrender.com/api/v1/`.
 
 ## Cómo contribuir
 
