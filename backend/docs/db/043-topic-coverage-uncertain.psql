@@ -1,0 +1,35 @@
+\set ON_ERROR_STOP on
+
+BEGIN;
+SET LOCAL lock_timeout = '5s';
+SET LOCAL statement_timeout = '60s';
+SET LOCAL search_path = pg_catalog;
+SELECT pg_catalog.pg_advisory_xact_lock(197701, 43);
+
+DO $identity$
+BEGIN
+    IF pg_catalog.current_database() <> 'neondb' OR current_user <> 'neondb_owner' THEN
+        RAISE EXCEPTION 'Expected database neondb and initialization role neondb_owner';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_class relation
+        JOIN pg_catalog.pg_namespace namespace ON namespace.oid = relation.relnamespace
+        JOIN pg_catalog.pg_roles owner_role ON owner_role.oid = relation.relowner
+        WHERE namespace.nspname = 'public' AND relation.relname = 'topic_coverage'
+        AND relation.relkind = 'r' AND owner_role.rolname = current_user) THEN
+        RAISE EXCEPTION 'Expected baseline table topic_coverage owned by neondb_owner';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'glifo_runtime') THEN
+        RAISE EXCEPTION 'Expected the previously initialized runtime role';
+    END IF;
+END
+$identity$;
+
+LOCK TABLE public.topic_coverage IN ACCESS EXCLUSIVE MODE;
+
+-- BEGIN MIGRATION BODY
+ALTER TABLE public.topic_coverage
+    DROP CONSTRAINT IF EXISTS ck_topic_coverage_state,
+    ADD CONSTRAINT ck_topic_coverage_state CHECK (state IN ('SOLID', 'PARTIAL', 'ABSENT', 'UNCERTAIN'));
+-- END MIGRATION BODY
+
+COMMIT;

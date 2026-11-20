@@ -2,9 +2,11 @@ package cr.ac.una.glifo.course.repository
 
 import cr.ac.una.glifo.course.entity.SyllabusTopic
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 
 @Repository
 interface SyllabusTopicRepository : JpaRepository<SyllabusTopic, Long> {
+    @Query("SELECT t FROM SyllabusTopic t WHERE t.course.id = :courseId ORDER BY t.orderIndex ASC, t.id ASC")
     fun findByCourseIdOrderByOrderIndex(courseId: Long): List<SyllabusTopic>
 }

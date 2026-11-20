@@ -1,0 +1,690 @@
+package cr.ac.una.glifo.presentation.navigation
+
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
+import androidx.compose.ui.Modifier
+import androidx.navigation.compose.currentBackStackEntryAsState
+import cr.ac.una.glifo.core.ui.theme.GlifoTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.res.stringResource
+import androidx.hilt.navigation.compose.hiltViewModel
+import cr.ac.una.glifo.R
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import cr.ac.una.glifo.core.network.SessionEvent
+import cr.ac.una.glifo.core.ui.component.ActiveCourseUi
+import cr.ac.una.glifo.core.ui.component.LocalActiveCourse
+import cr.ac.una.glifo.core.ui.component.LocalPendingSyncCount
+import cr.ac.una.glifo.core.ui.component.LocalProfilePhotoPath
+import cr.ac.una.glifo.core.ui.component.LocalSessionRole
+import cr.ac.una.glifo.domain.model.GlifoRole
+import cr.ac.una.glifo.presentation.ui.screen.AdminCoursesScreen
+import cr.ac.una.glifo.presentation.ui.screen.AdminRolesScreen
+import cr.ac.una.glifo.presentation.ui.screen.AdminUserDetailScreen
+import cr.ac.una.glifo.presentation.ui.screen.AdminUsersScreen
+import cr.ac.una.glifo.presentation.ui.screen.ForgotPasswordScreen
+import cr.ac.una.glifo.presentation.ui.screen.LoginScreen
+import cr.ac.una.glifo.presentation.ui.screen.RegisterScreen
+import cr.ac.una.glifo.presentation.ui.screen.SplashScreen
+import cr.ac.una.glifo.presentation.ui.screen.CaptureProcessingScreen
+import cr.ac.una.glifo.presentation.ui.screen.CaptureReviewScreen
+import cr.ac.una.glifo.presentation.ui.screen.CaptureScreen
+import cr.ac.una.glifo.presentation.ui.screen.CourseDetailScreen
+import cr.ac.una.glifo.presentation.ui.screen.CoursesScreen
+import cr.ac.una.glifo.presentation.ui.screen.JoinCourseScreen
+import cr.ac.una.glifo.presentation.ui.screen.CoverageDeltaScreen
+import cr.ac.una.glifo.presentation.ui.screen.CoverageScreen
+import cr.ac.una.glifo.presentation.ui.screen.TopicDetailScreen
+import cr.ac.una.glifo.presentation.ui.screen.AdminHomeScreen
+import cr.ac.una.glifo.presentation.ui.screen.HomeScreen
+import cr.ac.una.glifo.presentation.ui.screen.TeacherHomeScreen
+import cr.ac.una.glifo.presentation.ui.screen.*
+import cr.ac.una.glifo.presentation.ui.screen.ProfileScreen
+import cr.ac.una.glifo.presentation.ui.screen.SettingsScreen
+import cr.ac.una.glifo.presentation.ui.screen.FlashcardScreen
+import cr.ac.una.glifo.presentation.ui.screen.QuizResultScreen
+import cr.ac.una.glifo.presentation.ui.screen.QuizScreen
+import cr.ac.una.glifo.presentation.ui.screen.StudyScreen
+import cr.ac.una.glifo.presentation.ui.screen.AiCostScreen
+import cr.ac.una.glifo.presentation.ui.screen.SyncQueueScreen
+import cr.ac.una.glifo.presentation.ui.screen.*
+import cr.ac.una.glifo.presentation.viewmodel.ActiveCourseViewModel
+import cr.ac.una.glifo.presentation.viewmodel.SessionViewModel
+
+@Composable
+fun GlifoNavHost(
+    navController: NavHostController = rememberNavController(),
+    startDestination: String = Screen.Splash.route,
+    targetDestination: String? = null,
+    onClearTargetDestination: () -> Unit = {}
+) {
+    // Obtained once, Activity-scoped: SessionRepositoryImpl backing it is a Hilt
+    // @Singleton, so every route below shares the same session state without
+    // threading it through nav arguments.
+    val sessionViewModel: SessionViewModel = hiltViewModel()
+    var sessionExpiredMessage by remember { mutableStateOf<String?>(null) }
+    // Se toma del idioma elegido en la app; el texto fijo del evento venía siempre en español.
+    val sessionExpiredText = stringResource(R.string.error_unauthorized)
+
+    LaunchedEffect(Unit) {
+        sessionViewModel.sessionEvents.collect { event ->
+            when (event) {
+                is SessionEvent.SessionExpired -> {
+                    sessionExpiredMessage = sessionExpiredText
+                    sessionViewModel.expireSession()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            }
+        }
+    }
+    val activeCourseViewModel: ActiveCourseViewModel = hiltViewModel()
+    val activeCourseId by activeCourseViewModel.activeCourseId.collectAsState()
+    val noActiveCourseText = stringResource(R.string.capture_join_course_hint)
+    var coursesInfoMessage by remember { mutableStateOf<String?>(null) }
+
+    // Las rutas por curso usan el curso activo; si todavía no hay ninguno, se lleva a Cursos con aviso.
+    fun navigateToCourseRoute(route: (Long) -> String) {
+        val courseId = activeCourseId
+        if (courseId != null && courseId > 0L) {
+            navController.navigate(route(courseId))
+        } else {
+            coursesInfoMessage = noActiveCourseText
+            navController.navigate(Screen.Courses.route)
+        }
+    }
+
+    // A single, consistent motion for every screen transition in the app instead of
+    // an instant cut — kept subtle (short duration, small horizontal offset).
+    val activeCourse by activeCourseViewModel.activeCourse.collectAsState()
+    // Rol real de la sesión: el menú lateral lo usa en vez del rol fijo de cada pantalla.
+    val sessionUser by sessionViewModel.currentUser.collectAsState()
+    val profilePhotoPath by sessionViewModel.profilePhotoUri.collectAsState()
+
+    LaunchedEffect(targetDestination, sessionUser, activeCourseId) {
+        if (targetDestination == cr.ac.una.glifo.MainActivity.DESTINATION_STUDY && sessionUser != null) {
+            val destination = activeCourseId?.let(Screen.StudyHub::createRoute) ?: Screen.Courses.route
+            navController.navigate(destination) {
+                launchSingleTop = true
+            }
+            onClearTargetDestination()
+        }
+    }
+    val activeCourseUi = ActiveCourseUi(
+        name = activeCourse?.name,
+        onChangeCourse = { navController.navigate(Screen.CourseSwitcher.route) { launchSingleTop = true } }
+    )
+
+    // El menú lateral de cualquier pantalla lee de aquí el curso activo y cómo cambiarlo.
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = backStackEntry?.destination?.route
+    val tabs = sessionUser?.role?.let(::tabsFor).orEmpty()
+
+    fun selectTab(tab: GlifoTab) {
+        val target = if ("{courseId}" in tab.route) {
+            val courseId = activeCourseId?.takeIf { it > 0L }
+            if (courseId == null) {
+                coursesInfoMessage = noActiveCourseText
+                navController.navigate(Screen.Courses.route) { launchSingleTop = true }
+                return
+            }
+            tab.route.replace("{courseId}", courseId.toString())
+        } else {
+            tab.route
+        }
+        navController.navigate(target) {
+            popUpTo(tabs.first().route) { saveState = true }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
+
+    CompositionLocalProvider(
+        LocalActiveCourse provides activeCourseUi,
+        LocalSessionRole provides sessionUser?.role,
+        LocalPendingSyncCount provides sessionViewModel::pendingSyncCount,
+        LocalProfilePhotoPath provides profilePhotoPath
+    ) {
+    Scaffold(
+        containerColor = GlifoTheme.colors.background,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        bottomBar = {
+            if (tabs.any { it.route == currentRoute }) {
+                GlifoBottomBar(tabs = tabs, currentRoute = currentRoute, onSelect = ::selectTab)
+            }
+        }
+    ) { innerPadding ->
+    NavHost(
+        navController = navController,
+        modifier = Modifier.padding(innerPadding).consumeWindowInsets(innerPadding),
+        startDestination = startDestination,
+        enterTransition = { fadeIn(tween(220)) + slideInHorizontally(tween(220)) { it / 10 } },
+        exitTransition = { fadeOut(tween(180)) },
+        popEnterTransition = { fadeIn(tween(220)) },
+        popExitTransition = { fadeOut(tween(180)) + slideOutHorizontally(tween(180)) { it / 10 } }
+    ) {
+
+        // ── A: Acceso ────────────────────────────────────────────────────────
+        composable(Screen.Splash.route) {
+            SplashScreen(
+                onNavigateToHome = { role ->
+                    val homeRoute = when (role) {
+                        GlifoRole.Student -> Screen.Home.route
+                        GlifoRole.Teacher -> Screen.HomeTeacher.route
+                        GlifoRole.Admin -> Screen.HomeAdmin.route
+                    }
+                    navController.navigate(homeRoute) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
+                },
+                onNavigateToLogin = {
+                    navController.navigate(Screen.Login.route)
+                },
+                restoreSession = {
+                    sessionViewModel.restoreSession()?.role
+                }
+            )
+        }
+
+        composable(Screen.Login.route) {
+            LoginScreen(
+                sessionExpiredMessage = sessionExpiredMessage,
+                onNavigateToRegister = {
+                    sessionExpiredMessage = null
+                    navController.navigate(Screen.Register.route)
+                },
+                onNavigateToForgotPassword = {
+                    sessionExpiredMessage = null
+                    navController.navigate(Screen.ForgotPassword.route)
+                },
+                onLoginSuccess = { role ->
+                    sessionExpiredMessage = null
+                    if (targetDestination == cr.ac.una.glifo.MainActivity.DESTINATION_STUDY) {
+                        val destination = activeCourseId?.let(Screen.StudyHub::createRoute) ?: Screen.Courses.route
+                        navController.navigate(destination) {
+                            popUpTo(Screen.Splash.route) { inclusive = true }
+                        }
+                        onClearTargetDestination()
+                    } else {
+                        val homeRoute = when (role) {
+                            GlifoRole.Student -> Screen.Home.route
+                            GlifoRole.Teacher -> Screen.HomeTeacher.route
+                            GlifoRole.Admin -> Screen.HomeAdmin.route
+                        }
+                        navController.navigate(homeRoute) {
+                            popUpTo(Screen.Splash.route) { inclusive = true }
+                        }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.Register.route) {
+            RegisterScreen(
+                onNavigateToLogin = {
+                    navController.popBackStack()
+                },
+                onRegisterSuccess = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.ForgotPassword.route) {
+            ForgotPasswordScreen(onNavigateBack = { navController.popBackStack() })
+        }
+
+        composable(Screen.ChangePassword.route) {
+            ChangePasswordScreen(onNavigateBack = { navController.popBackStack() })
+        }
+
+        // ── B: Inicio ────────────────────────────────────────────────────────
+        composable(Screen.Home.route) {
+            HomeScreen(
+                onNavigateToCourse = { courseId ->
+                    navController.navigate(Screen.CourseDetail.createRoute(courseId))
+                },
+                onNavigateToCourses = { navController.navigate(Screen.Courses.route) },
+                onNavigateToNotes = { navigateToCourseRoute { Screen.NoteList.createRoute(it) } },
+                onNavigateToCoverage = { navigateToCourseRoute { Screen.Coverage.createRoute(it) } },
+                onNavigateToStudy = { navigateToCourseRoute { Screen.StudyHub.createRoute(it) } },
+                onNavigateToSync = { navController.navigate(Screen.SyncQueue.route) },
+                onNavigateToAiCost = { navController.navigate(Screen.AiCost.route) },
+                onNavigateToCapture = { navigateToCourseRoute { Screen.Capture.createRoute(it) } },
+                onNavigateToFlashcards = { navController.navigate(Screen.FlashcardSession.route) },
+                onNavigateToQuiz = { navController.navigate(Screen.QuizSession.route) },
+                onNavigateToDelta = { navController.navigate(Screen.CoverageDelta.route) },
+                onNavigateToNoteDetail = { noteId -> navController.navigate(Screen.NoteDetail.createRoute(noteId)) }
+            )
+        }
+
+        composable(Screen.HomeTeacher.route) {
+            TeacherHomeScreen(
+                onNavigateToCourses = { navController.navigate(Screen.TeacherCourses.route) },
+                onNavigateToSyllabus = { navController.navigate(Screen.TeacherSyllabus.route) },
+                onNavigateToGlossary = { navController.navigate(Screen.TeacherGlossary.route) },
+                onNavigateToGaps = { navController.navigate(Screen.TeacherGaps.route) },
+                onNavigateToAiCost = { navController.navigate(Screen.AiCost.route) }
+            )
+        }
+
+        composable(Screen.HomeAdmin.route) {
+            AdminHomeScreen(
+                onNavigateToUsers = { navController.navigate(Screen.AdminUsers.route) },
+                onNavigateToCourses = { navController.navigate(Screen.AdminCourses.route) },
+                onNavigateToRoles = { navController.navigate(Screen.AdminRoles.route) },
+                onNavigateToAiCost = { navController.navigate(Screen.AiCost.route) }
+            )
+        }
+
+        // ── C: Cursos ────────────────────────────────────────────────────────
+        composable(Screen.Courses.route) {
+            CoursesScreen(
+                infoMessage = coursesInfoMessage,
+                onDismissInfoMessage = { coursesInfoMessage = null },
+                onNavigateBackOrMenu = { navController.popBackStack() },
+                onNavigateToCourseDetail = { courseId -> navController.navigate(Screen.CourseDetail.createRoute(courseId)) },
+                onNavigateToJoinCourse = { navController.navigate(Screen.JoinCourse.route) }
+            )
+        }
+
+        composable(Screen.CourseSwitcher.route) {
+            CourseSwitcherScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onJoinCourse = { navController.navigate(Screen.JoinCourse.route) },
+                onCreateCourse = { navController.navigate(Screen.TeacherNewCourse.route) }
+            )
+        }
+
+        composable(Screen.JoinCourse.route) {
+            JoinCourseScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onJoinSuccess = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Courses.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(
+            route = Screen.CourseDetail.route,
+            arguments = listOf(navArgument("courseId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val courseId = backStackEntry.arguments?.getLong("courseId") ?: return@composable
+            CourseDetailScreen(
+                courseId = courseId,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToNotes = { navController.navigate(Screen.NoteList.createRoute(courseId)) },
+                onNavigateToCoverage = { navController.navigate(Screen.Coverage.createRoute(courseId)) },
+                onNavigateToStudy = { navController.navigate(Screen.StudyHub.createRoute(courseId)) },
+                onNavigateToDelta = { navController.navigate(Screen.CoverageDelta.route) },
+                onNavigateToCapture = { navController.navigate(Screen.Capture.createRoute(courseId)) },
+                onNavigateToSync = { navController.navigate(Screen.SyncQueue.route) },
+            )
+        }
+
+        // ── D: Captura ────────────────────────────────────────────────────────
+        composable(
+            route = Screen.Capture.route,
+            arguments = listOf(navArgument("courseId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val courseId = backStackEntry.arguments?.getLong("courseId") ?: 0L
+            if (courseId <= 0L) {
+                LaunchedEffect(Unit) {
+                    coursesInfoMessage = noActiveCourseText
+                    navController.navigate(Screen.Courses.route) {
+                        popUpTo(Screen.Capture.route) { inclusive = true }
+                    }
+                }
+                return@composable
+            }
+            CaptureScreen(
+                courseId = courseId,
+                onNavigateBack = { navController.popBackStack() },
+                onNoActiveCourse = {
+                    coursesInfoMessage = noActiveCourseText
+                    navController.navigate(Screen.Courses.route) {
+                        popUpTo(Screen.Capture.route) { inclusive = true }
+                    }
+                },
+                onCapturePhoto = { photoPath ->
+                    navController.navigate(Screen.CaptureReview.createRoute(photoPath, courseId))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.CaptureReview.route,
+            arguments = captureArguments()
+        ) { backStackEntry ->
+            val photoPath = backStackEntry.arguments?.getString("photoPath")
+            val courseId = backStackEntry.captureCourseId()
+            CaptureReviewScreen(
+                photoPath = photoPath,
+                onNavigateBack = { navController.popBackStack() },
+                onRetakePhoto = { navController.popBackStack() },
+                onProcessAnyway = { navController.navigate(Screen.CaptureProcessing.createRoute(photoPath, courseId)) }
+            )
+        }
+
+        composable(
+            route = Screen.CaptureProcessing.route,
+            arguments = captureArguments()
+        ) { backStackEntry ->
+            CaptureProcessingScreen(
+                photoPath = backStackEntry.arguments?.getString("photoPath"),
+                courseId = backStackEntry.captureCourseId(),
+                onNavigateBack = { navController.popBackStack() },
+                // La captura ya quedó guardada como apunte (#25): se abre ese apunte, no uno fijo.
+                onViewResults = { noteId ->
+                    navController.navigate(Screen.NoteDetail.createRoute(noteId)) {
+                        popUpTo(Screen.Capture.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // ── E: Apuntes ────────────────────────────────────────────────────────
+        composable(
+            route = Screen.NoteList.route,
+            arguments = listOf(navArgument("courseId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            // Notas, cobertura y estudio siguen al curso activo: si se cambia de curso estando aquí,
+            // la pantalla pasa al nuevo en vez de quedarse con el de la ruta.
+            val courseId = activeCourseId ?: backStackEntry.arguments?.getLong("courseId") ?: return@composable
+            NotesScreen(
+                courseId = courseId,
+                onNavigateToNoteDetail = { noteId -> navController.navigate(Screen.NoteDetail.createRoute(noteId)) },
+                onNavigateToCapture = { navController.navigate(Screen.Capture.createRoute(courseId)) }
+            )
+        }
+
+        composable(
+            route = Screen.NoteDetail.route,
+            arguments = listOf(navArgument("noteId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val noteId = backStackEntry.arguments?.getLong("noteId") ?: return@composable
+            NoteDetailScreen(
+                noteId = noteId,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToCorrect = { fragment -> navController.navigate(Screen.CorrectFragment.createRoute(noteId, fragment)) },
+                onNavigateToFormula = { fragment -> navController.navigate(Screen.FormulaViewer.createRoute(noteId, fragment)) },
+                onNavigateToProvenance = { fragment -> navController.navigate(Screen.RegionProvenance.createRoute(noteId, fragment)) }
+            )
+        }
+
+        composable(
+            route = Screen.CorrectFragment.route,
+            arguments = noteFragmentArguments()
+        ) { backStackEntry ->
+            val noteId = backStackEntry.arguments?.getLong("noteId") ?: return@composable
+            CorrectFragmentScreen(
+                noteId = noteId,
+                fragmentId = backStackEntry.arguments?.getString("fragment"),
+                onNavigateBack = { navController.popBackStack() },
+                onSaveCorrection = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.FormulaViewer.route,
+            arguments = noteFragmentArguments()
+        ) { backStackEntry ->
+            val noteId = backStackEntry.arguments?.getLong("noteId") ?: return@composable
+            FormulaViewerScreen(
+                noteId = noteId,
+                fragmentId = backStackEntry.arguments?.getString("fragment"),
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToCorrect = { fragment -> navController.navigate(Screen.CorrectFragment.createRoute(noteId, fragment)) }
+            )
+        }
+
+        composable(
+            route = Screen.RegionProvenance.route,
+            arguments = noteFragmentArguments()
+        ) { backStackEntry ->
+            val noteId = backStackEntry.arguments?.getLong("noteId") ?: return@composable
+            RegionProvenanceScreen(
+                noteId = noteId,
+                fragmentId = backStackEntry.arguments?.getString("fragment"),
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        // ── F: Cobertura ──────────────────────────────────────────────────────
+        composable(
+            route = Screen.Coverage.route,
+            arguments = listOf(navArgument("courseId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            // Notas, cobertura y estudio siguen al curso activo: si se cambia de curso estando aquí,
+            // la pantalla pasa al nuevo en vez de quedarse con el de la ruta.
+            val courseId = activeCourseId ?: backStackEntry.arguments?.getLong("courseId") ?: return@composable
+            CoverageScreen(
+                courseId = courseId,
+                onNavigateToTopicDetail = { topicName -> navController.navigate(Screen.TopicDetail.createRoute(topicName)) },
+                onNavigateToDelta = { navController.navigate(Screen.CoverageDelta.route) }
+            )
+        }
+
+        composable(
+            route = Screen.TopicDetail.route,
+            arguments = listOf(navArgument("topicName") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val topicName = backStackEntry.arguments?.getString("topicName") ?: ""
+            TopicDetailScreen(
+                topicName = topicName,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToStudy = { navigateToCourseRoute { Screen.StudyHub.createRoute(it) } },
+                onNavigateToNoteDetail = { noteId -> navController.navigate(Screen.NoteDetail.createRoute(noteId)) }
+            )
+        }
+
+        composable(Screen.CoverageDelta.route) {
+            CoverageDeltaScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToNotes = { navigateToCourseRoute { Screen.NoteList.createRoute(it) } }
+            )
+        }
+
+        // ── G: Estudio ────────────────────────────────────────────────────────
+        composable(
+            route = Screen.StudyHub.route,
+            arguments = listOf(navArgument("courseId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            // Notas, cobertura y estudio siguen al curso activo: si se cambia de curso estando aquí,
+            // la pantalla pasa al nuevo en vez de quedarse con el de la ruta.
+            val courseId = activeCourseId ?: backStackEntry.arguments?.getLong("courseId") ?: return@composable
+            StudyScreen(
+                courseId = courseId,
+                onNavigateToFlashcards = { navController.navigate(Screen.FlashcardSession.route) },
+                onNavigateToQuiz = { navController.navigate(Screen.QuizSession.route) }
+            )
+        }
+
+        composable(Screen.FlashcardSession.route) {
+            FlashcardScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.QuizSession.route) {
+            QuizScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToResult = { navController.navigate(Screen.QuizResult.route) }
+            )
+        }
+
+        composable(Screen.QuizResult.route) {
+            QuizResultScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToCoverage = { navigateToCourseRoute { Screen.Coverage.createRoute(it) } },
+                onNavigateToStudy = { navigateToCourseRoute { Screen.StudyHub.createRoute(it) } }
+            )
+        }
+
+        // ── H: Sync e IA ──────────────────────────────────────────────────────
+        composable(Screen.SyncQueue.route) {
+            SyncQueueScreen(
+                onNavigateBackOrMenu = { navController.popBackStack() },
+                onNavigateToNoteDetail = { noteId -> navController.navigate(Screen.NoteDetail.createRoute(noteId)) }
+            )
+        }
+
+        composable(Screen.AiCost.route) {
+            val user by sessionViewModel.currentUser.collectAsState()
+            AiCostScreen(
+                role = user?.role ?: GlifoRole.Student,
+                onNavigateBackOrMenu = { navController.popBackStack() }
+            )
+        }
+
+        // ── I: Docente ────────────────────────────────────────────────────────
+        composable(Screen.TeacherCourses.route) {
+            TeacherCoursesScreen(
+                onNavigateToNewCourse = { navController.navigate(Screen.TeacherNewCourse.route) },
+                onNavigateToSyllabus = { navController.navigate(Screen.TeacherSyllabus.route) }
+            )
+        }
+
+        composable(Screen.TeacherNewCourse.route) {
+            TeacherNewCourseScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onCreateSuccess = { navController.navigate(Screen.HomeTeacher.route) }
+            )
+        }
+
+        composable(Screen.TeacherSyllabus.route) {
+            TeacherSyllabusScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onPublishSuccess = { navController.navigate(Screen.HomeTeacher.route) }
+            )
+        }
+
+        composable(Screen.TeacherGlossary.route) {
+            TeacherGlossaryScreen(
+            )
+        }
+
+        composable(Screen.TeacherGaps.route) {
+            TeacherGapsScreen(
+                onNavigateBackOrMenu = { navController.popBackStack() },
+                onNavigateToTopicDetail = { topicName -> navController.navigate(Screen.TopicDetail.createRoute(topicName)) }
+            )
+        }
+
+        // ── J: Admin ──────────────────────────────────────────────────────────
+        composable(Screen.AdminCourses.route) {
+            AdminCoursesScreen(
+                onNavigateToCourseDetail = { courseId -> navController.navigate(Screen.CourseDetail.createRoute(courseId)) }
+            )
+        }
+
+        composable(Screen.AdminUsers.route) {
+            AdminUsersScreen(
+            )
+        }
+
+        composable(
+            route = Screen.AdminUserDetail.route,
+            arguments = listOf(navArgument("userName") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val userName = backStackEntry.arguments?.getString("userName").orEmpty()
+            AdminUserDetailScreen(
+                userName = userName,
+                onNavigateBack = { navController.popBackStack() },
+                onSaveSuccess = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.AdminRoles.route) {
+            AdminRolesScreen(
+            )
+        }
+
+        // ── K: Perfil y Ajustes ───────────────────────────────────────────────
+        composable(Screen.Settings.route) {
+            SettingsScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToSync = { navController.navigate(Screen.SyncQueue.route) }
+            )
+        }
+
+        composable(Screen.Profile.route) {
+            val user by sessionViewModel.currentUser.collectAsState()
+            ProfileScreen(
+                onNavigateToChangePassword = { navController.navigate(Screen.ChangePassword.route) },
+                onNavigateToCourses = {
+                    val coursesRoute = when (user?.role) {
+                        GlifoRole.Teacher -> Screen.TeacherCourses.route
+                        GlifoRole.Admin -> Screen.AdminCourses.route
+                        else -> Screen.Courses.route
+                    }
+                    navController.navigate(coursesRoute)
+                },
+                onNavigateToAiCost = { navController.navigate(Screen.AiCost.route) },
+                onNavigateToSync = { navController.navigate(Screen.SyncQueue.route) },
+                onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
+                onLogout = {
+                    sessionViewModel.logout()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
+        }
+    }
+    }
+    }
+}
+
+/** Argumentos compartidos por las rutas de revision y procesamiento de una captura. */
+private fun captureArguments() = listOf(
+    navArgument("photoPath") {
+        type = NavType.StringType
+        nullable = true
+        defaultValue = null
+    },
+    // Navigation no admite Long nullable: -1 significa "captura sin curso".
+    navArgument("courseId") {
+        type = NavType.LongType
+        defaultValue = NO_COURSE
+    }
+)
+
+private const val NO_COURSE = -1L
+
+private fun NavBackStackEntry.captureCourseId(): Long? =
+    arguments?.getLong("courseId", NO_COURSE)?.takeIf { it != NO_COURSE }
+
+/** noteId obligatorio + el fragmento opcional que se tocó en el detalle del apunte. */
+private fun noteFragmentArguments() = listOf(
+    navArgument("noteId") { type = NavType.LongType },
+    navArgument("fragment") {
+        type = NavType.StringType
+        nullable = true
+        defaultValue = null
+    }
+)

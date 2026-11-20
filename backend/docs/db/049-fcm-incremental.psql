@@ -1,0 +1,75 @@
+\set ON_ERROR_STOP on
+
+BEGIN;
+SET LOCAL lock_timeout = '5s';
+SET LOCAL statement_timeout = '60s';
+SET LOCAL search_path = pg_catalog;
+SELECT pg_catalog.pg_advisory_xact_lock(197701, 49);
+
+DO $identity$
+BEGIN
+    IF pg_catalog.current_database() <> 'neondb' OR current_user <> 'neondb_owner' THEN
+        RAISE EXCEPTION 'Expected database neondb and initialization role neondb_owner';
+    END IF;
+    IF (SELECT count(*) FROM pg_catalog.pg_class relation
+        JOIN pg_catalog.pg_namespace namespace ON namespace.oid = relation.relnamespace
+        JOIN pg_catalog.pg_roles owner_role ON owner_role.oid = relation.relowner
+        WHERE namespace.nspname = 'public' AND relation.relname IN ('devices', 'notifications')
+        AND relation.relkind = 'r' AND owner_role.rolname = current_user) <> 2 THEN
+        RAISE EXCEPTION 'Expected baseline tables owned by neondb_owner';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'glifo_runtime') THEN
+        RAISE EXCEPTION 'Expected the previously initialized runtime role';
+    END IF;
+END
+$identity$;
+
+LOCK TABLE public.devices, public.notifications IN ACCESS EXCLUSIVE MODE;
+
+DO $baseline$
+BEGIN
+    IF ARRAY(SELECT attribute.attname::text FROM pg_catalog.pg_attribute attribute
+        WHERE attribute.attrelid = 'public.devices'::regclass AND attribute.attnum > 0
+        AND NOT attribute.attisdropped ORDER BY attribute.attname)
+        <> ARRAY['fcm_token', 'id', 'platform', 'registered_at', 'user_id']
+    OR ARRAY(SELECT attribute.attname::text FROM pg_catalog.pg_attribute attribute
+        WHERE attribute.attrelid = 'public.notifications'::regclass AND attribute.attnum > 0
+        AND NOT attribute.attisdropped ORDER BY attribute.attname)
+        <> ARRAY['id', 'kind', 'payload', 'read_at', 'sent_at', 'user_id'] THEN
+        RAISE EXCEPTION 'Expected the original baseline columns; partial or repeated migrations are refused';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_attribute attribute
+        WHERE attribute.attrelid = 'public.devices'::regclass AND attribute.attname = 'fcm_token'
+        AND pg_catalog.format_type(attribute.atttypid, attribute.atttypmod) = 'character varying(255)'
+        AND attribute.attnotnull AND NOT attribute.attisdropped) THEN
+        RAISE EXCEPTION 'Expected the original non-null varchar(255) device token';
+    END IF;
+    IF EXISTS (SELECT 1 FROM public.devices) OR EXISTS (SELECT 1 FROM public.notifications) THEN
+        RAISE EXCEPTION 'FCM migration requires empty devices and notifications; no historical data is rewritten';
+    END IF;
+END
+$baseline$;
+
+ALTER TABLE public.devices
+    ALTER COLUMN fcm_token TYPE character varying(512),
+    ALTER COLUMN fcm_token DROP NOT NULL,
+    ADD COLUMN installation_id character varying(64) NOT NULL,
+    ADD COLUMN is_active boolean NOT NULL,
+    ADD COLUMN updated_at timestamp(6) with time zone NOT NULL,
+    ADD CONSTRAINT uq_devices_user_installation UNIQUE (user_id, installation_id);
+CREATE INDEX idx_devices_user_active ON public.devices (user_id, is_active);
+
+ALTER TABLE public.notifications
+    ADD COLUMN device_id bigint,
+    ADD COLUMN idempotency_key uuid,
+    ADD COLUMN status character varying(24) NOT NULL,
+    ADD COLUMN attempts integer NOT NULL,
+    ADD COLUMN fcm_message_id character varying(255),
+    ADD COLUMN last_error character varying(500),
+    ADD COLUMN created_at timestamp(6) with time zone NOT NULL,
+    ADD CONSTRAINT uq_notifications_idempotency UNIQUE (idempotency_key),
+    ADD CONSTRAINT ck_notifications_status CHECK (status IN ('PENDING', 'ACCEPTED', 'FAILED_RETRYABLE', 'FAILED_PERMANENT')),
+    ADD CONSTRAINT fk_notifications_device FOREIGN KEY (device_id) REFERENCES public.devices(id);
+CREATE INDEX idx_notifications_device_status ON public.notifications (device_id, status);
+
+COMMIT;

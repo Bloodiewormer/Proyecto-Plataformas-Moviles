@@ -1,0 +1,130 @@
+package cr.ac.una.glifo.data.dto
+
+import com.google.gson.JsonElement
+import com.google.gson.annotations.SerializedName
+
+data class ApiResponse<T>(
+    @SerializedName("data") val data: T,
+    @SerializedName("meta") val meta: Map<String, Any>? = null
+)
+
+data class CourseResponse(
+    @SerializedName("id") val id: Long,
+    @SerializedName("name") val name: String,
+    @SerializedName("code") val code: String,
+    @SerializedName("join_code") val joinCode: String,
+    @SerializedName("term") val term: String = ""
+)
+
+data class CourseDetailResponse(
+    @SerializedName("id") val id: Long,
+    @SerializedName("name") val name: String,
+    @SerializedName("code") val code: String,
+    @SerializedName("join_code") val joinCode: String,
+    @SerializedName("syllabus_status") val syllabusStatus: String?
+)
+
+data class CreateCourseRequest(
+    @SerializedName("name") val name: String,
+    @SerializedName("code") val code: String,
+    @SerializedName("term") val term: String
+)
+
+data class JoinCourseRequest(
+    @SerializedName("join_code") val joinCode: String
+)
+
+data class EnrollmentResponse(
+    @SerializedName("id") val id: Long,
+    @SerializedName("course_id") val courseId: Long,
+    @SerializedName("course_name") val courseName: String? = null,
+    @SerializedName("status") val status: String
+)
+
+data class NoteResponse(
+    @SerializedName("id") val id: Long,
+    @SerializedName("course_id") val courseId: Long,
+    @SerializedName("title") val title: String,
+    @SerializedName("class_date") val classDate: String,
+    /** DRAFT · PROCESSING · READY · ARCHIVED; el mock no lo manda. */
+    @SerializedName("status") val status: String? = null,
+    @SerializedName("syllabus_topic_id") val syllabusTopicId: Long? = null,
+    @SerializedName("created_at") val createdAt: String? = null,
+    @SerializedName("page_count") val pageCount: Int? = null
+)
+
+data class NoteDetailResponse(
+    @SerializedName("id") val id: Long,
+    @SerializedName("course_id") val courseId: Long,
+    @SerializedName("title") val title: String,
+    @SerializedName("class_date") val classDate: String,
+    @SerializedName("status") val status: String? = null,
+    /** Reconstrucción IA-01 (§5.5) como JSON; null mientras no exista. */
+    @SerializedName("content") val content: JsonElement? = null,
+    @SerializedName("syllabus_topic_id") val syllabusTopicId: Long? = null
+)
+
+data class CreateNoteRequest(
+    @SerializedName("course_id") val courseId: Long,
+    @SerializedName("title") val title: String,
+    @SerializedName("class_date") val classDate: String,
+    @SerializedName("syllabus_topic_id") val syllabusTopicId: Long? = null
+)
+
+data class UpdateNoteRequest(
+    @SerializedName("syllabus_topic_id") val syllabusTopicId: Long? = null,
+    @SerializedName("class_date") val classDate: String,
+    @SerializedName("title") val title: String
+)
+
+/** `POST notes/{id}/pages`: la página ya procesada en el teléfono (issue #26). */
+data class CreateNotePageRequest(
+    @SerializedName("page_index") val pageIndex: Int,
+    @SerializedName("perceptual_hash") val perceptualHash: String,
+    @SerializedName("level_reached") val levelReached: String,
+    @SerializedName("overall_confidence") val overallConfidence: Float,
+    /** Regiones con bbox normalizado a 0..1 (§5.6). */
+    @SerializedName("regions") val regions: JsonElement,
+    @SerializedName("quality_metrics") val qualityMetrics: JsonElement? = null
+)
+
+data class NotePageResponse(
+    @SerializedName("id") val id: Long,
+    @SerializedName("note_id") val noteId: Long,
+    @SerializedName("page_index") val pageIndex: Int
+)
+
+/** DTO de entrada para agregar un tema o subtema al temario (#32). */
+data class CreateSyllabusTopicRequest(
+    @SerializedName("code") val code: String,
+    @SerializedName("title") val title: String,
+    @SerializedName("order_index") val orderIndex: Int = 1,
+    @SerializedName("parent_id") val parentId: Long? = null,
+    @SerializedName("parent_code") val parentCode: String? = null
+)
+
+/** DTO de entrada para publicar el temario estructurado de un curso (#32). */
+data class PublishSyllabusRequest(
+    @SerializedName("source_uri") val sourceUri: String? = null,
+    @SerializedName("topics") val topics: List<CreateSyllabusTopicRequest>
+)
+
+/** DTO de salida que representa un tema o subtema del temario (#32). */
+data class SyllabusTopicResponse(
+    @SerializedName("id") val id: Long,
+    @SerializedName("course_id") val courseId: Long,
+    @SerializedName("parent_id") val parentId: Long? = null,
+    @SerializedName("code") val code: String,
+    @SerializedName("title") val title: String,
+    @SerializedName("order_index") val orderIndex: Int
+)
+
+data class SyllabusDocumentResponse(
+    @SerializedName("course_id") val courseId: Long,
+    @SerializedName("file_name") val fileName: String? = null,
+    @SerializedName("size_bytes") val sizeBytes: Long? = null,
+    @SerializedName("parsed_at") val parsedAt: String? = null,
+    @SerializedName("syllabus_version") val syllabusVersion: Int = 0,
+    @SerializedName("topics") val topics: List<SyllabusTopicResponse> = emptyList()
+)
+

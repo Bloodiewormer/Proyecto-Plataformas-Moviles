@@ -2,55 +2,46 @@ package cr.ac.una.glifo.core.sync
 
 import android.content.Context
 import androidx.work.CoroutineWorker
-import androidx.work.ListenableWorker
 import androidx.work.WorkerParameters
-import cr.ac.una.glifo.core.database.dao.SyncQueueDao
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import cr.ac.una.glifo.domain.error.Result as DomainResult
+import cr.ac.una.glifo.domain.model.SyncRunOutcome
+import cr.ac.una.glifo.domain.repository.SyncRepository
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.components.SingletonComponent
+import androidx.work.ListenableWorker.Result as WorkResult
 
+/**
+ * Vacía la cola offline (issue #26). La lógica vive en [SyncRepository.syncNow]; el worker
+ * solo traduce el resultado a lo que entiende WorkManager: `retry()` activa el backoff
+ * exponencial de [SyncScheduler].
+ *
+ * Hilt no inyecta Workers sin la librería hilt-work, así que el repositorio se obtiene con
+ * un EntryPoint del grafo de la aplicación.
+ */
 class SyncWorker(
     context: Context,
-    params: WorkerParameters,
-    private val syncQueueDao: SyncQueueDao
+    params: WorkerParameters
 ) : CoroutineWorker(context, params) {
 
-    override suspend fun doWork(): ListenableWorker.Result = withContext(Dispatchers.IO) {
-        try {
-            val pendingOperations = syncQueueDao.getPendingOperations()
-            
-            if (pendingOperations.isEmpty()) {
-                return@withContext ListenableWorker.Result.success()
-            }
+    @EntryPoint
+    @InstallIn(SingletonComponent::class)
+    interface SyncWorkerEntryPoint {
+        fun syncRepository(): SyncRepository
+    }
 
-            // Group or process sequentially ensuring CREATE_NOTE happens before UPLOAD_PAGE
-            // For now, process sequentially as the query returns them ordered by created_at ascending
-            
-            for (operation in pendingOperations) {
-                try {
-                    // Update to processing
-                    syncQueueDao.update(operation.copy(status = "PROCESSING", attempts = operation.attempts + 1))
-                    
-                    // Simulate processing for now. Real implementation will call ApiService
-                    // ApiService.executeSyncOperation(operation)
-                    
-                    // Mark as done
-                    syncQueueDao.update(operation.copy(status = "DONE"))
-                } catch (e: Exception) {
-                    // Mark as pending or failed if too many attempts
-                    val newStatus = if (operation.attempts >= 3) "FAILED" else "PENDING"
-                    syncQueueDao.update(operation.copy(
-                        status = newStatus, 
-                        lastError = e.message?.take(500)
-                    ))
-                }
+    override suspend fun doWork(): WorkResult {
+        val repository = EntryPointAccessors
+            .fromApplication(applicationContext, SyncWorkerEntryPoint::class.java)
+            .syncRepository()
+
+        return when (val result = repository.syncNow()) {
+            is DomainResult.Success -> when (result.value.outcome) {
+                SyncRunOutcome.Completed -> WorkResult.success()
+                SyncRunOutcome.RetryLater -> WorkResult.retry()
             }
-            
-            // Clean up done operations
-            syncQueueDao.clearDoneOperations()
-            
-            ListenableWorker.Result.success()
-        } catch (e: Exception) {
-            ListenableWorker.Result.retry()
+            is DomainResult.Failure -> WorkResult.retry()
         }
     }
 }

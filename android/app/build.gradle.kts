@@ -1,11 +1,38 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
+
+// Firma de release: se lee de gradle.properties del usuario o de variables de entorno, nunca del repo.
+val releaseSigning = listOf(
+    "GLIFO_RELEASE_STORE_FILE",
+    "GLIFO_RELEASE_STORE_PASSWORD",
+    "GLIFO_RELEASE_KEY_ALIAS",
+    "GLIFO_RELEASE_KEY_PASSWORD",
+).associateWith { providers.gradleProperty(it).orElse(providers.environmentVariable(it)).orNull }
 
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.google.services)
+    alias(libs.plugins.firebase.crashlytics)
 }
+
+// URL del backend para el APK de release: Render por defecto. Se puede cambiar con local.properties
+// (glifo.release.base.url=...), -PGLIFO_RELEASE_BASE_URL=... o la variable de entorno GLIFO_RELEASE_BASE_URL.
+val localProps = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+val debugBaseUrl = "http://10.0.2.2:8080/api/v1/"
+val renderBaseUrl = "https://glifo-api.onrender.com/api/v1/"
+val releaseBaseUrl: String = (
+    localProps.getProperty("glifo.release.base.url")
+        ?: providers.gradleProperty("GLIFO_RELEASE_BASE_URL").orNull
+        ?: System.getenv("GLIFO_RELEASE_BASE_URL")
+    )?.trim()?.takeIf { it.isNotEmpty() }?.let { it.removeSuffix("/") + "/" } ?: renderBaseUrl
+// Las cuentas demo del login se ven en debug; en release solo si se pide (glifo.release.show.demo=true).
+val releaseShowDemo: Boolean = localProps.getProperty("glifo.release.show.demo")?.trim()?.toBoolean() ?: false
 
 android {
     namespace = "cr.ac.una.glifo"
@@ -15,14 +42,38 @@ android {
         applicationId = "cr.ac.una.glifo"
         minSdk = 26
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (releaseSigning.values.none { it.isNullOrBlank() }) {
+            create("release") {
+                storeFile = file(releaseSigning.getValue("GLIFO_RELEASE_STORE_FILE")!!)
+                storePassword = releaseSigning.getValue("GLIFO_RELEASE_STORE_PASSWORD")
+                keyAlias = releaseSigning.getValue("GLIFO_RELEASE_KEY_ALIAS")
+                keyPassword = releaseSigning.getValue("GLIFO_RELEASE_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
+        debug {
+            buildConfigField("String", "BASE_URL", "\"$debugBaseUrl\"")
+            buildConfigField("boolean", "SHOW_DEMO_ACCOUNTS", "true")
+        }
         release {
+            buildConfigField("String", "BASE_URL", "\"$releaseBaseUrl\"")
+            buildConfigField("boolean", "SHOW_DEMO_ACCOUNTS", releaseShowDemo.toString())
+            // Con las GLIFO_RELEASE_* se firma con la llave de release; sin ellas, con la debug
+            // para que el APK de prueba siga siendo instalable.
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
+            // Solo teléfonos reales (ARM): saca las librerías x86 de OpenCV y ML Kit del APK.
+            ndk {
+                abiFilters += listOf("arm64-v8a", "armeabi-v7a")
+            }
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -36,6 +87,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -89,7 +141,22 @@ dependencies {
     implementation(libs.retrofit.gson)
     implementation(libs.okhttp.logging)
 
+    // OpenCV
+    implementation(libs.opencv)
+    // Firebase Crashlytics, Analytics & Cloud Messaging (#48)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.crashlytics)
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.messaging)
+
+    // ML Kit — Pipeline N1: OCR local con el modelo latino empaquetado (sin llamadas de red)
+    implementation(libs.mlkit.text.recognition)
+
+
     testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotlinx.coroutines.test)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.ui.test.junit4)

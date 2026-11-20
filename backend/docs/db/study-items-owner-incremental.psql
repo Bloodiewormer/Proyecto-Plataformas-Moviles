@@ -1,0 +1,53 @@
+\set ON_ERROR_STOP on
+
+BEGIN;
+SET LOCAL lock_timeout = '5s';
+SET LOCAL statement_timeout = '60s';
+SET LOCAL search_path = pg_catalog;
+SELECT pg_catalog.pg_advisory_xact_lock(197701, 61);
+
+DO $identity$
+BEGIN
+    IF pg_catalog.current_database() <> 'neondb' OR current_user <> 'neondb_owner' THEN
+        RAISE EXCEPTION 'Expected database neondb and initialization role neondb_owner';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'glifo_runtime') THEN
+        RAISE EXCEPTION 'Expected the previously initialized runtime role';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_class relation
+        JOIN pg_catalog.pg_namespace namespace ON namespace.oid = relation.relnamespace
+        JOIN pg_catalog.pg_roles owner_role ON owner_role.oid = relation.relowner
+        WHERE namespace.nspname = 'public' AND relation.relname = 'study_items'
+        AND relation.relkind = 'r' AND owner_role.rolname = current_user) THEN
+        RAISE EXCEPTION 'Expected public.study_items owned by neondb_owner';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_class relation
+        JOIN pg_catalog.pg_namespace namespace ON namespace.oid = relation.relnamespace
+        JOIN pg_catalog.pg_roles owner_role ON owner_role.oid = relation.relowner
+        WHERE namespace.nspname = 'public' AND relation.relname = 'users'
+        AND relation.relkind = 'r' AND owner_role.rolname = current_user) THEN
+        RAISE EXCEPTION 'Expected public.users owned by neondb_owner';
+    END IF;
+    IF EXISTS (
+        SELECT 1
+        FROM pg_catalog.pg_attribute att
+        JOIN pg_catalog.pg_class rel ON rel.oid = att.attrelid
+        JOIN pg_catalog.pg_namespace ns ON ns.oid = rel.relnamespace
+        WHERE ns.nspname = 'public'
+          AND rel.relname = 'study_items'
+          AND att.attname = 'user_id'
+          AND NOT att.attisdropped
+    ) THEN
+        RAISE EXCEPTION 'public.study_items.user_id already exists; repeated migrations are refused';
+    END IF;
+END
+$identity$;
+
+ALTER TABLE public.study_items
+    ADD COLUMN user_id bigint REFERENCES public.users(id) ON DELETE CASCADE;
+
+CREATE INDEX idx_study_items_user_course ON public.study_items USING btree (user_id, course_id);
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.study_items TO glifo_runtime;
+
+COMMIT;

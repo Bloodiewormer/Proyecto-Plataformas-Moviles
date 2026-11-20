@@ -24,4 +24,7 @@ class GlifoUserDetails(
     override fun isCredentialsNonExpired(): Boolean = true
 
     override fun isEnabled(): Boolean = active
+
+    fun isAdmin(): Boolean =
+        authoritiesList.any { it.authority == "ROLE_ADMIN" || it.authority == "USER_MANAGE" }
 }

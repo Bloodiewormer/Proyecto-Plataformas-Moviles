@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Glifo" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/glifo_night</item>
+        <item name="android:statusBarColor">@color/glifo_night</item>
+        <item name="android:navigationBarColor">@color/glifo_night</item>
+        <item name="android:windowSplashScreenBackground">@color/glifo_night</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_glifo_splash</item>
+    </style>
+</resources>

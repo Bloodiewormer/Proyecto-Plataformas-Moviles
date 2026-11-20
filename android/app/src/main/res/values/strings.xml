@@ -1,3 +1,767 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Glifo</string>
+
+    <!-- Shared / cross-screen (AppError messages, common actions) -->
+    <string name="error_no_connection">No connection. Try again.</string>
+    <string name="error_timeout">The server is taking too long to respond. Try again in a moment.</string>
+    <string name="error_unauthorized">Your session expired. Sign in again.</string>
+    <string name="error_unknown">An unexpected error occurred.</string>
+    <string name="common_close">Close</string>
+    <string name="common_not_now">Not now</string>
+    <string name="common_search">Search</string>
+    <string name="common_retry">Retry</string>
+    <string name="common_nav_back">Back</string>
+    <string name="common_nav_menu">Menu</string>
+    <string name="common_camera_description">Camera</string>
+
+    <!-- GlifoDrawerContent -->
+    <string name="drawer_item_home">Home</string>
+    <string name="drawer_item_ai_cost">AI usage</string>
+    <string name="drawer_item_syllabus">Syllabus</string>
+    <string name="drawer_item_notation_glossary">Notation glossary</string>
+    <string name="drawer_item_group_gaps">Group gaps</string>
+    <string name="drawer_item_course_consumption">Course usage</string>
+    <string name="drawer_active_course_section">ACTIVE COURSE</string>
+    <string name="drawer_change_course">Change</string>
+
+    <!-- SplashScreen -->
+    <string name="splash_tagline">The glyph is the unit of writing.</string>
+
+    <!-- LoginScreen -->
+    <string name="login_title">Sign in to Glifo</string>
+    <string name="login_subtitle">Use your institutional email.</string>
+    <string name="login_email_label">Email</string>
+    <string name="login_password_label">Password</string>
+    <string name="login_error_empty_fields">Fill in all the fields</string>
+    <string name="login_error_invalid_credentials">Incorrect email or password.</string>
+    <string name="login_button_submit">Sign in</string>
+    <string name="login_forgot_password">I forgot my password</string>
+    <string name="login_no_account">Don\'t have an account yet?</string>
+    <string name="login_create_account">Create account</string>
+    <string name="login_demo_hint_title">TRY A DEMO ROLE</string>
+    <string name="login_role_student">Student</string>
+    <string name="login_role_teacher">Teacher</string>
+    <string name="login_role_admin">Admin</string>
+
+    <!-- RegisterScreen -->
+    <string name="register_title">Create account</string>
+    <string name="register_error_name_empty">Enter your full name</string>
+    <string name="register_error_name_invalid">Enter your first and last name</string>
+    <string name="register_error_email_empty">Enter your email</string>
+    <string name="register_error_email_invalid">That email isn\'t valid</string>
+    <string name="register_error_password_empty">Enter a password</string>
+    <string name="register_error_password_short">At least 8 characters</string>
+    <string name="register_error_confirm_empty">Confirm your password</string>
+    <string name="register_error_confirm_mismatch">The two passwords must match</string>
+    <string name="register_error_email_exists">An account with that email already exists</string>
+    <string name="register_field_full_name">Full name</string>
+    <string name="register_field_email">Email</string>
+    <string name="register_field_email_placeholder">student@est.una.ac.cr</string>
+    <string name="register_field_password">Password</string>
+    <string name="register_field_password_placeholder">At least 8 characters</string>
+    <string name="register_field_confirm_password">Confirm password</string>
+    <string name="register_field_confirm_placeholder">Repeat your password</string>
+    <string name="register_button_submit">Create account</string>
+    <string name="register_button_submitting">Creating account…</string>
+    <string name="register_role_note">You\'ll sign in as a student. If you\'re a teacher, ask the administrator for a role change.</string>
+
+    <!-- ForgotPasswordScreen -->
+    <string name="forgot_password_title">Reset password</string>
+
+    <!-- ProfileScreen -->
+    <string name="profile_title">Profile</string>
+    <string name="profile_photo_description">Profile photo</string>
+    <string name="profile_change_photo_description">Change profile photo</string>
+    <string name="profile_role_teacher">TEACHER</string>
+    <string name="profile_role_admin">ADMIN</string>
+    <string name="profile_role_student">STUDENT</string>
+    <string name="profile_stat_pages_captured">Pages captured</string>
+    <string name="profile_stat_resolved_no_paid_calls">Resolved with no paid calls</string>
+    <string name="profile_section_account">ACCOUNT</string>
+    <string name="profile_item_change_password">Change password</string>
+    <string name="profile_item_my_courses">My courses</string>
+    <string name="profile_item_ai_usage">My AI usage</string>
+    <string name="profile_button_logout">Log out</string>
+
+    <!-- SettingsScreen -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_section_appearance">APPEARANCE</string>
+    <string name="settings_theme_title">Theme</string>
+    <string name="settings_theme_description">Choose how Glifo looks, or let it follow the system setting.</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_language_title">Language</string>
+    <string name="settings_language_description">Select the application display language.</string>
+    <string name="settings_language_system">System</string>
+    <string name="settings_language_es">Spanish</string>
+    <string name="settings_language_en">English</string>
+    <string name="settings_section_capture">CAPTURE</string>
+    <string name="settings_reject_low_quality">Reject low-quality photos</string>
+    <string name="settings_section_processing">PROCESSING</string>
+    <string name="settings_confidence_threshold">Confidence threshold</string>
+    <string name="settings_confidence_threshold_description">Below this value the region escalates to the next engine. It\'s the value on-device processing uses and can\'t be changed here.</string>
+    <string name="settings_allow_vision_escalation">Allow escalation to vision (N2)</string>
+    <string name="settings_section_sync">SYNC</string>
+    <string name="settings_sync_wifi_only">Upload captures only on wifi</string>
+    <string name="settings_daily_study_reminder">Daily study reminder</string>
+    <string name="settings_notify_queue_done">Notify when the queue finishes</string>
+    <string name="settings_section_about">ABOUT</string>
+    <string name="settings_sync_queue">Sync queue</string>
+    <string name="settings_pending_count">%1$d pending</string>
+    <string name="settings_version_label">Version</string>
+    <string name="settings_section_diagnostics">DIAGNOSTICS AND TELEMETRY</string>
+    <string name="settings_test_crashlytics_title">Test Crashlytics (simulate crash)</string>
+    <string name="settings_test_crashlytics_description">Triggers a test exception to verify in Firebase Console.</string>
+    <string name="settings_send_nonfatal_title">Send a non-fatal event to Crashlytics</string>
+    <string name="settings_send_nonfatal_description">Logs a background warning without closing the app.</string>
+
+    <!-- CaptureScreen -->
+    <string name="capture_page_header">%1$s · page 1</string>
+    <string name="capture_default_course_name">Course</string>
+    <string name="capture_framing_hint">Line up the sheet with the frame: the whole photo is used</string>
+    <string name="capture_gallery_description">Gallery</string>
+    <string name="capture_permission_title">Glifo needs the camera</string>
+    <string name="capture_permission_description">To capture your notes we need access to the device camera. Nothing is ever uploaded without you asking for it.</string>
+    <string name="capture_open_app_settings">Open app settings</string>
+    <string name="capture_grant_permission">Allow camera access</string>
+
+    <!-- CaptureProcessingScreen -->
+    <string name="capture_processing_title">Processing</string>
+    <string name="capture_processing_zero_paid_calls">0 PAID CALLS</string>
+    <string name="capture_processing_page_label">Page 1 of 1</string>
+    <string name="capture_processing_summary">%1$d regions detected · %2$d ms on-device</string>
+    <string name="capture_processing_no_photo">No photo: showing the pipeline walkthrough</string>
+    <string name="capture_processing_view_results">View results</string>
+    <string name="capture_processing_process_as_new">Process as new page</string>
+    <string name="capture_processing_regions_section">REGIONS AND ROUTING</string>
+    <string name="capture_processing_text_count">%1$d TEXT</string>
+    <string name="capture_processing_math_count">%1$d MATH</string>
+    <string name="capture_processing_drawing_count">%1$d DRAWING</string>
+    <string name="capture_processing_region_label">Region %1$d · %2$s</string>
+    <string name="capture_processing_no_legible_text">No legible text: %1$d strokes, %2$d%% ink</string>
+
+    <!-- CaptureReviewScreen -->
+    <string name="capture_review_title">Review the photo</string>
+    <string name="capture_review_photo_description">Captured photo</string>
+    <string name="capture_review_preview_placeholder">Capture preview</string>
+    <string name="capture_review_blur_warning_title">The photo is blurry</string>
+    <string name="capture_review_blur_warning_description">At this level of blur, recognition would invent text. Rest your elbow on the table and retake the shot.</string>
+    <string name="capture_review_overexposed_warning_title">The photo is overexposed</string>
+    <string name="capture_review_overexposed_warning_description">Too much glare washes out ink and formulas. Move away from direct light or turn off the flash and retake the shot.</string>
+    <string name="capture_review_underexposed_warning_title">The photo is too dark</string>
+    <string name="capture_review_underexposed_warning_description">Low light makes fine strokes hard to read. Move to a brighter spot and retake the shot.</string>
+    <string name="capture_review_multiple_warning_title">The photo needs another take</string>
+    <string name="capture_review_multiple_warning_description">Both focus and lighting issues can distort recognition. Rest your elbow under even light and retake the shot.</string>
+    <string name="capture_review_generic_warning_title">The photo has quality issues</string>
+    <string name="capture_review_generic_warning_description">Recognition may miss or misread text. Adjust focus and lighting and retake the shot.</string>
+    <string name="capture_review_quality_section">QUALITY DIAGNOSTICS</string>
+    <string name="capture_review_retake">Retake photo</string>
+    <string name="capture_review_process_anyway">Process it anyway, I know it\'ll fail</string>
+    <string name="capture_review_process">Process</string>
+
+    <!-- CorrectFragmentScreen -->
+    <string name="correct_fragment_title">Correct fragment</string>
+    <string name="correct_fragment_save">Save</string>
+    <string name="correct_fragment_confidence_threshold">confidence %1$s · threshold %2$s</string>
+    <string name="correct_fragment_original_crop_placeholder">Original crop of the region</string>
+    <string name="correct_fragment_region_counter">Region %1$d of %2$d</string>
+    <string name="correct_fragment_engine_read_section">WHAT THE ENGINE READ</string>
+    <string name="correct_fragment_recognized_text_label">RECOGNIZED TEXT</string>
+    <string name="correct_fragment_glossary_suggestions_section">GLOSSARY SUGGESTIONS</string>
+
+    <!-- RegionProvenanceScreen -->
+    <string name="region_provenance_title">Region</string>
+    <string name="region_provenance_crop_placeholder">Region crop</string>
+    <string name="region_provenance_threshold_configured">Configured threshold: %1$s</string>
+    <string name="region_provenance_how_calculated_section">HOW IT WAS CALCULATED</string>
+    <string name="region_provenance_pipeline_section">LADDER WALKTHROUGH</string>
+
+    <!-- FormulaViewerScreen -->
+    <string name="formula_viewer_title">Formula · %1$s</string>
+    <string name="formula_viewer_crop_section">ORIGINAL CROP</string>
+    <string name="formula_viewer_photo_placeholder">Photo of the region</string>
+    <string name="formula_viewer_transcription_section">TRANSCRIPTION</string>
+    <string name="formula_viewer_latex_generated">LaTeX generated</string>
+    <string name="formula_viewer_toggle_latex">LaTeX</string>
+    <string name="formula_viewer_toggle_latex_description">Show or hide raw LaTeX</string>
+    <string name="formula_viewer_copy_latex">Copy LaTeX</string>
+    <string name="formula_viewer_copied">Copied</string>
+    <string name="formula_viewer_compiles_jlatex">Compiles with JLaTeXMath</string>
+    <string name="formula_viewer_engine_confidence">Engine confidence</string>
+    <string name="formula_viewer_correct">Correct</string>
+    <string name="formula_viewer_looks_good">Looks good</string>
+
+    <!-- CoursesScreen -->
+    <string name="courses_title">My courses</string>
+    <string name="courses_search_placeholder">Search by name or code</string>
+    <string name="courses_empty_no_courses">You\'re not enrolled in any course yet.</string>
+    <string name="courses_empty_no_match">No course matches that search.</string>
+    <string name="courses_active_badge">ACTIVE</string>
+    <string name="courses_code_instructor">%1$s · %2$s</string>
+    <string name="courses_coverage_percent">%1$d%% coverage</string>
+    <string name="courses_delta_positive">+%1$d</string>
+    <string name="courses_delta_none">no change</string>
+    <string name="courses_join_with_code">Join with a code</string>
+
+    <!-- JoinCourseScreen -->
+    <string name="join_course_title">Join a course</string>
+    <string name="join_course_instructions">Ask your teacher for the code. It\'s eight characters and not case-sensitive.</string>
+    <string name="join_course_field_label">Course code</string>
+    <string name="join_course_join_button">Join this course</string>
+    <string name="join_course_invalid_code">Invalid course code. Check it with your teacher.</string>
+    <string name="join_course_already_enrolled">You\'re already enrolled in this course.</string>
+    <string name="join_course_privacy_note">Your notes are private. The teacher sees the group\'s coverage, never your photos.</string>
+
+    <!-- CourseDetailScreen -->
+    <string name="course_detail_subtitle">Hub for</string>
+    <string name="course_detail_capture_description">Capture</string>
+    <string name="course_detail_instructor_students">%1$s · students: %2$d</string>
+    <string name="course_detail_my_notes">My notes</string>
+    <string name="course_detail_note_count">%1$d notes</string>
+    <string name="course_detail_coverage">Coverage</string>
+    <string name="course_detail_topic_count">%1$d topics</string>
+    <string name="course_detail_study">Study</string>
+    <string name="course_detail_pending_count">%1$d pending</string>
+    <string name="course_detail_whats_changed">What changed</string>
+    <string name="course_detail_weekly_delta">+%1$d pts this week</string>
+    <string name="course_detail_quick_access_section">QUICK ACCESS</string>
+    <string name="course_detail_new_capture">New capture</string>
+
+    <!-- NotesScreen -->
+    <string name="notes_title">Notes</string>
+    <string name="notes_search_placeholder">Search a note</string>
+    <string name="notes_empty_no_notes">You don\'t have any notes yet.</string>
+    <string name="notes_pending_captures">%1$d captures queued</string>
+    <string name="notes_empty_no_match">No note matches that search.</string>
+    <string name="notes_empty_course">This course has no notes yet. Capture a page with the camera.</string>
+
+    <!-- NoteDetailScreen -->
+    <string name="note_detail_default_title">Note</string>
+    <string name="note_detail_provenance_description">Provenance</string>
+    <string name="note_detail_edit_description">Edit</string>
+    <string name="note_detail_summary_counts">%1$d verified · %2$d repaired · %3$d escalated · %4$d uncertain</string>
+    <string name="note_detail_confidence_label">confidence %1$s</string>
+    <string name="note_detail_view_original_crop">View the original crop</string>
+
+    <!-- CoverageScreen -->
+    <string name="coverage_subtitle">Coverage for</string>
+    <string name="coverage_calendar_description">Calendar</string>
+    <string name="coverage_topic_count">%1$d topics</string>
+    <string name="coverage_solid_count">%1$d solid</string>
+    <string name="coverage_absent_count">%1$d absent</string>
+    <string name="coverage_partial_count">%1$d partial</string>
+    <string name="coverage_doubtful_count">%1$d doubtful</string>
+
+    <!-- TopicDetailScreen -->
+    <string name="topic_detail_why_section">WHY IT\'S IN THIS STATE</string>
+    <string name="topic_detail_appears_in_section">LINKED NOTES</string>
+    <string name="topic_detail_no_notes">No notes are linked to this topic yet.</string>
+    <string name="topic_detail_generate_reinforcement">Generate reinforcement for this topic</string>
+
+    <!-- StudyScreen -->
+    <string name="study_subtitle">Study for</string>
+    <string name="study_quiz_title">Quiz</string>
+    <string name="study_footer_note">Study material comes from your notes and your learning gaps, reinforcing what you wrote and practicing what you still need to master.</string>
+    <string name="study_no_material_yet">No study material yet. Tap Generate.</string>
+    <plurals name="study_flashcards_plural">
+        <item quantity="one">%1$d flashcard</item>
+        <item quantity="other">%1$d flashcards</item>
+    </plurals>
+    <plurals name="study_topics_plural">
+        <item quantity="one">%1$d topic</item>
+        <item quantity="other">%1$d topics</item>
+    </plurals>
+    <string name="study_flashcard_topics_summary">%1$s from %2$s</string>
+    <plurals name="study_quiz_questions_plural">
+        <item quantity="one">%1$d question</item>
+        <item quantity="other">%1$d questions</item>
+    </plurals>
+    <string name="study_quiz_topics_summary">%1$s · %2$s</string>
+
+    <!-- FlashcardScreen -->
+    <string name="flashcard_progress_counter">%1$d / %2$d</string>
+    <string name="flashcard_unit_label">%1$s — tap the card to flip</string>
+    <string name="flashcard_answer_label">Answer</string>
+    <string name="flashcard_question_label">Question</string>
+    <string name="flashcard_badge_answer">ANSWER</string>
+    <string name="flashcard_badge_question">QUESTION</string>
+    <string name="flashcard_how_well_remembered">How well did you remember it?</string>
+    <string name="flashcard_rating_again">Again</string>
+    <string name="flashcard_rating_hard">Hard</string>
+    <string name="flashcard_rating_good">Good</string>
+    <string name="flashcard_rating_easy">Easy</string>
+
+    <!-- QuizScreen -->
+    <string name="quiz_answer_button">Answer</string>
+    <string name="quiz_view_result_button">View result</string>
+    <string name="quiz_correct_feedback">Correct!</string>
+    <string name="quiz_incorrect_feedback">Not quite</string>
+    <string name="quiz_local_grading_note">Grading is local, on the phone. All the quiz questions were generated in a single call.</string>
+
+    <!-- QuizResultScreen -->
+    <string name="quiz_result_title">Result</string>
+    <string name="quiz_result_of_total">of %1$d</string>
+    <string name="quiz_result_review_section">REVIEW</string>
+    <string name="quiz_result_rescheduled_count">%1$d items rescheduled for tomorrow</string>
+    <string name="quiz_result_return_in_days">Correct ones come back in %1$d days.</string>
+    <string name="quiz_result_view_coverage">View updated coverage</string>
+    <string name="quiz_result_all_correct_headline">All correct!</string>
+    <string name="quiz_result_review_topic_headline">Review: %1$s</string>
+    <string name="quiz_result_failed_of_total">You missed %1$d of %2$d.</string>
+    <string name="quiz_result_same_topic_failures">All %1$d misses are from the same topic.</string>
+    <string name="quiz_result_row_label">%1$d · %2$s</string>
+
+    <!-- SyncQueueScreen -->
+    <string name="sync_queue_title">Sync</string>
+    <string name="sync_queue_empty">There\'s nothing in the sync queue.</string>
+    <string name="sync_queue_note_singular">note</string>
+    <string name="sync_queue_note_plural">notes</string>
+    <string name="sync_queue_syncing_note">Syncing %1$d %2$s…</string>
+    <string name="sync_queue_queued_badge">QUEUED</string>
+
+    <!-- AiCostScreen -->
+    <string name="ai_cost_title_admin">System usage</string>
+    <string name="ai_cost_title_teacher">Course usage</string>
+    <string name="ai_cost_title_student">AI usage</string>
+    <string name="ai_cost_headline_description">of regions were resolved\nwith no paid calls</string>
+    <string name="ai_cost_quota_label">%1$d of %2$d tier-2 calls · quota at %3$d%%</string>
+    <string name="ai_cost_breakdown_section">WHERE EACH REGION WAS RESOLVED</string>
+    <string name="ai_cost_paid_calls_section">CALLS TO THE PAID MODEL</string>
+    <string name="ai_cost_total_label">Total</string>
+
+    <!-- HomeScreen (Student) -->
+    <string name="home_subtitle_active_course">Active course</string>
+    <string name="home_pending_captures_banner">%1$d captures queued · sent when the network returns</string>
+    <string name="home_sync_completed">Notes uploaded</string>
+    <string name="home_coverage_card_title">Course coverage</string>
+    <string name="home_coverage_delta_since">+%1$d this week</string>
+    <string name="home_pending_today_section">DUE TODAY</string>
+    <string name="home_flashcard_topic">To review today</string>
+    <string name="home_quiz_count">%1$d quiz</string>
+    <string name="home_quiz_description">From the detected gaps</string>
+    <string name="home_recent_notes_section">RECENT NOTES</string>
+
+    <!-- TeacherHomeScreen -->
+    <string name="teacher_home_group_coverage_title">Group coverage</string>
+    <string name="teacher_home_enrolled_students">Enrolled: %1$d · course average</string>
+    <string name="teacher_home_gaps_section">TOPICS WITH THE MOST GAPS</string>
+    <string name="teacher_home_uncovered_fraction">%1$s uncovered</string>
+    <string name="teacher_home_attention_section">NEEDS ATTENTION</string>
+    <string name="teacher_home_no_syllabus_title">%1$s has no syllabus</string>
+    <string name="teacher_home_no_syllabus_description">Without a syllabus, coverage can\'t be calculated.</string>
+    <string name="teacher_home_publish_syllabus">Publish syllabus</string>
+
+    <!-- AdminHomeScreen -->
+    <string name="admin_home_title">Administration</string>
+    <string name="admin_home_published_courses">Published courses</string>
+    <string name="admin_home_system_status_section">SYSTEM STATUS</string>
+    <string name="admin_home_api_label">API</string>
+    <string name="admin_home_api_unavailable">Unavailable</string>
+    <string name="admin_home_unavailable_notice">User directory, role breakdown, and server database or OCR quotas are not available from the backend yet.</string>
+
+    <!-- TeacherCoursesScreen -->
+    <string name="teacher_courses_create_description">Create</string>
+    <string name="teacher_courses_code_term">%1$s · %2$s</string>
+    <string name="teacher_courses_coverage_students">%1$d%% coverage · students: %2$d</string>
+    <string name="teacher_courses_no_syllabus_warning">No syllabus · no coverage</string>
+    <string name="teacher_courses_create_new">Create new course</string>
+
+    <!-- TeacherNewCourseScreen -->
+    <string name="teacher_new_course_title">New course</string>
+    <string name="teacher_new_course_field_name">Course name</string>
+    <string name="teacher_new_course_field_name_placeholder">e.g. Mobile Platforms</string>
+    <string name="teacher_new_course_field_code">Institutional code</string>
+    <string name="teacher_new_course_field_code_placeholder">e.g. EIF411</string>
+    <string name="teacher_new_course_field_cycle">Term</string>
+    <string name="teacher_new_course_field_cycle_placeholder">e.g. Term II 2026</string>
+    <string name="teacher_new_course_join_code_section">ENROLLMENT CODE</string>
+    <string name="teacher_new_course_copy_code_description">Copy code</string>
+    <string name="teacher_new_course_join_code_note">Students write it by hand, so it skips ambiguous letters.</string>
+    <string name="teacher_new_course_syllabus_later_title">The syllabus comes later</string>
+    <string name="teacher_new_course_syllabus_later_description">Without a syllabus the course still works, it just can\'t calculate coverage.</string>
+    <string name="teacher_new_course_button_creating">Creating…</string>
+    <string name="teacher_new_course_button_create">Create course</string>
+    <string name="teacher_add_topic_dialog_title">Add topic</string>
+    <string name="teacher_add_topic_dialog_description">Added to the first unit of the syllabus.</string>
+    <string name="teacher_add_topic_field_label">Topic name</string>
+    <string name="teacher_add_topic_field_placeholder">e.g. 3.6 Alternating series</string>
+    <string name="teacher_add_button">Add</string>
+
+    <!-- TeacherSyllabusScreen -->
+    <string name="teacher_syllabus_title">Syllabus</string>
+    <string name="teacher_syllabus_publish_button">Publish</string>
+    <string name="teacher_syllabus_upload_pdf">Upload PDF</string>
+    <string name="teacher_syllabus_uploading_ai">Analyzing syllabus with AI…</string>
+    <string name="teacher_syllabus_empty_title">No syllabus yet</string>
+    <string name="teacher_syllabus_empty_description">Upload the course syllabus PDF to extract its units and topics automatically.</string>
+    <string name="teacher_syllabus_file_meta_full">%1$s · parsed on %2$s</string>
+    <string name="teacher_syllabus_file_meta_date_only">Parsed on %1$s</string>
+    <string name="teacher_syllabus_published_note">The syllabus is already published, so another PDF cannot be uploaded. You can still add individual topics by hand.</string>
+    <string name="teacher_syllabus_saved_summary">%1$d units and %2$d topics saved.</string>
+    <string name="teacher_syllabus_pending_summary">%1$d units and %2$d topics ready to publish.</string>
+    <string name="teacher_syllabus_structure_section">DETECTED STRUCTURE</string>
+    <string name="teacher_syllabus_add_topic_manually">Add a topic by hand</string>
+    <string name="teacher_syllabus_no_active_course">Select or create an active course first.</string>
+    <string name="teacher_syllabus_topic_title_required">The topic title is required.</string>
+    <string name="teacher_syllabus_empty_topics_error">Add at least one topic before publishing the syllabus.</string>
+    <string name="teacher_syllabus_already_published">The syllabus for this course has already been published.</string>
+    <string name="teacher_syllabus_pending_unit_label">1 · Pending topics</string>
+    <string name="teacher_syllabus_error_too_large">The PDF exceeds the 10 MB limit.</string>
+    <string name="teacher_syllabus_error_unreadable">Could not read the selected PDF.</string>
+
+    <!-- TeacherGlossaryScreen -->
+    <string name="teacher_glossary_title">Glossary</string>
+    <string name="teacher_glossary_add_description">Add</string>
+    <string name="teacher_glossary_search_placeholder">Search a term</string>
+    <string name="teacher_glossary_not_dictionary_title">This isn\'t a dictionary</string>
+    <string name="teacher_glossary_not_dictionary_description">Every entry raises recognition confidence for that symbol across the whole course.</string>
+    <string name="teacher_glossary_entries_count">%1$d ENTRIES</string>
+    <string name="teacher_glossary_suggestions_section">SUGGESTED FROM CORRECTIONS</string>
+    <string name="teacher_glossary_discard_description">Discard</string>
+    <string name="teacher_glossary_accept_description">Accept</string>
+    <string name="teacher_glossary_empty">No glossary terms for this course yet. Tap + to add one.</string>
+    <string name="teacher_glossary_no_match">No term matches that search.</string>
+    <string name="teacher_glossary_add_dialog_title">Add to the glossary</string>
+    <string name="teacher_glossary_field_term">Term</string>
+    <string name="teacher_glossary_field_notation">Notation</string>
+    <string name="teacher_glossary_field_notation_placeholder">e.g. \\sum or synonyms separated by ·</string>
+    <string name="teacher_glossary_type_symbol">Symbol</string>
+
+    <!-- TeacherGapsScreen -->
+    <string name="teacher_gaps_subtitle">Gaps for</string>
+    <string name="teacher_gaps_share_title">Group gaps · %1$s</string>
+    <string name="teacher_gaps_share_summary_line">Students: %1$d · %2$d%% average coverage</string>
+    <string name="teacher_gaps_share_gap_line">• %1$s — %2$s uncovered (%3$d%%)</string>
+    <string name="teacher_gaps_share_chooser_title">Export gaps</string>
+    <string name="teacher_gaps_export_description">Export</string>
+    <string name="teacher_gaps_student_count">Students: %1$d</string>
+    <string name="teacher_gaps_coverage_updated_today">Group average coverage</string>
+    <string name="teacher_gaps_privacy_note">Aggregated data. The teacher never sees individual notes.</string>
+
+    <!-- AdminUsersScreen -->
+    <string name="admin_users_title">Users</string>
+    <string name="admin_users_field_email_placeholder">user@una.ac.cr</string>
+    <string name="admin_users_you">You</string>
+    <string name="admin_users_empty">No accounts to show.</string>
+    <string name="admin_users_change_role">Change role</string>
+    <string name="admin_users_role_hint">The change applies the next time this person signs in.</string>
+    <string name="admin_users_save_role">Save role</string>
+
+    <!-- AdminUserDetailScreen -->
+    <string name="admin_user_detail_unavailable">User details and role editing are not available yet.</string>
+
+    <!-- AdminRolesScreen -->
+    <string name="admin_roles_title">Roles</string>
+    <string name="admin_roles_user_count">Accounts: %1$d</string>
+    <string name="admin_roles_privileges">Privileges</string>
+
+    <!-- AdminCoursesScreen -->
+    <string name="admin_courses_title">Courses</string>
+    <string name="admin_courses_no_syllabus_badge">NO SYLLABUS</string>
+    <string name="admin_courses_students_with_coverage">Students: %1$d · %2$d%% coverage</string>
+    <!-- Lab 4: apuntes reales (#25) y cola de sincronización (#26) -->
+    <string name="note_detail_page_label_local">Pages processed on this device: %1$d · regions: %2$d</string>
+    <string name="note_detail_page_label_server">Reconstruction from the server</string>
+    <string name="note_detail_pending_sync">Waiting to sync</string>
+    <string name="note_detail_corrected_badge">Corrected by you</string>
+    <string name="note_detail_formula_badge">FORMULA · N1.5 pending</string>
+    <string name="note_detail_formula_badge_resolved">FORMULA · N1.5</string>
+    <string name="note_detail_unreadable_fragment">[no text recognized]</string>
+    <string name="note_detail_unavailable_title">No content on this device yet</string>
+    <string name="note_detail_unavailable_description">This note has no processed pages or server reconstruction yet.</string>
+    <plurals name="note_detail_fragments_to_review">
+        <item quantity="one">%1$d fragment needs your review</item>
+        <item quantity="other">%1$d fragments need your review</item>
+    </plurals>
+    <string name="correct_fragment_input_label">YOUR CORRECTION</string>
+    <string name="correct_fragment_nothing_title">Nothing to correct</string>
+    <string name="correct_fragment_nothing_description">Every fragment of this note is above the confidence threshold.</string>
+    <string name="correct_fragment_no_suggestions">No similar terms in the course glossary saved on this device.</string>
+    <string name="correct_fragment_saved_locally">The correction is saved with the note and marks the fragment as verified.</string>
+    <string name="formula_viewer_ocr_read_section">WHAT N1 READ</string>
+    <string name="formula_viewer_latex_pending">LaTeX conversion (N1.5) has not run for this region yet. You can correct the text in the meantime.</string>
+    <string name="formula_viewer_kind_confidence">Classification confidence</string>
+    <string name="formula_viewer_route">Route</string>
+    <string name="formula_viewer_none_title">No formulas in this note</string>
+    <string name="formula_viewer_none_description">The region classifier did not route any region to math OCR.</string>
+    <string name="region_provenance_server_note">This fragment comes from the server reconstruction. Per-region signals are only available for pages processed on this device.</string>
+    <string name="region_provenance_factor_ocr">OCR confidence (ML Kit)</string>
+    <string name="region_provenance_factor_kind">Region type classification</string>
+    <string name="region_provenance_factor_ink">Ink density</string>
+    <string name="region_provenance_step_n0">N0 · preprocessing (OpenCV)</string>
+    <string name="region_provenance_step_n1">N1 · text OCR (ML Kit)</string>
+    <string name="region_provenance_step_classifier">Classifier · %1$s</string>
+    <string name="region_provenance_step_n15">N1.5 · math OCR</string>
+    <string name="region_provenance_step_n2">N2 · vision repair</string>
+    <string name="region_provenance_state_done">done</string>
+    <string name="region_provenance_state_pending">pending</string>
+    <string name="region_provenance_state_skipped">not needed</string>
+    <string name="sync_queue_failed_badge">FAILED</string>
+    <string name="sync_queue_sync_now">Sync now</string>
+    <string name="sync_queue_retry_failed">Retry failed</string>
+    <string name="sync_queue_attempts">Attempts: %1$d · %2$s</string>
+    <string name="sync_queue_result">%1$d uploaded · %2$d pending</string>
+    <!-- Selector del curso activo -->
+    <string name="course_switcher_title">Change course</string>
+    <string name="course_switcher_hint">The active course is used by Home, Notes, Coverage, Study and the camera.</string>
+    <string name="course_switcher_code">%1$s · code %2$s</string>
+    <string name="course_switcher_active">Active course</string>
+    <string name="course_switcher_empty">You don\'t have any courses yet.</string>
+    <string name="course_switcher_join">Join a course</string>
+    <string name="course_switcher_create">Create a course</string>
+    <string name="drawer_no_active_course">No course selected</string>
+    <!-- Lab 6: generación de material de estudio IA-02 (#44) -->
+    <string name="study_generate_button">Generate study material</string>
+    <string name="study_regenerate_button">Regenerate with my new notes</string>
+    <string name="study_notice_no_linked_notes">Study material comes from your notes on the course topics.</string>
+    <string name="study_generating_ai">Generating with AI…</string>
+    <string name="study_quiz_count_title">%1$d-question quiz</string>
+    <string name="quiz_progress_format">%1$d of %2$d</string>
+    <string name="quiz_next_question_button">Next question</string>
+    <string name="study_error_no_connection">No internet connection. Check your network and try again.</string>
+    <string name="study_error_ai_unavailable">The AI service isn\'t available right now. Try again later.</string>
+    <string name="study_error_forbidden">You don\'t have permission to do this in this course.</string>
+    <string name="study_error_no_topics">This course doesn\'t have any published syllabus topics yet.</string>
+    <!-- Lab 6: reconstrucción de nota IA-01 (#42) -->
+    <string name="note_detail_reconstruct_button">Rebuild with AI</string>
+    <string name="note_detail_reconstructing_ai">Rebuilding with AI…</string>
+    <string name="note_reconstruct_error_no_connection">No internet connection. Check your network and try again.</string>
+    <string name="note_reconstruct_error_ai_unavailable">The AI service isn\'t available right now. Try again later.</string>
+    <string name="note_reconstruct_error_no_pages">This note doesn\'t have any pages uploaded to the server yet.</string>
+    <string name="note_reconstruct_error_not_synced">This note is still uploading. Try again when it finishes.</string>
+    <!-- Lab 6: notificaciones push FCM dirigidas por device_id (#48) -->
+    <string name="sync_notification_channel_name">Synchronization</string>
+    <string name="sync_notification_channel_description">Notifications when this device finishes uploading its offline queue.</string>
+    <string name="sync_notification_title">Sync completed</string>
+    <string name="sync_notification_body_single">1 item from the offline queue was uploaded from this device.</string>
+    <string name="sync_notification_body_plural">%1$d items from the offline queue were uploaded from this device.</string>
+    <string name="sync_notification_permission_banner">Enable notification permission to receive an alert when the offline queue finishes uploading.</string>
+    <string name="sync_notification_permission_action">Allow</string>
+
+    <!-- Notificaciones locales -->
+    <string name="sync_local_notification_title">Your note is ready</string>
+    <string name="sync_local_notification_single_title_and_course">Note \"%1$s\" uploaded and processed in %2$s</string>
+    <string name="sync_local_notification_single_title">Note \"%1$s\" uploaded and processed</string>
+    <plurals name="sync_local_notification_body">
+        <item quantity="one">%1$d note uploaded and processed</item>
+        <item quantity="other">%1$d notes uploaded and processed</item>
+    </plurals>
+    <plurals name="sync_local_notification_body_with_course">
+        <item quantity="one">%1$d note uploaded and processed in %2$s</item>
+        <item quantity="other">%1$d notes uploaded and processed in %2$s</item>
+    </plurals>
+
+    <string name="study_reminder_channel_name">Study reminders</string>
+    <string name="study_reminder_channel_description">Daily reminders to review pending flashcards and quizzes.</string>
+    <string name="study_reminder_notification_title">Study reminder</string>
+    <plurals name="study_reminder_notification_body_flashcards">
+        <item quantity="one">You have %1$d flashcard to review today in %2$s</item>
+        <item quantity="other">You have %1$d flashcards to review today in %2$s</item>
+    </plurals>
+    <plurals name="study_reminder_notification_body_quiz">
+        <item quantity="one">You have %1$d quiz to review today in %2$s</item>
+        <item quantity="other">You have %1$d quizzes to review today in %2$s</item>
+    </plurals>
+    <!-- Lab 6: pantalla de uso de IA (#47) -->
+    <string name="ai_cost_tokens_label">Tokens (in / out)</string>
+    <string name="ai_cost_tokens_value">%1$d (%2$d / %3$d)</string>
+    <string name="ai_cost_estimated_cost_label">Estimated cost</string>
+    <string name="ai_cost_not_configured">Cost not configured</string>
+    <string name="ai_cost_avoided_calls_section">AVOIDED CALLS</string>
+    <string name="ai_cost_avoided_total_label">Total avoided</string>
+    <string name="ai_cost_server_unavailable">Server data is not available offline. Showing on-device metrics only.</string>
+    <string name="ai_cost_call_tokens_subtitle">%1$d tokens · %2$s</string>
+    <!-- Lab 6: cobertura con datos reales e IA-04 (#43) -->
+    <string name="coverage_evaluate_button">Evaluate coverage</string>
+    <string name="coverage_evaluating_ai">Evaluating with AI…</string>
+    <string name="coverage_delta_changed_count">%1$d topics updated</string>
+    <string name="coverage_delta_changed_topics_section">UPDATED TOPICS</string>
+    <string name="coverage_delta_empty_since">No changes since %1$s</string>
+    <string name="home_coverage_breakdown_format">%1$d solid · %2$d partial · %3$d absent</string>
+    <string name="quiz_result_review_flashcards">Review with flashcards</string>
+    <string name="password_show">Show password</string>
+    <string name="password_hide">Hide password</string>
+    <string name="forgot_password_description">Enter your account email and the new password. Next time you sign in, use the new one.</string>
+    <string name="forgot_password_error_not_found">There is no account with that email.</string>
+    <string name="forgot_password_success">Password updated. Sign in with the new one.</string>
+    <string name="change_password_title">Change password</string>
+    <string name="change_password_description">Enter your current password and the new one. Next time you sign in, use the new one.</string>
+    <string name="change_password_current">Current password</string>
+    <string name="change_password_new">New password</string>
+    <string name="change_password_save">Save new password</string>
+    <string name="change_password_saving">Saving…</string>
+    <string name="change_password_success">Password updated.</string>
+    <string name="change_password_error_current_empty">Enter your current password.</string>
+    <string name="change_password_error_same">The new password must be different from the current one.</string>
+    <string name="settings_reject_low_quality_description">If a photo is blurry, too dark or too bright, you\'ll have to retake it.</string>
+    <string name="settings_allow_vision_escalation_description">Unclear regions are sent to the vision model when syncing (paid call). Off: only on-device and N1.5 results are kept.</string>
+    <string name="capture_review_rejected_by_setting">This photo didn\'t pass the quality check. Retake it, or turn off "Reject low-quality photos" in Settings.</string>
+    <string name="flashcard_done_title">Session finished</string>
+    <string name="flashcard_done_headline">You reviewed every card</string>
+    <string name="flashcard_done_summary">Cards reviewed: %1$d · marked Again: %2$d</string>
+    <string name="flashcard_done_restart">Review again</string>
+    <string name="flashcard_done_back">Back</string>
+    <string name="note_detail_all_unreadable_hint">No text could be read from this photo. Try another photo with more light and the page flat, or tap a region to type what it says.</string>
+    <string name="login_server_waking">The server is waking up. The first sign-in can take up to a minute.</string>
+    <plurals name="notes_date_page_count_plural">
+        <item quantity="one">%1$s · %2$d page</item>
+        <item quantity="other">%1$s · %2$d pages</item>
+    </plurals>
+    <string name="teacher_gaps_empty">No topic has gaps in the group right now.</string>
+    <string name="common_back">Back</string>
+    <string name="study_state_flashcards_title">Flashcards</string>
+    <string name="study_empty_flashcards">There are no flashcards for this course yet. Generate them from Study with \"Generate study material\".</string>
+    <string name="study_empty_quiz">There is no quiz for this course yet. Generate it from Study with \"Generate study material\".</string>
+    <string name="admin_reset_password_title">Reset password</string>
+    <string name="admin_reset_password_description">Type the account email. A temporary password is generated so you can give it to the person.</string>
+    <string name="admin_reset_password_button">Reset</string>
+    <string name="admin_reset_password_working">Resetting…</string>
+    <string name="admin_reset_password_done">Temporary password for %1$s:</string>
+    <string name="admin_reset_password_hint">It is shown only this once. Tell them to sign in with it and change it in Profile → Change password.</string>
+    <string name="admin_reset_password_copy">Copy</string>
+    <string name="admin_reset_password_copied">Copied</string>
+    <string name="admin_reset_password_error_email">Type a valid email.</string>
+
+    <!-- Coverage & Delta localized labels -->
+    <string name="coverage_state_solid">SOLID</string>
+    <string name="coverage_state_partial">PARTIAL</string>
+    <string name="coverage_state_absent">ABSENT</string>
+    <string name="coverage_state_uncertain">UNCERTAIN</string>
+    <string name="coverage_unit_default">COURSE SYLLABUS</string>
+    <string name="coverage_delta_latest_update">Last updated: %1$s · View changes</string>
+    <string name="coverage_delta_view_recent">View recent syllabus changes</string>
+    <string name="coverage_topic_updated_at">Updated: %1$s</string>
+    <string name="coverage_delta_since">Since %1$s</string>
+    <string name="coverage_error_no_active_course">Select an active course first.</string>
+
+    <!-- AI usage & cost localized labels -->
+    <string name="ai_usage_call_ia_01">IA-01 · Note reconstruction</string>
+    <string name="ai_usage_call_ia_02">IA-02 · Study material</string>
+    <string name="ai_usage_call_ia_04">IA-04 · Syllabus coverage</string>
+    <string name="ai_usage_call_ocr_m">OCR_M (N1.5) · Math OCR</string>
+    <string name="ai_usage_call_ia_00">IA_00 (N2) · Vision repair</string>
+    <string name="ai_cost_period_this_phone">This phone · %1$d page(s) · %2$d regions</string>
+    <string name="ai_cost_footer_summary">This phone processed %1$d page(s) (%2$d regions). Server: %3$d paid call(s), %4$d avoided, %5$d tokens.</string>
+    <string name="ai_cost_breakdown_n1">N1 · ML Kit, on device</string>
+    <string name="ai_cost_breakdown_n15">Routed to N1.5 · Math OCR</string>
+    <string name="ai_cost_breakdown_n2">Routed to N2 · vision</string>
+    <string name="ai_cost_breakdown_uncertain">Below N1 gate</string>
+    <string name="ai_cost_offline_footer">No server connection: paid call, token and server cost data are unavailable. Showing local metrics only.</string>
+
+    <!-- Regions & Capture pipeline localized labels -->
+    <string name="region_kind_text">Text</string>
+    <string name="region_kind_math">Math</string>
+    <string name="region_kind_drawing">Drawing</string>
+    <string name="region_route_n1_5">N1.5 · Math OCR</string>
+    <string name="region_route_n2">N2 · Vision repair</string>
+    <string name="region_route_n2_below_gate">N2 · Vision repair (below gate)</string>
+    <string name="region_route_n1_verified">N1 · ML Kit verified</string>
+    <string name="note_fragment_route_server">%1$s · Server reconstruction</string>
+
+    <string name="capture_quality_focus_label">Focus &amp; Sharpness</string>
+    <string name="capture_quality_focus_blurry">Blurry image</string>
+    <string name="capture_quality_focus_optimal">Optimal focus</string>
+    <string name="capture_quality_light_label">Lighting</string>
+    <string name="capture_quality_light_dark">Too dark. Insufficient lighting.</string>
+    <string name="capture_quality_light_bright">Overexposed. Too much light.</string>
+    <string name="capture_quality_light_optimal">Proper lighting</string>
+
+    <string name="capture_step_dedup_name">Deduplication (pHash)</string>
+    <string name="capture_step_dedup_no_course">No course linked: skipped comparing against previous pages.</string>
+    <string name="capture_step_dedup_reused">Page already processed (%1$d/64 distinct bits) - result reused - 0 calls</string>
+    <string name="capture_step_dedup_new">New page - hash saved to detect repeats.</string>
+    <string name="capture_step_reused_skipped">Skipped: result reused from the already processed page.</string>
+    <string name="capture_step_n0_name">N0 - Preprocessing</string>
+    <string name="capture_step_n0_desc">Perspective corrected - normalized contrast - %1$d regions segmented</string>
+    <string name="capture_step_n1_name">N1 - Text OCR</string>
+    <string name="capture_step_n1_desc">%1$d of %2$d regions read - ML Kit, on device - %3$s s</string>
+    <string name="capture_step_classifier_name">Region classifier</string>
+    <string name="capture_step_classifier_desc">%1$d text - %2$d formulas - %3$d drawings</string>
+    <string name="capture_step_glossary_no_course">no course glossary</string>
+    <string name="capture_step_glossary_not_cached">no glossary on this device (downloaded when opening camera online)</string>
+    <string name="capture_step_glossary_cached">glossary v%1$d (%2$d terms, local copy)</string>
+    <string name="capture_step_n15_name">N1.5 - Math OCR</string>
+    <string name="capture_step_n15_desc_active">%1$d regions routed to LaTeX conversion on the server (low cost)</string>
+    <string name="capture_step_n15_desc_empty">No formulas were detected on this page.</string>
+    <string name="capture_step_n2_name">N2 - Vision repair</string>
+    <string name="capture_step_n2_desc_active">%1$d regions did not pass the N1 gate.</string>
+    <string name="capture_step_n2_desc_idle">Activates only if something fails the gates.</string>
+
+    <string name="capture_error_hash_failed">Could not compute the page fingerprint.</string>
+    <string name="capture_error_no_photo">There is no photo to analyze.</string>
+    <string name="capture_error_unreadable_photo">Could not read the captured photo.</string>
+    <string name="capture_error_local_pipeline_failed">Local processing failed.</string>
+
+    <!-- Study, Glossary, Syllabus, Courses, Notes, Sync & API errors -->
+    <string name="study_tf_true">True</string>
+    <string name="study_tf_false">False</string>
+    <string name="study_topic_fallback">Topic %1$d</string>
+    <string name="study_error_select_topic">Select at least one course topic</string>
+    <string name="study_error_no_quiz">No quiz questions available</string>
+
+    <string name="glossary_tag_symbol">SYMBOL</string>
+    <string name="glossary_tag_notation">NOTATION</string>
+    <string name="glossary_tag_term">TERM</string>
+    <string name="teacher_error_glossary_fields_required">Term and notation are required</string>
+
+    <string name="syllabus_unit_default">1 · Course topics</string>
+
+    <string name="course_error_code_empty">Code cannot be empty</string>
+    <string name="course_error_invalid_code">Invalid course code</string>
+    <string name="course_error_name_code_required">Name and code are required</string>
+
+    <string name="note_default_title_format">Note %1$s</string>
+    <string name="note_error_correction_empty">Correction cannot be empty</string>
+    <string name="note_error_fragment_missing">That fragment no longer exists in the note</string>
+    <string name="note_error_title_required">Title is required</string>
+    <string name="note_error_not_found">Note not found</string>
+    <string name="note_topic_section_title">TOPIC</string>
+    <string name="note_topic_unlinked">No topic linked</string>
+    <string name="note_topic_select">Select</string>
+    <string name="note_topic_change">Change</string>
+    <string name="note_topic_fallback_label">Unnamed topic</string>
+    <string name="note_topic_suggested_label">Suggested topic: %1$s</string>
+    <string name="note_topic_suggested_accept">Accept</string>
+    <string name="note_topic_picker_title">Select syllabus topic</string>
+    <string name="note_topic_picker_empty">No syllabus topics available for this course.</string>
+    <string name="note_topic_picker_retry">Retry</string>
+    <string name="note_topic_picker_clear">Remove topic link</string>
+    <string name="note_topic_error_no_connection">No connection. Connect to the internet to save the note topic.</string>
+    <string name="note_topic_error_not_synced">Wait until the note syncs with the server before linking a topic.</string>
+
+    <string name="sync_item_page_title">%1$s · p.%2$d</string>
+    <string name="sync_item_note_title">%1$s · note</string>
+    <string name="sync_op_title">Operation %1$s #%2$d</string>
+    <string name="sync_timestamp_recent">Recent</string>
+    <string name="sync_error_no_connection">No connection to the server</string>
+    <string name="sync_error_unexpected">Unexpected error</string>
+    <string name="sync_error_unreadable_analysis">Saved page analysis cannot be read</string>
+    <string name="sync_error_unknown_operation">Unknown operation: %1$s</string>
+    <string name="sync_error_note_rejected_409">Server rejected the note (409)</string>
+    <string name="sync_error_session_expired">Session expired; retrying when signed back in</string>
+    <string name="sync_error_server_wait">Server requested to wait (%1$d)</string>
+    <string name="sync_error_server">Server error (%1$d)</string>
+    <string name="sync_error_rejected">Server rejected the operation (%1$d)</string>
+
+    <string name="error_invalid_request">Invalid request data</string>
+    <string name="error_not_found">Resource not found</string>
+    <string name="error_conflict">Request conflict</string>
+    <string name="error_server_code">Server error (%1$s)</string>
+    <string name="logout_pending_title">Unsynced captures</string>
+    <string name="logout_pending_confirm">Log out anyway</string>
+    <string name="logout_pending_cancel">Stay signed in</string>
+    <plurals name="logout_pending_message">
+        <item quantity="one">You have %1$d capture that has not been synced yet. Logging out deletes it from this phone.</item>
+        <item quantity="other">You have %1$d captures that have not been synced yet. Logging out deletes them from this phone.</item>
+    </plurals>
+    <string name="capture_join_course_hint">Join a course to save your notes</string>
+    <plurals name="sync_queue_note_pages">
+        <item quantity="one">%1$s · %2$d page</item>
+        <item quantity="other">%1$s · %2$d pages</item>
+    </plurals>
+    <string name="nav_tab_courses">Courses</string>
+    <string name="nav_tab_gaps">Gaps</string>
+    <string name="nav_tab_glossary">Glossary</string>
 </resources>
