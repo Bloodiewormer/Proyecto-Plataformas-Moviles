@@ -1,15 +1,22 @@
 package cr.ac.una.glifo.presentation.navigation
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
+import androidx.compose.ui.Modifier
+import androidx.navigation.compose.currentBackStackEntryAsState
+import cr.ac.una.glifo.core.ui.theme.GlifoTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.LaunchedEffect
@@ -25,7 +32,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import cr.ac.una.glifo.core.network.SessionEvent
 import cr.ac.una.glifo.core.ui.component.ActiveCourseUi
-import cr.ac.una.glifo.core.ui.component.COURSE_SWITCHER_ROUTE
 import cr.ac.una.glifo.core.ui.component.LocalActiveCourse
 import cr.ac.una.glifo.core.ui.component.LocalPendingSyncCount
 import cr.ac.una.glifo.core.ui.component.LocalProfilePhotoPath
@@ -63,38 +69,6 @@ import cr.ac.una.glifo.presentation.ui.screen.SyncQueueScreen
 import cr.ac.una.glifo.presentation.ui.screen.*
 import cr.ac.una.glifo.presentation.viewmodel.ActiveCourseViewModel
 import cr.ac.una.glifo.presentation.viewmodel.SessionViewModel
-
-/**
- * The drawer (`GlifoDrawerContent`) hands back short internal ids ("notes", "syllabus",
- * "gaps"…), not real nav routes — some need a courseId, some don't share their string
- * with the actual route path at all. Translating them here in one place means every
- * screen's drawer just works, instead of each screen re-deriving the mapping (or, as
- * before, passing the raw id straight into `navController.navigate` and silently
- * failing to match any destination).
- */
-private fun navigateFromDrawer(navController: NavHostController, route: String, activeCourseId: Long?) {
-    val target = when (route) {
-        "home" -> Screen.Home.route
-        "home_teacher" -> Screen.HomeTeacher.route
-        "home_admin" -> Screen.HomeAdmin.route
-        "courses" -> Screen.Courses.route
-        COURSE_SWITCHER_ROUTE -> Screen.CourseSwitcher.route
-        "notes" -> activeCourseId?.let(Screen.NoteList::createRoute) ?: Screen.Courses.route
-        "coverage" -> activeCourseId?.let(Screen.Coverage::createRoute) ?: Screen.Courses.route
-        "study" -> activeCourseId?.let(Screen.StudyHub::createRoute) ?: Screen.Courses.route
-        "sync" -> Screen.SyncQueue.route
-        "ai_cost" -> Screen.AiCost.route
-        "teacher_courses" -> Screen.TeacherCourses.route
-        "syllabus" -> Screen.TeacherSyllabus.route
-        "glossary" -> Screen.TeacherGlossary.route
-        "gaps" -> Screen.TeacherGaps.route
-        "admin_users" -> Screen.AdminUsers.route
-        "admin_roles" -> Screen.AdminRoles.route
-        "admin_courses" -> Screen.AdminCourses.route
-        else -> route
-    }
-    navController.navigate(target) { launchSingleTop = true }
-}
 
 @Composable
 fun GlifoNavHost(
@@ -162,14 +136,47 @@ fun GlifoNavHost(
     )
 
     // El menú lateral de cualquier pantalla lee de aquí el curso activo y cómo cambiarlo.
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = backStackEntry?.destination?.route
+    val tabs = sessionUser?.role?.let(::tabsFor).orEmpty()
+
+    fun selectTab(tab: GlifoTab) {
+        val target = if ("{courseId}" in tab.route) {
+            val courseId = activeCourseId?.takeIf { it > 0L }
+            if (courseId == null) {
+                coursesInfoMessage = noActiveCourseText
+                navController.navigate(Screen.Courses.route) { launchSingleTop = true }
+                return
+            }
+            tab.route.replace("{courseId}", courseId.toString())
+        } else {
+            tab.route
+        }
+        navController.navigate(target) {
+            popUpTo(tabs.first().route) { saveState = true }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
+
     CompositionLocalProvider(
         LocalActiveCourse provides activeCourseUi,
         LocalSessionRole provides sessionUser?.role,
         LocalPendingSyncCount provides sessionViewModel::pendingSyncCount,
         LocalProfilePhotoPath provides profilePhotoPath
     ) {
+    Scaffold(
+        containerColor = GlifoTheme.colors.background,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        bottomBar = {
+            if (tabs.any { it.route == currentRoute }) {
+                GlifoBottomBar(tabs = tabs, currentRoute = currentRoute, onSelect = ::selectTab)
+            }
+        }
+    ) { innerPadding ->
     NavHost(
         navController = navController,
+        modifier = Modifier.padding(innerPadding).consumeWindowInsets(innerPadding),
         startDestination = startDestination,
         enterTransition = { fadeIn(tween(220)) + slideInHorizontally(tween(220)) { it / 10 } },
         exitTransition = { fadeOut(tween(180)) },
@@ -265,19 +272,11 @@ fun GlifoNavHost(
                 onNavigateToStudy = { navigateToCourseRoute { Screen.StudyHub.createRoute(it) } },
                 onNavigateToSync = { navController.navigate(Screen.SyncQueue.route) },
                 onNavigateToAiCost = { navController.navigate(Screen.AiCost.route) },
-                onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
-                onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                 onNavigateToCapture = { navigateToCourseRoute { Screen.Capture.createRoute(it) } },
                 onNavigateToFlashcards = { navController.navigate(Screen.FlashcardSession.route) },
                 onNavigateToQuiz = { navController.navigate(Screen.QuizSession.route) },
                 onNavigateToDelta = { navController.navigate(Screen.CoverageDelta.route) },
-                onNavigateToNoteDetail = { noteId -> navController.navigate(Screen.NoteDetail.createRoute(noteId)) },
-                onLogout = {
-                    sessionViewModel.logout()
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.Home.route) { inclusive = true }
-                    }
-                }
+                onNavigateToNoteDetail = { noteId -> navController.navigate(Screen.NoteDetail.createRoute(noteId)) }
             )
         }
 
@@ -287,15 +286,7 @@ fun GlifoNavHost(
                 onNavigateToSyllabus = { navController.navigate(Screen.TeacherSyllabus.route) },
                 onNavigateToGlossary = { navController.navigate(Screen.TeacherGlossary.route) },
                 onNavigateToGaps = { navController.navigate(Screen.TeacherGaps.route) },
-                onNavigateToAiCost = { navController.navigate(Screen.AiCost.route) },
-                onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
-                onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
-                onLogout = {
-                    sessionViewModel.logout()
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.HomeTeacher.route) { inclusive = true }
-                    }
-                }
+                onNavigateToAiCost = { navController.navigate(Screen.AiCost.route) }
             )
         }
 
@@ -304,14 +295,7 @@ fun GlifoNavHost(
                 onNavigateToUsers = { navController.navigate(Screen.AdminUsers.route) },
                 onNavigateToCourses = { navController.navigate(Screen.AdminCourses.route) },
                 onNavigateToRoles = { navController.navigate(Screen.AdminRoles.route) },
-                onNavigateToAiCost = { navController.navigate(Screen.AiCost.route) },
-                onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
-                onLogout = {
-                    sessionViewModel.logout()
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.HomeAdmin.route) { inclusive = true }
-                    }
-                }
+                onNavigateToAiCost = { navController.navigate(Screen.AiCost.route) }
             )
         }
 
@@ -322,16 +306,7 @@ fun GlifoNavHost(
                 onDismissInfoMessage = { coursesInfoMessage = null },
                 onNavigateBackOrMenu = { navController.popBackStack() },
                 onNavigateToCourseDetail = { courseId -> navController.navigate(Screen.CourseDetail.createRoute(courseId)) },
-                onNavigateToJoinCourse = { navController.navigate(Screen.JoinCourse.route) },
-                onNavigateDrawer = { route -> navigateFromDrawer(navController, route, activeCourseId) },
-                onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
-                onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
-                onLogout = {
-                    sessionViewModel.logout()
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.Home.route) { inclusive = true }
-                    }
-                }
+                onNavigateToJoinCourse = { navController.navigate(Screen.JoinCourse.route) }
             )
         }
 
@@ -442,18 +417,8 @@ fun GlifoNavHost(
             val courseId = activeCourseId ?: backStackEntry.arguments?.getLong("courseId") ?: return@composable
             NotesScreen(
                 courseId = courseId,
-                onNavigateBackOrMenu = { navController.popBackStack() },
                 onNavigateToNoteDetail = { noteId -> navController.navigate(Screen.NoteDetail.createRoute(noteId)) },
-                onNavigateToCapture = { navController.navigate(Screen.Capture.createRoute(courseId)) },
-                onNavigateDrawer = { route -> navigateFromDrawer(navController, route, courseId) },
-                onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
-                onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
-                onLogout = {
-                    sessionViewModel.logout()
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.Home.route) { inclusive = true }
-                    }
-                }
+                onNavigateToCapture = { navController.navigate(Screen.Capture.createRoute(courseId)) }
             )
         }
 
@@ -519,18 +484,8 @@ fun GlifoNavHost(
             val courseId = activeCourseId ?: backStackEntry.arguments?.getLong("courseId") ?: return@composable
             CoverageScreen(
                 courseId = courseId,
-                onNavigateBackOrMenu = { navController.popBackStack() },
                 onNavigateToTopicDetail = { topicName -> navController.navigate(Screen.TopicDetail.createRoute(topicName)) },
-                onNavigateToDelta = { navController.navigate(Screen.CoverageDelta.route) },
-                onNavigateDrawer = { route -> navigateFromDrawer(navController, route, courseId) },
-                onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
-                onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
-                onLogout = {
-                    sessionViewModel.logout()
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.Home.route) { inclusive = true }
-                    }
-                }
+                onNavigateToDelta = { navController.navigate(Screen.CoverageDelta.route) }
             )
         }
 
@@ -564,18 +519,8 @@ fun GlifoNavHost(
             val courseId = activeCourseId ?: backStackEntry.arguments?.getLong("courseId") ?: return@composable
             StudyScreen(
                 courseId = courseId,
-                onNavigateBackOrMenu = { navController.popBackStack() },
                 onNavigateToFlashcards = { navController.navigate(Screen.FlashcardSession.route) },
-                onNavigateToQuiz = { navController.navigate(Screen.QuizSession.route) },
-                onNavigateDrawer = { route -> navigateFromDrawer(navController, route, courseId) },
-                onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
-                onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
-                onLogout = {
-                    sessionViewModel.logout()
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.Home.route) { inclusive = true }
-                    }
-                }
+                onNavigateToQuiz = { navController.navigate(Screen.QuizSession.route) }
             )
         }
 
@@ -604,16 +549,7 @@ fun GlifoNavHost(
         composable(Screen.SyncQueue.route) {
             SyncQueueScreen(
                 onNavigateBackOrMenu = { navController.popBackStack() },
-                onNavigateToNoteDetail = { noteId -> navController.navigate(Screen.NoteDetail.createRoute(noteId)) },
-                onNavigateDrawer = { route -> navigateFromDrawer(navController, route, activeCourseId) },
-                onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
-                onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
-                onLogout = {
-                    sessionViewModel.logout()
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.Home.route) { inclusive = true }
-                    }
-                }
+                onNavigateToNoteDetail = { noteId -> navController.navigate(Screen.NoteDetail.createRoute(noteId)) }
             )
         }
 
@@ -621,34 +557,15 @@ fun GlifoNavHost(
             val user by sessionViewModel.currentUser.collectAsState()
             AiCostScreen(
                 role = user?.role ?: GlifoRole.Student,
-                onNavigateBackOrMenu = { navController.popBackStack() },
-                onNavigateDrawer = { route -> navigateFromDrawer(navController, route, activeCourseId) },
-                onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
-                onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
-                onLogout = {
-                    sessionViewModel.logout()
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.Home.route) { inclusive = true }
-                    }
-                }
+                onNavigateBackOrMenu = { navController.popBackStack() }
             )
         }
 
         // ── I: Docente ────────────────────────────────────────────────────────
         composable(Screen.TeacherCourses.route) {
             TeacherCoursesScreen(
-                onNavigateBackOrMenu = { navController.popBackStack() },
                 onNavigateToNewCourse = { navController.navigate(Screen.TeacherNewCourse.route) },
-                onNavigateToSyllabus = { navController.navigate(Screen.TeacherSyllabus.route) },
-                onNavigateDrawer = { route -> navigateFromDrawer(navController, route, activeCourseId) },
-                onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
-                onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
-                onLogout = {
-                    sessionViewModel.logout()
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.HomeTeacher.route) { inclusive = true }
-                    }
-                }
+                onNavigateToSyllabus = { navController.navigate(Screen.TeacherSyllabus.route) }
             )
         }
 
@@ -668,62 +585,25 @@ fun GlifoNavHost(
 
         composable(Screen.TeacherGlossary.route) {
             TeacherGlossaryScreen(
-                onNavigateBackOrMenu = { navController.popBackStack() },
-                onNavigateDrawer = { route -> navigateFromDrawer(navController, route, activeCourseId) },
-                onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
-                onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
-                onLogout = {
-                    sessionViewModel.logout()
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.HomeTeacher.route) { inclusive = true }
-                    }
-                }
             )
         }
 
         composable(Screen.TeacherGaps.route) {
             TeacherGapsScreen(
                 onNavigateBackOrMenu = { navController.popBackStack() },
-                onNavigateToTopicDetail = { topicName -> navController.navigate(Screen.TopicDetail.createRoute(topicName)) },
-                onNavigateDrawer = { route -> navigateFromDrawer(navController, route, activeCourseId) },
-                onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
-                onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
-                onLogout = {
-                    sessionViewModel.logout()
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.HomeTeacher.route) { inclusive = true }
-                    }
-                }
+                onNavigateToTopicDetail = { topicName -> navController.navigate(Screen.TopicDetail.createRoute(topicName)) }
             )
         }
 
         // ── J: Admin ──────────────────────────────────────────────────────────
         composable(Screen.AdminCourses.route) {
             AdminCoursesScreen(
-                onNavigateBackOrMenu = { navController.popBackStack() },
-                onNavigateToCourseDetail = { courseId -> navController.navigate(Screen.CourseDetail.createRoute(courseId)) },
-                onNavigateDrawer = { route -> navigateFromDrawer(navController, route, activeCourseId) },
-                onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
-                onLogout = {
-                    sessionViewModel.logout()
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.HomeAdmin.route) { inclusive = true }
-                    }
-                }
+                onNavigateToCourseDetail = { courseId -> navController.navigate(Screen.CourseDetail.createRoute(courseId)) }
             )
         }
 
         composable(Screen.AdminUsers.route) {
             AdminUsersScreen(
-                onNavigateBackOrMenu = { navController.popBackStack() },
-                onNavigateDrawer = { route -> navigateFromDrawer(navController, route, activeCourseId) },
-                onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
-                onLogout = {
-                    sessionViewModel.logout()
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.HomeAdmin.route) { inclusive = true }
-                    }
-                }
             )
         }
 
@@ -741,15 +621,6 @@ fun GlifoNavHost(
 
         composable(Screen.AdminRoles.route) {
             AdminRolesScreen(
-                onNavigateBackOrMenu = { navController.popBackStack() },
-                onNavigateDrawer = { route -> navigateFromDrawer(navController, route, activeCourseId) },
-                onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
-                onLogout = {
-                    sessionViewModel.logout()
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.HomeAdmin.route) { inclusive = true }
-                    }
-                }
             )
         }
 
@@ -757,20 +628,13 @@ fun GlifoNavHost(
         composable(Screen.Settings.route) {
             SettingsScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToSync = { navController.navigate(Screen.SyncQueue.route) },
-                onLogout = {
-                    sessionViewModel.logout()
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.Home.route) { inclusive = true }
-                    }
-                }
+                onNavigateToSync = { navController.navigate(Screen.SyncQueue.route) }
             )
         }
 
         composable(Screen.Profile.route) {
             val user by sessionViewModel.currentUser.collectAsState()
             ProfileScreen(
-                onNavigateBack = { navController.popBackStack() },
                 onNavigateToChangePassword = { navController.navigate(Screen.ChangePassword.route) },
                 onNavigateToCourses = {
                     val coursesRoute = when (user?.role) {
@@ -781,14 +645,17 @@ fun GlifoNavHost(
                     navController.navigate(coursesRoute)
                 },
                 onNavigateToAiCost = { navController.navigate(Screen.AiCost.route) },
+                onNavigateToSync = { navController.navigate(Screen.SyncQueue.route) },
+                onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                 onLogout = {
                     sessionViewModel.logout()
                     navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.Home.route) { inclusive = true }
+                        popUpTo(0) { inclusive = true }
                     }
                 }
             )
         }
+    }
     }
     }
 }

@@ -39,15 +39,9 @@ import kotlinx.coroutines.launch
 // ── Screen J1: Usuarios Admin ──────────────────────────────────────────────
 @Composable
 fun AdminUsersScreen(
-    onNavigateBackOrMenu: () -> Unit,
-    onNavigateDrawer: (String) -> Unit,
-    onNavigateToSettings: () -> Unit,
-    onLogout: () -> Unit,
     viewModel: AdminUsersViewModel = hiltViewModel(),
     sessionViewModel: SessionViewModel = hiltViewModel()
 ) {
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
     val colors = GlifoTheme.colors
     val context = LocalContext.current
     val user by sessionViewModel.currentUser.collectAsState()
@@ -56,91 +50,53 @@ fun AdminUsersScreen(
     var resetEmail by remember { mutableStateOf("") }
     var selected by remember { mutableStateOf<AdminUser?>(null) }
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        gesturesEnabled = true,
-        drawerContent = {
-            ModalDrawerSheet(
-                drawerContainerColor = colors.surface,
-                drawerContentColor = colors.textPrimary,
-                drawerShape = RoundedCornerShape(topEnd = 0.dp, bottomEnd = 0.dp),
-                windowInsets = WindowInsets(0, 0, 0, 0),
-                modifier = Modifier
-                    .width(280.dp)
-                    .fillMaxHeight()
-            ) {
-                GlifoDrawerContent(
-                    role = GlifoRole.Admin,
-                    currentScreen = "admin_users",
-                    userName = user?.fullName.orEmpty(),
-                    userEmail = user?.email.orEmpty(),
-                    userInitials = user?.initials.orEmpty(),
-                    onNavigate = { route ->
-                        scope.launch { drawerState.close() }
-                        onNavigateDrawer(route)
-                    },
-                    onSettingsClick = {
-                        scope.launch { drawerState.close() }
-                        onNavigateToSettings()
-                    },
-                    onLogoutClick = {
-                        scope.launch { drawerState.close() }
-                        sessionViewModel.logout()
-                        onLogout()
-                    }
-                )
-            }
-        }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(colors.background)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(colors.background)
-        ) {
-            GlifoTopAppBar(
-                title = stringResource(R.string.admin_users_title),
-                onNavigationClick = { scope.launch { drawerState.open() } },
-                actions = {
-                    IconButton(onClick = { showResetDialog = true }) {
-                        Icon(
-                            Icons.Default.LockReset,
-                            contentDescription = stringResource(R.string.admin_reset_password_title),
-                            tint = colors.textSecondary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
+        GlifoTopAppBar(
+            title = stringResource(R.string.admin_users_title),
+            actions = {
+                IconButton(onClick = { showResetDialog = true }) {
+                    Icon(
+                        Icons.Default.LockReset,
+                        contentDescription = stringResource(R.string.admin_reset_password_title),
+                        tint = colors.textSecondary,
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
-            )
+            }
+        )
 
-            when (val state = uiState) {
-                is UiState.Loading -> GlifoLoadingBox()
-                is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
-                is UiState.Empty -> GlifoEmptyBox(stringResource(R.string.admin_users_empty), stringResource(R.string.common_retry), viewModel::load)
-                is UiState.Success -> Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .navigationBarsPadding()
-                        .verticalScroll(rememberScrollState())
-                        .padding(14.dp)
-                ) {
-                    state.data.forEachIndexed { i, account ->
-                        val isMe = account.id == user?.id
-                        GlifoStaggeredEntry(index = i) {
-                            GlifoCard(
-                                onClick = if (isMe) null else ({ selected = account }),
-                                modifier = Modifier.padding(bottom = 10.dp)
+        when (val state = uiState) {
+            is UiState.Loading -> GlifoLoadingBox()
+            is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
+            is UiState.Empty -> GlifoEmptyBox(stringResource(R.string.admin_users_empty), stringResource(R.string.common_retry), viewModel::load)
+            is UiState.Success -> Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .navigationBarsPadding()
+                    .verticalScroll(rememberScrollState())
+                    .padding(14.dp)
+            ) {
+                state.data.forEachIndexed { i, account ->
+                    val isMe = account.id == user?.id
+                    GlifoStaggeredEntry(index = i) {
+                        GlifoCard(
+                            onClick = if (isMe) null else ({ selected = account }),
+                            modifier = Modifier.padding(bottom = 10.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(account.fullName, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary, modifier = Modifier.weight(1f))
-                                    if (isMe) GlifoBadge(text = stringResource(R.string.admin_users_you), modifier = Modifier.padding(end = 6.dp))
-                                    GlifoBadge(text = roleLabel(account.role))
-                                }
-                                Text(account.email, fontFamily = FontFamily.Monospace, fontSize = 11.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
+                                Text(account.fullName, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                                if (isMe) GlifoBadge(text = stringResource(R.string.admin_users_you), modifier = Modifier.padding(end = 6.dp))
+                                GlifoBadge(text = roleLabel(account.role))
                             }
+                            Text(account.email, fontFamily = FontFamily.Monospace, fontSize = 11.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
                         }
                     }
                 }
@@ -365,101 +321,55 @@ fun AdminUserDetailScreen(
 // ── Screen J3: Roles y Privilegios ─────────────────────────────────────────
 @Composable
 fun AdminRolesScreen(
-    onNavigateBackOrMenu: () -> Unit,
-    onNavigateDrawer: (String) -> Unit,
-    onNavigateToSettings: () -> Unit,
-    onLogout: () -> Unit,
-    viewModel: AdminRolesViewModel = hiltViewModel(),
-    sessionViewModel: SessionViewModel = hiltViewModel()
+    viewModel: AdminRolesViewModel = hiltViewModel()
 ) {
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
     val colors = GlifoTheme.colors
     val context = LocalContext.current
-    val user by sessionViewModel.currentUser.collectAsState()
     val uiState by viewModel.state.collectAsState()
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        gesturesEnabled = true,
-        drawerContent = {
-            ModalDrawerSheet(
-                drawerContainerColor = colors.surface,
-                drawerContentColor = colors.textPrimary,
-                drawerShape = RoundedCornerShape(topEnd = 0.dp, bottomEnd = 0.dp),
-                windowInsets = WindowInsets(0, 0, 0, 0),
-                modifier = Modifier
-                    .width(280.dp)
-                    .fillMaxHeight()
-            ) {
-                GlifoDrawerContent(
-                    role = GlifoRole.Admin,
-                    currentScreen = "admin_roles",
-                    userName = user?.fullName.orEmpty(),
-                    userEmail = user?.email.orEmpty(),
-                    userInitials = user?.initials.orEmpty(),
-                    onNavigate = { route ->
-                        scope.launch { drawerState.close() }
-                        onNavigateDrawer(route)
-                    },
-                    onSettingsClick = {
-                        scope.launch { drawerState.close() }
-                        onNavigateToSettings()
-                    },
-                    onLogoutClick = {
-                        scope.launch { drawerState.close() }
-                        sessionViewModel.logout()
-                        onLogout()
-                    }
-                )
-            }
-        }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(colors.background)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(colors.background)
-        ) {
-            GlifoTopAppBar(
-                title = stringResource(R.string.admin_roles_title),
-                onNavigationClick = { scope.launch { drawerState.open() } }
-            )
+        GlifoTopAppBar(
+            title = stringResource(R.string.admin_roles_title)
+        )
 
-            when (val state = uiState) {
-                is UiState.Loading -> GlifoLoadingBox()
-                is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
-                is UiState.Empty -> GlifoEmptyBox(stringResource(R.string.admin_users_empty), stringResource(R.string.common_retry), viewModel::load)
-                is UiState.Success -> Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .navigationBarsPadding()
-                        .verticalScroll(rememberScrollState())
-                        .padding(14.dp)
-                ) {
-                    state.data.forEachIndexed { i, role ->
-                        GlifoStaggeredEntry(index = i) {
-                            GlifoCard(modifier = Modifier.padding(bottom = 10.dp)) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(roleNameLabel(role.name), fontSize = 16.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                                    GlifoBadge(text = stringResource(R.string.admin_roles_user_count, role.userCount))
-                                }
-                                role.description?.let {
-                                    Text(it, fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
-                                }
-                                Text(
-                                    stringResource(R.string.admin_roles_privileges),
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = colors.textPrimary,
-                                    modifier = Modifier.padding(top = 10.dp, bottom = 4.dp)
-                                )
-                                role.privileges.forEach { privilege ->
-                                    Text(privilege, fontFamily = FontFamily.Monospace, fontSize = 11.sp, color = colors.textSecondary)
-                                }
+        when (val state = uiState) {
+            is UiState.Loading -> GlifoLoadingBox()
+            is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
+            is UiState.Empty -> GlifoEmptyBox(stringResource(R.string.admin_users_empty), stringResource(R.string.common_retry), viewModel::load)
+            is UiState.Success -> Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .navigationBarsPadding()
+                    .verticalScroll(rememberScrollState())
+                    .padding(14.dp)
+            ) {
+                state.data.forEachIndexed { i, role ->
+                    GlifoStaggeredEntry(index = i) {
+                        GlifoCard(modifier = Modifier.padding(bottom = 10.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(roleNameLabel(role.name), fontSize = 16.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                                GlifoBadge(text = stringResource(R.string.admin_roles_user_count, role.userCount))
+                            }
+                            role.description?.let {
+                                Text(it, fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
+                            }
+                            Text(
+                                stringResource(R.string.admin_roles_privileges),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = colors.textPrimary,
+                                modifier = Modifier.padding(top = 10.dp, bottom = 4.dp)
+                            )
+                            role.privileges.forEach { privilege ->
+                                Text(privilege, fontFamily = FontFamily.Monospace, fontSize = 11.sp, color = colors.textSecondary)
                             }
                         }
                     }
@@ -475,133 +385,87 @@ fun AdminRolesScreen(
 // teacher's — entering here used to silently turn the admin into a teacher.
 @Composable
 fun AdminCoursesScreen(
-    onNavigateBackOrMenu: () -> Unit,
     onNavigateToCourseDetail: (Long) -> Unit,
-    onNavigateDrawer: (String) -> Unit,
-    onNavigateToSettings: () -> Unit,
-    onLogout: () -> Unit,
-    viewModel: AdminCoursesViewModel = hiltViewModel(),
-    sessionViewModel: SessionViewModel = hiltViewModel()
+    viewModel: AdminCoursesViewModel = hiltViewModel()
 ) {
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
     val colors = GlifoTheme.colors
     val context = LocalContext.current
-    val user by sessionViewModel.currentUser.collectAsState()
     val uiState by viewModel.state.collectAsState()
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        gesturesEnabled = true,
-        drawerContent = {
-            ModalDrawerSheet(
-                drawerContainerColor = colors.surface,
-                drawerContentColor = colors.textPrimary,
-                drawerShape = RoundedCornerShape(topEnd = 0.dp, bottomEnd = 0.dp),
-                windowInsets = WindowInsets(0, 0, 0, 0),
-                modifier = Modifier
-                    .width(280.dp)
-                    .fillMaxHeight()
-            ) {
-                GlifoDrawerContent(
-                    role = GlifoRole.Admin,
-                    currentScreen = "admin_courses",
-                    userName = user?.fullName.orEmpty(),
-                    userEmail = user?.email.orEmpty(),
-                    userInitials = user?.initials.orEmpty(),
-                    onNavigate = { route ->
-                        scope.launch { drawerState.close() }
-                        onNavigateDrawer(route)
-                    },
-                    onSettingsClick = {
-                        scope.launch { drawerState.close() }
-                        onNavigateToSettings()
-                    },
-                    onLogoutClick = {
-                        scope.launch { drawerState.close() }
-                        sessionViewModel.logout()
-                        onLogout()
-                    }
-                )
-            }
-        }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(colors.background)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(colors.background)
-        ) {
-            GlifoTopAppBar(
-                title = stringResource(R.string.admin_courses_title),
-                onNavigationClick = { scope.launch { drawerState.open() } }
-            )
+        GlifoTopAppBar(
+            title = stringResource(R.string.admin_courses_title)
+        )
 
-            when (val state = uiState) {
-                is UiState.Loading -> GlifoLoadingBox()
-                is UiState.Empty -> GlifoEmptyBox(
-                    message = stringResource(R.string.courses_empty_no_courses),
-                    actionText = stringResource(R.string.common_retry),
-                    onAction = viewModel::load
-                )
-                is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
-                is UiState.Success -> {
-                    val coursesWithStats = state.data
-                    if (coursesWithStats.isEmpty()) {
-                        GlifoEmptyBox(
-                            message = stringResource(R.string.courses_empty_no_courses),
-                            actionText = stringResource(R.string.common_retry),
-                            onAction = viewModel::load
-                        )
-                    } else {
-                        Column(
-                            modifier = Modifier
-                                .weight(1f)
-                                .navigationBarsPadding()
-                                .verticalScroll(rememberScrollState())
-                                .padding(14.dp)
-                        ) {
-                            coursesWithStats.forEachIndexed { i, entry ->
-                                val course = entry.course
-                                val stats = entry.stats
-                                val codeSubtitle = if (stats.instructorName.isBlank()) {
-                                    course.code
-                                } else {
-                                    stringResource(R.string.courses_code_instructor, course.code, stats.instructorName)
-                                }
-                                GlifoStaggeredEntry(index = i) {
-                                    GlifoCard(
-                                        onClick = { onNavigateToCourseDetail(course.id) },
-                                        modifier = Modifier.padding(bottom = 10.dp),
-                                        borderColor = if (stats.hasSyllabus) colors.border else colors.alertLine
+        when (val state = uiState) {
+            is UiState.Loading -> GlifoLoadingBox()
+            is UiState.Empty -> GlifoEmptyBox(
+                message = stringResource(R.string.courses_empty_no_courses),
+                actionText = stringResource(R.string.common_retry),
+                onAction = viewModel::load
+            )
+            is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
+            is UiState.Success -> {
+                val coursesWithStats = state.data
+                if (coursesWithStats.isEmpty()) {
+                    GlifoEmptyBox(
+                        message = stringResource(R.string.courses_empty_no_courses),
+                        actionText = stringResource(R.string.common_retry),
+                        onAction = viewModel::load
+                    )
+                } else {
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .navigationBarsPadding()
+                            .verticalScroll(rememberScrollState())
+                            .padding(14.dp)
+                    ) {
+                        coursesWithStats.forEachIndexed { i, entry ->
+                            val course = entry.course
+                            val stats = entry.stats
+                            val codeSubtitle = if (stats.instructorName.isBlank()) {
+                                course.code
+                            } else {
+                                stringResource(R.string.courses_code_instructor, course.code, stats.instructorName)
+                            }
+                            GlifoStaggeredEntry(index = i) {
+                                GlifoCard(
+                                    onClick = { onNavigateToCourseDetail(course.id) },
+                                    modifier = Modifier.padding(bottom = 10.dp),
+                                    borderColor = if (stats.hasSyllabus) colors.border else colors.alertLine
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Text(text = course.name, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                                            if (!stats.hasSyllabus) GlifoBadge(text = stringResource(R.string.admin_courses_no_syllabus_badge), backgroundColor = colors.alertSoft, textColor = colors.alert)
-                                        }
-                                        Text(
-                                            text = codeSubtitle,
-                                            fontFamily = FontFamily.Monospace,
-                                            fontSize = 11.sp,
-                                            color = colors.textSecondary,
-                                            modifier = Modifier.padding(top = 2.dp)
-                                        )
-                                        if (stats.hasSyllabus) {
-                                            CovBar(v = stats.verified, r = stats.repaired, e = stats.escalated, u = stats.uncertain, modifier = Modifier.padding(vertical = 8.dp))
-                                        }
-                                        Text(
-                                            text = if (stats.hasSyllabus) {
-                                                stringResource(R.string.admin_courses_students_with_coverage, stats.studentCount, stats.coveragePercent)
-                                            } else {
-                                                stringResource(R.string.teacher_gaps_student_count, stats.studentCount)
-                                            },
-                                            fontSize = 12.sp,
-                                            color = colors.textSecondary
-                                        )
+                                        Text(text = course.name, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                                        if (!stats.hasSyllabus) GlifoBadge(text = stringResource(R.string.admin_courses_no_syllabus_badge), backgroundColor = colors.alertSoft, textColor = colors.alert)
                                     }
+                                    Text(
+                                        text = codeSubtitle,
+                                        fontFamily = FontFamily.Monospace,
+                                        fontSize = 11.sp,
+                                        color = colors.textSecondary,
+                                        modifier = Modifier.padding(top = 2.dp)
+                                    )
+                                    if (stats.hasSyllabus) {
+                                        CovBar(v = stats.verified, r = stats.repaired, e = stats.escalated, u = stats.uncertain, modifier = Modifier.padding(vertical = 8.dp))
+                                    }
+                                    Text(
+                                        text = if (stats.hasSyllabus) {
+                                            stringResource(R.string.admin_courses_students_with_coverage, stats.studentCount, stats.coveragePercent)
+                                        } else {
+                                            stringResource(R.string.teacher_gaps_student_count, stats.studentCount)
+                                        },
+                                        fontSize = 12.sp,
+                                        color = colors.textSecondary
+                                    )
                                 }
                             }
                         }

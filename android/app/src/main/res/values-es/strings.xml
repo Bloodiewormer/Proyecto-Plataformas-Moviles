@@ -61,7 +61,7 @@
     <string name="register_field_password">Contraseña</string>
     <string name="register_field_password_placeholder">Mínimo 8 caracteres</string>
     <string name="register_field_confirm_password">Confirmar contraseña</string>
-    <string name="register_field_confirm_placeholder">••••••</string>
+    <string name="register_field_confirm_placeholder">Repite tu contraseña</string>
     <string name="register_button_submit">Crear cuenta</string>
     <string name="register_button_submitting">Creando cuenta…</string>
     <string name="register_role_note">Vas a entrar como estudiante. Si sos docente, pedile el cambio de rol al administrador.</string>
@@ -227,7 +227,6 @@
     <string name="course_detail_whats_changed">Qué cambió</string>
     <string name="course_detail_weekly_delta">+%1$d pts esta semana</string>
     <string name="course_detail_quick_access_section">ACCESO RÁPIDO</string>
-    <string name="course_detail_confidence_map">Mapa de confianza</string>
     <string name="course_detail_new_capture">Nueva captura</string>
 
     <!-- NotesScreen -->
@@ -762,4 +761,7 @@
         <item quantity="one">%1$s · %2$d página</item>
         <item quantity="other">%1$s · %2$d páginas</item>
     </plurals>
+    <string name="nav_tab_courses">Cursos</string>
+    <string name="nav_tab_gaps">Brechas</string>
+    <string name="nav_tab_glossary">Glosario</string>
 </resources>

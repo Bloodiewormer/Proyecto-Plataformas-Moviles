@@ -36,10 +36,8 @@ import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.common.AppError
 import cr.ac.una.glifo.core.common.UiState
 import cr.ac.una.glifo.domain.model.ConfidenceState
-import cr.ac.una.glifo.domain.model.GlifoRole
 import cr.ac.una.glifo.core.ui.component.*
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
-import cr.ac.una.glifo.presentation.viewmodel.SessionViewModel
 import cr.ac.una.glifo.presentation.viewmodel.TeacherCoursesViewModel
 import cr.ac.una.glifo.presentation.viewmodel.TeacherGapsViewModel
 import cr.ac.una.glifo.presentation.viewmodel.TeacherGlossaryViewModel
@@ -55,156 +53,105 @@ import java.io.ByteArrayOutputStream
 // ── Screen I1: Cursos Docente ─────────────────────────────────────────────────
 @Composable
 fun TeacherCoursesScreen(
-    onNavigateBackOrMenu: () -> Unit,
     onNavigateToNewCourse: () -> Unit,
     onNavigateToSyllabus: () -> Unit,
-    onNavigateDrawer: (String) -> Unit,
-    onNavigateToSettings: () -> Unit,
-    onNavigateToProfile: () -> Unit,
-    onLogout: () -> Unit,
-    viewModel: TeacherCoursesViewModel = hiltViewModel(),
-    sessionViewModel: SessionViewModel = hiltViewModel()
+    viewModel: TeacherCoursesViewModel = hiltViewModel()
 ) {
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
     val colors = GlifoTheme.colors
     val context = LocalContext.current
-    val user by sessionViewModel.currentUser.collectAsState()
     val uiState by viewModel.state.collectAsState()
     val activeCourseId by viewModel.activeCourseId.collectAsState()
 
     LaunchedEffect(Unit) { viewModel.load() }
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        gesturesEnabled = true,
-        drawerContent = {
-            ModalDrawerSheet(
-                drawerContainerColor = colors.surface,
-                drawerContentColor = colors.textPrimary,
-                drawerShape = RoundedCornerShape(topEnd = 0.dp, bottomEnd = 0.dp),
-                windowInsets = WindowInsets(0, 0, 0, 0),
-                modifier = Modifier
-                    .width(280.dp)
-                    .fillMaxHeight()
-            ) {
-                GlifoDrawerContent(
-                    role = GlifoRole.Teacher,
-                    currentScreen = "teacher_courses",
-                    userName = user?.fullName.orEmpty(),
-                    userEmail = user?.email.orEmpty(),
-                    userInitials = user?.initials.orEmpty(),
-                    onNavigate = { route ->
-                        scope.launch { drawerState.close() }
-                        onNavigateDrawer(route)
-                    },
-                    onProfileClick = {
-                        scope.launch { drawerState.close() }
-                        onNavigateToProfile()
-                    },
-                    onSettingsClick = {
-                        scope.launch { drawerState.close() }
-                        onNavigateToSettings()
-                    },
-                    onLogoutClick = {
-                        scope.launch { drawerState.close() }
-                        sessionViewModel.logout()
-                        onLogout()
-                    }
-                )
-            }
-        }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(colors.background)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(colors.background)
-        ) {
-            GlifoTopAppBar(
-                title = stringResource(R.string.courses_title),
-                onNavigationClick = { scope.launch { drawerState.open() } },
-                actions = {
-                    IconButton(onClick = onNavigateToNewCourse) {
-                        Icon(imageVector = Icons.Default.Add, contentDescription = stringResource(R.string.teacher_courses_create_description), tint = colors.textSecondary, modifier = Modifier.size(22.dp))
-                    }
+        GlifoTopAppBar(
+            title = stringResource(R.string.courses_title),
+            actions = {
+                IconButton(onClick = onNavigateToNewCourse) {
+                    Icon(imageVector = Icons.Default.Add, contentDescription = stringResource(R.string.teacher_courses_create_description), tint = colors.textSecondary, modifier = Modifier.size(22.dp))
                 }
-            )
+            }
+        )
 
-            when (val state = uiState) {
-                is UiState.Loading -> GlifoLoadingBox()
-                is UiState.Empty -> GlifoEmptyBox(
-                    message = stringResource(R.string.courses_empty_no_courses),
-                    actionText = stringResource(R.string.teacher_courses_create_new),
-                    onAction = onNavigateToNewCourse
-                )
-                is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
-                is UiState.Success -> {
-                    val coursesWithStats = state.data
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .navigationBarsPadding()
-                            .verticalScroll(rememberScrollState())
-                            .padding(14.dp)
-                    ) {
-                        coursesWithStats.forEachIndexed { i, entry ->
-                            val course = entry.course
-                            val stats = entry.stats
-                            val codeTermText = if (course.term.isNotBlank()) {
-                                stringResource(R.string.teacher_courses_code_term, course.code, course.term)
-                            } else {
-                                course.code
-                            }
-                            GlifoStaggeredEntry(index = i) {
-                                if (stats.hasSyllabus) {
-                                    GlifoCard(
-                                        onClick = { viewModel.select(course); onNavigateToSyllabus() },
-                                        modifier = Modifier.padding(bottom = 10.dp)
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Text(text = course.name, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                                            if (course.id == activeCourseId) GlifoBadge(text = stringResource(R.string.courses_active_badge))
-                                        }
-                                        Text(codeTermText, fontFamily = FontFamily.Monospace, fontSize = 11.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
-                                        CovBar(v = stats.verified, r = stats.repaired, e = stats.escalated, u = stats.uncertain, modifier = Modifier.padding(vertical = 8.dp))
-                                        Text(stringResource(R.string.teacher_courses_coverage_students, stats.coveragePercent, stats.studentCount), fontSize = 12.sp, color = colors.textSecondary)
-                                    }
-                                } else {
-                                    GlifoCard(
-                                        onClick = { viewModel.select(course); onNavigateToSyllabus() },
-                                        borderColor = colors.alertLine,
-                                        modifier = Modifier.padding(bottom = 14.dp)
+        when (val state = uiState) {
+            is UiState.Loading -> GlifoLoadingBox()
+            is UiState.Empty -> GlifoEmptyBox(
+                message = stringResource(R.string.courses_empty_no_courses),
+                actionText = stringResource(R.string.teacher_courses_create_new),
+                onAction = onNavigateToNewCourse
+            )
+            is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
+            is UiState.Success -> {
+                val coursesWithStats = state.data
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .navigationBarsPadding()
+                        .verticalScroll(rememberScrollState())
+                        .padding(14.dp)
+                ) {
+                    coursesWithStats.forEachIndexed { i, entry ->
+                        val course = entry.course
+                        val stats = entry.stats
+                        val codeTermText = if (course.term.isNotBlank()) {
+                            stringResource(R.string.teacher_courses_code_term, course.code, course.term)
+                        } else {
+                            course.code
+                        }
+                        GlifoStaggeredEntry(index = i) {
+                            if (stats.hasSyllabus) {
+                                GlifoCard(
+                                    onClick = { viewModel.select(course); onNavigateToSyllabus() },
+                                    modifier = Modifier.padding(bottom = 10.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(text = course.name, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                                        Text(codeTermText, fontFamily = FontFamily.Monospace, fontSize = 11.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(top = 10.dp)
-                                                .background(colors.alertFaint, RoundedCornerShape(6.dp))
-                                                .padding(horizontal = 10.dp, vertical = 8.dp)
-                                        ) {
-                                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                                Icon(Icons.Default.Warning, contentDescription = null, tint = colors.alert, modifier = Modifier.size(14.dp))
-                                                Text(stringResource(R.string.teacher_courses_no_syllabus_warning), fontSize = 12.sp, color = colors.alert)
-                                            }
+                                        if (course.id == activeCourseId) GlifoBadge(text = stringResource(R.string.courses_active_badge))
+                                    }
+                                    Text(codeTermText, fontFamily = FontFamily.Monospace, fontSize = 11.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
+                                    CovBar(v = stats.verified, r = stats.repaired, e = stats.escalated, u = stats.uncertain, modifier = Modifier.padding(vertical = 8.dp))
+                                    Text(stringResource(R.string.teacher_courses_coverage_students, stats.coveragePercent, stats.studentCount), fontSize = 12.sp, color = colors.textSecondary)
+                                }
+                            } else {
+                                GlifoCard(
+                                    onClick = { viewModel.select(course); onNavigateToSyllabus() },
+                                    borderColor = colors.alertLine,
+                                    modifier = Modifier.padding(bottom = 14.dp)
+                                ) {
+                                    Text(text = course.name, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                                    Text(codeTermText, fontFamily = FontFamily.Monospace, fontSize = 11.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(top = 10.dp)
+                                            .background(colors.alertFaint, RoundedCornerShape(6.dp))
+                                            .padding(horizontal = 10.dp, vertical = 8.dp)
+                                    ) {
+                                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                            Icon(Icons.Default.Warning, contentDescription = null, tint = colors.alert, modifier = Modifier.size(14.dp))
+                                            Text(stringResource(R.string.teacher_courses_no_syllabus_warning), fontSize = 12.sp, color = colors.alert)
                                         }
                                     }
                                 }
                             }
                         }
-
-                        GlifoButton(
-                            text = stringResource(R.string.teacher_courses_create_new),
-                            variant = GlifoButtonVariant.Secondary,
-                            icon = Icons.Default.Add,
-                            onClick = onNavigateToNewCourse
-                        )
                     }
+
+                    GlifoButton(
+                        text = stringResource(R.string.teacher_courses_create_new),
+                        variant = GlifoButtonVariant.Secondary,
+                        icon = Icons.Default.Add,
+                        onClick = onNavigateToNewCourse
+                    )
                 }
             }
         }
@@ -784,207 +731,156 @@ private fun AddTopicDialog(onDismiss: () -> Unit, onAdd: (String) -> Unit) {
 // ── Screen I4: Glosario Docente ───────────────────────────────────────────────
 @Composable
 fun TeacherGlossaryScreen(
-    onNavigateBackOrMenu: () -> Unit,
-    onNavigateDrawer: (String) -> Unit,
-    onNavigateToSettings: () -> Unit,
-    onNavigateToProfile: () -> Unit,
-    onLogout: () -> Unit,
-    viewModel: TeacherGlossaryViewModel = hiltViewModel(),
-    sessionViewModel: SessionViewModel = hiltViewModel()
+    viewModel: TeacherGlossaryViewModel = hiltViewModel()
 ) {
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
     val colors = GlifoTheme.colors
     val context = LocalContext.current
-    val user by sessionViewModel.currentUser.collectAsState()
     var searchOpen by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf("") }
     var showAddDialog by remember { mutableStateOf(false) }
     val uiState by viewModel.state.collectAsState()
     val actionError by viewModel.actionError.collectAsState()
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        gesturesEnabled = true,
-        drawerContent = {
-            ModalDrawerSheet(
-                drawerContainerColor = colors.surface,
-                drawerContentColor = colors.textPrimary,
-                drawerShape = RoundedCornerShape(topEnd = 0.dp, bottomEnd = 0.dp),
-                windowInsets = WindowInsets(0, 0, 0, 0),
-                modifier = Modifier
-                    .width(280.dp)
-                    .fillMaxHeight()
-            ) {
-                GlifoDrawerContent(
-                    role = GlifoRole.Teacher,
-                    currentScreen = "glossary",
-                    userName = user?.fullName.orEmpty(),
-                    userEmail = user?.email.orEmpty(),
-                    userInitials = user?.initials.orEmpty(),
-                    onNavigate = { route ->
-                        scope.launch { drawerState.close() }
-                        onNavigateDrawer(route)
-                    },
-                    onProfileClick = {
-                        scope.launch { drawerState.close() }
-                        onNavigateToProfile()
-                    },
-                    onSettingsClick = {
-                        scope.launch { drawerState.close() }
-                        onNavigateToSettings()
-                    },
-                    onLogoutClick = {
-                        scope.launch { drawerState.close() }
-                        sessionViewModel.logout()
-                        onLogout()
-                    }
-                )
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(colors.background)
+    ) {
+        GlifoTopAppBar(
+            title = stringResource(R.string.teacher_glossary_title),
+            actions = {
+                IconButton(onClick = { searchOpen = !searchOpen; if (!searchOpen) query = "" }) {
+                    Icon(Icons.Default.Search, contentDescription = stringResource(R.string.common_search), tint = colors.textSecondary, modifier = Modifier.size(20.dp))
+                }
+                IconButton(onClick = { showAddDialog = true }) {
+                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.teacher_glossary_add_description), tint = colors.textSecondary, modifier = Modifier.size(20.dp))
+                }
+            }
+        )
+
+        AnimatedVisibility(visible = searchOpen) {
+            Box(modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)) {
+                GlifoField(label = stringResource(R.string.teacher_glossary_search_placeholder), value = query, onValueChange = { query = it }, isFocused = true)
             }
         }
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(colors.background)
-        ) {
-            GlifoTopAppBar(
-                title = stringResource(R.string.teacher_glossary_title),
-                onNavigationClick = { scope.launch { drawerState.open() } },
-                actions = {
-                    IconButton(onClick = { searchOpen = !searchOpen; if (!searchOpen) query = "" }) {
-                        Icon(Icons.Default.Search, contentDescription = stringResource(R.string.common_search), tint = colors.textSecondary, modifier = Modifier.size(20.dp))
-                    }
-                    IconButton(onClick = { showAddDialog = true }) {
-                        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.teacher_glossary_add_description), tint = colors.textSecondary, modifier = Modifier.size(20.dp))
-                    }
-                }
+
+        when (val state = uiState) {
+            is UiState.Loading -> GlifoLoadingBox()
+            is UiState.Empty -> GlifoEmptyBox(
+                message = stringResource(
+                    if (query.isBlank()) R.string.teacher_glossary_empty
+                    else R.string.teacher_glossary_no_match
+                ),
+                actionText = stringResource(R.string.common_retry),
+                onAction = viewModel::load
             )
+            is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
+            is UiState.Success -> {
+                val allEntries = state.data.entries
+                val entries = allEntries.filter { query.isBlank() || it.term.contains(query, ignoreCase = true) }
+                val suggestions = state.data.suggestions
 
-            AnimatedVisibility(visible = searchOpen) {
-                Box(modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)) {
-                    GlifoField(label = stringResource(R.string.teacher_glossary_search_placeholder), value = query, onValueChange = { query = it }, isFocused = true)
-                }
-            }
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .navigationBarsPadding()
+                        .verticalScroll(rememberScrollState())
+                        .padding(14.dp)
+                ) {
+                    actionError?.let { error ->
+                        GlifoBanner(
+                            text = error.toMessage(context),
+                            isWarning = true,
+                            modifier = Modifier
+                                .padding(bottom = 12.dp)
+                                .clickable { viewModel.dismissActionError() }
+                        )
+                    }
 
-            when (val state = uiState) {
-                is UiState.Loading -> GlifoLoadingBox()
-                is UiState.Empty -> GlifoEmptyBox(
-                    message = stringResource(
-                        if (query.isBlank()) R.string.teacher_glossary_empty
-                        else R.string.teacher_glossary_no_match
-                    ),
-                    actionText = stringResource(R.string.common_retry),
-                    onAction = viewModel::load
-                )
-                is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
-                is UiState.Success -> {
-                    val allEntries = state.data.entries
-                    val entries = allEntries.filter { query.isBlank() || it.term.contains(query, ignoreCase = true) }
-                    val suggestions = state.data.suggestions
-
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .navigationBarsPadding()
-                            .verticalScroll(rememberScrollState())
-                            .padding(14.dp)
+                    GlifoCard(
+                        backgroundColor = colors.accentFaint,
+                        borderColor = colors.accentLine
                     ) {
-                        actionError?.let { error ->
-                            GlifoBanner(
-                                text = error.toMessage(context),
-                                isWarning = true,
-                                modifier = Modifier
-                                    .padding(bottom = 12.dp)
-                                    .clickable { viewModel.dismissActionError() }
-                            )
-                        }
-
-                        GlifoCard(
-                            backgroundColor = colors.accentFaint,
-                            borderColor = colors.accentLine
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.Top
                         ) {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                verticalAlignment = Alignment.Top
-                            ) {
-                                Icon(Icons.Default.GpsFixed, contentDescription = null, tint = colors.accentText, modifier = Modifier.size(20.dp))
-                                Column {
-                                    Text(stringResource(R.string.teacher_glossary_not_dictionary_title), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                                    Text(stringResource(R.string.teacher_glossary_not_dictionary_description), fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 4.dp))
+                            Icon(Icons.Default.GpsFixed, contentDescription = null, tint = colors.accentText, modifier = Modifier.size(20.dp))
+                            Column {
+                                Text(stringResource(R.string.teacher_glossary_not_dictionary_title), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                                Text(stringResource(R.string.teacher_glossary_not_dictionary_description), fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 4.dp))
+                            }
+                        }
+                    }
+
+                    Text(
+                        text = stringResource(R.string.teacher_glossary_entries_count, entries.size),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = 0.6.sp,
+                        color = colors.textSecondary,
+                        modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                    )
+
+                    if (entries.isNotEmpty()) {
+                        GlifoCard(tight = true) {
+                            entries.forEachIndexed { i, entry ->
+                                GlifoItem(showBottomBorder = i < entries.size - 1) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(text = entry.term, fontSize = 16.sp, color = colors.textPrimary)
+                                        Text(text = entry.notation, fontSize = 13.sp, fontFamily = FontFamily.Monospace, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
+                                    }
+                                    val bg = if (entry.isSymbol) colors.repairedSoft else colors.accentSoft
+                                    val fg = if (entry.isSymbol) colors.repaired else colors.accentText
+                                    GlifoBadge(text = entry.tag, backgroundColor = bg, textColor = fg)
                                 }
                             }
                         }
+                    }
 
+                    if (suggestions.isNotEmpty()) {
                         Text(
-                            text = stringResource(R.string.teacher_glossary_entries_count, entries.size),
+                            text = stringResource(R.string.teacher_glossary_suggestions_section),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.SemiBold,
                             letterSpacing = 0.6.sp,
                             color = colors.textSecondary,
-                            modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                            modifier = Modifier.padding(top = 18.dp, bottom = 8.dp)
                         )
 
-                        if (entries.isNotEmpty()) {
-                            GlifoCard(tight = true) {
-                                entries.forEachIndexed { i, entry ->
-                                    GlifoItem(showBottomBorder = i < entries.size - 1) {
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(text = entry.term, fontSize = 16.sp, color = colors.textPrimary)
-                                            Text(text = entry.notation, fontSize = 13.sp, fontFamily = FontFamily.Monospace, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
-                                        }
-                                        val bg = if (entry.isSymbol) colors.repairedSoft else colors.accentSoft
-                                        val fg = if (entry.isSymbol) colors.repaired else colors.accentText
-                                        GlifoBadge(text = entry.tag, backgroundColor = bg, textColor = fg)
+                        GlifoCard(tight = true) {
+                            suggestions.forEachIndexed { i, s ->
+                                GlifoItem(compact = true, showBottomBorder = i < suggestions.size - 1) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(s.term, fontSize = 15.sp, color = colors.textPrimary)
+                                        Text(s.meta, fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
+                                    }
+                                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                        Icon(
+                                            Icons.Default.Close,
+                                            contentDescription = stringResource(R.string.teacher_glossary_discard_description),
+                                            tint = colors.textSecondary,
+                                            modifier = Modifier.size(20.dp).clickable { viewModel.discardSuggestion(s.id) }
+                                        )
+                                        Icon(
+                                            Icons.Default.Check,
+                                            contentDescription = stringResource(R.string.teacher_glossary_accept_description),
+                                            tint = colors.verified,
+                                            modifier = Modifier.size(20.dp).clickable { viewModel.approveSuggestion(s.id) }
+                                        )
                                     }
                                 }
                             }
                         }
+                    }
 
-                        if (suggestions.isNotEmpty()) {
-                            Text(
-                                text = stringResource(R.string.teacher_glossary_suggestions_section),
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                letterSpacing = 0.6.sp,
-                                color = colors.textSecondary,
-                                modifier = Modifier.padding(top = 18.dp, bottom = 8.dp)
-                            )
-
-                            GlifoCard(tight = true) {
-                                suggestions.forEachIndexed { i, s ->
-                                    GlifoItem(compact = true, showBottomBorder = i < suggestions.size - 1) {
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(s.term, fontSize = 15.sp, color = colors.textPrimary)
-                                            Text(s.meta, fontSize = 12.sp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
-                                        }
-                                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                            Icon(
-                                                Icons.Default.Close,
-                                                contentDescription = stringResource(R.string.teacher_glossary_discard_description),
-                                                tint = colors.textSecondary,
-                                                modifier = Modifier.size(20.dp).clickable { viewModel.discardSuggestion(s.id) }
-                                            )
-                                            Icon(
-                                                Icons.Default.Check,
-                                                contentDescription = stringResource(R.string.teacher_glossary_accept_description),
-                                                tint = colors.verified,
-                                                modifier = Modifier.size(20.dp).clickable { viewModel.approveSuggestion(s.id) }
-                                            )
-                                        }
-                                    }
-                                }
-                            }
+                    if (entries.isEmpty()) {
+                        val emptyRes = if (query.isBlank()) {
+                            R.string.teacher_glossary_empty
+                        } else {
+                            R.string.teacher_glossary_no_match
                         }
-
-                        if (entries.isEmpty()) {
-                            val emptyRes = if (query.isBlank()) {
-                                R.string.teacher_glossary_empty
-                            } else {
-                                R.string.teacher_glossary_no_match
-                            }
-                            GlifoBanner(text = stringResource(emptyRes), modifier = Modifier.padding(top = 12.dp))
-                        }
+                        GlifoBanner(text = stringResource(emptyRes), modifier = Modifier.padding(top = 12.dp))
                     }
                 }
             }
@@ -1050,18 +946,10 @@ private fun AddGlossaryEntryDialog(
 fun TeacherGapsScreen(
     onNavigateBackOrMenu: () -> Unit,
     onNavigateToTopicDetail: (String) -> Unit,
-    onNavigateDrawer: (String) -> Unit,
-    onNavigateToSettings: () -> Unit,
-    onNavigateToProfile: () -> Unit,
-    onLogout: () -> Unit,
-    viewModel: TeacherGapsViewModel = hiltViewModel(),
-    sessionViewModel: SessionViewModel = hiltViewModel()
+    viewModel: TeacherGapsViewModel = hiltViewModel()
 ) {
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
     val colors = GlifoTheme.colors
     val context = LocalContext.current
-    val user by sessionViewModel.currentUser.collectAsState()
     val uiState by viewModel.state.collectAsState()
     val activeCourseName = LocalActiveCourse.current.name ?: stringResource(R.string.drawer_no_active_course)
     val shareTitle = stringResource(R.string.teacher_gaps_share_title, activeCourseName)
@@ -1069,166 +957,124 @@ fun TeacherGapsScreen(
     val shareGapLineFormat = stringResource(R.string.teacher_gaps_share_gap_line)
     val shareChooserTitle = stringResource(R.string.teacher_gaps_share_chooser_title)
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        gesturesEnabled = true,
-        drawerContent = {
-            ModalDrawerSheet(
-                drawerContainerColor = colors.surface,
-                drawerContentColor = colors.textPrimary,
-                drawerShape = RoundedCornerShape(topEnd = 0.dp, bottomEnd = 0.dp),
-                windowInsets = WindowInsets(0, 0, 0, 0),
-                modifier = Modifier
-                    .width(280.dp)
-                    .fillMaxHeight()
-            ) {
-                GlifoDrawerContent(
-                    role = GlifoRole.Teacher,
-                    currentScreen = "gaps",
-                    userName = user?.fullName.orEmpty(),
-                    userEmail = user?.email.orEmpty(),
-                    userInitials = user?.initials.orEmpty(),
-                    onNavigate = { route ->
-                        scope.launch { drawerState.close() }
-                        onNavigateDrawer(route)
-                    },
-                    onProfileClick = {
-                        scope.launch { drawerState.close() }
-                        onNavigateToProfile()
-                    },
-                    onSettingsClick = {
-                        scope.launch { drawerState.close() }
-                        onNavigateToSettings()
-                    },
-                    onLogoutClick = {
-                        scope.launch { drawerState.close() }
-                        sessionViewModel.logout()
-                        onLogout()
-                    }
-                )
-            }
-        }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(colors.background)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(colors.background)
-        ) {
-            GlifoTopAppBar(
-                title = activeCourseName,
-                subtitle = stringResource(R.string.teacher_gaps_subtitle),
-                onNavigationClick = { scope.launch { drawerState.open() } },
-                actions = {
-                    val currentState = uiState
-                    IconButton(onClick = {
-                        if (currentState is UiState.Success) {
-                            val stats = currentState.data.stats
-                            val gaps = currentState.data.gaps
-                            val summary = buildString {
-                                appendLine(shareTitle)
-                                appendLine(String.format(shareSummaryLineFormat, stats.studentCount, stats.coveragePercent))
-                                appendLine()
-                                gaps.forEach { gap -> appendLine(String.format(shareGapLineFormat, gap.label, gap.fraction, gap.percent.toInt())) }
-                            }
-                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                type = "text/plain"
-                                putExtra(Intent.EXTRA_SUBJECT, shareTitle)
-                                putExtra(Intent.EXTRA_TEXT, summary)
-                            }
-                            context.startActivity(Intent.createChooser(shareIntent, shareChooserTitle))
+        GlifoTopAppBar(
+            title = activeCourseName,
+            subtitle = stringResource(R.string.teacher_gaps_subtitle),
+            actions = {
+                val currentState = uiState
+                IconButton(onClick = {
+                    if (currentState is UiState.Success) {
+                        val stats = currentState.data.stats
+                        val gaps = currentState.data.gaps
+                        val summary = buildString {
+                            appendLine(shareTitle)
+                            appendLine(String.format(shareSummaryLineFormat, stats.studentCount, stats.coveragePercent))
+                            appendLine()
+                            gaps.forEach { gap -> appendLine(String.format(shareGapLineFormat, gap.label, gap.fraction, gap.percent.toInt())) }
                         }
-                    }) {
-                        Icon(Icons.Default.Upload, contentDescription = stringResource(R.string.teacher_gaps_export_description), tint = colors.textSecondary, modifier = Modifier.size(20.dp))
+                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_SUBJECT, shareTitle)
+                            putExtra(Intent.EXTRA_TEXT, summary)
+                        }
+                        context.startActivity(Intent.createChooser(shareIntent, shareChooserTitle))
                     }
+                }) {
+                    Icon(Icons.Default.Upload, contentDescription = stringResource(R.string.teacher_gaps_export_description), tint = colors.textSecondary, modifier = Modifier.size(20.dp))
                 }
+            }
+        )
+
+        when (val state = uiState) {
+            is UiState.Loading -> GlifoLoadingBox()
+            is UiState.Empty -> GlifoEmptyBox(
+                message = stringResource(R.string.courses_empty_no_courses),
+                actionText = stringResource(R.string.common_nav_back),
+                onAction = onNavigateBackOrMenu
             )
+            is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
+            is UiState.Success -> {
+                val stats = state.data.stats
+                val gaps = state.data.gaps
 
-            when (val state = uiState) {
-                is UiState.Loading -> GlifoLoadingBox()
-                is UiState.Empty -> GlifoEmptyBox(
-                    message = stringResource(R.string.courses_empty_no_courses),
-                    actionText = stringResource(R.string.common_nav_back),
-                    onAction = onNavigateBackOrMenu
-                )
-                is UiState.Error -> GlifoErrorBox(state.error.toMessage(context), onRetry = viewModel::load)
-                is UiState.Success -> {
-                    val stats = state.data.stats
-                    val gaps = state.data.gaps
-
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .navigationBarsPadding()
-                            .verticalScroll(rememberScrollState())
-                            .padding(14.dp)
-                    ) {
-                        GlifoCard {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.Top
-                            ) {
-                                Text(stringResource(R.string.teacher_gaps_student_count, stats.studentCount), fontSize = 18.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
-                                Text("${stats.coveragePercent}%", fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = colors.accentText)
-                            }
-                            CovBar(v = stats.verified, r = stats.repaired, e = stats.escalated, u = stats.uncertain, modifier = Modifier.padding(vertical = 10.dp))
-                            Text(stringResource(R.string.teacher_gaps_coverage_updated_today), fontSize = 12.sp, color = colors.textSecondary)
-                        }
-
-                        Text(
-                            text = stringResource(R.string.teacher_home_gaps_section),
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            letterSpacing = 0.6.sp,
-                            color = colors.textSecondary,
-                            modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
-                        )
-
-                        if (gaps.isEmpty()) {
-                            Text(stringResource(R.string.teacher_gaps_empty), fontSize = 13.sp, color = colors.textSecondary)
-                        } else GlifoCard(tight = true) {
-                            gaps.forEachIndexed { i, gap ->
-                                GlifoItem(showBottomBorder = i < gaps.size - 1, onClick = { onNavigateToTopicDetail(gap.label) }) {
-                                    GlifoConfidenceChip(state = gap.state)
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(text = gap.label, fontSize = 15.sp, color = colors.textPrimary)
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .height(6.dp)
-                                                .padding(top = 7.dp)
-                                                .clip(RoundedCornerShape(999.dp))
-                                                .background(colors.surfaceHigh)
-                                        ) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .fillMaxHeight()
-                                                    .fillMaxWidth(gap.percent / 100f)
-                                                    .background(
-                                                        when (gap.state) {
-                                                            ConfidenceState.Escalated -> colors.escalated
-                                                            ConfidenceState.Uncertain -> colors.uncertain
-                                                            else -> colors.repaired
-                                                        }
-                                                    )
-                                            )
-                                        }
-                                    }
-                                    Text(text = gap.fraction, fontFamily = FontFamily.Monospace, fontSize = 12.sp, color = colors.textSecondary)
-                                }
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .navigationBarsPadding()
+                        .verticalScroll(rememberScrollState())
+                        .padding(14.dp)
+                ) {
+                    GlifoCard {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.Top
                         ) {
-                            Icon(Icons.Default.Shield, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp).padding(top = 1.dp))
-                            Text(stringResource(R.string.teacher_gaps_privacy_note), fontSize = 12.sp, color = colors.textSecondary)
+                            Text(stringResource(R.string.teacher_gaps_student_count, stats.studentCount), fontSize = 18.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                            Text("${stats.coveragePercent}%", fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = colors.accentText)
                         }
+                        CovBar(v = stats.verified, r = stats.repaired, e = stats.escalated, u = stats.uncertain, modifier = Modifier.padding(vertical = 10.dp))
+                        Text(stringResource(R.string.teacher_gaps_coverage_updated_today), fontSize = 12.sp, color = colors.textSecondary)
+                    }
+
+                    Text(
+                        text = stringResource(R.string.teacher_home_gaps_section),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = 0.6.sp,
+                        color = colors.textSecondary,
+                        modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                    )
+
+                    if (gaps.isEmpty()) {
+                        Text(stringResource(R.string.teacher_gaps_empty), fontSize = 13.sp, color = colors.textSecondary)
+                    } else GlifoCard(tight = true) {
+                        gaps.forEachIndexed { i, gap ->
+                            GlifoItem(showBottomBorder = i < gaps.size - 1, onClick = { onNavigateToTopicDetail(gap.label) }) {
+                                GlifoConfidenceChip(state = gap.state)
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(text = gap.label, fontSize = 15.sp, color = colors.textPrimary)
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(6.dp)
+                                            .padding(top = 7.dp)
+                                            .clip(RoundedCornerShape(999.dp))
+                                            .background(colors.surfaceHigh)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxHeight()
+                                                .fillMaxWidth(gap.percent / 100f)
+                                                .background(
+                                                    when (gap.state) {
+                                                        ConfidenceState.Escalated -> colors.escalated
+                                                        ConfidenceState.Uncertain -> colors.uncertain
+                                                        else -> colors.repaired
+                                                    }
+                                                )
+                                        )
+                                    }
+                                }
+                                Text(text = gap.fraction, fontFamily = FontFamily.Monospace, fontSize = 12.sp, color = colors.textSecondary)
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Icon(Icons.Default.Shield, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp).padding(top = 1.dp))
+                        Text(stringResource(R.string.teacher_gaps_privacy_note), fontSize = 12.sp, color = colors.textSecondary)
                     }
                 }
             }

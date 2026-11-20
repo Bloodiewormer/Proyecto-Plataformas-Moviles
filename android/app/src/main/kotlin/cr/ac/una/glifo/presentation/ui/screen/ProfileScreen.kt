@@ -1,5 +1,7 @@
 package cr.ac.una.glifo.presentation.ui.screen
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -16,13 +18,18 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,10 +48,11 @@ import cr.ac.una.glifo.presentation.viewmodel.SessionViewModel
 
 @Composable
 fun ProfileScreen(
-    onNavigateBack: () -> Unit,
     onNavigateToChangePassword: () -> Unit,
     onNavigateToCourses: () -> Unit,
     onNavigateToAiCost: () -> Unit,
+    onNavigateToSync: () -> Unit,
+    onNavigateToSettings: () -> Unit,
     onLogout: () -> Unit,
     viewModel: ProfileViewModel = hiltViewModel(),
     sessionViewModel: SessionViewModel = hiltViewModel()
@@ -65,6 +73,19 @@ fun ProfileScreen(
     LaunchedEffect(role) { viewModel.load(role) }
 
     val photoPath by sessionViewModel.profilePhotoUri.collectAsState()
+    val pendingSyncCount = LocalPendingSyncCount.current
+    val logoutScope = rememberCoroutineScope()
+    var pendingBeforeLogout by remember { mutableStateOf<Int?>(null) }
+    pendingBeforeLogout?.let { pending ->
+        LogoutPendingSyncDialog(
+            pendingCount = pending,
+            onDismiss = { pendingBeforeLogout = null },
+            onConfirm = {
+                pendingBeforeLogout = null
+                onLogout()
+            }
+        )
+    }
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri -> if (uri != null) sessionViewModel.saveProfilePhoto(uri.toString()) }
@@ -75,9 +96,7 @@ fun ProfileScreen(
             .background(colors.background)
     ) {
         GlifoTopAppBar(
-            title = stringResource(R.string.profile_title),
-            isBack = true,
-            onNavigationClick = onNavigateBack
+            title = stringResource(R.string.profile_title)
         )
 
         Column(
@@ -172,9 +191,19 @@ fun ProfileScreen(
                     Text("$courseCount", fontSize = 12.sp, color = colors.textSecondary)
                     Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(15.dp))
                 }
-                GlifoItem(compact = true, showBottomBorder = false, onClick = onNavigateToAiCost) {
+                GlifoItem(compact = true, onClick = onNavigateToAiCost) {
                     Icon(Icons.Default.BarChart, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
                     Text(stringResource(R.string.profile_item_ai_usage), fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(15.dp))
+                }
+                GlifoItem(compact = true, onClick = onNavigateToSync) {
+                    Icon(Icons.Default.Sync, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
+                    Text(stringResource(R.string.sync_queue_title), fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(15.dp))
+                }
+                GlifoItem(compact = true, showBottomBorder = false, onClick = onNavigateToSettings) {
+                    Icon(Icons.Default.Settings, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
+                    Text(stringResource(R.string.settings_title), fontSize = 14.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
                     Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(15.dp))
                 }
             }
@@ -185,7 +214,12 @@ fun ProfileScreen(
                 text = stringResource(R.string.profile_button_logout),
                 variant = GlifoButtonVariant.Danger,
                 icon = Icons.AutoMirrored.Filled.ExitToApp,
-                onClick = onLogout
+                onClick = {
+                    logoutScope.launch {
+                        val pending = pendingSyncCount()
+                        if (pending > 0) pendingBeforeLogout = pending else onLogout()
+                    }
+                }
             )
         }
     }

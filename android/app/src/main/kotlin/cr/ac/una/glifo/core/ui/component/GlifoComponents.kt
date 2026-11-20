@@ -1,5 +1,7 @@
 package cr.ac.una.glifo.core.ui.component
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -11,28 +13,17 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
-import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.automirrored.filled.Notes
-import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import kotlinx.coroutines.launch
 import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -54,7 +45,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cr.ac.una.glifo.R
 import cr.ac.una.glifo.core.ui.theme.GlifoTheme
-import cr.ac.una.glifo.domain.model.GlifoRole
 import kotlinx.coroutines.delay
 
 // ── Glifo Logo Drawing ────────────────────────────────────────────────────────
@@ -689,353 +679,6 @@ fun GlifoCameraFab(
     }
 }
 
-// ── Drawer Content ────────────────────────────────────────────────────────────
-// GlifoRole moved to domain.model.GlifoRole (pure domain concept, not UI-only).
-
-data class GlifoDrawerItem(
-    val id: String,
-    val label: String,
-    val icon: ImageVector? = null,
-    val route: String,
-    val isActive: Boolean = false,
-    val isSubItem: Boolean = false
-)
-
-@Composable
-fun GlifoDrawerContent(
-    role: GlifoRole = GlifoRole.Student,
-    currentScreen: String = "home",
-    // El curso activo y "Cambiar" salen de LocalActiveCourse (lo provee el NavHost), así el
-    // menú muestra lo mismo en todas las pantallas. Los parámetros quedan para previews.
-    activeCourseName: String? = LocalActiveCourse.current.name,
-    userName: String = "",
-    userEmail: String = "",
-    userInitials: String = "",
-    onNavigate: (String) -> Unit,
-    // null: "Cambiar" navega a "course_switcher" por onNavigate, como los demás ítems (cierra el menú).
-    onChangeCourseClick: (() -> Unit)? = null,
-    onProfileClick: () -> Unit = {},
-    onSettingsClick: () -> Unit = {},
-    onLogoutClick: () -> Unit = {}
-) {
-    // El rol de la sesión manda sobre el que fija la pantalla (ver LocalSessionRole).
-    @Suppress("NAME_SHADOWING")
-    val role = LocalSessionRole.current ?: role
-    val colors = GlifoTheme.colors
-    val pendingSyncCount = LocalPendingSyncCount.current
-    val logoutScope = androidx.compose.runtime.rememberCoroutineScope()
-    var pendingBeforeLogout by remember { mutableStateOf<Int?>(null) }
-    pendingBeforeLogout?.let { pending ->
-        LogoutPendingSyncDialog(
-            pendingCount = pending,
-            onDismiss = { pendingBeforeLogout = null },
-            onConfirm = {
-                pendingBeforeLogout = null
-                onLogoutClick()
-            }
-        )
-    }
-
-    val drawerHome = stringResource(R.string.drawer_item_home)
-    val drawerMyCourses = stringResource(R.string.courses_title)
-    val drawerNotes = stringResource(R.string.notes_title)
-    val drawerCoverage = stringResource(R.string.course_detail_coverage)
-    val drawerStudy = stringResource(R.string.course_detail_study)
-    val drawerSync = stringResource(R.string.sync_queue_title)
-    val drawerAiCostStudent = stringResource(R.string.drawer_item_ai_cost)
-    val drawerSyllabus = stringResource(R.string.drawer_item_syllabus)
-    val drawerGlossary = stringResource(R.string.drawer_item_notation_glossary)
-    val drawerGroupGaps = stringResource(R.string.drawer_item_group_gaps)
-    val drawerCourseConsumption = stringResource(R.string.drawer_item_course_consumption)
-    val drawerUsers = stringResource(R.string.admin_users_title)
-    val drawerCourses = stringResource(R.string.admin_courses_title)
-    val drawerRoles = stringResource(R.string.admin_roles_title)
-
-    val studentItems = listOf(
-        GlifoDrawerItem("home", drawerHome, Icons.Outlined.Home, "home", currentScreen == "home"),
-        GlifoDrawerItem("school", drawerMyCourses, Icons.Default.School, "courses", currentScreen == "courses"),
-        GlifoDrawerItem("notes", drawerNotes, Icons.AutoMirrored.Filled.Notes, "notes", currentScreen == "notes"),
-        GlifoDrawerItem("coverage", drawerCoverage, Icons.Outlined.Schedule, "coverage", currentScreen == "coverage"),
-        GlifoDrawerItem("study", drawerStudy, Icons.Default.Layers, "study", currentScreen == "study"),
-        GlifoDrawerItem("sync", drawerSync, Icons.Default.Sync, "sync", currentScreen == "sync"),
-        GlifoDrawerItem("cost", drawerAiCostStudent, Icons.Default.BarChart, "ai_cost", currentScreen == "ai_cost")
-    )
-
-    val teacherItems = listOf(
-        GlifoDrawerItem("home", drawerHome, Icons.Outlined.Home, "home_teacher", currentScreen == "home_teacher"),
-        GlifoDrawerItem("school", drawerMyCourses, Icons.Default.School, "teacher_courses", currentScreen == "teacher_courses"),
-        GlifoDrawerItem("syllabus", drawerSyllabus, Icons.AutoMirrored.Filled.FormatListBulleted, "syllabus", currentScreen == "syllabus"),
-        GlifoDrawerItem("glossary", drawerGlossary, Icons.Default.Functions, "glossary", currentScreen == "glossary"),
-        GlifoDrawerItem("gaps", drawerGroupGaps, Icons.AutoMirrored.Filled.ShowChart, "gaps", currentScreen == "gaps"),
-        GlifoDrawerItem("cost", drawerCourseConsumption, Icons.Default.BarChart, "ai_cost", currentScreen == "ai_cost")
-    )
-
-    val adminItems = listOf(
-        GlifoDrawerItem("home", drawerHome, Icons.Outlined.Home, "home_admin", currentScreen == "home_admin"),
-        GlifoDrawerItem("users", drawerUsers, Icons.Default.Group, "admin_users", currentScreen == "admin_users"),
-        GlifoDrawerItem("school", drawerCourses, Icons.Default.School, "admin_courses", currentScreen == "admin_courses"),
-        GlifoDrawerItem("roles", drawerRoles, null, "admin_roles", currentScreen == "admin_roles", isSubItem = true),
-        GlifoDrawerItem("cost", drawerAiCostStudent, Icons.Default.BarChart, "ai_cost", currentScreen == "ai_cost")
-    )
-
-    val items = when (role) {
-        GlifoRole.Student -> studentItems
-        GlifoRole.Teacher -> teacherItems
-        GlifoRole.Admin -> adminItems
-    }
-
-    val roleLabel = when (role) {
-        GlifoRole.Student -> stringResource(R.string.profile_role_student)
-        GlifoRole.Teacher -> stringResource(R.string.profile_role_teacher)
-        GlifoRole.Admin -> stringResource(R.string.profile_role_admin)
-    }
-
-    val roleBadgeBg = if (role == GlifoRole.Admin) colors.alertSoft else colors.accentSoft
-    val roleBadgeFg = if (role == GlifoRole.Admin) colors.alert else colors.accentText
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .fillMaxHeight()
-            .background(colors.surface)
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .drawRightBorder(colors.border)
-    ) {
-        // User Profile Header
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .drawBottomBorder(colors.border)
-                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 14.dp)
-        ) {
-            ProfileAvatar(
-                photoPath = LocalProfilePhotoPath.current,
-                initials = userInitials,
-                size = 48.dp,
-                fontSize = 16.sp
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Text(
-                text = userName,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = colors.textPrimary
-            )
-
-            Text(
-                text = userEmail,
-                fontSize = 12.sp,
-                color = colors.textSecondary
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Box(
-                modifier = Modifier
-                    .background(roleBadgeBg, CircleShape)
-                    .padding(horizontal = 8.dp, vertical = 3.dp)
-            ) {
-                Text(
-                    text = roleLabel,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    letterSpacing = 0.6.sp,
-                    color = roleBadgeFg
-                )
-            }
-        }
-
-        // Active Course Section (only for Student and Teacher)
-        if (role != GlifoRole.Admin) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .drawBottomBorder(colors.border)
-                    .padding(horizontal = 16.dp, vertical = 10.dp)
-            ) {
-                Text(
-                    text = stringResource(R.string.drawer_active_course_section),
-                    fontSize = 10.sp,
-                    color = colors.textSecondary,
-                    letterSpacing = 0.5.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Spacer(modifier = Modifier.height(3.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = activeCourseName ?: stringResource(R.string.drawer_no_active_course),
-                        fontSize = 15.sp,
-                        color = if (activeCourseName != null) colors.textPrimary else colors.textSecondary,
-                        fontWeight = FontWeight.Medium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Text(
-                        text = stringResource(R.string.drawer_change_course),
-                        fontSize = 13.sp,
-                        color = colors.accentText,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .clickable(onClick = onChangeCourseClick ?: { onNavigate(COURSE_SWITCHER_ROUTE) })
-                            .padding(4.dp)
-                    )
-                }
-            }
-        }
-
-        // Navigation Items List
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(vertical = 6.dp)
-        ) {
-            items.forEach { item ->
-                val bg = if (item.isActive) colors.accentSoft else Color.Transparent
-                val fg = if (item.isActive) colors.accentText else colors.textPrimary
-                val iconFg = if (item.isActive) colors.accentText else colors.textSecondary
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                        .background(bg)
-                        .clickable { onNavigate(item.route) }
-                ) {
-                    // Left active indicator
-                    if (item.isActive) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxHeight()
-                                .width(3.dp)
-                                .background(colors.accent)
-                                .align(Alignment.CenterStart)
-                        )
-                    }
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(14.dp)
-                    ) {
-                        if (item.isSubItem) {
-                            Spacer(modifier = Modifier.width(20.dp))
-                        } else if (item.icon != null) {
-                            Icon(
-                                imageVector = item.icon,
-                                contentDescription = item.label,
-                                tint = iconFg,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                        Text(
-                            text = item.label,
-                            fontSize = 14.sp,
-                            color = fg,
-                            fontWeight = if (item.isActive) FontWeight.SemiBold else FontWeight.Normal
-                        )
-                    }
-                }
-            }
-
-            // Divider
-            HorizontalDivider(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                thickness = 1.dp,
-                color = colors.border
-            )
-
-            // Perfil (Only for Student and Teacher)
-            if (role != GlifoRole.Admin) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                        .clickable(onClick = onProfileClick)
-                        .padding(horizontal = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = stringResource(R.string.profile_title),
-                        tint = colors.textSecondary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Text(
-                        text = stringResource(R.string.profile_title),
-                        fontSize = 14.sp,
-                        color = colors.textPrimary
-                    )
-                }
-            }
-
-            // Ajustes
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp)
-                    .clickable(onClick = onSettingsClick)
-                    .padding(horizontal = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.WbSunny,
-                    contentDescription = stringResource(R.string.settings_title),
-                    tint = colors.textSecondary,
-                    modifier = Modifier.size(20.dp)
-                )
-                Text(
-                    text = stringResource(R.string.settings_title),
-                    fontSize = 14.sp,
-                    color = colors.textPrimary
-                )
-            }
-
-            // Cerrar sesión
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp)
-                    .clickable {
-                        logoutScope.launch {
-                            val pending = pendingSyncCount()
-                            if (pending > 0) pendingBeforeLogout = pending else onLogoutClick()
-                        }
-                    }
-                    .padding(horizontal = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                    contentDescription = stringResource(R.string.profile_button_logout),
-                    tint = colors.alert,
-                    modifier = Modifier.size(20.dp)
-                )
-                Text(
-                    text = stringResource(R.string.profile_button_logout),
-                    fontSize = 14.sp,
-                    color = colors.alert,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-        }
-    }
-}
-
 // ── Backward Compatibility Components ────────────────────────────────────────
 @Composable
 fun GlifoTopBar(
@@ -1103,7 +746,7 @@ fun GlifoStaggeredEntry(
 }
 
 @Composable
-private fun LogoutPendingSyncDialog(pendingCount: Int, onDismiss: () -> Unit, onConfirm: () -> Unit) {
+internal fun LogoutPendingSyncDialog(pendingCount: Int, onDismiss: () -> Unit, onConfirm: () -> Unit) {
     val colors = GlifoTheme.colors
     androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
         GlifoCard {

@@ -15,7 +15,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -45,7 +44,6 @@ import cr.ac.una.glifo.presentation.viewmodel.SettingsViewModel
 fun SettingsScreen(
     onNavigateBack: (() -> Unit)? = null,
     onNavigateToSync: () -> Unit = {},
-    onLogout: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val colors = GlifoTheme.colors
@@ -328,54 +326,48 @@ fun SettingsScreen(
                 }
             }
 
-            Text(
-                text = stringResource(R.string.settings_section_diagnostics),
-                fontSize = 11.sp,
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = 0.6.sp,
-                color = colors.textSecondary,
-                modifier = Modifier.padding(top = 18.dp, bottom = 8.dp)
-            )
+            if (cr.ac.una.glifo.BuildConfig.DEBUG) {
+                Text(
+                    text = stringResource(R.string.settings_section_diagnostics),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 0.6.sp,
+                    color = colors.textSecondary,
+                    modifier = Modifier.padding(top = 18.dp, bottom = 8.dp)
+                )
 
-            GlifoCard(tight = true) {
-                GlifoItem(
-                    compact = true,
-                    onClick = {
-                        cr.ac.una.glifo.core.telemetry.GlifoCrashReporter.setCustomKey("triggered_by", "settings_screen")
-                        cr.ac.una.glifo.core.telemetry.GlifoCrashReporter.log("Probando caída de diagnóstico en Firebase Crashlytics")
-                        cr.ac.una.glifo.core.telemetry.GlifoCrashReporter.testCrash()
+                GlifoCard(tight = true) {
+                    GlifoItem(
+                        compact = true,
+                        onClick = {
+                            cr.ac.una.glifo.core.telemetry.GlifoCrashReporter.setCustomKey("triggered_by", "settings_screen")
+                            cr.ac.una.glifo.core.telemetry.GlifoCrashReporter.log("Probando caída de diagnóstico en Firebase Crashlytics")
+                            cr.ac.una.glifo.core.telemetry.GlifoCrashReporter.testCrash()
+                        }
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(stringResource(R.string.settings_test_crashlytics_title), fontSize = 15.sp, color = colors.alert)
+                            Text(stringResource(R.string.settings_test_crashlytics_description), fontSize = 12.sp, color = colors.textSecondary)
+                        }
+                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(16.dp))
                     }
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(stringResource(R.string.settings_test_crashlytics_title), fontSize = 15.sp, color = colors.alert)
-                        Text(stringResource(R.string.settings_test_crashlytics_description), fontSize = 12.sp, color = colors.textSecondary)
+                    GlifoItem(
+                        compact = true,
+                        showBottomBorder = false,
+                        onClick = {
+                            cr.ac.una.glifo.core.telemetry.GlifoCrashReporter.log("Reporte no fatal manual generado desde Ajustes")
+                            cr.ac.una.glifo.core.telemetry.GlifoCrashReporter.recordException(Exception("Diagnóstico manual no fatal - Telemetría OK"), "manual_diagnostics")
+                        }
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(stringResource(R.string.settings_send_nonfatal_title), fontSize = 15.sp, color = colors.textPrimary)
+                            Text(stringResource(R.string.settings_send_nonfatal_description), fontSize = 12.sp, color = colors.textSecondary)
+                        }
+                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(16.dp))
                     }
-                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(16.dp))
-                }
-                GlifoItem(
-                    compact = true,
-                    showBottomBorder = false,
-                    onClick = {
-                        cr.ac.una.glifo.core.telemetry.GlifoCrashReporter.log("Reporte no fatal manual generado desde Ajustes")
-                        cr.ac.una.glifo.core.telemetry.GlifoCrashReporter.recordException(Exception("Diagnóstico manual no fatal - Telemetría OK"), "manual_diagnostics")
-                    }
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(stringResource(R.string.settings_send_nonfatal_title), fontSize = 15.sp, color = colors.textPrimary)
-                        Text(stringResource(R.string.settings_send_nonfatal_description), fontSize = 12.sp, color = colors.textSecondary)
-                    }
-                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(16.dp))
                 }
             }
 
-            Spacer(modifier = Modifier.height(18.dp))
-
-            GlifoButton(
-                text = stringResource(R.string.profile_button_logout),
-                variant = GlifoButtonVariant.Danger,
-                icon = Icons.AutoMirrored.Filled.ExitToApp,
-                onClick = onLogout
-            )
         }
     }
 }
